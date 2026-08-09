@@ -1,8 +1,13 @@
-# Event-driven lifecycle of the engine.
+# Event-driven lifecycle of the engine, safe with TWO demand sources
+# (maintenance executions and freshness sweeps).
 #
-# Comes up when work arrives and the engine is down.
-# Drains when demand reaches zero.
-# There is NO recurring job: whoever asks for a start follows it to the end.
+# Every transition happens under a row lock (SELECT ... FOR UPDATE on the
+# single trino_engine_states row), which closes three races at once: the
+# destroy-during-acceptance window, concurrent drains and concurrent starts.
+#
+# State machine: down -> starting -> up -> draining -> stopping -> down.
+# "stopping" is the point of no return: destruction is in progress, and demand
+# that arrives there must wait for down and trigger a fresh start.
 module TrinoEngineSupervisor
   READY_TIMEOUT = 8.minutes
   MAX_START_ATTEMPTS = 2
@@ -10,81 +15,98 @@ module TrinoEngineSupervisor
 
   module_function
 
-  def state
-    TrinoEngineState.first_or_create!(status: "down", status_changed_at: Time.current)
+  def state = TrinoEngineState.first_or_create!(status: "down", status_changed_at: Time.current)
+
+  # Single entry point for ANY demand source. Maintenance and freshness call
+  # the same method - there is no parallel path that could diverge.
+  def demand_arrived!(dispatch: nil)
+    current = state
+    current.with_lock do
+      case current.status
+      when "up"
+        dispatch&.call
+      when "starting"
+        # The start in progress releases everything pending when ready.
+        nil
+      when "draining"
+        # Still in time: back up without destroying anything.
+        transition!(current, "up", drain_started_at: nil)
+        dispatch&.call
+      when "stopping"
+        # Destruction already in progress. Do NOT dispatch: the engine is
+        # dying. When it reaches down, the pending demand triggers a new start.
+        nil
+      else # down | failed
+        transition!(current, "starting", start_attempts: 0, last_error: nil)
+        MaintenanceOrchestrator.supervise_engine_start
+      end
+    end
   end
 
-  # Called when an execution is enqueued.
-  def on_execution_enqueued(execution)
+  def demand_finished!
     current = state
+    current.with_lock do
+      next if TrinoDemand.any?
+      next unless current.status == "up"
 
-    case current.status
-    when "up"
-      MaintenanceOrchestrator.start_execution_on_engine(execution.id)
-    when "starting"
-      # Someone is already supervising the start; this execution will be
-      # released together with the rest when the engine is ready.
-      nil
-    when "draining"
-      # Work arrived within the grace period: cancel the drain without
-      # bringing the engine down.
-      current.update!(status: "up", drain_started_at: nil, status_changed_at: Time.current)
-      MaintenanceOrchestrator.start_execution_on_engine(execution.id)
-    else # down | failed
-      current.update!(status: "starting", start_attempts: 0,
-                      last_error: nil, status_changed_at: Time.current)
+      transition!(current, "draining", drain_started_at: Time.current)
+      MaintenanceOrchestrator.drain_engine
+    end
+  end
+
+  # Called by DrainEngineJob immediately before destroying. Returns false if
+  # demand appeared - and then the destruction does NOT happen.
+  def begin_stopping!
+    current = state
+    current.with_lock do
+      return false unless current.status == "draining"
+
+      if TrinoDemand.any?
+        transition!(current, "up", drain_started_at: nil)
+        release_pending!
+        return false
+      end
+
+      transition!(current, "stopping")
+      true
+    end
+  end
+
+  # Called after the destruction finished.
+  def finish_stopping!
+    current = state
+    current.with_lock do
+      transition!(current, "down", drain_started_at: nil)
+
+      # Demand that arrived during stopping: start again now.
+      if TrinoDemand.any?
+        transition!(current, "starting", start_attempts: 0)
+        MaintenanceOrchestrator.supervise_engine_start
+      end
+    end
+  end
+
+  # Operator-forced restart from the activity screen.
+  def restart!
+    current = state
+    current.with_lock do
+      transition!(current, "starting", start_attempts: 0, last_error: nil)
       MaintenanceOrchestrator.supervise_engine_start
     end
   end
 
-  # Called when an execution finishes (success or failure).
-  def on_execution_finished(execution)
-    TableLock.release(execution)
-
-    return if TrinoDemand.any?
-
-    current = state
-    return unless current.status == "up"
-
-    current.update!(status: "draining", drain_started_at: Time.current,
-                    status_changed_at: Time.current)
-    MaintenanceOrchestrator.drain_engine
-  end
-
-  # Releases all the executions that were waiting for the engine.
+  # Releases everything that was waiting for the engine, from both sources.
   def release_pending!
     ExecutionHistory.where(status: "pending").find_each do |execution|
       MaintenanceOrchestrator.start_execution_on_engine(execution.id)
     end
-  end
-
-  # A freshness run was enqueued: same logic as on_execution_enqueued - bring
-  # the engine up when down, cancel the drain when draining.
-  def on_freshness_run_enqueued(run)
-    current = state
-
-    case current.status
-    when "up", "starting"
-      nil
-    when "draining"
-      current.update!(status: "up", drain_started_at: nil, status_changed_at: Time.current)
-    else # down | failed
-      current.update!(status: "starting", start_attempts: 0,
-                      last_error: nil, status_changed_at: Time.current)
-      MaintenanceOrchestrator.supervise_engine_start
+    FreshnessRun.where(status: "pending").find_each do |run|
+      MaintenanceOrchestrator.start_freshness_sweep(run.id)
     end
   end
 
-  # A freshness run finished: drain when demand has cleared, like
-  # on_execution_finished.
-  def on_freshness_run_finished(run)
-    return if TrinoDemand.any?
-
-    current = state
-    return unless current.status == "up"
-
-    current.update!(status: "draining", drain_started_at: Time.current,
-                    status_changed_at: Time.current)
-    MaintenanceOrchestrator.drain_engine
+  def transition!(record, status, **extra)
+    record.update!(status: status, status_changed_at: Time.current,
+                   generation: record.generation + 1, **extra)
   end
 end

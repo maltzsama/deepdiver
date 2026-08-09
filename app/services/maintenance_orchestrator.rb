@@ -31,7 +31,9 @@ module MaintenanceOrchestrator
       return execution
     end
 
-    TrinoEngineSupervisor.on_execution_enqueued(execution)
+    TrinoEngineSupervisor.demand_arrived!(
+      dispatch: -> { start_execution_on_engine(execution.id) }
+    )
     execution
   end
 
@@ -42,6 +44,22 @@ module MaintenanceOrchestrator
     "outside cadence (#{step.cadence_cron})"
   end
   private_class_method :skip_reason
+
+  # Enqueues a freshness sweep, unless there is nothing enabled - otherwise
+  # the engine would come up 24 times a day to check nothing.
+  def self.enqueue_freshness_sweep
+    return nil if TableFreshnessSla.where(enabled: true).none?
+
+    run = FreshnessRun.create!(status: "pending")
+    TrinoEngineSupervisor.demand_arrived!(
+      dispatch: -> { start_freshness_sweep(run.id) }
+    )
+    run
+  end
+
+  def self.start_freshness_sweep(freshness_run_id)
+    backend.start_freshness_sweep(freshness_run_id)
+  end
 
   # Releases a pending execution onto the engine: acquires the per-table lock
   # and, when successful, enqueues the maintenance step. On lock contention the

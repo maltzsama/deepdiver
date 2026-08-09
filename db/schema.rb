@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_09_200020) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_09_200021) do
   create_table "catalog_credentials", force: :cascade do |t|
     t.string "auth_method", default: "none", null: false
     t.integer "catalog_id", null: false
@@ -228,6 +228,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200020) do
   create_table "trino_engine_states", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "drain_started_at"
+    t.bigint "generation", default: 0, null: false
     t.text "last_error"
     t.integer "start_attempts", default: 0, null: false
     t.string "status", default: "down", null: false

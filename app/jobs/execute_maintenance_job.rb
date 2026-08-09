@@ -65,6 +65,6 @@ class ExecuteMaintenanceJob < ApplicationJob
   def finish_chain(execution)
     execution.update!(status: :success, current_step: "done", finished_at: Time.current)
     execution.maintenance_plan.update!(consecutive_failures: 0)
-    TrinoEngineSupervisor.on_execution_finished(execution)
+    TrinoEngineSupervisor.demand_finished!
   end
 end
