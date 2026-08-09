@@ -53,4 +53,7 @@ Rails.application.configure do
 
   # Tests run without an IdP: keep the local sign-in path only.
   ENV["SSO_ENABLED"] = "false"
+
+  # Tests run without a cluster: keep the in-memory provisioner.
+  ENV["TRINO_PROVISIONER"] = "fake"
 end

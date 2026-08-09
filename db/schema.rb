@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_09_200009) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_09_200011) do
   create_table "catalog_credentials", force: :cascade do |t|
     t.string "auth_method", default: "none", null: false
     t.integer "catalog_id", null: false
@@ -39,18 +39,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200009) do
   end
 
   create_table "execution_histories", force: :cascade do |t|
-    t.boolean "awaiting_retry", default: false, null: false
     t.datetime "created_at", null: false
     t.string "current_step", default: "start", null: false
     t.text "error_message"
+    t.integer "iceberg_table_id", null: false
+    t.datetime "last_heartbeat_at"
     t.integer "maintenance_schedule_id", null: false
     t.json "metrics"
     t.integer "retry_count", default: 0, null: false
-    t.datetime "scale_up_started_at"
     t.string "status", default: "pending", null: false
     t.datetime "updated_at", null: false
+    t.index ["iceberg_table_id"], name: "index_execution_histories_on_iceberg_table_id"
     t.index ["maintenance_schedule_id", "created_at"], name: "idx_on_maintenance_schedule_id_created_at_ba9b5c28dc"
     t.index ["maintenance_schedule_id"], name: "index_execution_histories_on_maintenance_schedule_id"
+    t.index ["status", "last_heartbeat_at"], name: "index_execution_histories_on_status_and_last_heartbeat_at"
     t.index ["status"], name: "index_execution_histories_on_status"
   end
 
@@ -93,14 +95,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200009) do
     t.index ["maintenance_policy_id"], name: "index_maintenance_schedules_on_maintenance_policy_id"
   end
 
-  create_table "trino_locks", force: :cascade do |t|
-    t.datetime "acquired_at"
+  create_table "table_locks", force: :cascade do |t|
+    t.datetime "acquired_at", null: false
     t.datetime "created_at", null: false
-    t.bigint "execution_history_id"
-    t.string "key", default: "global", null: false
+    t.integer "execution_history_id", null: false
+    t.integer "iceberg_table_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["execution_history_id"], name: "index_trino_locks_on_execution_history_id"
-    t.index ["key"], name: "index_trino_locks_on_key", unique: true
+    t.index ["execution_history_id"], name: "index_table_locks_on_execution_history_id"
+    t.index ["iceberg_table_id"], name: "index_table_locks_on_iceberg_table_id", unique: true
+  end
+
+  create_table "trino_engine_states", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "drain_started_at"
+    t.text "last_error"
+    t.integer "start_attempts", default: 0, null: false
+    t.string "status", default: "down", null: false
+    t.datetime "status_changed_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "users", force: :cascade do |t|
@@ -120,8 +132,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200009) do
   end
 
   add_foreign_key "catalog_credentials", "catalogs"
+  add_foreign_key "execution_histories", "iceberg_tables"
   add_foreign_key "execution_histories", "maintenance_schedules"
   add_foreign_key "iceberg_tables", "catalogs"
   add_foreign_key "maintenance_schedules", "iceberg_tables"
   add_foreign_key "maintenance_schedules", "maintenance_policies"
+  add_foreign_key "table_locks", "execution_histories"
+  add_foreign_key "table_locks", "iceberg_tables"
 end

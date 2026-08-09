@@ -24,4 +24,11 @@ class K8sClient
     status = @kubeclient.get_deployment(deployment, namespace).status
     status["readyReplicas"].to_i >= 1
   end
+
+  def deployment_exists?
+    @kubeclient.get_deployment(deployment, namespace)
+    true
+  rescue Kubeclient::ResourceNotFoundError
+    false
+  end
 end

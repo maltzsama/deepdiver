@@ -4,12 +4,25 @@ module MaintenanceOrchestrator
   end
 
   # Enqueue a new run of a maintenance schedule. Creates the execution_history
-  # record and starts the state machine.
+  # record and hands the engine lifecycle over to the supervisor.
   def self.run_schedule(schedule_id)
     schedule = MaintenanceSchedule.find(schedule_id)
     execution = schedule.execution_histories.create!(status: :pending, current_step: :start)
-    backend.start_execution(execution.id)
+    TrinoEngineSupervisor.on_execution_enqueued(execution)
     execution
+  end
+
+  # Releases a pending execution onto the engine: acquires the per-table lock
+  # and, when successful, enqueues the maintenance step.
+  def self.start_execution_on_engine(execution_history_id)
+    execution = ExecutionHistory.find(execution_history_id)
+    execution.update!(status: :running, current_step: :start)
+
+    if TableLock.acquire(execution)
+      execute_maintenance(execution_history_id)
+    else
+      retry_lock_acquisition(execution_history_id)
+    end
   end
 
   def self.sync_catalog(catalog_id, force: false)
@@ -20,12 +33,12 @@ module MaintenanceOrchestrator
     backend.retry_lock_acquisition(execution_history_id)
   end
 
-  def self.scale_up(execution_history_id)
-    backend.scale_up(execution_history_id)
+  def self.supervise_engine_start
+    backend.supervise_engine_start
   end
 
-  def self.retry_scale_up(execution_history_id)
-    backend.retry_scale_up(execution_history_id)
+  def self.drain_engine
+    backend.drain_engine
   end
 
   def self.execute_maintenance(execution_history_id)
@@ -34,9 +47,5 @@ module MaintenanceOrchestrator
 
   def self.retry_maintenance(execution_history_id)
     backend.retry_maintenance(execution_history_id)
-  end
-
-  def self.scale_down(execution_history_id)
-    backend.scale_down(execution_history_id)
   end
 end

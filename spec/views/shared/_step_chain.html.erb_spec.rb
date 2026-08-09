@@ -19,7 +19,7 @@ RSpec.describe "shared/_step_chain", type: :view do
   it "marks the current node as retry and shows the counter when awaiting a new attempt" do
     execution = schedule.execution_histories.create!(
       status: :running, current_step: :executing_sql,
-      awaiting_retry: true, retry_count: 2
+      retry_count: 2
     )
 
     output = render_for(execution)
@@ -31,7 +31,7 @@ RSpec.describe "shared/_step_chain", type: :view do
 
   it "does not confuse a normally running execution with a retry" do
     execution = schedule.execution_histories.create!(
-      status: :running, current_step: :executing_sql, awaiting_retry: false
+      status: :running, current_step: :executing_sql, retry_count: 0
     )
 
     output = render_for(execution)

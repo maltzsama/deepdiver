@@ -3,13 +3,12 @@ module MaintenanceOrchestrator
   # rest of the codebase never refers to specific job classes, so we can swap
   # the transport (Solid Queue, Temporal, ...) by exchanging the implementation.
   class Backend
-    def start_execution(execution_history_id) = raise NotImplementedError
-    def sync_catalog(catalog_id, force:) = raise NotImplementedError
+    def start_execution_on_engine(execution_history_id) = raise NotImplementedError
     def retry_lock_acquisition(execution_history_id) = raise NotImplementedError
-    def scale_up(execution_history_id) = raise NotImplementedError
-    def retry_scale_up(execution_history_id) = raise NotImplementedError
+    def supervise_engine_start = raise NotImplementedError
+    def drain_engine = raise NotImplementedError
     def execute_maintenance(execution_history_id) = raise NotImplementedError
     def retry_maintenance(execution_history_id) = raise NotImplementedError
-    def scale_down(execution_history_id) = raise NotImplementedError
+    def sync_catalog(catalog_id, force:) = raise NotImplementedError
   end
 end

@@ -79,4 +79,9 @@ Rails.application.configure do
   # Local dev has no IdP: keep the local sign-in path. Set SSO_ENABLED=true
   # plus the OIDC_* vars if you want to exercise SSO locally.
   ENV["SSO_ENABLED"] = "false"
+
+  # Local dev has no cluster: keep the in-memory provisioner. Set
+  # TRINO_PROVISIONER=chart (plus TRINO_NAMESPACE/DEPLOYMENT and KUBE_*) to
+  # provision a real Trino.
+  ENV["TRINO_PROVISIONER"] = "fake"
 end
