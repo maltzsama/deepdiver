@@ -1,53 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title><%= content_for(:title) || "Lakedeepdiver" %></title>
+    <title><%= content_for(:title) || "LakeDeepDiver" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Lakedeepdiver">
+    <meta name="application-name" content="LakeDeepDiver">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
     <%= yield :head %>
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="min-h-screen bg-gray-50 text-gray-900">
-    <header class="flex items-center justify-between px-6 py-3 bg-gray-900 text-white">
-      <a href="<%= root_path %>" class="font-bold text-lg text-white no-underline">LakeDeepDiver</a>
-      <nav class="flex gap-4">
-        <%= link_to "Dashboard", root_path, class: "text-gray-300 hover:text-white" %>
-        <%= link_to "Catalogs", catalogs_path, class: "text-gray-300 hover:text-white" %>
-        <%= link_to "Schedules", maintenance_schedules_path, class: "text-gray-300 hover:text-white" %>
-      </nav>
-      <div class="flex items-center gap-3 text-sm">
+  <body class="app-shell">
+    <header class="app-header">
+      <div class="app-headbar">
+        <a class="app-brand" href="<%= root_path %>">
+          <span class="app-brand-mark">&#9672;</span> LakeDeepDiver
+        </a>
+
         <% if user_signed_in? %>
-          <span class="text-gray-300"><%= current_user.email %></span>
-          <%= button_to "Log out", destroy_user_session_path, method: :delete,
-                        class: "bg-transparent border-none cursor-pointer hover:underline text-gray-300 hover:text-white p-0 text-sm" %>
+          <nav class="app-nav">
+            <%= nav_link_to t("layout.nav.overview"), root_path, active_when: current_page?(root_path) %>
+            <%= nav_link_to t("layout.nav.catalogs"), catalogs_path, active_when: controller_name == "catalogs" %>
+            <%= nav_link_to t("layout.nav.schedules"), maintenance_schedules_path,
+                            active_when: controller_name == "maintenance_schedules" %>
+          </nav>
+
+          <div class="app-session">
+            <span class="app-user"><%= current_user.email %></span>
+            <% if current_user.admin? %>
+              <span class="badge badge-neutral"><%= t("layout.session.admin") %></span>
+            <% end %>
+            <%= button_to t("layout.session.sign_out"), destroy_user_session_path, method: :delete,
+                          class: "btn btn-default btn-sm" %>
+          </div>
         <% end %>
       </div>
     </header>
 
-    <% if notice.present? %>
-      <p class="bg-green-100 text-green-800 border border-green-300 p-3 text-sm rounded m-4"><%= notice %></p>
-    <% end %>
-    <% if alert.present? %>
-      <p class="bg-red-100 text-red-800 border border-red-300 p-3 text-sm rounded m-4"><%= alert %></p>
-    <% end %>
-
-    <main class="container mx-auto px-4 py-6 max-w-5xl">
+    <main class="app-main">
+      <%= render "shared/flash" %>
       <%= yield %>
     </main>
   </body>
