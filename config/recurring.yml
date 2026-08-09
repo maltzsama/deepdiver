@@ -1,11 +1,5 @@
-# Recurring jobs (Solid Queue, replaces sidekiq-cron). Loaded by the Solid
-# Queue supervisor (bin/jobs) in production.
 production:
-  schedule_dispatch:
-    class: ScheduleDispatchJob
-    queue: maintenance
-    schedule: every minute
-  catalog_sync:
-    class: CatalogSyncJob
-    queue: sync
+  freshness_sweep:
+    class: EnqueueFreshnessSweepJob
+    queue: freshness
     schedule: every hour at minute 5

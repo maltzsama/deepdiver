@@ -11,7 +11,8 @@ module TrinoDemand
 
   def count
     reap_orphans!
-    ExecutionHistory.where(status: ACTIVE_STATUSES).count
+    ExecutionHistory.where(status: ACTIVE_STATUSES).count +
+      FreshnessRun.where(status: %w[pending running]).count
   end
 
   def any? = count.positive?

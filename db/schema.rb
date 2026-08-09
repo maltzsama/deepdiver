@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_09_200019) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_09_200020) do
   create_table "catalog_credentials", force: :cascade do |t|
     t.string "auth_method", default: "none", null: false
     t.integer "catalog_id", null: false
@@ -76,6 +76,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200019) do
     t.index ["execution_history_id", "operation"], name: "index_execution_steps_on_execution_history_id_and_operation", unique: true
     t.index ["execution_history_id"], name: "index_execution_steps_on_execution_history_id"
     t.index ["maintenance_step_id"], name: "index_execution_steps_on_maintenance_step_id"
+  end
+
+  create_table "freshness_checks", force: :cascade do |t|
+    t.datetime "checked_at", null: false
+    t.datetime "created_at", null: false
+    t.integer "delay_seconds"
+    t.integer "duration_ms"
+    t.text "error_message"
+    t.integer "iceberg_table_id", null: false
+    t.datetime "max_timestamp"
+    t.integer "sla_minutes"
+    t.string "status", null: false
+    t.string "trino_query_id"
+    t.datetime "updated_at", null: false
+    t.index ["iceberg_table_id", "checked_at"], name: "index_freshness_checks_on_iceberg_table_id_and_checked_at"
+    t.index ["iceberg_table_id"], name: "index_freshness_checks_on_iceberg_table_id"
+    t.index ["status", "checked_at"], name: "index_freshness_checks_on_status_and_checked_at"
+  end
+
+  create_table "freshness_runs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.datetime "finished_at"
+    t.datetime "started_at"
+    t.string "status", default: "pending", null: false
+    t.integer "tables_checked", default: 0, null: false
+    t.integer "tables_errored", default: 0, null: false
+    t.integer "tables_late", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_freshness_runs_on_status"
   end
 
   create_table "iceberg_tables", force: :cascade do |t|
@@ -163,6 +193,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200019) do
     t.index ["maintenance_plan_id"], name: "index_maintenance_steps_on_maintenance_plan_id"
   end
 
+  create_table "table_freshness_slas", force: :cascade do |t|
+    t.datetime "breached_since"
+    t.datetime "created_at", null: false
+    t.boolean "enabled", default: false, null: false
+    t.integer "iceberg_table_id", null: false
+    t.datetime "last_alert_at"
+    t.string "last_alert_level"
+    t.string "partition_column"
+    t.integer "partition_lookback", default: 7, null: false
+    t.integer "sla_minutes", default: 120, null: false
+    t.string "slack_webhook_url"
+    t.string "source_timezone", default: "UTC", null: false
+    t.string "status", default: "unknown", null: false
+    t.datetime "status_changed_at"
+    t.string "timestamp_column", null: false
+    t.string "timestamp_type", default: "timestamp_tz", null: false
+    t.datetime "updated_at", null: false
+    t.integer "warning_at_percent", default: 80, null: false
+    t.index ["enabled", "status"], name: "index_table_freshness_slas_on_enabled_and_status"
+    t.index ["iceberg_table_id"], name: "index_table_freshness_slas_on_iceberg_table_id", unique: true
+  end
+
   create_table "table_locks", force: :cascade do |t|
     t.datetime "acquired_at", null: false
     t.datetime "created_at", null: false
@@ -205,12 +257,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200019) do
   add_foreign_key "execution_histories", "maintenance_schedules"
   add_foreign_key "execution_steps", "execution_histories"
   add_foreign_key "execution_steps", "maintenance_steps"
+  add_foreign_key "freshness_checks", "iceberg_tables"
   add_foreign_key "iceberg_tables", "catalogs"
   add_foreign_key "maintenance_plans", "iceberg_tables"
   add_foreign_key "maintenance_plans", "maintenance_policies"
   add_foreign_key "maintenance_schedules", "iceberg_tables"
   add_foreign_key "maintenance_schedules", "maintenance_policies"
   add_foreign_key "maintenance_steps", "maintenance_plans"
+  add_foreign_key "table_freshness_slas", "iceberg_tables"
   add_foreign_key "table_locks", "execution_histories"
   add_foreign_key "table_locks", "iceberg_tables"
 end
