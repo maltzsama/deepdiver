@@ -2,16 +2,16 @@ class ScheduleDispatchJob < ApplicationJob
   queue_as :maintenance
 
   # The heavyweight twin of the catalog recurring sync: checks every active,
-  # non-paused schedule against the current minute and enqueues a run when its
-  # cron matches. Runs every minute in production.
+  # non-paused maintenance plan against the current minute and enqueues a run
+  # when its cron matches. Runs every minute in production.
   def perform
-    MaintenanceSchedule.dispatchable.find_each do |schedule|
+    MaintenancePlan.dispatchable.find_each do |plan|
       begin
-        next unless schedule.scheduled_at?
+        next unless plan.scheduled_at?
 
-        MaintenanceOrchestrator.run_schedule(schedule.id)
+        MaintenanceOrchestrator.run_plan(plan.id)
       rescue StandardError => e
-        Rails.logger.error("ScheduleDispatchJob failed for schedule #{schedule.id}: #{e.message}")
+        Rails.logger.error("ScheduleDispatchJob failed for plan #{plan.id}: #{e.message}")
       end
     end
   end

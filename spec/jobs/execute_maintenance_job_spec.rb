@@ -1,30 +1,51 @@
 require "rails_helper"
 
 RSpec.describe ExecuteMaintenanceJob, type: :job do
-  def conflict_runtime
-    Class.new(FakeTrinoRuntime) do
-      def execute(sql, execution_id:, execution: nil)
-        raise TrinoRuntime::CommitConflict, "concurrent commit"
-      end
-    end.new
+  let(:plan) { create(:maintenance_plan, :with_all_steps) }
+  let(:execution) { create(:execution_history, maintenance_plan: plan, iceberg_table: plan.iceberg_table) }
+
+  before { TrinoRuntime.adapter = FakeTrinoRuntime.new }
+
+  it "executes the steps in canonical order" do
+    4.times { described_class.perform_now(execution.id) }
+
+    expect(execution.execution_steps.order(:started_at).pluck(:operation))
+      .to eq(MaintenancePlan::CANONICAL_ORDER)
   end
 
-  it "keeps the execution as demand on a commit conflict and enqueues a backoff retry" do
-    execution = create(:execution_history, status: :running, current_step: :executing_sql)
-    TableLock.acquire(execution)
-    TrinoRuntime.adapter = conflict_runtime
+  it "skips a disabled step without breaking the chain" do
+    plan.maintenance_steps.find_by(operation: "optimize_manifests").update!(enabled: false)
+
+    4.times { described_class.perform_now(execution.id) }
+
+    expect(execution.execution_steps.find_by(operation: "optimize_manifests").status).to eq("skipped")
+    expect(execution.execution_steps.find_by(operation: "remove_orphan_files").status).to eq("succeeded")
+  end
+
+  it "stops the chain when a step fails" do
+    allow(TrinoRuntime).to receive(:execute).and_raise("permission error")
 
     described_class.perform_now(execution.id)
 
-    execution.reload
-    expect(execution.retry_count).to eq(1)
-    expect(execution.status).to eq("running")
+    expect(execution.reload.status).to eq("failed")
+    expect(execution.execution_steps.where(status: "succeeded")).to be_empty
+    expect(execution.execution_steps.count).to eq(1)
+  end
 
-    enqueued = enqueued_jobs.map { |job| job[:job] }
-    expect(enqueued).to include(ExecuteMaintenanceJob)
+  it "records the duration of each step" do
+    described_class.perform_now(execution.id)
 
-    # The engine is not torn down per execution; the per-table lock is freed.
-    expect(enqueued).not_to include(DrainEngineJob)
-    expect(TableLock.count).to eq(0)
+    step = execution.execution_steps.first
+    expect(step.started_at).to be_present
+    expect(step.finished_at).to be_present
+  end
+
+  it "does not advance the chain or tear down the engine on a commit conflict" do
+    allow(TrinoRuntime).to receive(:execute).and_raise(TrinoRuntime::CommitConflict)
+
+    described_class.perform_now(execution.id)
+
+    expect(execution.reload.status).to eq("running")
+    expect(execution.execution_steps.first.retry_count).to eq(1)
   end
 end

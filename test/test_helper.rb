@@ -66,6 +66,21 @@ class ActiveSupport::TestCase
     build_table.maintenance_schedules.create!(**attrs)
   end
 
+  # A plan on a fresh table, so callers get distinct plans.
+  def build_plan(cron: "0 3 * * *", is_paused: false, **rest)
+    catalog = build_catalog
+    table = catalog.iceberg_tables.create!(namespace: "reporting", name: "plan_table_#{SecureRandom.hex(4)}")
+    MaintenancePlan.create!(iceberg_table: table, cron: cron, is_paused: is_paused, **rest)
+  end
+
+  def build_plan_with_steps(cron: "0 3 * * *")
+    plan = build_plan(cron: cron)
+    MaintenancePlan::CANONICAL_ORDER.each_with_index do |operation, index|
+      plan.maintenance_steps.create!(operation: operation, position: index, config: {})
+    end
+    plan
+  end
+
   def cleanup_table_locks
     TableLock.delete_all
   end

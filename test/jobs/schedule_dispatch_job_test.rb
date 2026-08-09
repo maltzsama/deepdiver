@@ -1,10 +1,10 @@
 require "test_helper"
 
 class ScheduleDispatchJobTest < ActiveSupport::TestCase
-  test "enqueues runs only for matching, non-paused schedules" do
-    due = build_schedule(cron: "* * * * *")
-    not_due = build_schedule(operation: "expire_snapshots", cron: "0 0 1 1 *")
-    paused = build_schedule(operation: "optimize_manifests", cron: "* * * * *", is_paused: true)
+  test "enqueues runs only for matching, non-paused plans" do
+    due = build_plan(cron: "* * * * *")
+    not_due = build_plan(cron: "0 0 1 1 *")
+    paused = build_plan(cron: "* * * * *", is_paused: true)
 
     ScheduleDispatchJob.perform_now
 
@@ -15,15 +15,15 @@ class ScheduleDispatchJobTest < ActiveSupport::TestCase
     assert_equal 0, paused.execution_histories.count
   end
 
-  test "one failing schedule does not prevent later schedules from dispatching" do
-    first = build_schedule(cron: "* * * * *")
-    second = build_schedule(operation: "expire_snapshots", cron: "* * * * *")
+  test "one failing plan does not prevent later plans from dispatching" do
+    first = build_plan(cron: "* * * * *")
+    second = build_plan(cron: "* * * * *")
 
-    original = MaintenanceOrchestrator.method(:run_schedule)
-    MaintenanceOrchestrator.define_singleton_method(:run_schedule) do |schedule_id|
-      raise "boom" if schedule_id == first.id
+    original = MaintenanceOrchestrator.method(:run_plan)
+    MaintenanceOrchestrator.define_singleton_method(:run_plan) do |plan_id|
+      raise "boom" if plan_id == first.id
 
-      original.call(schedule_id)
+      original.call(plan_id)
     end
 
     ScheduleDispatchJob.perform_now
@@ -33,7 +33,7 @@ class ScheduleDispatchJobTest < ActiveSupport::TestCase
     assert_equal 0, first.execution_histories.count
     assert_enqueued_with(job: SuperviseEngineStartJob)
   ensure
-    MaintenanceOrchestrator.singleton_class.send(:remove_method, :run_schedule) if original
-    MaintenanceOrchestrator.define_singleton_method(:run_schedule, original) if original
+    MaintenanceOrchestrator.singleton_class.send(:remove_method, :run_plan) if original
+    MaintenanceOrchestrator.define_singleton_method(:run_plan, original) if original
   end
 end

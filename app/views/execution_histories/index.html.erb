@@ -51,14 +51,13 @@
         </thead>
         <tbody>
           <% @executions.each do |execution| %>
-            <% schedule = execution.maintenance_schedule %>
             <tr>
               <td>
-                <%= link_to schedule.iceberg_table.fully_qualified_name,
-                            schedule.iceberg_table, class: "link-mono" %>
-                <span class="ml-2 text-xs cell-muted"><%= schedule.iceberg_table.catalog.name %></span>
+                <%= link_to execution.iceberg_table.fully_qualified_name,
+                            execution.iceberg_table, class: "link-mono" %>
+                <span class="ml-2 text-xs cell-muted"><%= execution.iceberg_table.catalog.name %></span>
               </td>
-              <td><span class="badge badge-neutral"><%= schedule.operation %></span></td>
+              <td><span class="badge badge-neutral"><%= execution.operation_label %></span></td>
               <td>
                 <span class="badge <%= execution_status_badge_class(execution.status) %>">
                   <span class="badge-dot"></span><%= execution.status %>

@@ -1,9 +1,7 @@
 # Circuit breaker: marks an execution as failed, tracks consecutive failures on
-# the schedule (pausing it after 3), alerts Slack, and always teardown the Trino
-# engine by enqueueing the scale-down step.
+# the maintenance plan (pausing it after the plan's threshold), alerts Slack,
+# and frees the per-table lock. The engine lifecycle is the supervisor's job.
 class ExecutionFailureHandler
-  MAX_CONSECUTIVE_FAILURES = 3
-
   def self.handle(execution, error_message, scale_down: true)
     new(execution, error_message, scale_down: scale_down).call
   end
@@ -12,7 +10,8 @@ class ExecutionFailureHandler
     @execution = execution
     @error_message = error_message
     @scale_down = scale_down
-    @schedule = execution.maintenance_schedule
+    @plan = execution.maintenance_plan
+    @table = execution.iceberg_table
   end
 
   def call
@@ -31,17 +30,18 @@ class ExecutionFailureHandler
   end
 
   def increment_and_maybe_pause
-    @schedule.increment!(:consecutive_failures)
+    return if @plan.nil?
 
-    return unless @schedule.consecutive_failures >= MAX_CONSECUTIVE_FAILURES
+    @plan.increment!(:consecutive_failures)
 
-    @schedule.update!(is_paused: true)
-    Rails.logger.warn("Schedule #{@schedule.id} paused after #{MAX_CONSECUTIVE_FAILURES} consecutive failures")
+    return unless @plan.consecutive_failures >= (@plan.auto_pause_after || 3)
+
+    @plan.update!(is_paused: true)
+    Rails.logger.warn("Plan #{@plan.id} paused after #{@plan.consecutive_failures} consecutive failures")
   end
 
   def notify
-    SlackAlert.notify("Maintenance failed for schedule ##{@schedule.id} " \
-                      "(#{@schedule.operation} on #{@schedule.iceberg_table.fully_qualified_name}): #{@error_message}")
+    SlackAlert.notify("Maintenance failed for #{@table&.fully_qualified_name}: #{@error_message}")
   end
 
   # The engine is NOT brought down per execution - that is the supervisor's

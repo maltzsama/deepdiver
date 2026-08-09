@@ -39,9 +39,41 @@ FactoryBot.define do
     config { {} }
   end
 
-  factory :execution_history do
-    maintenance_schedule
+  factory :maintenance_plan do
+    iceberg_table
+    cron { "0 3 * * *" }
+    is_paused { false }
+    consecutive_failures { 0 }
+    auto_pause_after { 3 }
+
+    trait :with_all_steps do
+      after(:create) do |plan|
+        MaintenancePlan::CANONICAL_ORDER.each_with_index do |operation, index|
+          plan.maintenance_steps.create!(operation: operation, position: index, config: {})
+        end
+      end
+    end
+  end
+
+  factory :maintenance_step do
+    maintenance_plan
+    operation { "optimize" }
+    position { 0 }
+    enabled { true }
+    config { {} }
+  end
+
+  factory :execution_step do
+    execution_history
+    operation { "optimize" }
     status { "pending" }
+  end
+
+  factory :execution_history do
+    iceberg_table
+    maintenance_schedule { nil }
+    maintenance_plan { nil }
+    status { "running" }
     current_step { "start" }
   end
 end
