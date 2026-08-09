@@ -34,12 +34,43 @@ class CatalogClientTest < ActiveSupport::TestCase
     transport = StubCatalogTransport.new(
       "http://polaris:8181/api/catalog/v1/namespaces" => {
         "namespaces" => [ { "namespace" => %w[reporting dwd] }, { "namespace" => [ "raw" ] } ]
-      }
+      },
+      "http://polaris:8181/api/catalog/v1/namespaces?parent=reporting%1Fdwd" => { "namespaces" => [] },
+      "http://polaris:8181/api/catalog/v1/namespaces?parent=raw" => { "namespaces" => [] }
     )
     client = PolarisCatalogClient.new(build_catalog, transport: transport)
 
     assert_equal [ "reporting.dwd", "raw" ], client.namespaces
     assert_equal({ "Authorization" => "Bearer secret" }, transport.requests.first[2])
+  end
+
+  test "namespaces recurses into nested children" do
+    transport = StubCatalogTransport.new(
+      "http://polaris:8181/api/catalog/v1/namespaces" => {
+        "namespaces" => [ { "namespace" => %w[bronze vendas] } ]
+      },
+      "http://polaris:8181/api/catalog/v1/namespaces?parent=bronze%1Fvendas" => {
+        "namespaces" => [ { "namespace" => %w[bronze vendas raw] }, { "namespace" => %w[bronze vendas silver] } ]
+      },
+      "http://polaris:8181/api/catalog/v1/namespaces?parent=bronze%1Fvendas%1Fraw" => { "namespaces" => [] },
+      "http://polaris:8181/api/catalog/v1/namespaces?parent=bronze%1Fvendas%1Fsilver" => { "namespaces" => [] }
+    )
+    client = PolarisCatalogClient.new(build_catalog, transport: transport)
+
+    assert_equal [ "bronze.vendas", "bronze.vendas.raw", "bronze.vendas.silver" ], client.namespaces
+  end
+
+  test "tables_in encodes nested namespace with the unit separator" do
+    transport = StubCatalogTransport.new(
+      "http://polaris:8181/api/catalog/v1/namespaces/bronze%1Fvendas/tables" => {
+        "identifiers" => [ { "name" => "pedidos" } ]
+      }
+    )
+    client = PolarisCatalogClient.new(build_catalog, transport: transport)
+
+    assert_equal [ "pedidos" ], client.tables_in("bronze.vendas")
+    assert_equal "http://polaris:8181/api/catalog/v1/namespaces/bronze%1Fvendas/tables",
+                 transport.requests.first[1]
   end
 
   test "table names are read from the identifiers list" do

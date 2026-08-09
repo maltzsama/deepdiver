@@ -49,6 +49,7 @@ class ActiveSupport::TestCase
     Catalog.find_or_create_by!(name: "analytics") do |catalog|
       catalog.catalog_type = "nessie"
       catalog.endpoint = "http://nessie:19120/api/v1"
+      catalog.trino_catalog_name = "analytics"
     end
   end
 

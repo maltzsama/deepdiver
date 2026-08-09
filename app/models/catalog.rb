@@ -6,6 +6,7 @@ class Catalog < ApplicationRecord
   validates :name, presence: true, uniqueness: true
   validates :catalog_type, presence: true, inclusion: { in: CATALOG_TYPES }
   validates :endpoint, presence: true
+  validates :trino_catalog_name, presence: true
 
   def to_s
     name

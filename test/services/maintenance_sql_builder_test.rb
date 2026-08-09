@@ -8,28 +8,28 @@ class MaintenanceSqlBuilderTest < ActiveSupport::TestCase
 
   test "optimize uses the default file size threshold" do
     assert_built "optimize",
-                 "ALTER TABLE iceberg.analytics.reporting.dwd_orders EXECUTE optimize(file_size_threshold => '128MB')"
+                 "ALTER TABLE \"analytics\".\"reporting\".\"dwd_orders\" EXECUTE optimize(file_size_threshold => '128MB')"
   end
 
   test "optimize honors a custom file size threshold" do
     assert_built "optimize",
-                 "ALTER TABLE iceberg.analytics.reporting.dwd_orders EXECUTE optimize(file_size_threshold => '256MB')",
+                 "ALTER TABLE \"analytics\".\"reporting\".\"dwd_orders\" EXECUTE optimize(file_size_threshold => '256MB')",
                  { "file_size_threshold" => "256MB" }
   end
 
   test "expire_snapshots uses the retention threshold" do
     assert_built "expire_snapshots",
-                 "ALTER TABLE iceberg.analytics.reporting.dwd_orders EXECUTE expire_snapshots(retention_threshold => '7d')"
+                 "ALTER TABLE \"analytics\".\"reporting\".\"dwd_orders\" EXECUTE expire_snapshots(retention_threshold => '7d')"
   end
 
   test "remove_orphan_files uses the retention threshold" do
     assert_built "remove_orphan_files",
-                 "ALTER TABLE iceberg.analytics.reporting.dwd_orders EXECUTE remove_orphan_files(retention_threshold => '14d')",
+                 "ALTER TABLE \"analytics\".\"reporting\".\"dwd_orders\" EXECUTE remove_orphan_files(retention_threshold => '14d')",
                  { "retention_threshold" => "14d" }
   end
 
   test "rewrite_manifests has no arguments" do
     assert_built "rewrite_manifests",
-                 "ALTER TABLE iceberg.analytics.reporting.dwd_orders EXECUTE rewrite_manifests"
+                 "ALTER TABLE \"analytics\".\"reporting\".\"dwd_orders\" EXECUTE rewrite_manifests"
   end
 end

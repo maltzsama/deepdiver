@@ -6,6 +6,29 @@ class IcebergTableTest < ActiveSupport::TestCase
     assert_equal "reporting.dwd_orders", table.fully_qualified_name
   end
 
+  test "trino_identifier has three parts for a simple namespace" do
+    table = build_table
+    assert_equal "\"analytics\".\"reporting\".\"dwd_orders\"", table.trino_identifier
+  end
+
+  test "trino_identifier keeps a nested namespace as one quoted part" do
+    catalog = Catalog.new(name: "x", trino_catalog_name: "polaris_prod", catalog_type: "polaris",
+                          endpoint: "http://x")
+    table = IcebergTable.new(catalog: catalog, namespace: "bronze.vendas.raw", name: "pedidos")
+
+    identifier = table.trino_identifier
+    assert_equal "\"polaris_prod\".\"bronze.vendas.raw\".\"pedidos\"", identifier
+    assert_equal 3, identifier.scan(/"(?:[^"]|"")*"/).size
+  end
+
+  test "trino_identifier quotes unusual characters and escapes embedded quotes" do
+    catalog = Catalog.new(name: "x", trino_catalog_name: "polaris_prod", catalog_type: "polaris",
+                          endpoint: "http://x")
+    table = IcebergTable.new(catalog: catalog, namespace: "ns-com-hifen", name: "Table \"Big\"")
+
+    assert_equal "\"polaris_prod\".\"ns-com-hifen\".\"Table \"\"Big\"\"\"", table.trino_identifier
+  end
+
   test "name is unique within the catalog namespace" do
     table = build_table
     duplicate = build_table.catalog.iceberg_tables.new(namespace: "reporting", name: "dwd_orders")

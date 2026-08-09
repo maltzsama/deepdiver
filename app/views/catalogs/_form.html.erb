@@ -16,6 +16,12 @@
   </div>
 
   <div>
+    <%= form.label :trino_catalog_name, "Trino catalog name" %>
+    <p><small>Name of the catalog file in Trino's etc/catalog/&lt;name&gt;.properties</small></p>
+    <%= form.text_field :trino_catalog_name %>
+  </div>
+
+  <div>
     <%= form.label :catalog_type %>
     <%= form.select :catalog_type, Catalog::CATALOG_TYPES %>
   </div>
