@@ -81,7 +81,18 @@ affinity: {}
 worker:
   enabled: true
   replicaCount: 1
-  resources: {}
+  resources:
+    requests: { cpu: 100m, memory: 512Mi }
+    limits:   { cpu: 500m, memory: 1Gi }
+  securityContext: {}
+
+# Freshness runs on its own process so it never waits behind an optimize.
+workerFreshness:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests: { cpu: 100m, memory: 512Mi }
+    limits:   { cpu: 500m, memory: 1Gi }
   securityContext: {}
 
 # Schema migrations run as a pre-install/pre-upgrade Job so web and worker

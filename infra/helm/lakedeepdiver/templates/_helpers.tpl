@@ -43,3 +43,12 @@ app.kubernetes.io/name: {{ include "lakedeepdiver.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/component: worker
 {{- end }}
+
+{{/*
+Selector labels for the freshness worker Deployment.
+*/}}
+{{- define "lakedeepdiver.workerFreshnessSelector" -}}
+app.kubernetes.io/name: {{ include "lakedeepdiver.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: worker-freshness
+{{- end }}
