@@ -6,11 +6,13 @@ class ScheduleDispatchJob < ApplicationJob
   # cron matches. Runs every minute in production.
   def perform
     MaintenanceSchedule.dispatchable.find_each do |schedule|
-      next unless schedule.scheduled_at?
+      begin
+        next unless schedule.scheduled_at?
 
-      MaintenanceOrchestrator.run_schedule(schedule.id)
+        MaintenanceOrchestrator.run_schedule(schedule.id)
+      rescue StandardError => e
+        Rails.logger.error("ScheduleDispatchJob failed for schedule #{schedule.id}: #{e.message}")
+      end
     end
-  rescue StandardError => e
-    Rails.logger.error("ScheduleDispatchJob failed: #{e.message}")
   end
 end
