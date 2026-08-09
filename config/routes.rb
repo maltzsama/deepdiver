@@ -12,17 +12,17 @@ Rails.application.routes.draw do
     end
   end
 
-  # index e novo: visão global de tabelas com filtros (CR-25)
+  # Global tables view with filters.
   resources :iceberg_tables, only: %i[index show] do
     member do
       post :run_maintenance
     end
   end
 
-  # log global de operações (CR-26)
+  # Global log of operations.
   resources :execution_histories, only: %i[index]
 
-  # políticas de manutenção (CR-28)
+  # Maintenance policies.
   resources :maintenance_policies do
     member { post :apply }
   end
