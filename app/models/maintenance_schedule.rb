@@ -2,6 +2,7 @@ class MaintenanceSchedule < ApplicationRecord
   OPERATIONS = %w[optimize expire_snapshots remove_orphan_files optimize_manifests].freeze
 
   belongs_to :iceberg_table
+  belongs_to :maintenance_policy, optional: true
   has_many :execution_histories, dependent: :destroy
 
   enum :operation, OPERATIONS.to_h { |o| [ o, o ] }

@@ -22,5 +22,10 @@ Rails.application.routes.draw do
   # log global de operações (CR-26)
   resources :execution_histories, only: %i[index]
 
+  # políticas de manutenção (CR-28)
+  resources :maintenance_policies do
+    member { post :apply }
+  end
+
   resources :maintenance_schedules
 end

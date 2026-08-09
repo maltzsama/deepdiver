@@ -37,6 +37,8 @@
                             active_when: controller_name == "execution_histories" %>
             <%= nav_link_to t("layout.nav.schedules"), maintenance_schedules_path,
                             active_when: controller_name == "maintenance_schedules" %>
+            <%= nav_link_to t("layout.nav.policies"), maintenance_policies_path,
+                            active_when: controller_name == "maintenance_policies" %>
           </nav>
 
           <div class="app-session">
