@@ -9,11 +9,30 @@ class CatalogSyncService
   end
 
   def sync
+    errors = []
+
     @client.namespaces.each do |namespace|
-      @client.tables_in(namespace).each do |table_name|
-        upsert_table(namespace, table_name)
+      begin
+        @client.tables_in(namespace).each do |table_name|
+          begin
+            upsert_table(namespace, table_name)
+          rescue StandardError => e
+            errors << "#{namespace}.#{table_name}: #{e.message}"
+            Rails.logger.warn("Sync failed for #{namespace}.#{table_name}: #{e.message}")
+          end
+        end
+      rescue StandardError => e
+        errors << "namespace #{namespace}: #{e.message}"
+        Rails.logger.warn("Sync failed for namespace #{namespace}: #{e.message}")
       end
     end
+
+    if errors.any?
+      SlackAlert.notify("Sync of catalog #{@catalog.name} finished with #{errors.size} failure(s): " \
+                        "#{errors.first(5).join('; ')}")
+    end
+
+    { errors: errors }
   end
 
   private
