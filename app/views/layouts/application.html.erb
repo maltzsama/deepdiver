@@ -30,12 +30,7 @@
           <nav class="app-nav">
             <%= nav_link_to t("layout.nav.overview"), root_path, active_when: current_page?(root_path) %>
             <%= nav_link_to t("layout.nav.in_progress"), activity_path,
-                            active_when: controller_name == "activity" do %>
-              <%= t("layout.nav.in_progress") %>
-              <% if TrinoDemand.any? %>
-                <span class="badge badge-running"><%= TrinoDemand.count %></span>
-              <% end %>
-            <% end %>
+                            active_when: controller_name == "activity" %>
             <%= nav_link_to t("layout.nav.tables"), iceberg_tables_path,
                             active_when: controller_name == "iceberg_tables" %>
             <%= nav_link_to t("layout.nav.catalogs"), catalogs_path,
