@@ -39,7 +39,7 @@ class ExecutionHistoriesController < ApplicationController
     execution = ExecutionHistory.find(params[:id])
     execution.update!(status: :failed, error_message: "cancelled by operator", finished_at: Time.current)
     TableLock.release(execution)
-    TrinoEngineSupervisor.on_execution_finished(execution)
+    TrinoEngineSupervisor.demand_finished!
     redirect_to activity_path, notice: "Execution cancelled."
   end
 end

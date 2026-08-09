@@ -58,4 +58,15 @@ RSpec.describe ExecuteMaintenanceJob, type: :job do
     expect(execution.reload.status).to eq("running")
     expect(execution.execution_steps.first.retry_count).to eq(1)
   end
+
+  it "drains when a failure drops the last demand" do
+    execution = released_execution
+    TrinoEngineSupervisor.state.update!(status: "up", status_changed_at: Time.current)
+    allow(TrinoRuntime).to receive(:execute).and_raise("permission error")
+
+    described_class.perform_now(execution.id)
+
+    expect(execution.reload.status).to eq("failed")
+    expect(TrinoEngineSupervisor.state.reload.status).to eq("draining")
+  end
 end

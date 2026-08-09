@@ -28,13 +28,24 @@ class DrainEngineJob < ApplicationJob
 
     Rails.logger.warn("Drain grace period exhausted with queries still active; destroying anyway") unless TrinoProvisioner.idle?
 
-    TrinoProvisioner.destroy!
-    TrinoEngineSupervisor.finish_stopping!
+    destroy_engine
   end
 
   private
 
   def still_draining?
     TrinoEngineSupervisor.state.reload.status == "draining"
+  end
+
+  # If the destruction itself fails, do not leave the state in "stopping"
+  # forever: log it and mark the engine failed so the operator can act.
+  def destroy_engine
+    TrinoProvisioner.destroy!
+    TrinoEngineSupervisor.finish_stopping!
+  rescue StandardError => e
+    Rails.logger.error("Trino destroy failed: #{e.message}")
+    TrinoEngineSupervisor.state.with_lock do |current|
+      TrinoEngineSupervisor.transition!(current, "failed", last_error: e.message)
+    end
   end
 end
