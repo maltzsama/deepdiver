@@ -1,9 +1,15 @@
 require "test_helper"
 
 class ExecuteMaintenanceJobTest < ActiveSupport::TestCase
+  def released_execution(plan)
+    execution = MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 03:00"))
+    execution.update!(status: :running)
+    execution
+  end
+
   test "a commit conflict keeps the execution as demand and retries the step" do
     plan = build_plan_with_steps
-    execution = plan.execution_histories.create!(status: :running, current_step: :start)
+    execution = released_execution(plan)
     TableLock.acquire(execution)
     TrinoRuntime.adapter = ConflictRuntime.new
 
@@ -21,10 +27,8 @@ class ExecuteMaintenanceJobTest < ActiveSupport::TestCase
   test "gives up after the max retries and pauses the plan" do
     plan = build_plan_with_steps
     plan.update!(consecutive_failures: 2)
-    execution = plan.execution_histories.create!(status: :running, current_step: :start)
-    execution.execution_steps.create!(operation: "optimize",
-                                      maintenance_step: plan.maintenance_steps.first,
-                                      retry_count: ExecuteMaintenanceJob::MAX_RETRIES)
+    execution = released_execution(plan)
+    execution.execution_steps.find_by(operation: "optimize").update!(retry_count: ExecuteMaintenanceJob::MAX_RETRIES)
     TrinoRuntime.adapter = ConflictRuntime.new
 
     ExecuteMaintenanceJob.perform_now(execution.id)
@@ -37,7 +41,7 @@ class ExecuteMaintenanceJobTest < ActiveSupport::TestCase
 
   test "a generic failure marks the execution failed" do
     plan = build_plan_with_steps
-    execution = plan.execution_histories.create!(status: :running, current_step: :start)
+    execution = released_execution(plan)
     TrinoRuntime.adapter = Object.new # no `execute` method -> standard error
 
     ExecuteMaintenanceJob.perform_now(execution.id)

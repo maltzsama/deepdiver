@@ -5,7 +5,9 @@ class ExecuteMaintenanceJob < ApplicationJob
   RETRY_WAIT = 10.minutes
 
   # Runs ONE step and enqueues the next. The engine is NOT brought down between
-  # steps - the TrinoEngineSupervisor owns that.
+  # steps - the TrinoEngineSupervisor owns that. The chain was materialised by
+  # run_plan with each step's cadence already resolved; order is always
+  # maintenance_steps.position.
   def perform(execution_history_id)
     execution = ExecutionHistory.find(execution_history_id)
     execution.update!(started_at: Time.current) if execution.started_at.nil?
@@ -20,30 +22,23 @@ class ExecuteMaintenanceJob < ApplicationJob
   private
 
   def next_step_for(execution)
-    done = execution.execution_steps.where(status: %w[succeeded skipped]).pluck(:operation)
-
-    execution.maintenance_plan.maintenance_steps.find do |candidate|
-      !done.include?(candidate.operation)
-    end
+    execution.execution_steps
+             .joins(:maintenance_step)
+             .where(status: "pending")
+             .order("maintenance_steps.position ASC")
+             .first
   end
 
-  def run_step(execution, step)
-    unless step.enabled
-      execution.execution_steps.create!(operation: step.operation, maintenance_step: step,
-                                        status: "skipped")
-      return MaintenanceOrchestrator.execute_maintenance(execution.id)
-    end
-
-    result_row = execution.execution_steps.find_or_create_by!(operation: step.operation) do |row|
-      row.maintenance_step = step
-    end
+  def run_step(execution, result_row)
+    maintenance_step = result_row.maintenance_step
     result_row.update!(status: "running", started_at: Time.current)
-    execution.update!(current_step: step.operation)
+    execution.update!(current_step: result_row.operation)
 
-    sql = MaintenanceSqlBuilder.build(execution.iceberg_table, step)
+    sql = MaintenanceSqlBuilder.build(execution.iceberg_table, maintenance_step)
     metrics = TrinoRuntime.execute(sql, execution_id: execution.id, execution: execution)
 
     result_row.update!(status: "succeeded", finished_at: Time.current, metrics: metrics)
+    maintenance_step&.update_column(:last_run_at, Time.current)
 
     # Next link in the chain.
     MaintenanceOrchestrator.execute_maintenance(execution.id)
@@ -51,7 +46,7 @@ class ExecuteMaintenanceJob < ApplicationJob
     handle_commit_conflict(execution, result_row, e)
   rescue StandardError => e
     result_row&.update!(status: "failed", finished_at: Time.current, error_message: e.message)
-    ExecutionFailureHandler.handle(execution, "#{step.operation}: #{e.message}")
+    ExecutionFailureHandler.handle(execution, "#{result_row.operation}: #{e.message}")
   end
 
   def handle_commit_conflict(execution, result_row, error)
