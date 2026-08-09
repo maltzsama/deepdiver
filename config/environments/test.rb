@@ -56,4 +56,12 @@ Rails.application.configure do
 
   # Tests run without a cluster: keep the in-memory provisioner.
   ENV["TRINO_PROVISIONER"] = "fake"
+
+  # Bullet: any N+1 (missing eager load) fails the suite. Unused eager loads
+  # are allowed - some associations are only read for certain rows.
+  config.after_initialize do
+    Bullet.enable = true
+    Bullet.raise = true
+    Bullet.unused_eager_loading_enable = false
+  end
 end

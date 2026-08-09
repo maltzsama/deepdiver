@@ -84,4 +84,10 @@ Rails.application.configure do
   # TRINO_PROVISIONER=chart (plus TRINO_NAMESPACE/DEPLOYMENT and KUBE_*) to
   # provision a real Trino.
   ENV["TRINO_PROVISIONER"] = "fake"
-end
+
+  # Bullet: surface N+1 and unused eager loads in the log.
+  config.after_initialize do
+    Bullet.enable = true
+    Bullet.alert = true
+    Bullet.rails_logger = true
+  endend

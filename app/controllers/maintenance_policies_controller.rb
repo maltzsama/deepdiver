@@ -8,7 +8,8 @@ class MaintenancePoliciesController < ApplicationController
 
   def show
     @plans = @policy.maintenance_plans.includes(:iceberg_table)
-    @candidates = IcebergTable.includes(:catalog).order(:namespace, :name)
+    @candidates = IcebergTable.includes(:catalog, maintenance_plan: :maintenance_policy)
+                              .order(:namespace, :name)
     @apply_preview = preview_for(@policy, @candidates)
   end
 
