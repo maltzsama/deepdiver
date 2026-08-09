@@ -1,0 +1,33 @@
+FactoryBot.define do
+  factory :catalog do
+    sequence(:name) { |n| "catalog-#{n}" }
+    catalog_type { "nessie" }
+    endpoint { "http://nessie:19120/api/v1" }
+    trino_catalog_name { name }
+
+    factory :polaris_catalog do
+      catalog_type { "polaris" }
+      endpoint { "http://polaris:8181" }
+    end
+  end
+
+  factory :iceberg_table do
+    catalog
+    sequence(:name) { |n| "table-#{n}" }
+    namespace { "reporting" }
+  end
+
+  factory :maintenance_schedule do
+    iceberg_table
+    operation { "optimize" }
+    cron { "0 3 * * *" }
+    is_paused { false }
+    config { {} }
+  end
+
+  factory :execution_history do
+    maintenance_schedule
+    status { "pending" }
+    current_step { "start" }
+  end
+end
