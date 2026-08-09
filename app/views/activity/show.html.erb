@@ -11,7 +11,7 @@
 <div class="mb-2 flex items-center justify-end gap-2 text-xs text-abyss-500">
   <span id="auto-refresh-label"><%= t("activity.auto_refresh_on") %></span>
   <button id="auto-refresh-toggle" class="btn btn-default btn-sm" type="button"><%= t("activity.pause") %></button>
-  <%= link_to t("activity.refresh_now"), activity_path, class: "link text-xs" %>
+  <button id="refresh-now" class="btn btn-default btn-sm" type="button"><%= t("activity.refresh_now") %></button>
 </div>
 
 <section class="panel mb-6">
@@ -184,6 +184,9 @@
         start();
       }
     });
+
+    const refreshNow = document.getElementById("refresh-now");
+    refreshNow && refreshNow.addEventListener("click", function() { window.location.reload(); });
 
     start();
   })();
