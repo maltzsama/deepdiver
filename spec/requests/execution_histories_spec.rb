@@ -3,18 +3,18 @@ require "rails_helper"
 RSpec.describe "GET /execution_histories", type: :request do
   let(:user)    { create(:user) }
   let(:catalog) { create(:catalog) }
-  let(:outro)   { create(:catalog, name: "outro") }
+  let(:other)   { create(:catalog, name: "legacy") }
 
-  let(:tabela)       { create(:iceberg_table, catalog:, name: "vendas") }
-  let(:tabela_outra) { create(:iceberg_table, catalog: outro, name: "pedidos") }
+  let(:table)        { create(:iceberg_table, catalog:, name: "sales") }
+  let(:other_table)  { create(:iceberg_table, catalog: other, name: "orders") }
 
-  let(:optimize) { create(:maintenance_schedule, iceberg_table: tabela, operation: "optimize") }
-  let(:expire)   { create(:maintenance_schedule, iceberg_table: tabela, operation: "expire_snapshots") }
-  let(:alheia)   { create(:maintenance_schedule, iceberg_table: tabela_outra, operation: "optimize") }
+  let(:optimize) { create(:maintenance_schedule, iceberg_table: table, operation: "optimize") }
+  let(:expire)   { create(:maintenance_schedule, iceberg_table: table, operation: "expire_snapshots") }
+  let(:foreign)  { create(:maintenance_schedule, iceberg_table: other_table, operation: "optimize") }
 
-  let!(:falha)   { optimize.execution_histories.create!(status: :failed, current_step: :executing_sql, error_message: "commit conflict") }
-  let!(:sucesso) { expire.execution_histories.create!(status: :success, current_step: :done) }
-  let!(:de_fora) { alheia.execution_histories.create!(status: :success, current_step: :done) }
+  let!(:failed_execution) { optimize.execution_histories.create!(status: :failed, current_step: :executing_sql, error_message: "commit conflict") }
+  let!(:success_execution) { expire.execution_histories.create!(status: :success, current_step: :done) }
+  let!(:foreign_execution) { foreign.execution_histories.create!(status: :success, current_step: :done) }
 
   before { sign_in user }
 
@@ -22,14 +22,14 @@ RSpec.describe "GET /execution_histories", type: :request do
     get execution_histories_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("vendas")
+    expect(response.body).to include("sales")
   end
 
   it "filters by status" do
     get execution_histories_path, params: { status: "failed" }
 
     expect(response.body).to include("commit conflict")
-    expect(response.body).not_to include("pedidos")
+    expect(response.body).not_to include("orders")
   end
 
   it "filters by operation" do
@@ -39,10 +39,10 @@ RSpec.describe "GET /execution_histories", type: :request do
   end
 
   it "filters by catalog" do
-    get execution_histories_path, params: { catalog_id: outro.id }
+    get execution_histories_path, params: { catalog_id: other.id }
 
-    expect(response.body).to include("pedidos")
-    expect(response.body).not_to include("vendas")
+    expect(response.body).to include("orders")
+    expect(response.body).not_to include("sales")
   end
 
   it "shows the full error message, not truncated" do
