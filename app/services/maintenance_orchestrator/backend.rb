@@ -9,6 +9,7 @@ module MaintenanceOrchestrator
     def drain_engine = raise NotImplementedError
     def execute_maintenance(execution_history_id) = raise NotImplementedError
     def retry_maintenance(execution_history_id) = raise NotImplementedError
+    def start_freshness_sweep(freshness_run_id) = raise NotImplementedError
     def sync_catalog(catalog_id, force:) = raise NotImplementedError
   end
 end

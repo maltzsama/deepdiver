@@ -13,12 +13,8 @@ class DrainEngineJob < ApplicationJob
     deadline = (state.drain_started_at || Time.current) + TrinoEngineSupervisor::DRAIN_GRACE
 
     loop do
-      # New work arrived: abort the drain, keep the engine up.
-      if TrinoDemand.any?
-        state.update!(status: "up", drain_started_at: nil, status_changed_at: Time.current)
-        TrinoEngineSupervisor.release_pending!
-        return
-      end
+      # Work arrived: begin_stopping! returns false and already restores to up.
+      return unless still_draining?
 
       break if Time.current > deadline
       break if TrinoProvisioner.idle?
@@ -26,11 +22,19 @@ class DrainEngineJob < ApplicationJob
       sleep POLL_INTERVAL
     end
 
-    unless TrinoProvisioner.idle?
-      Rails.logger.warn("Drain grace period exhausted with queries still active; destroying anyway")
-    end
+    # Last check and the transition to stopping happen under the SAME lock:
+    # after this, new demand waits for down instead of being dispatched.
+    return unless TrinoEngineSupervisor.begin_stopping!
+
+    Rails.logger.warn("Drain grace period exhausted with queries still active; destroying anyway") unless TrinoProvisioner.idle?
 
     TrinoProvisioner.destroy!
-    state.update!(status: "down", drain_started_at: nil, status_changed_at: Time.current)
+    TrinoEngineSupervisor.finish_stopping!
+  end
+
+  private
+
+  def still_draining?
+    TrinoEngineSupervisor.state.reload.status == "draining"
   end
 end

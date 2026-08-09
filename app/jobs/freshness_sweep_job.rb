@@ -31,7 +31,7 @@ class FreshnessSweepJob < ApplicationJob
     run.update!(status: "finished", finished_at: Time.current,
                 tables_checked: checked, tables_late: late, tables_errored: errored)
   ensure
-    TrinoEngineSupervisor.on_freshness_run_finished(run) if run
+    TrinoEngineSupervisor.demand_finished!
   end
 
   private

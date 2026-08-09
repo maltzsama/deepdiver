@@ -51,6 +51,10 @@ FactoryBot.define do
     warning_at_percent { 80 }
   end
 
+  factory :freshness_run do
+    status { "pending" }
+  end
+
   factory :maintenance_plan do
     iceberg_table
     cron { "0 3 * * *" }

@@ -12,9 +12,7 @@ class ActivityController < ApplicationController
   end
 
   def restart
-    state = TrinoEngineSupervisor.state
-    state.update!(status: "starting", start_attempts: 0, last_error: nil, status_changed_at: Time.current)
-    MaintenanceOrchestrator.supervise_engine_start
+    TrinoEngineSupervisor.restart!
     redirect_to activity_path, notice: "Engine start re-triggered."
   end
 end

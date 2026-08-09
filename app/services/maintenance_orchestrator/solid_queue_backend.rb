@@ -26,6 +26,10 @@ module MaintenanceOrchestrator
       ExecuteMaintenanceJob.set(wait: 10.minutes).perform_later(execution_history_id)
     end
 
+    def start_freshness_sweep(freshness_run_id)
+      FreshnessSweepJob.perform_later(freshness_run_id)
+    end
+
     def sync_catalog(catalog_id, force: false)
       CatalogSyncJob.perform_later(catalog_id, force: force)
     end
