@@ -1,4 +1,14 @@
 FactoryBot.define do
+  factory :user do
+    sequence(:email) { |n| "user#{n}@example.com" }
+    password { "password" }
+    role { "viewer" }
+
+    trait :admin do
+      role { "admin" }
+    end
+  end
+
   factory :catalog do
     sequence(:name) { |n| "catalog-#{n}" }
     catalog_type { "nessie" }

@@ -12,7 +12,8 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :iceberg_tables, only: %i[show] do
+  # index e novo: visão global de tabelas com filtros (CR-25)
+  resources :iceberg_tables, only: %i[index show] do
     member do
       post :run_maintenance
     end
