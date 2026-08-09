@@ -16,8 +16,8 @@ class TrinoRuntime
     adapter.ensure_stopped
   end
 
-  def self.execute(sql, execution_id:)
-    adapter.execute(sql, execution_id: execution_id)
+  def self.execute(sql, execution_id:, execution: nil)
+    adapter.execute(sql, execution_id: execution_id, execution: execution)
   end
 
   def self.adapter

@@ -19,7 +19,7 @@ class ExecutionFailureHandler
     fail_execution
     increment_and_maybe_pause
     notify
-    ensure_trino_stopped
+    release_table_lock
 
     @execution
   end
@@ -44,7 +44,9 @@ class ExecutionFailureHandler
                       "(#{@schedule.operation} on #{@schedule.iceberg_table.fully_qualified_name}): #{@error_message}")
   end
 
-  def ensure_trino_stopped
-    MaintenanceOrchestrator.scale_down(@execution.id) if @scale_down
+  # The engine is NOT brought down per execution - that is the supervisor's
+  # job, driven by demand. Only the per-table lock is freed here.
+  def release_table_lock
+    TableLock.release(@execution) if @scale_down
   end
 end

@@ -59,6 +59,8 @@ RSpec.configure do |config|
 
   config.after(:each) do
     TrinoRuntime.reset_adapter!
+    TrinoProvisioner.reset_adapter!
+    TrinoEngineState.delete_all
   end
 
   # You can uncomment this line to turn off ActiveRecord support entirely.

@@ -11,7 +11,7 @@ class FakeTrinoRuntime
   def ensure_stopped
   end
 
-  def execute(sql, execution_id:)
+  def execute(sql, execution_id:, execution: nil)
     {
       "executed_sql" => sql,
       "execution_history_id" => execution_id,

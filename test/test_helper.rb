@@ -6,8 +6,10 @@ class ActiveSupport::TestCase
   parallelize(workers: :number_of_processors)
   include ActiveJob::TestHelper
 
-  teardown :cleanup_trino_locks
+  teardown :cleanup_table_locks
+  teardown :cleanup_engine_state
   teardown :reset_trino_runtime
+  teardown :reset_trino_provisioner
 
   # Test double for a runtime that raises Trino commit conflicts.
   class ConflictRuntime
@@ -64,11 +66,19 @@ class ActiveSupport::TestCase
     build_table.maintenance_schedules.create!(**attrs)
   end
 
-  def cleanup_trino_locks
-    TrinoLock.delete_all
+  def cleanup_table_locks
+    TableLock.delete_all
+  end
+
+  def cleanup_engine_state
+    TrinoEngineState.delete_all
   end
 
   def reset_trino_runtime
     TrinoRuntime.reset_adapter!
+  end
+
+  def reset_trino_provisioner
+    TrinoProvisioner.reset_adapter!
   end
 end

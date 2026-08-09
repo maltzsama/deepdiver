@@ -18,7 +18,7 @@ class RealTrinoRuntime
     @k8s.scale(0)
   end
 
-  def execute(sql, execution_id:)
-    @rest.execute(sql, execution_id: execution_id)
+  def execute(sql, execution_id:, execution: nil)
+    @rest.execute(sql, execution_id: execution_id, execution: execution)
   end
 end

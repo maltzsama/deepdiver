@@ -8,7 +8,8 @@ class ScheduleDispatchJobTest < ActiveSupport::TestCase
 
     ScheduleDispatchJob.perform_now
 
-    assert_enqueued_jobs 1, only: TrinoManagerJob
+    # The engine was down, so the dispatch kicked off a supervised start.
+    assert_enqueued_jobs 1, only: SuperviseEngineStartJob
     assert_equal 1, due.execution_histories.count
     assert_equal 0, not_due.execution_histories.count
     assert_equal 0, paused.execution_histories.count
@@ -30,7 +31,7 @@ class ScheduleDispatchJobTest < ActiveSupport::TestCase
     second_execution = second.execution_histories.first
     assert second_execution
     assert_equal 0, first.execution_histories.count
-    assert_enqueued_with(job: TrinoManagerJob, args: [ second_execution.id ])
+    assert_enqueued_with(job: SuperviseEngineStartJob)
   ensure
     MaintenanceOrchestrator.singleton_class.send(:remove_method, :run_schedule) if original
     MaintenanceOrchestrator.define_singleton_method(:run_schedule, original) if original

@@ -15,9 +15,9 @@ class TrinoRestClient
     @transport = transport
   end
 
-  def execute(sql, execution_id:)
+  def execute(sql, execution_id:, execution: nil)
     first = statement(sql, execution_id: execution_id)
-    poll(first, execution_id: execution_id).merge("execution_history_id" => execution_id)
+    poll(first, execution_id: execution_id, execution: execution).merge("execution_history_id" => execution_id)
   end
 
   private
@@ -29,7 +29,7 @@ class TrinoRestClient
     raise Error, "Trino statement rejected: #{e.message}"
   end
 
-  def poll(response, execution_id:)
+  def poll(response, execution_id:, execution: nil)
     deadline = Time.current + MAX_POLL_SECONDS
     current = response
 
@@ -40,6 +40,10 @@ class TrinoRestClient
       if Time.current > deadline
         raise Error, "Trino query exceeded #{MAX_POLL_SECONDS}s without finishing"
       end
+
+      # Proof of life: while the poll is happening, the execution is alive.
+      # Without this there is no way to tell "long query" from "worker died".
+      execution&.touch(:last_heartbeat_at)
 
       sleep POLL_INTERVAL
       current = @transport.get(uri(current["nextUri"]), headers: headers(execution_id))

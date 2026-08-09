@@ -8,6 +8,10 @@ class TrinoK8sClient
     @client.ready?
   end
 
+  def deployment_exists?
+    @client.deployment_exists?
+  end
+
   def scale(replicas)
     @client.scale(replicas)
   end
