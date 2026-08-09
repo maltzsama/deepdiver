@@ -9,9 +9,9 @@
 # "stopping" is the point of no return: destruction is in progress, and demand
 # that arrives there must wait for down and trigger a fresh start.
 module TrinoEngineSupervisor
-  READY_TIMEOUT = 8.minutes
-  MAX_START_ATTEMPTS = 2
-  DRAIN_GRACE = 5.minutes
+  READY_TIMEOUT = ENV.fetch("TRINO_READY_TIMEOUT_MINUTES", "8").to_i.minutes
+  MAX_START_ATTEMPTS = ENV.fetch("TRINO_MAX_START_ATTEMPTS", "2").to_i
+  DRAIN_GRACE = ENV.fetch("TRINO_DRAIN_GRACE_MINUTES", "5").to_i.minutes
 
   module_function
 
@@ -108,5 +108,6 @@ module TrinoEngineSupervisor
   def transition!(record, status, **extra)
     record.update!(status: status, status_changed_at: Time.current,
                    generation: record.generation + 1, **extra)
+    ActivityBroadcaster.broadcast!
   end
 end
