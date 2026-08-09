@@ -1,28 +1,59 @@
-<h1 class="text-2xl font-bold mb-4">Maintenance schedules</h1>
+<% content_for :title, "#{t("schedules.index.title")} — LakeDeepDiver" %>
 
-<table class="w-full border-collapse">
-  <thead>
-    <tr>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Table</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Operation</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Cron</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Paused</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Failures</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @schedules.each do |schedule| %>
-      <tr>
-        <td class="p-2 border-b border-gray-200"><%= link_to schedule.iceberg_table.fully_qualified_name, schedule, class: "text-blue-600 hover:text-blue-800" %></td>
-        <td class="p-2 border-b border-gray-200"><%= schedule.operation %></td>
-        <td class="p-2 border-b border-gray-200"><%= schedule.cron %></td>
-        <td class="p-2 border-b border-gray-200"><%= schedule.paused? ? "yes" : "no" %></td>
-        <td class="p-2 border-b border-gray-200"><%= schedule.consecutive_failures %></td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("schedules.index.eyebrow") %></p>
+    <h1 class="page-title"><%= t("schedules.index.title") %></h1>
+    <p class="page-sub"><%= t("schedules.index.subtitle") %></p>
+  </div>
+  <% if current_user.admin? %>
+    <div class="page-actions">
+      <%= link_to t("schedules.index.new"), new_maintenance_schedule_path, class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>
 
 <% if @schedules.empty? %>
-  <p>No schedules yet.</p>
+  <section class="panel">
+    <div class="empty">
+      <p class="empty-title"><%= t("schedules.index.empty_title") %></p>
+      <p class="empty-hint"><%= t("schedules.index.empty_hint") %></p>
+    </div>
+  </section>
+<% else %>
+  <section class="panel">
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><%= t("schedules.index.col_table") %></th>
+            <th><%= t("schedules.index.col_operation") %></th>
+            <th><%= t("schedules.index.col_cron") %></th>
+            <th><%= t("schedules.index.col_state") %></th>
+            <th><%= t("schedules.index.col_failures") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @schedules.each do |schedule| %>
+            <tr>
+              <td>
+                <%= link_to schedule.iceberg_table.fully_qualified_name, schedule, class: "link-mono" %>
+                <span class="ml-2 text-xs cell-muted"><%= schedule.iceberg_table.catalog.name %></span>
+              </td>
+              <td><span class="badge badge-neutral"><%= schedule.operation %></span></td>
+              <td class="cell-id"><%= schedule.cron %></td>
+              <td>
+                <% if schedule.paused? %>
+                  <span class="badge badge-critical"><span class="badge-dot"></span><%= t("schedules.index.paused") %></span>
+                <% else %>
+                  <span class="badge badge-healthy"><span class="badge-dot"></span><%= t("schedules.index.active") %></span>
+                <% end %>
+              </td>
+              <td class="cell-num"><%= schedule.consecutive_failures %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
 <% end %>

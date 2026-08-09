@@ -1,34 +1,65 @@
-<h1><%= @catalog.name %> <small>(<%= @catalog.catalog_type %>)</small></h1>
-<p><%= @catalog.endpoint %></p>
+<% content_for :title, "#{@catalog.name} — LakeDeepDiver" %>
 
-<% if current_user.admin? %>
-  <div class="flex gap-2 my-4">
-    <%= button_to "Sync now", sync_catalog_path(@catalog), method: :post %>
-    <%= button_to "Delete catalog", catalog_path(@catalog), method: :delete,
-                 data: { turbo_confirm: "Delete this catalog and its tables?" } %>
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("catalogs.show.eyebrow") %></p>
+    <h1 class="page-title-mono"><%= @catalog.name %></h1>
+    <p class="page-sub">
+      <span class="badge badge-neutral"><%= @catalog.catalog_type %></span>
+      <span class="ml-2 font-mono text-xs"><%= @catalog.endpoint %></span>
+    </p>
   </div>
-<% end %>
 
-<h2 class="text-xl font-semibold mt-6 mb-3">Tables</h2>
-<table class="w-full border-collapse">
-  <thead>
-    <tr>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Table</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Score</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Status</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Last update</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Schedules</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @tables.each do |table| %>
-      <tr>
-        <td class="p-2 border-b border-gray-200"><%= link_to table.fully_qualified_name, table, class: "text-blue-600 hover:text-blue-800" %></td>
-        <td class="p-2 border-b border-gray-200"><%= table.health_score %></td>
-        <td class="p-2 border-b border-gray-200"><%= table.health_status %></td>
-        <td class="p-2 border-b border-gray-200"><%= table.last_data_update&.presence ? table.last_data_update.to_fs(:db) : "&mdash;".html_safe %></td>
-        <td class="p-2 border-b border-gray-200"><%= table.schedules_count %></td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
+  <% if current_user.admin? %>
+    <div class="page-actions">
+      <%= button_to t("catalogs.show.sync_now"), sync_catalog_path(@catalog), method: :post,
+                    class: "btn btn-primary" %>
+      <%= button_to t("catalogs.show.delete"), catalog_path(@catalog), method: :delete,
+                    class: "btn btn-danger",
+                    data: { turbo_confirm: t("catalogs.show.delete_confirm") } %>
+    </div>
+  <% end %>
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("catalogs.show.tables_title") %></h2>
+    <span class="panel-note"><%= t("catalogs.show.subtitle_span", count: @tables.size) %></span>
+  </div>
+
+  <% if @tables.empty? %>
+    <div class="empty">
+      <p class="empty-title"><%= t("catalogs.show.empty_title") %></p>
+      <p class="empty-hint"><%= t("catalogs.show.empty_hint") %></p>
+    </div>
+  <% else %>
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><%= t("catalogs.show.col_table") %></th>
+            <th><%= t("catalogs.show.col_health") %></th>
+            <th><%= t("catalogs.show.col_status") %></th>
+            <th><%= t("catalogs.show.col_last_write") %></th>
+            <th><%= t("catalogs.show.col_schedules") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @tables.each do |table| %>
+            <tr>
+              <td><%= link_to table.fully_qualified_name, table, class: "link-mono" %></td>
+              <td><%= render "shared/health", table: table %></td>
+              <td>
+                <span class="badge <%= health_badge_class(table.health_status) %>">
+                  <span class="badge-dot"></span><%= table.health_status %>
+                </span>
+              </td>
+              <td><%= timestamp(table.last_data_update) %></td>
+              <td class="cell-num"><%= table.schedules_count %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</section>

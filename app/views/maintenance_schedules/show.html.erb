@@ -1,47 +1,54 @@
-<h1 class="text-2xl font-bold"><%= @schedule.operation %> on <%= @schedule.iceberg_table.fully_qualified_name %></h1>
+<% content_for :title, "#{@schedule.operation} — LakeDeepDiver" %>
 
-<dl class="my-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
-  <dt class="font-semibold">Cron</dt>
-  <dd><%= @schedule.cron %></dd>
-  <dt class="font-semibold">Paused</dt>
-  <dd><%= @schedule.paused? ? "yes" : "no" %></dd>
-  <dt class="font-semibold">Consecutive failures</dt>
-  <dd><%= @schedule.consecutive_failures %></dd>
-  <dt class="font-semibold">Config</dt>
-  <dd><%= @schedule.config.inspect %></dd>
-</dl>
-
-<% if current_user.admin? %>
-  <div class="flex gap-2 my-4">
-    <%= link_to "Edit", edit_maintenance_schedule_path(@schedule), class: "text-blue-600 hover:text-blue-800" %>
-    <%= button_to "Delete", maintenance_schedule_path(@schedule), method: :delete,
-                 data: { turbo_confirm: "Delete this schedule?" } %>
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow">
+      <%= t("schedules.show.eyebrow_prefix") %>
+      <%= link_to @schedule.iceberg_table.fully_qualified_name,
+                  @schedule.iceberg_table, class: "link" %>
+    </p>
+    <h1 class="page-title"><%= @schedule.operation %></h1>
   </div>
-<% end %>
 
-<h2 class="text-xl font-semibold mt-6 mb-3">Executions</h2>
-<table class="w-full border-collapse">
-  <thead>
-    <tr>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Status</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Step</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Retries</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Error</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Ran at</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @executions.each do |execution| %>
-      <tr>
-        <td class="p-2 border-b border-gray-200"><%= execution.status %></td>
-        <td class="p-2 border-b border-gray-200"><%= execution.current_step %></td>
-        <td class="p-2 border-b border-gray-200"><%= execution.retry_count %></td>
-        <td class="p-2 border-b border-gray-200"><%= execution.error_message %></td>
-        <td class="p-2 border-b border-gray-200"><%= execution.created_at.to_fs(:db) %></td>
-      </tr>
-    <% end %>
-    <% if @executions.empty? %>
-      <tr><td colspan="5" class="p-2 border-b border-gray-200">No executions yet.</td></tr>
-    <% end %>
-  </tbody>
-</table>
+  <% if current_user.admin? %>
+    <div class="page-actions">
+      <%= link_to t("schedules.show.edit"), edit_maintenance_schedule_path(@schedule), class: "btn btn-default" %>
+      <%= button_to t("schedules.show.delete"), maintenance_schedule_path(@schedule), method: :delete,
+                    class: "btn btn-danger",
+                    data: { turbo_confirm: t("schedules.show.delete_confirm") } %>
+    </div>
+  <% end %>
+</div>
+
+<section class="panel mb-6">
+  <div class="panel-body">
+    <dl class="dl">
+      <div>
+        <dt class="dl-term"><%= t("schedules.show.cron") %></dt>
+        <dd class="dl-desc-mono"><%= @schedule.cron %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("schedules.show.state") %></dt>
+        <dd class="dl-desc">
+          <% if @schedule.paused? %>
+            <span class="badge badge-critical"><span class="badge-dot"></span><%= t("schedules.show.paused") %></span>
+          <% else %>
+            <span class="badge badge-healthy"><span class="badge-dot"></span><%= t("schedules.show.active") %></span>
+          <% end %>
+        </dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("schedules.show.failures") %></dt>
+        <dd class="dl-desc-mono"><%= @schedule.consecutive_failures %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("schedules.show.params") %></dt>
+        <dd class="dl-desc-mono text-xs">
+          <%= @schedule.config.presence&.to_json || t("schedules.show.params_default") %>
+        </dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<%= render "shared/executions", executions: @executions %>

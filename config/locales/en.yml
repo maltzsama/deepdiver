@@ -18,6 +18,7 @@ en:
       empty_title: "No catalogs registered"
       empty_hint: "Register a Polaris or Nessie to start discovering tables."
       register: "Register catalog"
+      col_tables: "Tables"
     show:
       eyebrow: "Catalog"
       subtitle_span: "tables"

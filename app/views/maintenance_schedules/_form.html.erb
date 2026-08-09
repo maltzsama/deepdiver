@@ -1,52 +1,78 @@
-<%= form_with model: schedule, class: "space-y-4 max-w-lg" do |f| %>
-  <% if schedule.errors.any? %>
-    <div id="error_explanation" class="bg-red-50 text-red-800 p-4 rounded border border-red-300 mb-4">
-      <ul class="list-disc list-inside">
-        <% schedule.errors.full_messages.each do |message| %>
-          <li><%= message %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
+<section class="panel">
+  <div class="panel-body">
+    <%= form_with model: schedule, class: "form-grid" do |f| %>
+      <% if schedule.errors.any? %>
+        <div class="errors">
+          <p class="errors-title">
+            <%= t("schedules.form.errors_#{schedule.errors.count == 1 ? "one" : "other"}",
+                  count: schedule.errors.count) %>
+          </p>
+          <ul class="errors-list">
+            <% schedule.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
 
-  <div>
-    <%= f.label :iceberg_table_id, "Table", class: "block text-sm font-medium mb-1" %>
-    <%= f.collection_select :iceberg_table_id, IcebergTable.order(:name).includes(:catalog),
-                            :id, :fully_qualified_name, {}, class: "w-full border border-gray-300 rounded px-3 py-1.5" %>
-  </div>
+      <div class="field">
+        <%= f.label :iceberg_table_id, t("schedules.form.table"), class: "field-label" %>
+        <%= f.collection_select :iceberg_table_id,
+                                IcebergTable.includes(:catalog).order(:namespace, :name),
+                                :id, :fully_qualified_name,
+                                { include_blank: t("schedules.form.table_placeholder") },
+                                class: "field-input field-input-mono" %>
+      </div>
 
-  <div>
-    <%= f.label :operation, class: "block text-sm font-medium mb-1" %>
-    <%= f.select :operation, MaintenanceSchedule::OPERATIONS, {}, class: "w-full border border-gray-300 rounded px-3 py-1.5" %>
-  </div>
+      <div class="field">
+        <%= f.label :operation, t("schedules.form.operation"), class: "field-label" %>
+        <p class="field-hint"><%= t("schedules.form.operation_hint") %></p>
+        <%= f.select :operation, MaintenanceSchedule::OPERATIONS, {}, class: "field-input field-input-mono" %>
+      </div>
 
-  <div>
-    <%= f.label :cron, class: "block text-sm font-medium mb-1" %>
-    <%= f.text_field :cron, placeholder: "0 3 * * *", class: "w-full border border-gray-300 rounded px-3 py-1.5" %>
-  </div>
+      <div class="field">
+        <%= f.label :cron, t("schedules.form.cron"), class: "field-label" %>
+        <p class="field-hint"><%= t("schedules.form.cron_hint") %></p>
+        <%= f.text_field :cron, class: "field-input field-input-mono",
+                         placeholder: t("schedules.form.cron_placeholder") %>
+      </div>
 
-  <div class="flex items-center gap-2">
-    <%= f.check_box :is_paused %>
-    <%= f.label :is_paused, class: "text-sm" %>
-  </div>
+      <div class="field">
+        <label class="field-check">
+          <%= f.check_box :is_paused, class: "field-checkbox" %>
+          <%= t("schedules.form.start_paused") %>
+        </label>
+        <p class="field-hint"><%= t("schedules.form.start_paused_hint") %></p>
+      </div>
 
-  <div>
-    <p class="text-sm font-medium mb-1">Config</p>
-  </div>
-  <div>
-    <%= f.label "config[file_size_threshold]", "File size threshold (only for optimize)", class: "block text-sm mb-1" %>
-    <%= text_field_tag "maintenance_schedule[config][file_size_threshold]",
-                       schedule.config&.dig("file_size_threshold"),
-                       placeholder: "128MB",
-                       class: "w-full border border-gray-300 rounded px-3 py-1.5" %>
-  </div>
-  <div>
-    <%= f.label "config[retention_threshold]", "Retention threshold (only for expire_snapshots / remove_orphan_files)", class: "block text-sm mb-1" %>
-    <%= text_field_tag "maintenance_schedule[config][retention_threshold]",
-                       schedule.config&.dig("retention_threshold"),
-                       placeholder: "7d",
-                       class: "w-full border border-gray-300 rounded px-3 py-1.5" %>
-  </div>
+      <div class="field-group">
+        <p class="field-group-title"><%= t("schedules.form.params_title") %></p>
+        <p class="field-hint mb-4"><%= t("schedules.form.params_hint") %></p>
 
-  <%= f.submit class: "bg-gray-900 text-white px-4 py-2 rounded cursor-pointer" %>
-<% end %>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="field">
+            <%= label_tag "maintenance_schedule[config][file_size_threshold]",
+                          t("schedules.form.file_size"), class: "field-label" %>
+            <%= text_field_tag "maintenance_schedule[config][file_size_threshold]",
+                               schedule.config&.dig("file_size_threshold"),
+                               class: "field-input field-input-mono", placeholder: "128MB" %>
+          </div>
+
+          <div class="field">
+            <%= label_tag "maintenance_schedule[config][retention_threshold]",
+                          t("schedules.form.retention"), class: "field-label" %>
+            <%= text_field_tag "maintenance_schedule[config][retention_threshold]",
+                               schedule.config&.dig("retention_threshold"),
+                               class: "field-input field-input-mono", placeholder: "7d" %>
+            <p class="field-hint"><%= t("schedules.form.retention_hint") %></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <%= f.submit t("schedules.form.submit"), class: "btn btn-primary" %>
+        <%= link_to t("schedules.form.cancel"), maintenance_schedules_path, class: "link text-sm" %>
+      </div>
+    <% end %>
+  </div>
+</section>
