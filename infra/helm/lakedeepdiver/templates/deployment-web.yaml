@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "lakedeepdiver.fullname" . }}-web
+  labels:
+    {{- include "lakedeepdiver.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "lakedeepdiver.webSelector" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "lakedeepdiver.webSelector" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "lakedeepdiver.fullname" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- if and .Values.internalCA.enabled .Values.internalCA.existingSecret }}
+        - name: internal-ca
+          secret:
+            secretName: {{ .Values.internalCA.existingSecret | quote }}
+            optional: true
+            defaultMode: 0444
+            items:
+              - key: {{ .Values.internalCA.caKey | quote }}
+                path: {{ base .Values.internalCA.mountFile | quote }}
+        {{- end }}
+      containers:
+        - name: web
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "lakedeepdiver.fullname" . }}
+            {{- if .Values.appSecrets.existingSecret }}
+            - secretRef:
+                name: {{ .Values.appSecrets.existingSecret | quote }}
+            {{- else if .Values.appSecrets.create }}
+            - secretRef:
+                name: {{ include "lakedeepdiver.fullname" . }}-app
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- if and .Values.internalCA.enabled .Values.internalCA.existingSecret }}
+            - name: internal-ca
+              mountPath: {{ dir .Values.internalCA.mountFile | quote }}
+              readOnly: true
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /up
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /up
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
