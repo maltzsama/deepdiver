@@ -61,10 +61,19 @@ RSpec.describe "GET /iceberg_tables", type: :request do
     expect(response.body).not_to include("sales")
   end
 
-  it "flags tables without a schedule" do
+  it "flags tables without a plan" do
     get iceberg_tables_path
 
-    expect(response.body).to include("none")
+    expect(response.body).to include("no plan")
+  end
+
+  it "filters by tables without a plan" do
+    create(:maintenance_plan, :with_all_steps, iceberg_table: critical_table)
+
+    get iceberg_tables_path, params: { no_plan: "1" }
+
+    expect(response.body).to include("customers")
+    expect(response.body).not_to include("sales")
   end
 
   it "shows the table count as a number, not a grouped hash" do

@@ -7,7 +7,7 @@ class IcebergTablesController < ApplicationController
     @catalogs   = Catalog.order(:name)
     @namespaces = IcebergTable.distinct.order(:namespace).pluck(:namespace)
 
-    @tables = IcebergTable.includes(:catalog)
+    @tables = IcebergTable.includes(:catalog, :maintenance_plan)
                           .left_joins(:maintenance_schedules)
                           .select("iceberg_tables.*, COUNT(maintenance_schedules.id) AS schedules_count")
                           .group("iceberg_tables.id")
@@ -15,6 +15,10 @@ class IcebergTablesController < ApplicationController
     @tables = @tables.where(catalog_id: params[:catalog_id])       if params[:catalog_id].present?
     @tables = @tables.where(namespace: params[:namespace])         if params[:namespace].present?
     @tables = @tables.where(health_status: params[:health_status]) if params[:health_status].present?
+
+    if params[:no_plan].present?
+      @tables = @tables.where.not(id: MaintenancePlan.select(:iceberg_table_id))
+    end
 
     if params[:q].present?
       term = "%#{params[:q].downcase}%"

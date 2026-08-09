@@ -16,6 +16,12 @@ class IcebergTable < ApplicationRecord
     "#{namespace}.#{name}"
   end
 
+  def average_file_size
+    return nil if total_size_bytes.nil? || total_data_files.nil? || total_data_files.zero?
+
+    total_size_bytes / total_data_files
+  end
+
   # Trino SQL identifier, always exactly three parts: catalog.schema.table.
   # The whole namespace stays inside a single quoted part; the Iceberg
   # connector rebuilds the nested Namespace from its separator. Never split
