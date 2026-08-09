@@ -23,7 +23,7 @@
 <section class="panel">
   <div class="panel-head">
     <h2 class="panel-title"><%= t("tables.index.result") %></h2>
-    <span class="panel-note"><%= t("tables.index.count", count: @tables.size) %></span>
+    <span class="panel-note"><%= t("tables.index.count", count: @tables.length) %></span>
   </div>
 
   <% if @tables.empty? %>
