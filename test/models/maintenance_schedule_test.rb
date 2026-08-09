@@ -27,4 +27,13 @@ class MaintenanceScheduleTest < ActiveSupport::TestCase
     assert_not schedule.valid?
     assert_includes schedule.errors[:config], "file_size_threshold must be a size string"
   end
+
+  test "ignores empty config values from the form" do
+    schedule = build_table.maintenance_schedules.new(operation: "expire_snapshots", cron: "0 3 * * *",
+                                                     config: { "file_size_threshold" => "",
+                                                               "retention_threshold" => "" })
+
+    assert schedule.valid?
+    assert_equal({}, schedule.config)
+  end
 end
