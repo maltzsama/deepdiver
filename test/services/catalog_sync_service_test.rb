@@ -37,4 +37,42 @@ class CatalogSyncServiceTest < ActiveSupport::TestCase
 
     assert_equal 1, catalog.iceberg_tables.count
   end
+
+  class FlakyCatalogClient < FakeCatalogClient
+    def tables_in(namespace)
+      [ "good", "bad" ]
+    end
+
+    def table_metadata(namespace, table)
+      raise "exploded" if table == "bad"
+
+      super
+    end
+  end
+
+  test "one broken table does not abort the whole sync" do
+    catalog = build_catalog
+
+    result = CatalogSyncService.new(catalog, client: FlakyCatalogClient.new).sync
+
+    assert_equal 1, result[:errors].size
+    assert_match(/bad: exploded/, result[:errors].first)
+    assert catalog.iceberg_tables.exists?(namespace: "reporting", name: "good")
+    assert_not catalog.iceberg_tables.exists?(namespace: "reporting", name: "bad")
+  end
+
+  class BrokenNamespaceClient < FakeCatalogClient
+    def tables_in(namespace)
+      raise "catalog unavailable"
+    end
+  end
+
+  test "a broken namespace is reported and the sync continues" do
+    catalog = build_catalog
+
+    result = CatalogSyncService.new(catalog, client: BrokenNamespaceClient.new).sync
+
+    assert_equal 1, result[:errors].size
+    assert_match(/namespace reporting: catalog unavailable/, result[:errors].first)
+  end
 end
