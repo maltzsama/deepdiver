@@ -32,7 +32,6 @@
         <thead>
           <tr>
             <th><%= t("policies.index.col_name") %></th>
-            <th><%= t("policies.index.col_operation") %></th>
             <th><%= t("policies.index.col_cron") %></th>
             <th><%= t("policies.index.col_tables") %></th>
           </tr>
@@ -46,9 +45,8 @@
                   <p class="cell-muted text-xs"><%= policy.description %></p>
                 <% end %>
               </td>
-              <td><span class="badge badge-neutral"><%= policy.operation %></span></td>
               <td class="cell-id"><%= policy.cron %></td>
-              <td class="cell-num"><%= policy.maintenance_schedules.size %></td>
+              <td class="cell-num"><%= policy.maintenance_plans.size %></td>
             </tr>
           <% end %>
         </tbody>

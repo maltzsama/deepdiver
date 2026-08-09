@@ -7,7 +7,7 @@ class MaintenancePoliciesController < ApplicationController
   end
 
   def show
-    @schedules = @policy.maintenance_schedules.includes(iceberg_table: :catalog)
+    @plans = @policy.maintenance_plans.includes(:iceberg_table)
     @candidates = IcebergTable.includes(:catalog).order(:namespace, :name)
   end
 
@@ -29,9 +29,9 @@ class MaintenancePoliciesController < ApplicationController
 
   def update
     if @policy.update(policy_params)
-      # Propagate to the schedules derived from this policy.
+      # Propagate to the plans derived from this policy.
       count = @policy.propagate!
-      redirect_to @policy, notice: "Policy updated. #{count} schedule(s) synced."
+      redirect_to @policy, notice: "Policy updated. #{count} plan(s) synced."
     else
       render :edit, status: :unprocessable_entity
     end
@@ -42,13 +42,13 @@ class MaintenancePoliciesController < ApplicationController
     redirect_to maintenance_policies_path, notice: "Policy deleted."
   end
 
-  # Applies the policy to a set of tables at once.
+  # Applies the policy to a set of tables at once, creating/updating their plans.
   def apply
     ids = Array(params[:iceberg_table_ids]).reject(&:blank?)
     result = @policy.apply_to!(IcebergTable.where(id: ids))
 
-    notice = "#{result[:created]} schedule(s) created, #{result[:updated]} updated."
-    notice += " #{result[:skipped]} skipped (already had this operation under another policy)." if result[:skipped].positive?
+    notice = "#{result[:created]} plan(s) created, #{result[:updated]} updated."
+    notice += " #{result[:skipped]} skipped (already managed by another policy)." if result[:skipped].positive?
 
     redirect_to @policy, notice: notice
   end
@@ -61,6 +61,6 @@ class MaintenancePoliciesController < ApplicationController
 
   def policy_params
     params.require(:maintenance_policy)
-          .permit(:name, :description, :operation, :cron, config: {})
+          .permit(:name, :description, :cron, steps_config: {})
   end
 end

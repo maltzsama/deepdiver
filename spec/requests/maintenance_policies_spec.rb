@@ -4,7 +4,7 @@ RSpec.describe "MaintenancePolicies", type: :request do
   let(:admin)  { create(:user, :admin) }
   let(:viewer) { create(:user, role: "viewer") }
   let(:policy) do
-    MaintenancePolicy.create!(name: "P", operation: "optimize", cron: "0 3 * * *")
+    MaintenancePolicy.create!(name: "P", cron: "0 3 * * *")
   end
 
   describe "authorization" do
@@ -20,7 +20,7 @@ RSpec.describe "MaintenancePolicies", type: :request do
 
       expect {
         post maintenance_policies_path,
-             params: { maintenance_policy: { name: "N", operation: "optimize", cron: "0 3 * * *" } }
+             params: { maintenance_policy: { name: "N", cron: "0 3 * * *" } }
       }.not_to change(MaintenancePolicy, :count)
     end
 
@@ -30,7 +30,7 @@ RSpec.describe "MaintenancePolicies", type: :request do
 
       expect {
         post apply_maintenance_policy_path(policy), params: { iceberg_table_ids: [ table.id ] }
-      }.not_to change(MaintenanceSchedule, :count)
+      }.not_to change(MaintenancePlan, :count)
     end
   end
 
@@ -43,9 +43,9 @@ RSpec.describe "MaintenancePolicies", type: :request do
       post apply_maintenance_policy_path(policy),
            params: { iceberg_table_ids: tables.map(&:id) }
 
-      expect(MaintenanceSchedule.count).to eq(2)
+      expect(MaintenancePlan.count).to eq(2)
       follow_redirect!
-      expect(response.body).to include("2 schedule(s) created")
+      expect(response.body).to include("2 plan(s) created")
     end
 
     it "ignores blank ids coming from the form" do
@@ -54,7 +54,7 @@ RSpec.describe "MaintenancePolicies", type: :request do
       post apply_maintenance_policy_path(policy),
            params: { iceberg_table_ids: [ "", table.id.to_s ] }
 
-      expect(MaintenanceSchedule.count).to eq(1)
+      expect(MaintenancePlan.count).to eq(1)
     end
   end
 end
