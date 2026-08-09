@@ -64,5 +64,9 @@ class SuperviseEngineStartJob < ApplicationJob
     ExecutionHistory.where(status: "pending").find_each do |execution|
       ExecutionFailureHandler.handle(execution, "engine unavailable: #{message}")
     end
+    # The engine never came up and every pending execution just failed: demand
+    # dropped to zero, so there is nothing to drain - but let the supervisor
+    # re-evaluate the state under its lock.
+    TrinoEngineSupervisor.demand_finished!
   end
 end

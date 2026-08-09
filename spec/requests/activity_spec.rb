@@ -27,4 +27,19 @@ RSpec.describe "GET /activity", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("waiting for the engine")
   end
+
+  it "lets an admin cancel a running execution" do
+    sign_in create(:user, :admin)
+    plan = create(:maintenance_plan, :with_all_steps)
+    execution = create(:execution_history, maintenance_plan: plan, iceberg_table: plan.iceberg_table,
+                                           status: :running)
+    TrinoEngineSupervisor.state.update!(status: "up", status_changed_at: Time.current)
+
+    post cancel_execution_history_path(execution)
+
+    expect(response).to redirect_to(activity_path)
+    expect(execution.reload.status).to eq("failed")
+    expect(execution.error_message).to include("cancelled by operator")
+    expect(TrinoEngineSupervisor.state.reload.status).to eq("draining")
+  end
 end
