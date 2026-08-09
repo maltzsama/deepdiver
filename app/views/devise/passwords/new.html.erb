@@ -1,11 +1,11 @@
-<% content_for :title, "#{t("auth.new_password")} — LakeDeepDiver" %>
+<% content_for :title, "#{t("auth.passwords.new_title")} — #{t("auth.brand")}" %>
 
 <div class="mx-auto max-w-sm">
   <div class="page-head">
     <div>
-      <p class="page-eyebrow">LakeDeepDiver</p>
-      <h1 class="page-title"><%= t("auth.new_password") %></h1>
-      <p class="page-sub"><%= t("auth.new_password_hint") %></p>
+      <p class="page-eyebrow"><%= t("auth.brand") %></p>
+      <h1 class="page-title"><%= t("auth.passwords.new_title") %></h1>
+      <p class="page-sub"><%= t("auth.passwords.new_hint") %></p>
     </div>
   </div>
 
@@ -14,14 +14,14 @@
       <%= form_for(resource, as: resource_name, url: password_path(resource_name),
                    html: { method: :post, class: "form-grid" }) do |f| %>
         <div class="field">
-          <%= f.label :email, t("auth.new_password_label"), class: "field-label" %>
+          <%= f.label :email, t("auth.passwords.new_label"), class: "field-label" %>
           <%= f.email_field :email, autofocus: true, autocomplete: "email",
                             class: "field-input" %>
         </div>
 
         <div class="form-actions">
-          <%= f.submit t("auth.new_password"), class: "btn btn-primary" %>
-          <%= link_to t("auth.forgot"), new_session_path(resource_name),
+          <%= f.submit t("auth.passwords.new_title"), class: "btn btn-primary" %>
+          <%= link_to t("auth.sign_in.forgot"), new_session_path(resource_name),
                       class: "link text-sm" %>
         </div>
       <% end %>

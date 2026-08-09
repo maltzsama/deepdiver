@@ -1,0 +1,30 @@
+pt-BR:
+  auth:
+    brand: "LakeDeepDiver"
+    eyebrow: "Manutenção de tabelas Iceberg"
+    tagline: "Agende, execute e acompanhe compactação, expiração de snapshots e limpeza de órfãos — com histórico de cada etapa."
+    footer: "Acesso restrito. Uso interno."
+    facts:
+      operations: "Operações"
+      catalogs: "Catálogos"
+      tables: "Tabelas"
+    fields:
+      email: "E-mail"
+      password: "Senha"
+      remember_me: "Manter conectado"
+    sign_in:
+      title: "Entrar"
+      subtitle: "Use sua conta corporativa para continuar."
+      sso: "Entrar com %{provider}"
+      or: "ou"
+      submit: "Entrar"
+      forgot: "Esqueci a senha"
+    errors:
+      sso_failed: "Não foi possível entrar pelo SSO. Fale com quem administra a aplicação."
+    account:
+      edit_title: "Editar conta"
+      waiting_confirmation: "Aguardando confirmação de: %{email}"
+      new_password_blank: "Nova senha (deixe em branco se não quiser mudar)"
+      confirm_password: "Confirmar nova senha"
+      current_password: "Senha atual (precisamos dela para confirmar as mudanças)"
+      update: "Atualizar"

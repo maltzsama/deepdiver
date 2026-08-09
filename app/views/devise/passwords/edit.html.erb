@@ -1,11 +1,11 @@
-<% content_for :title, "#{t("auth.change_password")} — LakeDeepDiver" %>
+<% content_for :title, "#{t("auth.passwords.edit_title")} — #{t("auth.brand")}" %>
 
 <div class="mx-auto max-w-sm">
   <div class="page-head">
     <div>
-      <p class="page-eyebrow">LakeDeepDiver</p>
-      <h1 class="page-title"><%= t("auth.change_password") %></h1>
-      <p class="page-sub"><%= t("auth.change_password_hint") %></p>
+      <p class="page-eyebrow"><%= t("auth.brand") %></p>
+      <h1 class="page-title"><%= t("auth.passwords.edit_title") %></h1>
+      <p class="page-sub"><%= t("auth.passwords.edit_hint") %></p>
     </div>
   </div>
 
@@ -19,21 +19,21 @@
         <%= f.hidden_field :reset_password_token %>
 
         <div class="field">
-          <%= f.label :password, t("auth.change_password_label"), class: "field-label" %>
+          <%= f.label :password, t("auth.passwords.new_password_label"), class: "field-label" %>
           <%= f.password_field :password, autofocus: true,
                                autocomplete: "new-password",
                                class: "field-input" %>
         </div>
 
         <div class="field">
-          <%= f.label :password_confirmation, t("auth.change_password_confirm_label"),
+          <%= f.label :password_confirmation, t("auth.passwords.confirm_label"),
                       class: "field-label" %>
           <%= f.password_field :password_confirmation, autocomplete: "new-password",
                                class: "field-input" %>
         </div>
 
         <div class="form-actions">
-          <%= f.submit t("auth.change_password"), class: "btn btn-primary" %>
+          <%= f.submit t("auth.passwords.edit_title"), class: "btn btn-primary" %>
         </div>
       <% end %>
     </div>

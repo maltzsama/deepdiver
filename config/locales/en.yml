@@ -159,19 +159,42 @@ en:
       retry_title: "Commit conflict. Trino stays up and the lock is held until the next attempt."
 
   auth:
-    sign_in_title: "Sign in"
-    email: "Email"
-    password: "Password"
-    remember_me: "Remember me"
-    submit: "Sign in"
-    forgot: "Forgot your password?"
-    new_password: "Send reset instructions"
-    change_password: "Change my password"
-    new_password_hint: "Enter your email and we will send reset instructions."
-    new_password_label: "Email"
-    change_password_label: "New password"
-    change_password_confirm_label: "Confirm new password"
-    change_password_hint: "Choose a new password."
+    brand: "LakeDeepDiver"
+    eyebrow: "Iceberg table maintenance"
+    tagline: "Schedule, run and track compaction, snapshot expiry and orphan cleanup — with a record of every step."
+    footer: "Restricted access. Internal use."
+    facts:
+      operations: "Operations"
+      catalogs: "Catalogs"
+      tables: "Tables"
+    fields:
+      email: "Email"
+      password: "Password"
+      remember_me: "Stay signed in"
+    sign_in:
+      title: "Sign in"
+      subtitle: "Use your corporate account to continue."
+      sso: "Continue with %{provider}"
+      or: "or"
+      submit: "Sign in"
+      forgot: "Forgot your password"
+    errors:
+      sso_failed: "SSO sign-in failed. Contact whoever administers this application."
+    passwords:
+      new_title: "Send reset instructions"
+      new_hint: "Enter your email and we will send reset instructions."
+      new_label: "Email"
+      edit_title: "Change my password"
+      edit_hint: "Choose a new password."
+      new_password_label: "New password"
+      confirm_label: "Confirm new password"
+    account:
+      edit_title: "Edit account"
+      waiting_confirmation: "Currently waiting confirmation for: %{email}"
+      new_password_blank: "New password (leave blank if you don't want to change it)"
+      confirm_password: "Confirm new password"
+      current_password: "Current password (we need it to confirm your changes)"
+      update: "Update"
 
   filters:
     all: "All"
