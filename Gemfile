@@ -42,8 +42,8 @@ gem "pg", "~> 1.5", groups: %i[ production ]
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
-# Deploy this application anywhere as a Docker container (deployed with Helm, see infra/helm/lakedeepdiver)
-# gem "kamal", require: false
+# Deploy this application as a Docker container consumed by the Helm chart
+# (see infra/helm/lakedeepdiver).
 
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
 gem "thruster", require: false
