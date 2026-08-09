@@ -16,15 +16,15 @@ class HttpTransport
   end
 
   def get(uri, headers: {})
-    perform(Net::HTTP::Get.new(uri), headers: headers, body: nil)
+    perform(Net::HTTP::Get.new(URI.parse(uri.to_s)), headers: headers, body: nil)
   end
 
   def post(uri, body:, headers: {})
-    perform(Net::HTTP::Post.new(uri), headers: headers, body: body)
+    perform(Net::HTTP::Post.new(URI.parse(uri.to_s)), headers: headers, body: body)
   end
 
   def delete(uri, headers: {})
-    perform(Net::HTTP::Delete.new(uri), headers: headers, body: nil)
+    perform(Net::HTTP::Delete.new(URI.parse(uri.to_s)), headers: headers, body: nil)
   end
 
   private
