@@ -1,0 +1,50 @@
+<div class="dashboard">
+  <h1>LakeDeepDiver</h1>
+
+  <section>
+    <h2>Worst table health</h2>
+    <table class="dashboard-table">
+      <thead>
+        <tr>
+          <th>Catalog</th>
+          <th>Table</th>
+          <th>Health score</th>
+          <th>Status</th>
+          <th>Last update</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @worst_health_tables.each do |table| %>
+          <tr>
+            <td><%= table.catalog.name %></td>
+            <td><%= link_to table.fully_qualified_name, table %></td>
+            <td><%= table.health_score %></td>
+            <td><%= table.health_status %></td>
+            <td><%= table.last_data_update&.to_fs(:db) %></td>
+          </tr>
+        <% end %>
+        <% if @worst_health_tables.empty? %>
+          <tr><td colspan="5">No tables synced yet. Create a catalog and run a sync.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Paused schedules</h2>
+    <% @paused_schedules.each do |schedule| %>
+      <p>
+        <%= link_to schedule.iceberg_table.fully_qualified_name, schedule %> —
+        <%= schedule.operation %> (failures: <%= schedule.consecutive_failures %>)
+      </p>
+    <% end %>
+    <% if @paused_schedules.empty? %>
+      <p>None.</p>
+    <% end %>
+  </section>
+
+  <nav>
+    <%= link_to "Catalogs", catalogs_path %>
+    <%= link_to "Schedules", maintenance_schedules_path %>
+  </nav>
+</div>
