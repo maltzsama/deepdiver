@@ -1,5 +1,14 @@
 Rails.application.routes.draw do
-  devise_for :users
+  # Public registration closed: accounts come from the IdP or from seed.
+  devise_for :users,
+             skip: %i[registrations],
+             controllers: { omniauth_callbacks: "users/omniauth_callbacks" }
+
+  # Allow signed-in users to edit their own account, without exposing /users/sign_up.
+  devise_scope :user do
+    get  "users/edit" => "devise/registrations#edit",   as: :edit_user_registration
+    put  "users"      => "devise/registrations#update", as: :user_registration
+  end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   get "up" => "rails/health#show", as: :rails_health_check
