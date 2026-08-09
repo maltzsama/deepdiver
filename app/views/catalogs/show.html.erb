@@ -1,0 +1,32 @@
+<h1><%= @catalog.name %> <small>(<%= @catalog.catalog_type %>)</small></h1>
+<p><%= @catalog.endpoint %></p>
+
+<% if current_user.admin? %>
+  <%= button_to "Sync now", sync_catalog_path(@catalog), method: :post %>
+  <%= button_to "Delete catalog", catalog_path(@catalog), method: :delete,
+               data: { turbo_confirm: "Delete this catalog and its tables?" } %>
+<% end %>
+
+<h2>Tables</h2>
+<table class="dashboard-table">
+  <thead>
+    <tr>
+      <th>Table</th>
+      <th>Score</th>
+      <th>Status</th>
+      <th>Last update</th>
+      <th>Schedules</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @tables.each do |table| %>
+      <tr>
+        <td><%= link_to table.fully_qualified_name, table %></td>
+        <td><%= table.health_score %></td>
+        <td><%= table.health_status %></td>
+        <td><%= table.last_data_update&.presence ? table.last_data_update.to_fs(:db) : "&mdash;".html_safe %></td>
+        <td><%= table.maintenance_schedules.count %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

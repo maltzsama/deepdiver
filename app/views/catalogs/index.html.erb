@@ -1,0 +1,17 @@
+<h1>Catalogs</h1>
+
+<ul>
+  <% @catalogs.each do |catalog| %>
+    <li>
+      <%= link_to catalog.name, catalog %> (<%= catalog.catalog_type %>)
+    </li>
+  <% end %>
+</ul>
+
+<% if @catalogs.empty? %>
+  <p>No catalogs yet.</p>
+<% end %>
+
+<% if current_user.admin? %>
+  <%= link_to "New catalog", new_catalog_path %>
+<% end %>
