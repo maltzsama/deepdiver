@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_09_200016) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_09_200017) do
   create_table "catalog_credentials", force: :cascade do |t|
     t.string "auth_method", default: "none", null: false
     t.integer "catalog_id", null: false
@@ -95,6 +95,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200016) do
     t.json "refs_json"
     t.json "schema_json"
     t.integer "snapshot_count"
+    t.json "snapshots_json"
     t.string "storage_location"
     t.string "table_uuid"
     t.bigint "total_data_files"

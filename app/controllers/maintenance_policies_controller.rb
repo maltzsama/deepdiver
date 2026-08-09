@@ -9,6 +9,7 @@ class MaintenancePoliciesController < ApplicationController
   def show
     @plans = @policy.maintenance_plans.includes(:iceberg_table)
     @candidates = IcebergTable.includes(:catalog).order(:namespace, :name)
+    @apply_preview = preview_for(@policy, @candidates)
   end
 
   def new
@@ -57,6 +58,24 @@ class MaintenancePoliciesController < ApplicationController
 
   def set_policy
     @policy = MaintenancePolicy.find(params[:id])
+  end
+
+  # What applying this policy to the given tables would do.
+  def preview_for(policy, tables)
+    created = 0
+    updated = 0
+    skipped = []
+
+    tables.each do |table|
+      plan = table.maintenance_plan
+      if plan.nil? || plan.maintenance_policy_id.nil? || plan.maintenance_policy_id == policy.id
+        plan.nil? ? created += 1 : updated += 1
+      else
+        skipped << [ table.fully_qualified_name, plan.maintenance_policy.name ]
+      end
+    end
+
+    { created: created, updated: updated, skipped: skipped }
   end
 
   def policy_params

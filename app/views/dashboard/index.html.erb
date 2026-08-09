@@ -42,6 +42,9 @@
               <th><%= t("dashboard.index.col_health") %></th>
               <th><%= t("dashboard.index.col_status") %></th>
               <th><%= t("dashboard.index.col_last_write") %></th>
+              <% if current_user.admin? %>
+                <th><span class="sr-only"><%= t("dashboard.index.col_actions") %></span></th>
+              <% end %>
             </tr>
           </thead>
           <tbody>
@@ -56,6 +59,12 @@
                   </span>
                 </td>
                 <td><%= timestamp(table.last_data_update) %></td>
+                <% if current_user.admin? %>
+                  <td class="text-right whitespace-nowrap">
+                    <%= button_to t("dashboard.index.run"), run_maintenance_iceberg_table_path(table),
+                                  method: :post, class: "btn btn-default btn-sm" %>
+                  </td>
+                <% end %>
               </tr>
             <% end %>
           </tbody>

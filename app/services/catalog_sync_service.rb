@@ -59,7 +59,8 @@ class CatalogSyncService
       schema_json: extractor.schemas,
       partition_json: extractor.partition_specs,
       refs_json: extractor.refs,
-      properties_json: extractor.properties
+      properties_json: extractor.properties,
+      snapshots_json: extractor.snapshots
     }
     if health[:score]
       attributes[:health_score] = health[:score]

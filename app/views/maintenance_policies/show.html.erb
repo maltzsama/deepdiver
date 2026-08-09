@@ -55,11 +55,35 @@
       <span class="panel-note"><%= t("policies.show.apply_note") %></span>
     </div>
     <div class="panel-body">
-      <%= form_with url: apply_maintenance_policy_path(@policy), method: :post do %>
-        <p class="field-hint mb-3">
-          <%= t("policies.show.apply_hint") %>
-        </p>
+      <div class="mb-4 grid gap-3 text-sm sm:grid-cols-2">
+        <p class="flex items-start gap-2"><span class="mt-0.5 text-frost-600">•</span><%= t("policies.show.explain_apply") %></p>
+        <p class="flex items-start gap-2"><span class="mt-0.5 text-frost-600">•</span><%= t("policies.show.explain_skip") %></p>
+        <p class="flex items-start gap-2"><span class="mt-0.5 text-frost-600">•</span><%= t("policies.show.explain_propagate") %></p>
+        <p class="flex items-start gap-2"><span class="mt-0.5 text-frost-600">•</span><%= t("policies.show.explain_pause") %></p>
+      </div>
 
+      <div class="mb-4 rounded-[--radius-panel] border border-abyss-100 bg-abyss-50/60 p-4">
+        <p class="text-sm font-medium text-abyss-900">
+          <%= t("policies.show.preview_title", name: @policy.name, count: @candidates.size) %>
+        </p>
+        <ul class="mt-2 space-y-1 text-sm text-abyss-700">
+          <li><%= t("policies.show.preview_created", count: @apply_preview[:created]) %></li>
+          <li><%= t("policies.show.preview_updated", count: @apply_preview[:updated]) %></li>
+          <% if @apply_preview[:skipped].any? %>
+            <li class="text-warn-600">
+              <%= t("policies.show.preview_skipped", count: @apply_preview[:skipped].size) %>
+              <ul class="mt-1 list-disc pl-5">
+                <% @apply_preview[:skipped].each do |table, policy_name| %>
+                  <li><span class="font-mono"><%= table %></span> — <%= policy_name %></li>
+                <% end %>
+              </ul>
+            </li>
+          <% end %>
+        </ul>
+        <p class="mt-2 text-xs text-abyss-500"><%= t("policies.show.preview_note") %></p>
+      </div>
+
+      <%= form_with url: apply_maintenance_policy_path(@policy), method: :post do %>
         <div class="max-h-80 overflow-y-auto rounded border border-abyss-100">
           <table class="data-table">
             <tbody>
