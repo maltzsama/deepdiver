@@ -1,0 +1,26 @@
+<%# Engine status strip. Also used by Turbo Stream broadcasts. %>
+<section id="activity-engine-strip" class="panel mb-6">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("activity.engine.title") %></h2>
+    <span class="panel-note"><%= t("activity.engine.active_count", count: local_assigns[:active_count]) %></span>
+  </div>
+  <div class="panel-body flex flex-wrap items-center gap-4">
+    <% case engine_state.status %>
+    <% when "up" %>
+      <span class="badge badge-healthy"><span class="badge-dot"></span><%= t("activity.engine.up", time: time_ago_in_words(engine_state.status_changed_at)) %></span>
+    <% when "starting" %>
+      <span class="badge badge-warning"><span class="badge-dot"></span><%= t("activity.engine.starting", attempt: engine_state.start_attempts + 1, max: TrinoEngineSupervisor::MAX_START_ATTEMPTS) %></span>
+    <% when "draining" %>
+      <span class="badge badge-running"><span class="badge-dot"></span><%= t("activity.engine.draining", time: distance_of_time_in_words_to_now(engine_state.drain_started_at + TrinoEngineSupervisor::DRAIN_GRACE)) %></span>
+    <% when "failed" %>
+      <span class="badge badge-critical"><span class="badge-dot"></span><%= t("activity.engine.failed") %></span>
+      <% if engine_state.last_error.present? %>
+        <span class="cell-muted font-mono text-xs"><%= engine_state.last_error %></span>
+      <% end %>
+      <%= button_to t("activity.engine.retry"), restart_activity_path, method: :post,
+                    class: "btn btn-default btn-sm" %>
+    <% else %>
+      <span class="badge badge-neutral"><span class="badge-dot"></span><%= t("activity.engine.down") %></span>
+    <% end %>
+  </div>
+</section>

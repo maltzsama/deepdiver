@@ -39,6 +39,7 @@ class ExecuteMaintenanceJob < ApplicationJob
 
     result_row.update!(status: "succeeded", finished_at: Time.current, metrics: metrics)
     maintenance_step&.update_column(:last_run_at, Time.current)
+    ActivityBroadcaster.broadcast!
 
     # Next link in the chain.
     MaintenanceOrchestrator.execute_maintenance(execution.id)
