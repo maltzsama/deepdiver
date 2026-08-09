@@ -1,0 +1,56 @@
+<%# Expects: executions (relation) %>
+<section class="panel">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("executions.section_title") %></h2>
+    <span class="panel-note"><%= t("executions.note", count: executions.size) %></span>
+  </div>
+
+  <% if executions.empty? %>
+    <div class="empty">
+      <p class="empty-title"><%= t("executions.empty_title") %></p>
+      <p class="empty-hint"><%= t("executions.empty_hint") %></p>
+    </div>
+  <% else %>
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><%= t("executions.col_status") %></th>
+            <th><%= t("executions.col_step") %></th>
+            <th><%= t("executions.col_attempts") %></th>
+            <th><%= t("executions.col_error") %></th>
+            <th><%= t("executions.col_when") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% executions.each do |execution| %>
+            <tr>
+              <td>
+                <% if execution_visual_state(execution) == :retrying %>
+                  <span class="badge badge-warning">
+                    <span class="badge-dot"></span><%= t("executions.awaiting_retry") %>
+                  </span>
+                <% else %>
+                  <span class="badge <%= execution_status_badge_class(execution.status) %>">
+                    <span class="badge-dot"></span><%= execution.status %>
+                  </span>
+                <% end %>
+              </td>
+              <td><%= render "shared/step_chain", execution: execution %></td>
+              <td class="cell-num"><%= execution.retry_count %></td>
+              <td class="max-w-md">
+                <% if execution.error_message.present? %>
+                  <span class="font-mono text-xs text-critical-600 line-clamp-2"
+                        title="<%= execution.error_message %>"><%= execution.error_message %></span>
+                <% else %>
+                  <span class="cell-muted">—</span>
+                <% end %>
+              </td>
+              <td><%= timestamp(execution.created_at) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</section>
