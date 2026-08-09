@@ -16,4 +16,8 @@ class ExecutionHistory < ApplicationRecord
   def finished?
     %w[success failed].include?(status)
   end
+
+  def awaiting_retry?
+    awaiting_retry == true
+  end
 end

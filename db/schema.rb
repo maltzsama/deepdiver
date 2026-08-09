@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_09_200001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_09_200002) do
   create_table "catalogs", force: :cascade do |t|
     t.string "catalog_type", null: false
     t.datetime "created_at", null: false
@@ -23,6 +23,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200001) do
   end
 
   create_table "execution_histories", force: :cascade do |t|
+    t.boolean "awaiting_retry", default: false, null: false
     t.datetime "created_at", null: false
     t.string "current_step", default: "start", null: false
     t.text "error_message"

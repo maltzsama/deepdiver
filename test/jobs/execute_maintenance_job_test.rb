@@ -3,6 +3,7 @@ require "test_helper"
 class ExecuteMaintenanceJobTest < ActiveSupport::TestCase
   test "a commit conflict bumps the retry_count and enqueues a backoff retry" do
     execution = build_schedule.execution_histories.create!(status: :running, current_step: :executing_sql)
+    TrinoLock.acquire(execution.id)
     TrinoRuntime.adapter = ConflictRuntime.new
 
     ExecuteMaintenanceJob.perform_now(execution.id)
@@ -10,7 +11,29 @@ class ExecuteMaintenanceJobTest < ActiveSupport::TestCase
     execution.reload
     assert_equal 1, execution.retry_count
     assert_equal "running", execution.status
+    assert execution.awaiting_retry?
     assert_enqueued_with(job: ExecuteMaintenanceJob, args: [ execution.id ])
+    assert_no_enqueued_jobs only: ScaleDownJob
+
+    # The engine stays up and the lock stays ours during the retry window.
+    lock = TrinoLock.find_by(key: TrinoLock::GLOBAL_KEY)
+    assert_equal execution.id.to_s, lock.owner
+  end
+
+  test "the retry run clears the awaiting_retry flag" do
+    execution = build_schedule.execution_histories.create!(status: :running, current_step: :executing_sql)
+    TrinoRuntime.adapter = ConflictRuntime.new
+
+    ExecuteMaintenanceJob.perform_now(execution.id)
+    execution.reload
+    assert execution.awaiting_retry?
+
+    TrinoRuntime.adapter = FakeTrinoRuntime.new
+    ExecuteMaintenanceJob.perform_now(execution.id)
+
+    execution.reload
+    assert_not execution.awaiting_retry?
+    assert_equal "success", execution.status
   end
 
   test "gives up after the max retries and pauses the schedule" do

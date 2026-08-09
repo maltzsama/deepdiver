@@ -8,7 +8,7 @@ class ExecuteMaintenanceJob < ApplicationJob
   # is up, the runtime is released back (see guard_trino_down below).
   def perform(execution_history_id)
     execution = ExecutionHistory.find(execution_history_id)
-    execution.update!(current_step: :executing_sql)
+    execution.update!(current_step: :executing_sql, awaiting_retry: false)
 
     schedule = execution.maintenance_schedule
     sql = MaintenanceSqlBuilder.build(schedule)
@@ -27,7 +27,10 @@ class ExecuteMaintenanceJob < ApplicationJob
   private
 
   def guard_trino_down(execution)
+    execution.reload
     return if execution.finished?
+    # Waiting for a retry: the engine must stay up and the lock stays ours.
+    return if execution.awaiting_retry?
 
     MaintenanceOrchestrator.scale_down(execution.id)
   end
@@ -39,6 +42,8 @@ class ExecuteMaintenanceJob < ApplicationJob
       ExecutionFailureHandler.handle(execution, "max retries (#{MAX_RETRIES}) reached after commit conflicts")
     else
       execution.increment!(:retry_count)
+      # Mark BEFORE enqueueing: the ensure block must observe this state.
+      execution.update!(awaiting_retry: true)
       MaintenanceOrchestrator.retry_maintenance(execution.id)
     end
   end
