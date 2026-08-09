@@ -1,0 +1,28 @@
+<h1>Maintenance schedules</h1>
+
+<table class="dashboard-table">
+  <thead>
+    <tr>
+      <th>Table</th>
+      <th>Operation</th>
+      <th>Cron</th>
+      <th>Paused</th>
+      <th>Failures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @schedules.each do |schedule| %>
+      <tr>
+        <td><%= link_to schedule.iceberg_table.fully_qualified_name, schedule %></td>
+        <td><%= schedule.operation %></td>
+        <td><%= schedule.cron %></td>
+        <td><%= schedule.paused? ? "yes" : "no" %></td>
+        <td><%= schedule.consecutive_failures %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<% if @schedules.empty? %>
+  <p>No schedules yet.</p>
+<% end %>

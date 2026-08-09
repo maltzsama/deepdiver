@@ -1,0 +1,50 @@
+<%= form_with model: schedule do |f| %>
+  <% if schedule.errors.any? %>
+    <div id="error_explanation">
+      <ul>
+        <% schedule.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :iceberg_table_id, "Table" %>
+    <%= f.collection_select :iceberg_table_id, IcebergTable.order(:name).includes(:catalog),
+                            :id, :fully_qualified_name %>
+  </div>
+
+  <div>
+    <%= f.label :operation %>
+    <%= f.select :operation, MaintenanceSchedule::OPERATIONS %>
+  </div>
+
+  <div>
+    <%= f.label :cron %>
+    <%= f.text_field :cron, placeholder: "0 3 * * *" %>
+  </div>
+
+  <div>
+    <%= f.label :is_paused %>
+    <%= f.check_box :is_paused %>
+  </div>
+
+  <div>
+    <%= f.label :config, "Config" %>
+  </div>
+  <div>
+    <%= f.label "config[file_size_threshold]", "File size threshold (optimize)" %>
+    <%= text_field_tag "maintenance_schedule[config][file_size_threshold]",
+                       schedule.config&.dig("file_size_threshold"),
+                       placeholder: "128MB" %>
+  </div>
+  <div>
+    <%= f.label "config[retention_threshold]", "Retention threshold (expire/orphan)" %>
+    <%= text_field_tag "maintenance_schedule[config][retention_threshold]",
+                       schedule.config&.dig("retention_threshold"),
+                       placeholder: "7d" %>
+  </div>
+
+  <%= f.submit %>
+<% end %>
