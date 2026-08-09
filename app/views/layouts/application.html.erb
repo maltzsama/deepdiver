@@ -24,9 +24,29 @@
   </head>
 
   <body>
-    <p class="notice"><%= notice %></p>
-    <p class="alert"><%= alert %></p>
-    <main>
+    <header class="app-header">
+      <a class="app-brand" href="<%= root_path %>">LakeDeepDiver</a>
+      <nav class="app-nav">
+        <%= link_to "Dashboard", root_path %>
+        <%= link_to "Catalogs", catalogs_path %>
+        <%= link_to "Schedules", maintenance_schedules_path %>
+      </nav>
+      <div class="app-session">
+        <% if user_signed_in? %>
+          <span class="app-user"><%= current_user.email %></span>
+          <%= button_to "Log out", destroy_user_session_path, method: :delete, class: "link-button" %>
+        <% end %>
+      </div>
+    </header>
+
+    <% if notice.present? %>
+      <p class="flash flash-notice"><%= notice %></p>
+    <% end %>
+    <% if alert.present? %>
+      <p class="flash flash-alert"><%= alert %></p>
+    <% end %>
+
+    <main class="app-main">
       <%= yield %>
     </main>
   </body>
