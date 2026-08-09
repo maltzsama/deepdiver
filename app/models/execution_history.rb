@@ -1,5 +1,5 @@
 class ExecutionHistory < ApplicationRecord
-  STATUSES = %w[pending running success failed].freeze
+  STATUSES = %w[pending running success failed skipped].freeze
 
   # STEPS kept for the legacy step-chain rendering; current_step now holds the
   # name of the chain step in flight (an operation) or a lifecycle label.
@@ -21,7 +21,7 @@ class ExecutionHistory < ApplicationRecord
   end
 
   def finished?
-    %w[success failed].include?(status)
+    %w[success failed skipped].include?(status)
   end
 
   def retrying?

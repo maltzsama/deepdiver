@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_09_200017) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_09_200019) do
   create_table "catalog_credentials", force: :cascade do |t|
     t.string "auth_method", default: "none", null: false
     t.integer "catalog_id", null: false
@@ -149,9 +149,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200017) do
   end
 
   create_table "maintenance_steps", force: :cascade do |t|
+    t.string "cadence_cron"
     t.json "config", default: {}
     t.datetime "created_at", null: false
     t.boolean "enabled", default: true, null: false
+    t.datetime "last_run_at"
     t.integer "maintenance_plan_id", null: false
     t.string "operation", null: false
     t.integer "position", null: false

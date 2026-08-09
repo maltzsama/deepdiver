@@ -70,11 +70,15 @@ class ActiveSupport::TestCase
   def build_plan(cron: "0 3 * * *", is_paused: false, **rest)
     catalog = build_catalog
     table = catalog.iceberg_tables.create!(namespace: "reporting", name: "plan_table_#{SecureRandom.hex(4)}")
-    MaintenancePlan.create!(iceberg_table: table, cron: cron, is_paused: is_paused, **rest)
+    plan = MaintenancePlan.create!(iceberg_table: table, cron: cron, is_paused: is_paused, **rest)
+    plan.maintenance_steps.create!(operation: "optimize", position: 0, config: {}) if plan.maintenance_steps.empty?
+    plan
   end
 
   def build_plan_with_steps(cron: "0 3 * * *")
-    plan = build_plan(cron: cron)
+    catalog = build_catalog
+    table = catalog.iceberg_tables.create!(namespace: "reporting", name: "plan_table_#{SecureRandom.hex(4)}")
+    plan = MaintenancePlan.create!(iceberg_table: table, cron: cron)
     MaintenancePlan::CANONICAL_ORDER.each_with_index do |operation, index|
       plan.maintenance_steps.create!(operation: operation, position: index, config: {})
     end
