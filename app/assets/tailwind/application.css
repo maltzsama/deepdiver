@@ -1,1 +1,198 @@
 @import "tailwindcss";
+
+/* ===================================================================
+   LakeDeepDiver - design tokens
+   Tailwind v4 configures in CSS (@theme), not tailwind.config.js.
+   Everything declared here becomes a utility: --color-frost-600 -> bg-frost-600.
+
+   FONTS: system stack on purpose. The environment is on-prem behind the
+   Gateway; if fonts.googleapis.com is unreachable the UI loads broken in
+   production. Zero external requests.
+   =================================================================== */
+@theme {
+  /* Cold base - ice core, not generic dark dashboard */
+  --color-abyss-950: #0B1620;
+  --color-abyss-900: #12212E;
+  --color-abyss-700: #2A3F52;
+  --color-abyss-500: #5A7186;
+  --color-abyss-300: #9FB2C2;
+  --color-abyss-100: #DCE5EC;
+  --color-abyss-50:  #EDF2F6;
+
+  /* Accent: glacial water */
+  --color-frost-700: #0A5F68;
+  --color-frost-600: #0E7C86;
+  --color-frost-500: #159AA6;
+  --color-frost-100: #D3ECEF;
+
+  /* Health states */
+  --color-healthy-600: #2F7D4F;
+  --color-healthy-100: #DCEFE3;
+  --color-warn-600:    #B5741A;
+  --color-warn-100:    #F7EAD5;
+  --color-critical-600:#B3322C;
+  --color-critical-100:#F7DEDC;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+
+  --radius-panel: 6px;
+}
+
+/* ===================================================================
+   Components. They exist so the next dev does not have to memorise 14
+   utilities per button. If a pattern shows up 3+ times, it becomes a
+   class here.
+   =================================================================== */
+@layer components {
+
+  /* ---------- structure ---------- */
+  .app-shell   { @apply min-h-screen bg-abyss-50 text-abyss-900 font-sans antialiased; }
+  .app-main    { @apply mx-auto w-full max-w-7xl px-4 py-8 sm:px-6; }
+
+  .app-header  { @apply sticky top-0 z-20 border-b border-abyss-100 bg-white/90 backdrop-blur; }
+  .app-headbar { @apply mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:px-6; }
+  .app-brand   { @apply font-mono text-sm font-semibold tracking-tight text-abyss-900; }
+  .app-brand-mark { @apply text-frost-600; }
+
+  .app-nav     { @apply flex items-center gap-1; }
+  .app-nav-link{ @apply rounded px-3 py-1.5 text-sm text-abyss-500 transition
+                  hover:bg-abyss-50 hover:text-abyss-900
+                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost-600; }
+  .app-nav-link-active { @apply bg-frost-100 text-frost-700 font-medium; }
+
+  .app-session { @apply ml-auto flex items-center gap-3 text-sm; }
+  .app-user    { @apply hidden font-mono text-xs text-abyss-500 sm:inline; }
+
+  /* ---------- page header ---------- */
+  .page-head   { @apply mb-6 flex flex-wrap items-start justify-between gap-4; }
+  .page-eyebrow{ @apply font-mono text-xs uppercase tracking-widest text-abyss-500; }
+  .page-title  { @apply mt-1 text-2xl font-semibold tracking-tight text-abyss-900; }
+  .page-title-mono { @apply mt-1 font-mono text-xl font-semibold tracking-tight text-abyss-900 break-all; }
+  .page-sub    { @apply mt-1 text-sm text-abyss-500; }
+  .page-actions{ @apply flex flex-wrap items-center gap-2; }
+
+  /* ---------- panels ---------- */
+  .panel       { @apply rounded-[--radius-panel] border border-abyss-100 bg-white shadow-sm; }
+  .panel-head  { @apply flex flex-wrap items-center justify-between gap-3 border-b border-abyss-100 px-4 py-3; }
+  .panel-title { @apply text-sm font-semibold text-abyss-900; }
+  .panel-body  { @apply p-4; }
+  .panel-note  { @apply font-mono text-xs text-abyss-500; }
+
+  /* ---------- tables ---------- */
+  .data-table  { @apply w-full border-collapse text-sm; }
+  .data-table thead th {
+    @apply border-b border-abyss-100 px-4 py-2.5 text-left font-mono text-xs
+           font-medium uppercase tracking-wider text-abyss-500 whitespace-nowrap;
+  }
+  .data-table tbody td { @apply border-b border-abyss-50 px-4 py-3 align-middle; }
+  .data-table tbody tr:last-child td { @apply border-b-0; }
+  .data-table tbody tr { @apply transition hover:bg-abyss-50/70; }
+  .data-table-scroll { @apply -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0; }
+
+  .cell-id     { @apply font-mono text-[13px] text-abyss-900; }
+  .cell-muted  { @apply text-abyss-500; }
+  .cell-num    { @apply font-mono tabular-nums text-abyss-900; }
+
+  /* ---------- links ---------- */
+  .link        { @apply text-frost-700 underline-offset-2 hover:underline
+                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost-600; }
+  .link-mono   { @apply font-mono text-[13px] text-frost-700 underline-offset-2 hover:underline
+                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost-600; }
+
+  /* ---------- buttons ---------- */
+  .btn { @apply inline-flex items-center justify-center gap-1.5 rounded border px-3 py-1.5
+          text-sm font-medium transition
+          focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost-600
+          disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply border-frost-600 bg-frost-600 text-white hover:bg-frost-700; }
+  .btn-default { @apply border-abyss-100 bg-white text-abyss-900 hover:bg-abyss-50; }
+  .btn-danger  { @apply border-critical-600 bg-white text-critical-600 hover:bg-critical-100; }
+  .btn-sm      { @apply px-2 py-1 text-xs; }
+
+  /* ---------- status badges ---------- */
+  .badge { @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5
+            font-mono text-xs font-medium whitespace-nowrap; }
+  .badge-healthy  { @apply bg-healthy-100 text-healthy-600; }
+  .badge-warning  { @apply bg-warn-100 text-warn-600; }
+  .badge-critical { @apply bg-critical-100 text-critical-600; }
+  .badge-unknown  { @apply bg-abyss-100 text-abyss-500; }
+  .badge-neutral  { @apply bg-abyss-100 text-abyss-700; }
+  .badge-running  { @apply bg-frost-100 text-frost-700; }
+
+  .badge-dot { @apply size-1.5 rounded-full bg-current; }
+
+  /* ---------- strata bar (health score) ----------
+     The score is accumulated sediment: snapshots, small files, orphans.
+     The bar shows how much "clean" is left.                       */
+  .strata      { @apply flex items-center gap-2; }
+  .strata-rail { @apply h-1.5 w-16 overflow-hidden rounded-full bg-abyss-100; }
+  .strata-fill { @apply h-full rounded-full transition-[width]; }
+  .strata-fill-healthy  { @apply bg-healthy-600; }
+  .strata-fill-warning  { @apply bg-warn-600; }
+  .strata-fill-critical { @apply bg-critical-600; }
+  .strata-value{ @apply font-mono text-xs tabular-nums text-abyss-700 w-8 text-right; }
+
+  /* ---------- step chain (signature element) ----------
+     Shows where the execution stopped. This is the central requirement:
+     "visibility into which step it stopped at".                    */
+  .chain       { @apply flex items-center gap-0.5; }
+  .chain-step  { @apply relative flex items-center; }
+  .chain-node  { @apply size-2 rounded-full ring-2 ring-white; }
+  .chain-link  { @apply h-0.5 w-4; }
+  .chain-done  { @apply bg-frost-600; }
+  .chain-here-ok   { @apply bg-frost-600 ring-frost-100 size-2.5; }
+  .chain-here-fail { @apply bg-critical-600 ring-critical-100 size-2.5; }
+  .chain-todo  { @apply bg-abyss-100; }
+  .chain-label { @apply ml-2 font-mono text-xs text-abyss-500; }
+  .chain-here-retry { @apply bg-warn-600 size-2.5 ring-2 ring-warn-100; animation: chain-pulse 2s ease-in-out infinite; }
+  .chain-retry-badge { @apply ml-1.5 rounded bg-warn-100 px-1.5 py-0.5 font-mono text-[10px] font-medium text-warn-600; }
+
+  /* ---------- forms ---------- */
+  .form-grid   { @apply grid gap-5 sm:max-w-2xl; }
+  .field       { @apply flex flex-col gap-1.5; }
+  .field-label { @apply text-sm font-medium text-abyss-900; }
+  .field-hint  { @apply text-xs text-abyss-500; }
+  .field-input { @apply w-full rounded border border-abyss-100 bg-white px-3 py-2 text-sm
+                  text-abyss-900 shadow-sm transition
+                  placeholder:text-abyss-300
+                  focus:border-frost-500 focus:outline-2 focus:outline-offset-0 focus:outline-frost-500; }
+  .field-input-mono { @apply font-mono; }
+  .field-check { @apply flex items-center gap-2 text-sm text-abyss-900; }
+  .field-checkbox { @apply size-4 rounded border-abyss-300 text-frost-600
+                     focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost-600; }
+  .field-group { @apply rounded-[--radius-panel] border border-abyss-100 bg-abyss-50/60 p-4; }
+  .field-group-title { @apply mb-3 font-mono text-xs uppercase tracking-widest text-abyss-500; }
+  .form-actions{ @apply flex items-center gap-3 pt-2; }
+
+  /* ---------- validation errors ---------- */
+  .errors      { @apply rounded-[--radius-panel] border border-critical-600/30 bg-critical-100 p-4; }
+  .errors-title{ @apply text-sm font-semibold text-critical-600; }
+  .errors-list { @apply mt-2 list-disc space-y-1 pl-5 text-sm text-critical-600; }
+
+  /* ---------- flash ---------- */
+  .flash       { @apply mb-4 flex items-start gap-2 rounded-[--radius-panel] border px-4 py-3 text-sm; }
+  .flash-notice{ @apply border-frost-600/30 bg-frost-100 text-frost-700; }
+  .flash-alert { @apply border-critical-600/30 bg-critical-100 text-critical-600; }
+
+  /* ---------- empty state ---------- */
+  .empty       { @apply px-4 py-12 text-center; }
+  .empty-title { @apply text-sm font-medium text-abyss-900; }
+  .empty-hint  { @apply mx-auto mt-1 max-w-sm text-sm text-abyss-500; }
+  .empty-action{ @apply mt-4; }
+
+  /* ---------- definition list ---------- */
+  .dl          { @apply grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4; }
+  .dl-term     { @apply font-mono text-xs uppercase tracking-widest text-abyss-500; }
+  .dl-desc     { @apply mt-1 text-sm text-abyss-900; }
+  .dl-desc-mono{ @apply mt-1 font-mono text-sm text-abyss-900 break-all; }
+}
+
+@keyframes chain-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

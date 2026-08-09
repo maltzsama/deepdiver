@@ -38,5 +38,8 @@ module Lakedeepdiver
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    # English is the initial UI language; other locales can be added later.
+    config.i18n.default_locale = :en
   end
 end
