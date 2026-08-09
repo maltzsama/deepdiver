@@ -1,0 +1,3 @@
+.dashboard { max-width: 60rem; margin: 2rem auto; padding: 0 1rem; }
+.dashboard-table { width: 100%; border-collapse: collapse; }
+.dashboard-table th, .dashboard-table td { text-align: left; padding: 0.5rem; border-bottom: 1px solid #ddd; }
