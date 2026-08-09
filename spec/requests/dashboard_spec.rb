@@ -25,12 +25,12 @@ RSpec.describe "GET /", type: :request do
   end
 
   it "excludes tables without a score from the worst-health list" do
-    com_score = create(:iceberg_table, catalog:, health_score: 30, health_status: "critical")
+    with_score = create(:iceberg_table, catalog:, health_score: 30, health_status: "critical")
     create(:iceberg_table, catalog:, health_score: nil, health_status: "unknown")
 
     get root_path
 
-    expect(assigns(:worst_health_tables)).to contain_exactly(com_score)
+    expect(assigns(:worst_health_tables)).to contain_exactly(with_score)
   end
 
   it "reports when the last sync happened" do
