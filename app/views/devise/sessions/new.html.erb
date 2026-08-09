@@ -1,0 +1,42 @@
+<% content_for :title, "#{t("auth.sign_in_title")} — LakeDeepDiver" %>
+
+<div class="mx-auto max-w-sm">
+  <div class="page-head">
+    <div>
+      <p class="page-eyebrow">LakeDeepDiver</p>
+      <h1 class="page-title"><%= t("auth.sign_in_title") %></h1>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-body">
+      <%= form_for(resource, as: resource_name,
+                   url: session_path(resource_name), class: "form-grid") do |f| %>
+        <div class="field">
+          <%= f.label :email, t("auth.email"), class: "field-label" %>
+          <%= f.email_field :email, autofocus: true, autocomplete: "email",
+                            class: "field-input" %>
+        </div>
+
+        <div class="field">
+          <%= f.label :password, t("auth.password"), class: "field-label" %>
+          <%= f.password_field :password, autocomplete: "current-password",
+                               class: "field-input" %>
+        </div>
+
+        <% if devise_mapping.rememberable? %>
+          <label class="field-check">
+            <%= f.check_box :remember_me, class: "field-checkbox" %>
+            <%= t("auth.remember_me") %>
+          </label>
+        <% end %>
+
+        <div class="form-actions">
+          <%= f.submit t("auth.submit"), class: "btn btn-primary" %>
+          <%= link_to t("auth.forgot"), new_password_path(resource_name),
+                      class: "link text-sm" %>
+        </div>
+      <% end %>
+    </div>
+  </section>
+</div>

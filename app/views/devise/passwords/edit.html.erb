@@ -1,0 +1,41 @@
+<% content_for :title, "#{t("auth.change_password")} — LakeDeepDiver" %>
+
+<div class="mx-auto max-w-sm">
+  <div class="page-head">
+    <div>
+      <p class="page-eyebrow">LakeDeepDiver</p>
+      <h1 class="page-title"><%= t("auth.change_password") %></h1>
+      <p class="page-sub"><%= t("auth.change_password_hint") %></p>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-body">
+      <%= form_for(resource, as: resource_name,
+                   url: password_path(resource_name),
+                   html: { method: :put, class: "form-grid" }) do |f| %>
+        <%= render "devise/shared/error_messages", resource: resource %>
+
+        <%= f.hidden_field :reset_password_token %>
+
+        <div class="field">
+          <%= f.label :password, t("auth.change_password_label"), class: "field-label" %>
+          <%= f.password_field :password, autofocus: true,
+                               autocomplete: "new-password",
+                               class: "field-input" %>
+        </div>
+
+        <div class="field">
+          <%= f.label :password_confirmation, t("auth.change_password_confirm_label"),
+                      class: "field-label" %>
+          <%= f.password_field :password_confirmation, autocomplete: "new-password",
+                               class: "field-input" %>
+        </div>
+
+        <div class="form-actions">
+          <%= f.submit t("auth.change_password"), class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </section>
+</div>
