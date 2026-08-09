@@ -40,11 +40,27 @@ class CatalogSyncService
   def upsert_table(namespace, table_name)
     payload = @client.table_metadata(namespace, table_name)
     extractor = TableMetadataExtractor.new(payload["metadata"] || payload)
-    health = HealthEvaluator.evaluate(extractor, now: @now)
 
     table = @catalog.iceberg_tables.find_or_create_by!(namespace: namespace, name: table_name)
+    health = HealthEvaluator.evaluate(extractor, plan: table.maintenance_plan, now: @now)
 
-    attributes = { last_data_update: extractor.last_snapshot_at }
+    attributes = {
+      last_data_update: extractor.last_snapshot_at,
+      table_uuid: extractor.table_uuid,
+      storage_location: extractor.storage_location,
+      total_records: extractor.total_records,
+      total_data_files: extractor.total_data_files,
+      total_size_bytes: extractor.total_size_bytes,
+      position_deletes: extractor.position_deletes,
+      equality_deletes: extractor.equality_deletes,
+      snapshot_count: extractor.snapshot_count,
+      oldest_snapshot_at: extractor.oldest_snapshot_at,
+      metadata_synced_at: @now,
+      schema_json: extractor.schemas,
+      partition_json: extractor.partition_specs,
+      refs_json: extractor.refs,
+      properties_json: extractor.properties
+    }
     if health[:score]
       attributes[:health_score] = health[:score]
       attributes[:health_status] = health[:status].to_s

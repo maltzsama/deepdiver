@@ -25,8 +25,8 @@ class CatalogSyncServiceTest < ActiveSupport::TestCase
 
     table = catalog.iceberg_tables.find_by(namespace: "reporting", name: "dwd_orders")
     assert table
-    assert_equal "warning", table.health_status
-    assert_equal 40, table.health_score
+    assert_equal "healthy", table.health_status
+    assert_equal 100, table.health_score
     assert_in_delta 3.days.ago.to_i, table.last_data_update.to_i, 5
   end
 
