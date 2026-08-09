@@ -1,0 +1,13 @@
+apiVersion: v2
+name: lakedeepdiver
+description: LakeDeepDiver - Iceberg maintenance control plane (Rails 8 + Solid Queue)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/anomalyco/lakedeepdiver
+keywords:
+  - iceberg
+  - trino
+  - rails
+maintainers:
+  - name: LakeDeepDiver team
