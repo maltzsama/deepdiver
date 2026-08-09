@@ -24,6 +24,20 @@ class ExecutionHistory < ApplicationRecord
     %w[success failed].include?(status)
   end
 
+  def retrying?
+    status == "running" && retry_count.positive?
+  end
+
+  # Started_at of the chain step currently in flight, if any.
+  def current_step_started_at
+    execution_steps.select { |s| s.status == "running" }.first&.started_at
+  end
+
+  # Why a queued execution is not running yet.
+  def waiting_reason
+    TableLock.exists?(iceberg_table_id: iceberg_table_id) ? :lock : :engine
+  end
+
   def duration
     return nil if started_at.nil? || finished_at.nil?
 

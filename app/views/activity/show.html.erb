@@ -1,0 +1,124 @@
+<% content_for :title, "#{t("activity.title")} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("activity.eyebrow") %></p>
+    <h1 class="page-title"><%= t("activity.title") %></h1>
+    <p class="page-sub"><%= t("activity.subtitle") %></p>
+  </div>
+</div>
+
+<meta http-equiv="refresh" content="10">
+
+<section class="panel mb-6">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("activity.engine.title") %></h2>
+    <span class="panel-note"><%= t("activity.engine.active_count", count: @running.size + @queued.size) %></span>
+  </div>
+  <div class="panel-body flex flex-wrap items-center gap-4">
+    <% case @engine_state.status %>
+    <% when "up" %>
+      <span class="badge badge-healthy"><span class="badge-dot"></span><%= t("activity.engine.up", time: time_ago_in_words(@engine_state.status_changed_at)) %></span>
+    <% when "starting" %>
+      <span class="badge badge-warning"><span class="badge-dot"></span><%= t("activity.engine.starting", attempt: @engine_state.start_attempts + 1, max: TrinoEngineSupervisor::MAX_START_ATTEMPTS) %></span>
+    <% when "draining" %>
+      <span class="badge badge-running"><span class="badge-dot"></span><%= t("activity.engine.draining", time: distance_of_time_in_words_to_now(@engine_state.drain_started_at + TrinoEngineSupervisor::DRAIN_GRACE)) %></span>
+    <% when "failed" %>
+      <span class="badge badge-critical"><span class="badge-dot"></span><%= t("activity.engine.failed") %></span>
+      <% if @engine_state.last_error.present? %>
+        <span class="cell-muted font-mono text-xs"><%= @engine_state.last_error %></span>
+      <% end %>
+      <%= button_to t("activity.engine.retry"), restart_activity_path, method: :post,
+                    class: "btn btn-default btn-sm" %>
+    <% else %>
+      <span class="badge badge-neutral"><span class="badge-dot"></span><%= t("activity.engine.down") %></span>
+    <% end %>
+  </div>
+</section>
+
+<div class="grid gap-6 lg:grid-cols-2">
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title"><%= t("activity.running.title") %></h2>
+    </div>
+    <div class="divide-y divide-abyss-50">
+      <% @running.select { |e| !e.retrying? }.each do |execution| %>
+        <div class="px-4 py-3">
+          <div class="flex items-center justify-between gap-3">
+            <%= link_to execution.iceberg_table.fully_qualified_name, execution.iceberg_table, class: "link-mono" %>
+            <span class="flex items-center gap-2">
+              <span class="badge badge-running"><%= execution.current_step %></span>
+              <% if current_user.admin? %>
+                <%= button_to t("activity.running.cancel"), cancel_execution_history_path(execution),
+                              method: :post, class: "btn btn-danger btn-sm",
+                              data: { turbo_confirm: t("activity.running.cancel_confirm") } %>
+              <% end %>
+            </span>
+          </div>
+          <%= render "shared/step_chain", execution: execution %>
+          <p class="mt-1 text-xs cell-muted">
+            <%= t("activity.running.elapsed", time: duration_label(Time.current - execution.current_step_started_at)) if execution.current_step_started_at %>
+            <% if (typical = execution.maintenance_plan&.typical_duration) %>
+              · <%= t("activity.running.typical", time: duration_label(typical)) %>
+            <% end %>
+          </p>
+        </div>
+      <% end %>
+      <% if @running.none? { |e| !e.retrying? } %>
+        <div class="empty">
+          <p class="empty-title"><%= t("activity.running.empty") %></p>
+        </div>
+      <% end %>
+    </div>
+  </section>
+
+  <div class="flex flex-col gap-6">
+    <section class="panel">
+      <div class="panel-head">
+        <h2 class="panel-title"><%= t("activity.retrying.title") %></h2>
+      </div>
+      <div class="divide-y divide-abyss-50">
+        <% @running.select(&:retrying?).each do |execution| %>
+          <div class="px-4 py-3">
+            <div class="flex items-center justify-between gap-3">
+              <%= link_to execution.iceberg_table.fully_qualified_name, execution.iceberg_table, class: "link-mono" %>
+              <span class="badge badge-warning"><%= t("activity.retrying.next_attempt", time: duration_label(ExecuteMaintenanceJob::RETRY_WAIT)) %></span>
+            </div>
+            <%= render "shared/step_chain", execution: execution %>
+          </div>
+        <% end %>
+        <% if @running.none?(&:retrying?) %>
+          <div class="empty">
+            <p class="empty-title"><%= t("activity.retrying.empty") %></p>
+          </div>
+        <% end %>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2 class="panel-title"><%= t("activity.queued.title") %></h2>
+        <span class="panel-note"><%= @queued.size %></span>
+      </div>
+      <div class="divide-y divide-abyss-50">
+        <% @queued.each_with_index do |execution, index| %>
+          <div class="flex items-center justify-between gap-3 px-4 py-3">
+            <div class="min-w-0">
+              <p class="truncate font-mono text-xs text-abyss-900">
+                <%= link_to execution.iceberg_table.fully_qualified_name, execution.iceberg_table, class: "link-mono" %>
+              </p>
+              <p class="cell-muted text-xs">
+                <%= index + 1 %> · <%= execution.waiting_reason %>
+              </p>
+            </div>
+          </div>
+        <% end %>
+        <% if @queued.empty? %>
+          <div class="empty">
+            <p class="empty-title"><%= t("activity.queued.empty") %></p>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  </div>
+</div>

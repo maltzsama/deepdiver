@@ -15,6 +15,11 @@ Rails.application.routes.draw do
 
   root "dashboard#index"
 
+  # What is happening right now.
+  resource :activity, only: :show, controller: "activity" do
+    member { post :restart }
+  end
+
   resources :catalogs, only: %i[index show new create edit update destroy] do
     member do
       post :sync
@@ -30,7 +35,18 @@ Rails.application.routes.draw do
   end
 
   # Global log of operations.
-  resources :execution_histories, only: %i[index]
+  resources :execution_histories, only: %i[index] do
+    member { post :cancel }
+  end
+
+  # Maintenance plans.
+  resources :maintenance_plans, only: %i[index show] do
+    member do
+      post :run
+      post :pause
+      post :resume
+    end
+  end
 
   # Maintenance policies.
   resources :maintenance_policies do
