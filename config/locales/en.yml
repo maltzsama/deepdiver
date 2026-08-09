@@ -191,6 +191,21 @@ en:
       position_deletes: "Position deletes"
       equality_deletes: "Equality deletes"
       missing_note: "Missing values mean the snapshot summary written by the engine did not carry that field - they are never shown as zero."
+    freshness:
+      title: "Freshness"
+      sla_note: "SLA %{minutes} min"
+      no_sla_title: "No freshness SLA configured"
+      no_sla_hint: "Define a watermark column and SLA to monitor whether data keeps arriving."
+      status: "Status"
+      watermark: "Watermark"
+      partition: "Partition"
+      sla: "SLA"
+      history: "Check history"
+      col_when: "Checked at"
+      col_status: "Status"
+      col_delay: "Delay"
+      col_max_ts: "Max watermark"
+      no_checks: "No checks recorded yet."
 
   schedules:
     index:
@@ -344,6 +359,15 @@ en:
     filter_namespace: "Namespace"
     filter_status: "Status"
     filter_no_plan: "Plan"
+    filter_freshness: "Freshness"
+    col_freshness: "Freshness"
+    fresh_no_sla: "no SLA"
+    fresh_late: "late %{delay}"
+    fresh_error: "probe error"
+    fresh_no_data: "no data"
+    fresh_late_filter: "Late"
+    fresh_no_sla_filter: "No SLA"
+    fresh_error_filter: "Probe error"
 
   operations:
     index:

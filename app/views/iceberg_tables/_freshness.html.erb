@@ -1,0 +1,71 @@
+<section class="panel mb-6">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("tables.freshness.title") %></h2>
+    <% if @freshness_sla&.enabled %>
+      <span class="panel-note"><%= t("tables.freshness.sla_note", minutes: @freshness_sla.sla_minutes) %></span>
+    <% end %>
+  </div>
+
+  <% if @freshness_sla.nil? || !@freshness_sla.enabled %>
+    <div class="empty">
+      <p class="empty-title"><%= t("tables.freshness.no_sla_title") %></p>
+      <p class="empty-hint"><%= t("tables.freshness.no_sla_hint") %></p>
+    </div>
+  <% else %>
+    <div class="panel-body">
+      <dl class="dl mb-4">
+        <div>
+          <dt class="dl-term"><%= t("tables.freshness.status") %></dt>
+          <dd class="dl-desc">
+            <span class="badge <%= freshness_badge_class(@freshness_sla.status) %>">
+              <span class="badge-dot"></span><%= @freshness_sla.status %>
+            </span>
+          </dd>
+        </div>
+        <div>
+          <dt class="dl-term"><%= t("tables.freshness.watermark") %></dt>
+          <dd class="dl-desc-mono text-xs"><%= @freshness_sla.timestamp_column %> (<%= @freshness_sla.timestamp_type %>)</dd>
+        </div>
+        <div>
+          <dt class="dl-term"><%= t("tables.freshness.partition") %></dt>
+          <dd class="dl-desc-mono text-xs"><%= @freshness_sla.partition_column || "—" %></dd>
+        </div>
+        <div>
+          <dt class="dl-term"><%= t("tables.freshness.sla") %></dt>
+          <dd class="dl-desc-mono"><%= @freshness_sla.sla_minutes %> min</dd>
+        </div>
+      </dl>
+
+      <h3 class="mb-2 text-sm font-semibold"><%= t("tables.freshness.history") %></h3>
+      <div class="data-table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><%= t("tables.freshness.col_when") %></th>
+              <th><%= t("tables.freshness.col_status") %></th>
+              <th><%= t("tables.freshness.col_delay") %></th>
+              <th><%= t("tables.freshness.col_max_ts") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @freshness_checks.each do |check| %>
+              <tr>
+                <td><%= timestamp(check.checked_at) %></td>
+                <td>
+                  <span class="badge <%= freshness_badge_class(check.status) %>">
+                    <span class="badge-dot"></span><%= check.status %>
+                  </span>
+                </td>
+                <td class="cell-num"><%= freshness_delay_label(check.delay_seconds) || "—" %></td>
+                <td class="cell-muted font-mono text-xs"><%= check.max_timestamp ? check.max_timestamp.to_fs(:db) : "—" %></td>
+              </tr>
+            <% end %>
+            <% if @freshness_checks.empty? %>
+              <tr><td colspan="4" class="p-2 border-b border-abyss-50"><%= t("tables.freshness.no_checks") %></td></tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% end %>
+</section>

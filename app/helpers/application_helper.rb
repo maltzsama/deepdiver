@@ -30,6 +30,16 @@ module ApplicationHelper
     end
   end
 
+  def freshness_badge_class(status)
+    case status.to_s
+    when "ok"      then "badge-healthy"
+    when "late"    then "badge-critical"
+    when "warning" then "badge-warning"
+    when "error"   then "badge-critical"
+    else "badge-neutral"
+    end
+  end
+
   def strata_fill_class(status)
     case status.to_s
     when "healthy"  then "strata-fill-healthy"
@@ -82,6 +92,31 @@ module ApplicationHelper
       "#{(seconds / 60).round} min"
     else
       "#{(seconds / 3600.0).round(1)} h"
+    end
+  end
+
+  def freshness_delay_label(seconds)
+    return nil if seconds.nil?
+
+    days = seconds.to_i / 86_400
+    return "#{days}d" if days >= 1
+
+    duration_label(seconds)
+  end
+
+  # [label, badge_class] for the freshness column, or nil.
+  def freshness_label(table)
+    sla = table.table_freshness_sla
+    return [ t("tables.index.fresh_no_sla"), "badge-neutral" ] if sla.nil? || !sla.enabled
+
+    delay = freshness_delay_label(table.latest_freshness_check&.delay_seconds)
+    case sla.status
+    when "ok"      then [ delay || "ok", "badge-healthy" ]
+    when "warning" then [ delay || "warning", "badge-warning" ]
+    when "late"    then [ t("tables.index.fresh_late", delay: delay || "?"), "badge-critical" ]
+    when "error"   then [ t("tables.index.fresh_error"), "badge-critical" ]
+    when "no_data" then [ t("tables.index.fresh_no_data"), "badge-neutral" ]
+    else [ "—", "badge-neutral" ]
     end
   end
 
