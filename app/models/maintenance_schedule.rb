@@ -14,6 +14,7 @@ class MaintenanceSchedule < ApplicationRecord
   validates :operation, uniqueness: { scope: :iceberg_table_id }
   validates :cron, presence: true, format: { with: CRON_PATTERN }
   validate :configuration_matches_operation
+  before_validation :compact_config
 
   # True when the schedule's cron matches the given instant.
   def scheduled_at?(time = Time.current)
@@ -25,6 +26,12 @@ class MaintenanceSchedule < ApplicationRecord
   end
 
   private
+
+  def compact_config
+    return if config.blank?
+
+    self.config = config.reject { |_key, value| value.blank? }
+  end
 
   def configuration_matches_operation
     return if config.nil? || config.empty?
@@ -38,10 +45,10 @@ class MaintenanceSchedule < ApplicationRecord
   end
 
   def valid_size?(value)
-    value.nil? || value.match?(/\A\d+(?:\.\d+)?[KMGTP]?B\z/)
+    value.blank? || value.match?(/\A\d+(?:\.\d+)?[KMGTP]?B\z/)
   end
 
   def valid_duration?(value)
-    value.nil? || value.match?(/\A\d+(ms|s|m|h|d)\z/)
+    value.blank? || value.match?(/\A\d+(ms|s|m|h|d)\z/)
   end
 end

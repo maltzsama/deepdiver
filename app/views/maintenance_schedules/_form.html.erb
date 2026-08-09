@@ -34,13 +34,13 @@
     <%= f.label :config, "Config" %>
   </div>
   <div>
-    <%= f.label "config[file_size_threshold]", "File size threshold (optimize)" %>
+    <%= f.label "config[file_size_threshold]", "File size threshold (only for optimize)" %>
     <%= text_field_tag "maintenance_schedule[config][file_size_threshold]",
                        schedule.config&.dig("file_size_threshold"),
                        placeholder: "128MB" %>
   </div>
   <div>
-    <%= f.label "config[retention_threshold]", "Retention threshold (expire/orphan)" %>
+    <%= f.label "config[retention_threshold]", "Retention threshold (only for expire_snapshots / remove_orphan_files)" %>
     <%= text_field_tag "maintenance_schedule[config][retention_threshold]",
                        schedule.config&.dig("retention_threshold"),
                        placeholder: "7d" %>
