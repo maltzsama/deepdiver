@@ -19,5 +19,8 @@ Rails.application.routes.draw do
     end
   end
 
+  # log global de operações (CR-26)
+  resources :execution_histories, only: %i[index]
+
   resources :maintenance_schedules
 end
