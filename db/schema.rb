@@ -10,14 +10,30 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_09_200006) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_09_200009) do
+  create_table "catalog_credentials", force: :cascade do |t|
+    t.string "auth_method", default: "none", null: false
+    t.integer "catalog_id", null: false
+    t.string "client_id"
+    t.datetime "created_at", null: false
+    t.string "scope", default: "PRINCIPAL_ROLE:ALL"
+    t.text "secret"
+    t.string "secret_hint"
+    t.datetime "secret_set_at"
+    t.string "token_path", default: "/v1/oauth/tokens"
+    t.datetime "updated_at", null: false
+    t.text "verification_error"
+    t.datetime "verified_at"
+    t.index ["catalog_id"], name: "index_catalog_credentials_on_catalog_id", unique: true
+  end
+
   create_table "catalogs", force: :cascade do |t|
     t.string "catalog_type", null: false
     t.datetime "created_at", null: false
     t.string "endpoint", null: false
     t.string "name", null: false
     t.json "properties", default: {}
-    t.string "trino_catalog_name", null: false
+    t.string "trino_catalog_name_override"
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_catalogs_on_name", unique: true
   end
@@ -103,6 +119,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200006) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "catalog_credentials", "catalogs"
   add_foreign_key "execution_histories", "maintenance_schedules"
   add_foreign_key "iceberg_tables", "catalogs"
   add_foreign_key "maintenance_schedules", "iceberg_tables"

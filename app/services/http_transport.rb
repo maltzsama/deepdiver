@@ -27,6 +27,13 @@ class HttpTransport
     perform(Net::HTTP::Delete.new(URI.parse(uri.to_s)), headers: headers, body: nil)
   end
 
+  # The OAuth2 token endpoint expects form-urlencoded, not JSON.
+  def post_form(uri, body:, headers: {})
+    request = Net::HTTP::Post.new(URI.parse(uri.to_s))
+    request["Content-Type"] = "application/x-www-form-urlencoded"
+    perform(request, headers: headers, body: body)
+  end
+
   private
 
   def perform(request, headers:, body:)

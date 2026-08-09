@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe MaintenanceSqlBuilder do
-  let(:catalog) { create(:catalog, name: "analytics", trino_catalog_name: "analytics") }
+  let(:catalog) { create(:catalog, name: "analytics") }
   let(:table) { create(:iceberg_table, catalog: catalog, namespace: "reporting", name: "dwd_orders") }
 
   def built_sql(operation, config = {})

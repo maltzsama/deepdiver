@@ -42,6 +42,10 @@ class CatalogClient
 
     children.flat_map { |child| [ child ] + collect_namespaces(child, depth + 1) }
   rescue HttpTransport::ApiError => e
+    # A failure at the root is a configuration problem: propagate it, otherwise
+    # the sync "succeeds" having imported zero tables.
+    raise if parent.nil?
+
     Rails.logger.warn("Failed to list namespaces under #{parent.inspect}: #{e.message}")
     []
   end
@@ -62,10 +66,8 @@ class CatalogClient
   end
 
   def auth_headers
-    token = catalog.properties&.dig("bearerToken") || catalog.properties&.dig("token")
-    return {} unless token
-
-    { "Authorization" => "Bearer #{token}" }
+    @token_provider ||= CatalogTokenProvider.new(catalog, transport: @transport)
+    @token_provider.headers
   end
 
   def get(path)
