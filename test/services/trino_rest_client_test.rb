@@ -32,12 +32,48 @@ class TrinoRestClientTest < ActiveSupport::TestCase
       }
     )
 
-    metrics = client(transport).execute("ALTER TABLE ... EXECUTE optimize", execution_id: 7)
+    client = client(transport)
+    client.define_singleton_method(:sleep) { |_seconds| nil }
+
+    metrics = client.execute("ALTER TABLE ... EXECUTE optimize", execution_id: 7)
 
     assert_equal 1, metrics["rows"]
     assert_equal %w[success written], metrics["columns"]
     assert_equal 12, metrics.dig("stats", "elapsedTimeMillis")
     assert_equal 7, metrics["execution_history_id"]
+  end
+
+  test "polls without busy-looping: waits between nextUri calls" do
+    transport = StubTrinoTransport.new(
+      "#{ENDPOINT}/v1/statement" => { "nextUri" => "#{ENDPOINT}/v1/statement/queue/a" },
+      "#{ENDPOINT}/v1/statement/queue/a" => { "columns" => [], "data" => [] }
+    )
+    client = client(transport)
+
+    slept = 0
+    client.define_singleton_method(:sleep) { |_seconds| slept += 1 }
+
+    client.execute("ALTER TABLE ... EXECUTE optimize", execution_id: 7)
+    assert_equal 1, slept
+  end
+
+  test "raises when the query never finishes within the deadline" do
+    transport = StubTrinoTransport.new(
+      "#{ENDPOINT}/v1/statement" => { "nextUri" => "#{ENDPOINT}/v1/statement/queue/a" },
+      "#{ENDPOINT}/v1/statement/queue/a" => { "nextUri" => "#{ENDPOINT}/v1/statement/queue/a" }
+    )
+    client = client(transport)
+    client.define_singleton_method(:sleep) { |_seconds| nil }
+
+    original = Time.method(:current)
+    now = Time.current
+    Time.define_singleton_method(:current) { now += 2.hours }
+
+    error = assert_raises(TrinoRestClient::Error) { client.execute("SELECT 1", execution_id: 7) }
+    assert_match(/exceeded/, error.message)
+  ensure
+    Time.singleton_class.send(:remove_method, :current) if original
+    Time.define_singleton_method(:current, original) if original
   end
 
   test "raises a commit conflict when the engine reports one" do

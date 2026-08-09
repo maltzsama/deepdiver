@@ -7,6 +7,9 @@ class TrinoRestClient
 
   COMMIT_CONFLICT_PATTERN = /(?i)\bcommit(?:s|ed)?\s+(?:concurrent|conflict)\b|\bconcurrent\s+(?:commits?|modification)\b/
 
+  POLL_INTERVAL = 1 # second between nextUri calls
+  MAX_POLL_SECONDS = 6 * 60 * 60
+
   def initialize(endpoint:, transport: HttpTransport.new)
     @endpoint = endpoint
     @transport = transport
@@ -27,15 +30,19 @@ class TrinoRestClient
   end
 
   def poll(response, execution_id:)
-    return finish(response) if response.include?("error") && response["error"]
+    deadline = Time.current + MAX_POLL_SECONDS
+    current = response
 
-    if response["nextUri"]
-      follow = @transport.get(uri(response["nextUri"]), headers: headers(execution_id))
-      return finish(follow) unless follow["nextUri"]
+    loop do
+      return finish(current) if current["error"]
+      return finish(current) unless current["nextUri"]
 
-      poll(follow, execution_id: execution_id)
-    else
-      finish(response)
+      if Time.current > deadline
+        raise Error, "Trino query exceeded #{MAX_POLL_SECONDS}s without finishing"
+      end
+
+      sleep POLL_INTERVAL
+      current = @transport.get(uri(current["nextUri"]), headers: headers(execution_id))
     end
   end
 
