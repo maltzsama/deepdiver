@@ -66,4 +66,11 @@ RSpec.describe "GET /iceberg_tables", type: :request do
 
     expect(response.body).to include("none")
   end
+
+  it "shows the table count as a number, not a grouped hash" do
+    get iceberg_tables_path
+
+    expect(response.body).to include("3 table(s)")
+    expect(response.body).not_to match(/\{\d+ =>/)
+  end
 end
