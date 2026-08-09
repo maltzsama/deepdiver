@@ -1,31 +1,170 @@
-# Files in the config/locales directory are used for internationalization and
-# are automatically loaded by Rails. If you want to use locales other than
-# English, add the necessary files in this directory.
-#
-# To use the locales, use `I18n.t`:
-#
-#     I18n.t "hello"
-#
-# In views, this is aliased to just `t`:
-#
-#     <%= t("hello") %>
-#
-# To use a different locale, set it with `I18n.locale`:
-#
-#     I18n.locale = :es
-#
-# This would use the information in config/locales/es.yml.
-#
-# To learn more about the API, please read the Rails Internationalization guide
-# at https://guides.rubyonrails.org/i18n.html.
-#
-# Be aware that YAML interprets the following case-insensitive strings as
-# booleans: `true`, `false`, `on`, `off`, `yes`, `no`. Therefore, these strings
-# must be quoted to be interpreted as strings. For example:
-#
-#     en:
-#       "yes": yup
-#       enabled: "ON"
-
 en:
-  hello: "Hello world"
+  layout:
+    app_name: "LakeDeepDiver"
+    nav:
+      overview: "Overview"
+      catalogs: "Catalogs"
+      schedules: "Schedules"
+    session:
+      sign_out: "Sign out"
+      admin: "admin"
+
+  catalogs:
+    index:
+      eyebrow: "Catalogs"
+      title: "Iceberg catalogs"
+      subtitle: "Metadata sources synced by this application."
+      new: "New catalog"
+      empty_title: "No catalogs registered"
+      empty_hint: "Register a Polaris or Nessie to start discovering tables."
+      register: "Register catalog"
+    show:
+      eyebrow: "Catalog"
+      subtitle_span: "tables"
+      sync_now: "Sync now"
+      delete: "Delete"
+      delete_confirm: "Delete this catalog and all its tables?"
+      tables_title: "Tables"
+      empty_title: "No synced tables"
+      empty_hint: "Run a sync to import the namespaces and tables of this catalog."
+      col_table: "Table"
+      col_health: "Health"
+      col_status: "Status"
+      col_last_write: "Last write"
+      col_schedules: "Schedules"
+    new:
+      title: "New catalog"
+      subtitle: "Point at a Polaris or Nessie reachable from the cluster."
+    form:
+      errors_one: "%{count} problem prevented the save"
+      errors_other: "%{count} problems prevented the save"
+      name: "Name"
+      name_hint: "How this catalog appears in this application."
+      name_placeholder: "polaris_prod"
+      trino_name: "Trino catalog name"
+      trino_name_hint: "Name of the file in Trino's etc/catalog/<name>.properties. This is what goes into the maintenance SQL."
+      trino_name_placeholder: "iceberg"
+      type: "Type"
+      endpoint: "Endpoint"
+      endpoint_hint: "Base URL of the catalog REST API."
+      endpoint_placeholder: "https://polaris.dados.svc"
+      properties: "Properties"
+      properties_hint: "JSON. Credentials live here - never version this value anywhere."
+      properties_placeholder: '{"bearerToken": "..."}'
+      submit: "Save catalog"
+      cancel: "Cancel"
+
+  tables:
+    show:
+      eyebrow_prefix: "Table ·"
+      new_schedule: "New schedule"
+      run_now: "Run maintenance now"
+      score: "Health score"
+      status: "Status"
+      last_write: "Last write"
+      trino_id: "Trino identifier"
+      schedules_title: "Schedules"
+      schedules_note: "%{count} of %{total} operations"
+      empty_title: "No schedules for this table"
+      empty_hint: "Without a schedule, no maintenance runs automatically on this table."
+      create_schedule: "Create schedule"
+      col_operation: "Operation"
+      col_cron: "Cron"
+      col_state: "State"
+      col_failures: "Consecutive failures"
+      col_actions: "Actions"
+      active: "active"
+      paused: "paused"
+      open: "Open"
+      delete: "Delete"
+      delete_confirm: "Delete this schedule?"
+
+  schedules:
+    index:
+      eyebrow: "Schedules"
+      title: "Scheduled maintenance"
+      subtitle: "One operation per row, with its cron and current state."
+      new: "New schedule"
+      empty_title: "No schedules"
+      empty_hint: "Open a table and create the first maintenance schedule."
+      col_table: "Table"
+      col_operation: "Operation"
+      col_cron: "Cron"
+      col_state: "State"
+      col_failures: "Consecutive failures"
+      active: "active"
+      paused: "paused"
+    show:
+      eyebrow_prefix: "Schedule ·"
+      edit: "Edit"
+      delete: "Delete"
+      delete_confirm: "Delete this schedule?"
+      cron: "Cron"
+      state: "State"
+      failures: "Consecutive failures"
+      params: "Parameters"
+      params_default: "Trino defaults"
+      active: "active"
+      paused: "paused"
+    new:
+      title: "New schedule"
+      subtitle: "A maintenance operation, repeated at the time you define."
+    edit:
+      title: "Edit %{operation}"
+    form:
+      errors_one: "%{count} problem prevented the save"
+      errors_other: "%{count} problems prevented the save"
+      table: "Table"
+      table_placeholder: "Select a table"
+      operation: "Operation"
+      operation_hint: "Each table can have one schedule per operation."
+      cron: "Cron"
+      cron_hint: "Five fields: minute hour day-of-month month day-of-week. E.g. 0 3 * * * runs daily at 3am."
+      cron_placeholder: "0 3 * * *"
+      start_paused: "Start paused"
+      start_paused_hint: "Paused schedules do not trigger until resumed."
+      params_title: "Operation parameters"
+      params_hint: "Leave blank to use the Trino default. Only the field for the chosen operation is used."
+      file_size: "File size (optimize)"
+      retention: "Retention (expire / orphan)"
+      retention_hint: "Cannot be lower than the minimum configured on the catalog (default 7d)."
+      submit: "Save schedule"
+      cancel: "Cancel"
+
+  executions:
+    section_title: "Recent executions"
+    note: "%{count} record(s)"
+    empty_title: "No executions yet"
+    empty_hint: "Executions appear here as soon as a schedule fires or someone runs maintenance manually."
+    col_status: "Status"
+    col_step: "Step"
+    col_attempts: "Attempts"
+    col_error: "Error"
+    col_when: "When"
+    awaiting_retry: "awaiting retry"
+    retry_badge: "retry %{current}/%{max}"
+
+  health:
+    no_data: "no data"
+
+  shared:
+    step_chain:
+      aria_step: "Step: %{step}"
+      aria_failed: " (failed)"
+      aria_retrying: " (waiting for a new attempt, %{current} of %{max})"
+      retry_title: "Commit conflict. Trino stays up and the lock is held until the next attempt."
+
+  auth:
+    sign_in_title: "Sign in"
+    email: "Email"
+    password: "Password"
+    remember_me: "Remember me"
+    submit: "Sign in"
+    forgot: "Forgot your password?"
+    new_password: "Send reset instructions"
+    change_password: "Change my password"
+    new_password_hint: "Enter your email and we will send reset instructions."
+    new_password_label: "Email"
+    change_password_label: "New password"
+    change_password_confirm_label: "Confirm new password"
+    change_password_hint: "Choose a new password."
