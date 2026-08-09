@@ -1,0 +1,13 @@
+<%# Strata bar + score. Expects: table (IcebergTable) %>
+<div class="strata">
+  <% if table.health_score.present? %>
+    <div class="strata-rail" role="img"
+         aria-label="Health score <%= table.health_score %> of 100">
+      <div class="strata-fill <%= strata_fill_class(table.health_status) %>"
+           style="width: <%= table.health_score.clamp(0, 100) %>%"></div>
+    </div>
+    <span class="strata-value"><%= table.health_score %></span>
+  <% else %>
+    <span class="cell-muted text-xs"><%= t("health.no_data") %></span>
+  <% end %>
+</div>

@@ -1,0 +1,60 @@
+<%#
+  Step chain - shows WHERE the execution stopped.
+  Expects: execution (ExecutionHistory)
+
+  Three possible states for the current node:
+    running  - solid teal
+    retrying - amber pulsing (commit conflict, waiting for another attempt)
+    failed   - red
+%>
+<%
+  steps   = ExecutionHistory::STEPS
+  current = execution.current_step.to_s
+  index   = steps.index(current) || 0
+  state   = execution_visual_state(execution)
+
+  here_class = case state
+               when :failed   then "chain-node chain-here-fail"
+               when :retrying then "chain-node chain-here-retry"
+               else                "chain-node chain-here-ok"
+               end
+
+  aria = t("shared.step_chain.aria_step", step: step_label(current))
+  aria += case state
+          when :failed   then t("shared.step_chain.aria_failed")
+          when :retrying then t("shared.step_chain.aria_retrying",
+                                current: execution.retry_count,
+                                max: ExecuteMaintenanceJob::MAX_RETRIES)
+          else ""
+          end
+%>
+<div class="chain" role="img" aria-label="<%= aria %>">
+  <% steps.each_with_index do |step, i| %>
+    <%
+      node_class =
+        if i < index
+          "chain-node chain-done"
+        elsif i == index
+          here_class
+        else
+          "chain-node chain-todo"
+        end
+    %>
+    <span class="chain-step">
+      <span class="<%= node_class %>" title="<%= step %>"></span>
+      <% if i < steps.size - 1 %>
+        <span class="chain-link <%= i < index ? "chain-done" : "chain-todo" %>"></span>
+      <% end %>
+    </span>
+  <% end %>
+
+  <span class="chain-label"><%= step_label(current) %></span>
+
+  <% if state == :retrying %>
+    <span class="chain-retry-badge"
+          title="<%= t("shared.step_chain.retry_title") %>">
+      <%= t("executions.retry_badge", current: execution.retry_count,
+                                      max: ExecuteMaintenanceJob::MAX_RETRIES) %>
+    </span>
+  <% end %>
+</div>
