@@ -29,14 +29,21 @@
         <% if user_signed_in? %>
           <nav class="app-nav">
             <%= nav_link_to t("layout.nav.overview"), root_path, active_when: current_page?(root_path) %>
+            <%= nav_link_to t("layout.nav.in_progress"), activity_path,
+                            active_when: controller_name == "activity" do %>
+              <%= t("layout.nav.in_progress") %>
+              <% if TrinoDemand.any? %>
+                <span class="badge badge-running"><%= TrinoDemand.count %></span>
+              <% end %>
+            <% end %>
             <%= nav_link_to t("layout.nav.tables"), iceberg_tables_path,
                             active_when: controller_name == "iceberg_tables" %>
             <%= nav_link_to t("layout.nav.catalogs"), catalogs_path,
                             active_when: controller_name == "catalogs" %>
-            <%= nav_link_to t("layout.nav.operations"), execution_histories_path,
+            <%= nav_link_to t("layout.nav.plans"), maintenance_plans_path,
+                            active_when: controller_name == "maintenance_plans" %>
+            <%= nav_link_to t("layout.nav.history"), execution_histories_path,
                             active_when: controller_name == "execution_histories" %>
-            <%= nav_link_to t("layout.nav.schedules"), maintenance_schedules_path,
-                            active_when: controller_name == "maintenance_schedules" %>
             <%= nav_link_to t("layout.nav.policies"), maintenance_policies_path,
                             active_when: controller_name == "maintenance_policies" %>
           </nav>

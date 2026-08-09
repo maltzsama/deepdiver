@@ -1,0 +1,56 @@
+<% content_for :title, "#{t("plans.index.title")} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("plans.index.eyebrow") %></p>
+    <h1 class="page-title"><%= t("plans.index.title") %></h1>
+    <p class="page-sub"><%= t("plans.index.subtitle") %></p>
+  </div>
+</div>
+
+<% if @plans.empty? %>
+  <section class="panel">
+    <div class="empty">
+      <p class="empty-title"><%= t("plans.index.empty_title") %></p>
+      <p class="empty-hint"><%= t("plans.index.empty_hint") %></p>
+    </div>
+  </section>
+<% else %>
+  <section class="panel">
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><%= t("plans.index.col_table") %></th>
+            <th><%= t("plans.index.col_cron") %></th>
+            <th><%= t("plans.index.col_state") %></th>
+            <th><%= t("plans.index.col_failures") %></th>
+            <th><%= t("plans.index.col_policy") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @plans.each do |plan| %>
+            <tr>
+              <td>
+                <%= link_to plan.iceberg_table.fully_qualified_name, plan, class: "link-mono" %>
+                <% if plan.needs_review %>
+                  <span class="badge badge-warning ml-1"><%= t("plans.index.needs_review") %></span>
+                <% end %>
+              </td>
+              <td class="cell-id"><%= plan.cron %></td>
+              <td>
+                <% if plan.paused? %>
+                  <span class="badge badge-critical"><span class="badge-dot"></span><%= t("plans.index.paused") %></span>
+                <% else %>
+                  <span class="badge badge-healthy"><span class="badge-dot"></span><%= t("plans.index.active") %></span>
+                <% end %>
+              </td>
+              <td class="cell-num"><%= plan.consecutive_failures %></td>
+              <td class="cell-muted"><%= plan.maintenance_policy&.name || "—" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% end %>

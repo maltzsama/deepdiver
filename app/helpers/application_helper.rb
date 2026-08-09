@@ -21,6 +21,15 @@ module ApplicationHelper
     STATUS_BADGE.fetch(status.to_s, "badge-neutral")
   end
 
+  def execution_step_badge_class(status)
+    case status.to_s
+    when "succeeded" then "badge-healthy"
+    when "failed"    then "badge-critical"
+    when "running"   then "badge-running"
+    else "badge-neutral"
+    end
+  end
+
   def strata_fill_class(status)
     case status.to_s
     when "healthy"  then "strata-fill-healthy"
@@ -54,12 +63,43 @@ module ApplicationHelper
   def nav_link_to(label, path, active_when:)
     classes = [ "app-nav-link" ]
     classes << "app-nav-link-active" if active_when
-    link_to label, path, class: classes.join(" ")
+    if block_given?
+      link_to path, class: classes.join(" ") do
+        yield
+      end
+    else
+      link_to label, path, class: classes.join(" ")
+    end
+  end
+
+  def duration_label(seconds)
+    return nil if seconds.nil?
+
+    seconds = seconds.to_i
+    if seconds < 60
+      "#{seconds}s"
+    elsif seconds < 3600
+      "#{(seconds / 60).round} min"
+    else
+      "#{(seconds / 3600.0).round(1)} h"
+    end
   end
 
   def timestamp(value)
     return content_tag(:span, "—", class: "cell-muted") if value.blank?
 
     content_tag(:span, value.to_fs(:db), class: "cell-num", title: value.iso8601)
+  end
+
+  # Concise composition summary for the health tooltip in the tables list.
+  def table_health_tooltip(table)
+    parts = []
+    if (avg = table.average_file_size)
+      parts << "avg file #{number_to_human_size(avg)}"
+    end
+    parts << "#{table.snapshot_count} snapshots" if table.snapshot_count
+    deletes = [ table.position_deletes, table.equality_deletes ].compact.sum
+    parts << "#{number_to_human(deletes)} deletes / #{number_to_human(table.total_records)} records" if deletes.positive?
+    parts.any? ? parts.join(" · ") : t("health.no_data")
   end
 end

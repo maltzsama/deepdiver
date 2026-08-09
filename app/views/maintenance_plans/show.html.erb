@@ -1,0 +1,86 @@
+<% content_for :title, "#{@plan.iceberg_table.fully_qualified_name} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("plans.show.eyebrow") %></p>
+    <h1 class="page-title-mono"><%= @plan.iceberg_table.fully_qualified_name %></h1>
+    <p class="page-sub"><%= t("plans.show.subtitle", cron: @plan.cron) %></p>
+  </div>
+
+  <% if current_user.admin? %>
+    <div class="page-actions">
+      <%= button_to t("plans.show.run_now"), run_maintenance_plan_path(@plan), method: :post,
+                    class: "btn btn-primary" %>
+      <% if @plan.paused? %>
+        <%= button_to t("plans.show.resume"), resume_maintenance_plan_path(@plan), method: :post,
+                      class: "btn btn-default" %>
+      <% else %>
+        <%= button_to t("plans.show.pause"), pause_maintenance_plan_path(@plan), method: :post,
+                      class: "btn btn-default" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<section class="panel mb-6">
+  <div class="panel-body">
+    <dl class="dl">
+      <div>
+        <dt class="dl-term"><%= t("plans.show.state") %></dt>
+        <dd class="dl-desc">
+          <% if @plan.paused? %>
+            <span class="badge badge-critical"><span class="badge-dot"></span><%= t("plans.show.paused") %></span>
+          <% else %>
+            <span class="badge badge-healthy"><span class="badge-dot"></span><%= t("plans.show.active") %></span>
+          <% end %>
+        </dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("plans.show.cron") %></dt>
+        <dd class="dl-desc-mono"><%= @plan.cron %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("plans.show.failures") %></dt>
+        <dd class="dl-desc-mono"><%= @plan.consecutive_failures %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("plans.show.typical") %></dt>
+        <dd class="dl-desc-mono"><%= @plan.typical_duration ? duration_label(@plan.typical_duration) : "—" %></dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<section class="panel mb-6">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("plans.show.steps_title") %></h2>
+  </div>
+  <div class="data-table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><%= t("plans.show.col_step") %></th>
+          <th><%= t("plans.show.col_state") %></th>
+          <th><%= t("plans.show.col_params") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @plan.maintenance_steps.each do |step| %>
+          <tr>
+            <td class="cell-id"><%= step.operation %></td>
+            <td>
+              <% if step.enabled %>
+                <span class="badge badge-healthy"><%= t("plans.show.enabled") %></span>
+              <% else %>
+                <span class="badge badge-neutral"><%= t("plans.show.disabled") %></span>
+              <% end %>
+            </td>
+            <td class="cell-muted font-mono text-xs"><%= step.config.presence&.to_json || "—" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<%= render "shared/executions", executions: @plan.execution_histories.latest.limit(20) %>
