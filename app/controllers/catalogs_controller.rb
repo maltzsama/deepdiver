@@ -39,7 +39,7 @@ class CatalogsController < ApplicationController
   private
 
   def catalog_params
-    params.require(:catalog).permit(:name, :catalog_type, :endpoint, :properties).tap do |permitted|
+    params.require(:catalog).permit(:name, :catalog_type, :endpoint, :trino_catalog_name, :properties).tap do |permitted|
       if permitted[:properties].is_a?(String)
         permitted[:properties] = JSON.parse(permitted[:properties])
       end

@@ -33,7 +33,8 @@ class PermissionsIntegrationTest < ActionDispatch::IntegrationTest
     sign_in @admin
     assert_difference("Catalog.count", 1) do
       post "/catalogs", params: {
-        catalog: { name: "ods", catalog_type: "nessie", endpoint: "http://nessie:19120", properties: "{}" }
+        catalog: { name: "ods", catalog_type: "nessie", endpoint: "http://nessie:19120",
+                   trino_catalog_name: "ods", properties: "{}" }
       }
     end
     assert_response :redirect

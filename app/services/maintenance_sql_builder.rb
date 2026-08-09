@@ -11,7 +11,6 @@ class MaintenanceSqlBuilder
   def initialize(schedule)
     @schedule = schedule
     @table = schedule.iceberg_table
-    @catalog = @table.catalog
   end
 
   def build
@@ -26,7 +25,7 @@ class MaintenanceSqlBuilder
   end
 
   def qualified_table
-    "iceberg.#{@catalog.name}.#{@table.namespace}.#{@table.name}"
+    @table.trino_identifier
   end
 
   def config

@@ -14,4 +14,19 @@ class IcebergTable < ApplicationRecord
   def fully_qualified_name
     "#{namespace}.#{name}"
   end
+
+  # Trino SQL identifier, always exactly three parts: catalog.schema.table.
+  # The whole namespace stays inside a single quoted part; the Iceberg
+  # connector rebuilds the nested Namespace from its separator. Never split
+  # a dotted namespace into multiple identifier parts.
+  #   "catalog"."ns1.ns2.ns3"."table"
+  def trino_identifier
+    [ catalog.trino_catalog_name, namespace, name ].map { |part| quote_identifier(part) }.join(".")
+  end
+
+  private
+
+  def quote_identifier(part)
+    %("#{part.to_s.gsub('"', '""')}")
+  end
 end
