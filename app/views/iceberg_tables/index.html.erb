@@ -1,0 +1,78 @@
+<% content_for :title, "#{t("tables.index.title")} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("tables.index.eyebrow") %></p>
+    <h1 class="page-title"><%= t("tables.index.title") %></h1>
+    <p class="page-sub"><%= t("tables.index.subtitle") %></p>
+  </div>
+</div>
+
+<%= render "shared/filters",
+           url: iceberg_tables_path,
+           search: true,
+           fields: [
+             { name: :catalog_id, label: t("tables.filter_catalog"),
+               options: @catalogs.map { |c| [ c.name, c.id ] } },
+             { name: :namespace, label: t("tables.filter_namespace"),
+               options: @namespaces.map { |n| [ n, n ] } },
+             { name: :health_status, label: t("tables.filter_status"),
+               options: IcebergTable::HEALTH_STATUSES.map { |s| [ s, s ] } }
+           ] %>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("tables.index.result") %></h2>
+    <span class="panel-note"><%= t("tables.index.count", count: @tables.size) %></span>
+  </div>
+
+  <% if @tables.empty? %>
+    <div class="empty">
+      <p class="empty-title"><%= t("tables.index.empty_title") %></p>
+      <p class="empty-hint">
+        <% if request.query_parameters.any? %>
+          <%= t("tables.index.empty_filters_hint") %>
+        <% else %>
+          <%= t("tables.index.empty_none_hint") %>
+        <% end %>
+      </p>
+    </div>
+  <% else %>
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><%= t("tables.index.col_table") %></th>
+            <th><%= t("tables.index.col_catalog") %></th>
+            <th><%= t("tables.index.col_health") %></th>
+            <th><%= t("tables.index.col_status") %></th>
+            <th><%= t("tables.index.col_last_write") %></th>
+            <th><%= t("tables.index.col_schedules") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @tables.each do |table| %>
+            <tr>
+              <td><%= link_to table.fully_qualified_name, table, class: "link-mono" %></td>
+              <td class="cell-muted"><%= table.catalog.name %></td>
+              <td><%= render "shared/health", table: table %></td>
+              <td>
+                <span class="badge <%= health_badge_class(table.health_status) %>">
+                  <span class="badge-dot"></span><%= table.health_status %>
+                </span>
+              </td>
+              <td><%= timestamp(table.last_data_update) %></td>
+              <td class="cell-num">
+                <% if table.schedules_count.to_i.zero? %>
+                  <span class="badge badge-warning"><%= t("tables.index.none_badge") %></span>
+                <% else %>
+                  <%= table.schedules_count %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</section>
