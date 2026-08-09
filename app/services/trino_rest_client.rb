@@ -7,8 +7,8 @@ class TrinoRestClient
 
   COMMIT_CONFLICT_PATTERN = /(?i)\bcommit(?:s|ed)?\s+(?:concurrent|conflict)\b|\bconcurrent\s+(?:commits?|modification)\b/
 
-  POLL_INTERVAL = 1 # second between nextUri calls
-  MAX_POLL_SECONDS = 6 * 60 * 60
+  POLL_INTERVAL = ENV.fetch("TRINO_MAINT_POLL_SECONDS", "1").to_i # seconds between nextUri calls
+  MAX_POLL_SECONDS = ENV.fetch("TRINO_MAINT_MAX_SECONDS", "21600").to_i
 
   def initialize(endpoint:, transport: HttpTransport.new)
     @endpoint = endpoint

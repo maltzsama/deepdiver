@@ -3,7 +3,7 @@
 module TrinoDemand
   ACTIVE_EXECUTION_STATUSES = %w[pending running].freeze
   ACTIVE_RUN_STATUSES = %w[pending running].freeze
-  STALE_AFTER = 15.minutes
+  STALE_AFTER = ENV.fetch("TRINO_HEARTBEAT_STALE_MINUTES", "15").to_i.minutes
 
   module_function
 

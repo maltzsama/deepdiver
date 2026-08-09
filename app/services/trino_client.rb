@@ -4,8 +4,8 @@
 class TrinoClient
   class Error < StandardError; end
 
-  POLL_INTERVAL = 1 # second between nextUri calls
-  MAX_POLL_SECONDS = 60 * 60
+  POLL_INTERVAL = ENV.fetch("TRINO_QUERY_POLL_SECONDS", "1").to_i # seconds between nextUri calls
+  MAX_POLL_SECONDS = ENV.fetch("TRINO_QUERY_MAX_SECONDS", "3600").to_i
 
   def initialize(endpoint: ENV.fetch("TRINO_URL"), catalog_name: nil)
     @endpoint = endpoint

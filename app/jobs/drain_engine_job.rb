@@ -4,7 +4,7 @@
 class DrainEngineJob < ApplicationJob
   queue_as :maintenance
 
-  POLL_INTERVAL = 10.seconds
+  POLL_INTERVAL = ENV.fetch("TRINO_DRAIN_POLL_SECONDS", "10").to_i.seconds
 
   def perform
     state = TrinoEngineSupervisor.state
