@@ -7,7 +7,7 @@ class TrinoLock < ApplicationRecord
   # becomes the owner, false when another execution holds it. A stale lock whose
   # owner already finished is stolen so a crashed process cannot block forever.
   def self.acquire(execution_history_id, attempts: 0)
-    lock = new(key: GLOBAL_KEY, owner: execution_history_id.to_s, acquired_at: Time.current)
+    lock = new(key: GLOBAL_KEY, execution_history_id: execution_history_id, acquired_at: Time.current)
     lock.save!
     lock
   rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
@@ -19,7 +19,7 @@ class TrinoLock < ApplicationRecord
   end
 
   def self.release(execution_history_id:)
-    where(key: GLOBAL_KEY, owner: execution_history_id.to_s).delete_all
+    where(key: GLOBAL_KEY, execution_history_id: execution_history_id).delete_all
   end
 
   # Steals the lock if the owning execution reached a terminal state.
@@ -27,7 +27,7 @@ class TrinoLock < ApplicationRecord
     lock = find_by(key: GLOBAL_KEY)
     return false unless lock
 
-    owner = ExecutionHistory.find_by(id: lock.owner)
+    owner = ExecutionHistory.find_by(id: lock.execution_history_id)
     return false unless owner&.finished?
 
     lock.delete
