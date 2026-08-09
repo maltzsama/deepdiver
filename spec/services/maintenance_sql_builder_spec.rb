@@ -3,10 +3,13 @@ require "rails_helper"
 RSpec.describe MaintenanceSqlBuilder do
   let(:catalog) { create(:catalog, name: "analytics") }
   let(:table) { create(:iceberg_table, catalog: catalog, namespace: "reporting", name: "dwd_orders") }
+  let(:plan) { create(:maintenance_plan, iceberg_table: table) }
 
   def built_sql(operation, config = {})
-    schedule = create(:maintenance_schedule, iceberg_table: table, operation: operation, config: config)
-    described_class.build(schedule)
+    step = plan.maintenance_steps.create!(operation: operation,
+                                          position: MaintenancePlan::CANONICAL_ORDER.index(operation),
+                                          config: config)
+    described_class.build(table, step)
   end
 
   it "emits a 3-part quoted identifier for optimize with the default threshold" do

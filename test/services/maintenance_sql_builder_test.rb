@@ -2,8 +2,12 @@ require "test_helper"
 
 class MaintenanceSqlBuilderTest < ActiveSupport::TestCase
   def assert_built(operation, expected, config = {})
-    schedule = build_schedule(operation: operation, config: config)
-    assert_equal expected, MaintenanceSqlBuilder.build(schedule)
+    table = build_table
+    plan = table.maintenance_plan || MaintenancePlan.create!(iceberg_table: table, cron: "0 3 * * *")
+    step = plan.maintenance_steps.create!(operation: operation,
+                                          position: MaintenancePlan::CANONICAL_ORDER.index(operation),
+                                          config: config)
+    assert_equal expected, MaintenanceSqlBuilder.build(table, step)
   end
 
   test "optimize uses the default file size threshold" do

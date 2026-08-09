@@ -30,16 +30,16 @@ class IcebergTablesController < ApplicationController
     @executions = @table.execution_histories.latest.limit(20)
   end
 
-  # Fallback for the table-level "run now": uses the first active schedule.
+  # Fallback for the table-level "run now": runs the table's plan.
   def run_maintenance
     @table = IcebergTable.find(params[:id])
-    schedule = @table.maintenance_schedules.dispatchable.first
+    plan = @table.maintenance_plan
 
-    if schedule
-      MaintenanceOrchestrator.run_schedule(schedule.id)
+    if plan && !plan.is_paused
+      MaintenanceOrchestrator.run_plan(plan.id)
       redirect_to @table, notice: "Maintenance enqueued."
     else
-      redirect_to @table, alert: "This table has no active schedule to run."
+      redirect_to @table, alert: "This table has no active plan to run."
     end
   end
 end

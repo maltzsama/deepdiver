@@ -1,16 +1,16 @@
-# Builds the exact Trino maintenance statement for a schedule, per the unified
-# `ALTER TABLE ... EXECUTE` syntax.
+# Builds the exact Trino maintenance statement for a chain step, per the
+# unified `ALTER TABLE ... EXECUTE` syntax.
 class MaintenanceSqlBuilder
   FILE_SIZE_THRESHOLD_DEFAULT = "128MB"
   RETENTION_THRESHOLD_DEFAULT = "7d"
 
-  def self.build(schedule)
-    new(schedule).build
+  def self.build(table, step)
+    new(table, step).build
   end
 
-  def initialize(schedule)
-    @schedule = schedule
-    @table = schedule.iceberg_table
+  def initialize(table, step)
+    @table = table
+    @step = step
   end
 
   def build
@@ -21,7 +21,7 @@ class MaintenanceSqlBuilder
   private
 
   def operation
-    @schedule.operation
+    @step.operation
   end
 
   def qualified_table
@@ -29,7 +29,7 @@ class MaintenanceSqlBuilder
   end
 
   def config
-    @schedule.config || {}
+    @step.config || {}
   end
 
   def arguments

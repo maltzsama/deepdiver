@@ -3,7 +3,8 @@ class IcebergTable < ApplicationRecord
 
   belongs_to :catalog
   has_many :maintenance_schedules, dependent: :destroy
-  has_many :execution_histories, through: :maintenance_schedules
+  has_one :maintenance_plan, dependent: :destroy
+  has_many :execution_histories, dependent: :destroy
 
   enum :health_status, HEALTH_STATUSES.to_h { |s| [ s, s ] }
 

@@ -3,11 +3,11 @@ module MaintenanceOrchestrator
     @backend ||= SolidQueueBackend.new
   end
 
-  # Enqueue a new run of a maintenance schedule. Creates the execution_history
+  # Enqueue a new run of a maintenance plan. Creates the execution_history
   # record and hands the engine lifecycle over to the supervisor.
-  def self.run_schedule(schedule_id)
-    schedule = MaintenanceSchedule.find(schedule_id)
-    execution = schedule.execution_histories.create!(status: :pending, current_step: :start)
+  def self.run_plan(plan_id)
+    plan = MaintenancePlan.find(plan_id)
+    execution = plan.execution_histories.create!(status: :pending, current_step: :start)
     TrinoEngineSupervisor.on_execution_enqueued(execution)
     execution
   end

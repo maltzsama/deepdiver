@@ -1,14 +1,14 @@
 require "rails_helper"
 
 RSpec.describe ScheduleDispatchJob, type: :job do
-  it "isolates a failing schedule from the rest" do
-    first = create(:maintenance_schedule, cron: "* * * * *")
-    second = create(:maintenance_schedule, operation: "expire_snapshots", cron: "* * * * *")
+  it "isolates a failing plan from the rest" do
+    first = create(:maintenance_plan, cron: "* * * * *")
+    second = create(:maintenance_plan, cron: "* * * * *")
 
-    allow(MaintenanceOrchestrator).to receive(:run_schedule).and_wrap_original do |original, schedule_id|
-      raise "boom" if schedule_id == first.id
+    allow(MaintenanceOrchestrator).to receive(:run_plan).and_wrap_original do |original, plan_id|
+      raise "boom" if plan_id == first.id
 
-      original.call(schedule_id)
+      original.call(plan_id)
     end
 
     described_class.perform_now
