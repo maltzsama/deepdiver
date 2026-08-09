@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_09_200002) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_09_200003) do
   create_table "catalogs", force: :cascade do |t|
     t.string "catalog_type", null: false
     t.datetime "created_at", null: false
@@ -30,6 +30,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200002) do
     t.integer "maintenance_schedule_id", null: false
     t.json "metrics"
     t.integer "retry_count", default: 0, null: false
+    t.datetime "scale_up_started_at"
     t.string "status", default: "pending", null: false
     t.datetime "updated_at", null: false
     t.index ["maintenance_schedule_id", "created_at"], name: "idx_on_maintenance_schedule_id_created_at_ba9b5c28dc"
