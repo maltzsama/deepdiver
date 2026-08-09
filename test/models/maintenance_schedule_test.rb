@@ -14,6 +14,17 @@ class MaintenanceScheduleTest < ActiveSupport::TestCase
     assert_not schedule.valid?
   end
 
+  test "rejects a cron with out-of-range fields" do
+    schedule = build_table.maintenance_schedules.new(operation: "optimize", cron: "0 99 99 99 99")
+    assert_not schedule.valid?
+    assert_includes schedule.errors[:cron], "is not a valid cron expression"
+  end
+
+  test "accepts a valid cron expression" do
+    schedule = build_table.maintenance_schedules.new(operation: "optimize", cron: "0 3 * * *")
+    assert schedule.valid?
+  end
+
   test "accepts a valid cron and a pause flag" do
     schedule = build_schedule(is_paused: true)
     assert schedule.valid?

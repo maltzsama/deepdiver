@@ -1,9 +1,6 @@
 class MaintenanceSchedule < ApplicationRecord
   OPERATIONS = %w[optimize expire_snapshots remove_orphan_files optimize_manifests].freeze
 
-  # Standard 5-field cron expression: minute hour day-of-month month day-of-week.
-  CRON_PATTERN = /\A(\*|\d+|\d+\/\d+|\d+(?:-\d+)?(?:,[0-9*\/-]+)*|\*\/\d+)(\s+\S+){4}\z/
-
   belongs_to :iceberg_table
   has_many :execution_histories, dependent: :destroy
 
@@ -12,13 +9,17 @@ class MaintenanceSchedule < ApplicationRecord
 
   validates :operation, presence: true, inclusion: { in: OPERATIONS }
   validates :operation, uniqueness: { scope: :iceberg_table_id }
-  validates :cron, presence: true, format: { with: CRON_PATTERN }
+  validates :cron, presence: true
+  validate :cron_is_parseable
   validate :configuration_matches_operation
   before_validation :compact_config
 
   # True when the schedule's cron matches the given instant.
   def scheduled_at?(time = Time.current)
-    !cron.blank? && (Fugit::Cron.parse(cron)&.match?(time.change(sec: 0, usec: 0)) || false)
+    parsed = Fugit::Cron.parse(cron)
+    return false if parsed.nil?
+
+    parsed.match?(time.change(sec: 0, usec: 0))
   end
 
   def paused?
@@ -26,6 +27,12 @@ class MaintenanceSchedule < ApplicationRecord
   end
 
   private
+
+  def cron_is_parseable
+    return if cron.blank?
+
+    errors.add(:cron, "is not a valid cron expression") if Fugit::Cron.parse(cron).nil?
+  end
 
   def compact_config
     return if config.blank?
