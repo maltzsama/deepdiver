@@ -1,45 +1,47 @@
-<h1><%= @schedule.operation %> on <%= @schedule.iceberg_table.fully_qualified_name %></h1>
+<h1 class="text-2xl font-bold"><%= @schedule.operation %> on <%= @schedule.iceberg_table.fully_qualified_name %></h1>
 
-<dl>
-  <dt>Cron</dt>
+<dl class="my-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+  <dt class="font-semibold">Cron</dt>
   <dd><%= @schedule.cron %></dd>
-  <dt>Paused</dt>
+  <dt class="font-semibold">Paused</dt>
   <dd><%= @schedule.paused? ? "yes" : "no" %></dd>
-  <dt>Consecutive failures</dt>
+  <dt class="font-semibold">Consecutive failures</dt>
   <dd><%= @schedule.consecutive_failures %></dd>
-  <dt>Config</dt>
+  <dt class="font-semibold">Config</dt>
   <dd><%= @schedule.config.inspect %></dd>
 </dl>
 
 <% if current_user.admin? %>
-  <%= link_to "Edit", edit_maintenance_schedule_path(@schedule) %>
-  <%= button_to "Delete", maintenance_schedule_path(@schedule), method: :delete,
-               data: { turbo_confirm: "Delete this schedule?" } %>
+  <div class="flex gap-2 my-4">
+    <%= link_to "Edit", edit_maintenance_schedule_path(@schedule), class: "text-blue-600 hover:text-blue-800" %>
+    <%= button_to "Delete", maintenance_schedule_path(@schedule), method: :delete,
+                 data: { turbo_confirm: "Delete this schedule?" } %>
+  </div>
 <% end %>
 
-<h2>Executions</h2>
-<table class="dashboard-table">
+<h2 class="text-xl font-semibold mt-6 mb-3">Executions</h2>
+<table class="w-full border-collapse">
   <thead>
     <tr>
-      <th>Status</th>
-      <th>Step</th>
-      <th>Retries</th>
-      <th>Error</th>
-      <th>Ran at</th>
+      <th class="text-left p-2 border-b border-gray-200 font-semibold">Status</th>
+      <th class="text-left p-2 border-b border-gray-200 font-semibold">Step</th>
+      <th class="text-left p-2 border-b border-gray-200 font-semibold">Retries</th>
+      <th class="text-left p-2 border-b border-gray-200 font-semibold">Error</th>
+      <th class="text-left p-2 border-b border-gray-200 font-semibold">Ran at</th>
     </tr>
   </thead>
   <tbody>
     <% @executions.each do |execution| %>
       <tr>
-        <td><%= execution.status %></td>
-        <td><%= execution.current_step %></td>
-        <td><%= execution.retry_count %></td>
-        <td><%= execution.error_message %></td>
-        <td><%= execution.created_at.to_fs(:db) %></td>
+        <td class="p-2 border-b border-gray-200"><%= execution.status %></td>
+        <td class="p-2 border-b border-gray-200"><%= execution.current_step %></td>
+        <td class="p-2 border-b border-gray-200"><%= execution.retry_count %></td>
+        <td class="p-2 border-b border-gray-200"><%= execution.error_message %></td>
+        <td class="p-2 border-b border-gray-200"><%= execution.created_at.to_fs(:db) %></td>
       </tr>
     <% end %>
     <% if @executions.empty? %>
-      <tr><td colspan="5">No executions yet.</td></tr>
+      <tr><td colspan="5" class="p-2 border-b border-gray-200">No executions yet.</td></tr>
     <% end %>
   </tbody>
 </table>

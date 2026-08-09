@@ -1,40 +1,39 @@
-<div class="dashboard">
-  <h1>LakeDeepDiver</h1>
+<h1>LakeDeepDiver</h1>
 
-  <section>
-    <h2>Worst table health</h2>
-    <table class="dashboard-table">
+  <section class="my-8">
+    <h2 class="text-xl font-semibold mb-3">Worst table health</h2>
+    <table class="w-full border-collapse">
       <thead>
         <tr>
-          <th>Catalog</th>
-          <th>Table</th>
-          <th>Health score</th>
-          <th>Status</th>
-          <th>Last update</th>
+          <th class="text-left p-2 border-b border-gray-200 font-semibold">Catalog</th>
+          <th class="text-left p-2 border-b border-gray-200 font-semibold">Table</th>
+          <th class="text-left p-2 border-b border-gray-200 font-semibold">Health score</th>
+          <th class="text-left p-2 border-b border-gray-200 font-semibold">Status</th>
+          <th class="text-left p-2 border-b border-gray-200 font-semibold">Last update</th>
         </tr>
       </thead>
       <tbody>
         <% @worst_health_tables.each do |table| %>
           <tr>
-            <td><%= table.catalog.name %></td>
-            <td><%= link_to table.fully_qualified_name, table %></td>
-            <td><%= table.health_score %></td>
-            <td><%= table.health_status %></td>
-            <td><%= table.last_data_update&.to_fs(:db) %></td>
+            <td class="p-2 border-b border-gray-200"><%= table.catalog.name %></td>
+            <td class="p-2 border-b border-gray-200"><%= link_to table.fully_qualified_name, table, class: "text-blue-600 hover:text-blue-800" %></td>
+            <td class="p-2 border-b border-gray-200"><%= table.health_score %></td>
+            <td class="p-2 border-b border-gray-200"><%= table.health_status %></td>
+            <td class="p-2 border-b border-gray-200"><%= table.last_data_update&.to_fs(:db) %></td>
           </tr>
         <% end %>
         <% if @worst_health_tables.empty? %>
-          <tr><td colspan="5">No tables synced yet. Create a catalog and run a sync.</td></tr>
+          <tr><td colspan="5" class="p-2 border-b border-gray-200">No tables synced yet. Create a catalog and run a sync.</td></tr>
         <% end %>
       </tbody>
     </table>
   </section>
 
-  <section>
-    <h2>Paused schedules</h2>
+  <section class="my-8">
+    <h2 class="text-xl font-semibold mb-3">Paused schedules</h2>
     <% @paused_schedules.each do |schedule| %>
       <p>
-        <%= link_to schedule.iceberg_table.fully_qualified_name, schedule %> —
+        <%= link_to schedule.iceberg_table.fully_qualified_name, schedule, class: "text-blue-600 hover:text-blue-800" %> —
         <%= schedule.operation %> (failures: <%= schedule.consecutive_failures %>)
       </p>
     <% end %>

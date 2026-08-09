@@ -1,23 +1,23 @@
-<h1>Maintenance schedules</h1>
+<h1 class="text-2xl font-bold mb-4">Maintenance schedules</h1>
 
-<table class="dashboard-table">
+<table class="w-full border-collapse">
   <thead>
     <tr>
-      <th>Table</th>
-      <th>Operation</th>
-      <th>Cron</th>
-      <th>Paused</th>
-      <th>Failures</th>
+      <th class="text-left p-2 border-b border-gray-200 font-semibold">Table</th>
+      <th class="text-left p-2 border-b border-gray-200 font-semibold">Operation</th>
+      <th class="text-left p-2 border-b border-gray-200 font-semibold">Cron</th>
+      <th class="text-left p-2 border-b border-gray-200 font-semibold">Paused</th>
+      <th class="text-left p-2 border-b border-gray-200 font-semibold">Failures</th>
     </tr>
   </thead>
   <tbody>
     <% @schedules.each do |schedule| %>
       <tr>
-        <td><%= link_to schedule.iceberg_table.fully_qualified_name, schedule %></td>
-        <td><%= schedule.operation %></td>
-        <td><%= schedule.cron %></td>
-        <td><%= schedule.paused? ? "yes" : "no" %></td>
-        <td><%= schedule.consecutive_failures %></td>
+        <td class="p-2 border-b border-gray-200"><%= link_to schedule.iceberg_table.fully_qualified_name, schedule, class: "text-blue-600 hover:text-blue-800" %></td>
+        <td class="p-2 border-b border-gray-200"><%= schedule.operation %></td>
+        <td class="p-2 border-b border-gray-200"><%= schedule.cron %></td>
+        <td class="p-2 border-b border-gray-200"><%= schedule.paused? ? "yes" : "no" %></td>
+        <td class="p-2 border-b border-gray-200"><%= schedule.consecutive_failures %></td>
       </tr>
     <% end %>
   </tbody>
