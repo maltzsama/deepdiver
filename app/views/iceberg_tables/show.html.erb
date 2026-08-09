@@ -1,0 +1,75 @@
+<h1><%= @table.fully_qualified_name %></h1>
+<p><%= link_to @table.catalog.name, @table.catalog %></p>
+
+<dl>
+  <dt>Health score</dt>
+  <dd><%= @table.health_score %></dd>
+  <dt>Health status</dt>
+  <dd><%= @table.health_status %></dd>
+  <dt>Last data update</dt>
+  <dd><%= @table.last_data_update&.presence ? @table.last_data_update.to_fs(:db) : "&mdash;".html_safe %></dd>
+</dl>
+
+<h2>Schedules</h2>
+<% if @schedules.empty? %>
+  <p>No maintenance schedules for this table.</p>
+<% else %>
+  <table class="dashboard-table">
+    <thead>
+      <tr>
+        <th>Operation</th>
+        <th>Cron</th>
+        <th>Paused</th>
+        <th>Failures</th>
+        <th colspan="2"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @schedules.each do |schedule| %>
+        <tr>
+          <td><%= schedule.operation %></td>
+          <td><%= schedule.cron %></td>
+          <td><%= schedule.paused? ? "yes" : "no" %></td>
+          <td><%= schedule.consecutive_failures %></td>
+<% if current_user.admin? %>
+            <td><%= link_to "View", maintenance_schedule_path(schedule) %></td>
+            <td><%= button_to "Delete", maintenance_schedule_path(schedule), method: :delete,
+                             data: { turbo_confirm: "Delete this schedule?" } %></td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
+
+<% if current_user.admin? %>
+  <%= link_to "New schedule", new_maintenance_schedule_path(iceberg_table_id: @table.id) %>
+  <%= button_to "Run maintenance now", run_maintenance_iceberg_table_path(@table), method: :post %>
+<% end %>
+
+<h2>Recent executions</h2>
+<table class="dashboard-table">
+  <thead>
+    <tr>
+      <th>Status</th>
+      <th>Step</th>
+      <th>Retries</th>
+      <th>Error</th>
+      <th>Ran at</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @executions.each do |execution| %>
+      <tr>
+        <td><%= execution.status %></td>
+        <td><%= execution.current_step %></td>
+        <td><%= execution.retry_count %></td>
+        <td><%= execution.error_message %></td>
+        <td><%= execution.created_at.to_fs(:db) %></td>
+      </tr>
+    <% end %>
+    <% if @executions.empty? %>
+      <tr><td colspan="5">No executions yet.</td></tr>
+    <% end %>
+  </tbody>
+</table>

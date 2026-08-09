@@ -1,0 +1,45 @@
+<h1><%= @schedule.operation %> on <%= @schedule.iceberg_table.fully_qualified_name %></h1>
+
+<dl>
+  <dt>Cron</dt>
+  <dd><%= @schedule.cron %></dd>
+  <dt>Paused</dt>
+  <dd><%= @schedule.paused? ? "yes" : "no" %></dd>
+  <dt>Consecutive failures</dt>
+  <dd><%= @schedule.consecutive_failures %></dd>
+  <dt>Config</dt>
+  <dd><%= @schedule.config.inspect %></dd>
+</dl>
+
+<% if current_user.admin? %>
+  <%= link_to "Edit", edit_maintenance_schedule_path(@schedule) %>
+  <%= button_to "Delete", maintenance_schedule_path(@schedule), method: :delete,
+               data: { turbo_confirm: "Delete this schedule?" } %>
+<% end %>
+
+<h2>Executions</h2>
+<table class="dashboard-table">
+  <thead>
+    <tr>
+      <th>Status</th>
+      <th>Step</th>
+      <th>Retries</th>
+      <th>Error</th>
+      <th>Ran at</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @executions.each do |execution| %>
+      <tr>
+        <td><%= execution.status %></td>
+        <td><%= execution.current_step %></td>
+        <td><%= execution.retry_count %></td>
+        <td><%= execution.error_message %></td>
+        <td><%= execution.created_at.to_fs(:db) %></td>
+      </tr>
+    <% end %>
+    <% if @executions.empty? %>
+      <tr><td colspan="5">No executions yet.</td></tr>
+    <% end %>
+  </tbody>
+</table>
