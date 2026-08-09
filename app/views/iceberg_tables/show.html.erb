@@ -1,79 +1,117 @@
-<h1 class="text-2xl font-bold"><%= @table.fully_qualified_name %></h1>
-<p class="mb-4"><%= link_to @table.catalog.name, @table.catalog, class: "text-blue-600 hover:text-blue-800" %></p>
+<% content_for :title, "#{@table.fully_qualified_name} — LakeDeepDiver" %>
 
-<dl class="my-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
-  <dt class="font-semibold">Health score</dt>
-  <dd><%= @table.health_score %></dd>
-  <dt class="font-semibold">Health status</dt>
-  <dd><%= @table.health_status %></dd>
-  <dt class="font-semibold">Last data update</dt>
-  <dd><%= @table.last_data_update&.presence ? @table.last_data_update.to_fs(:db) : "&mdash;".html_safe %></dd>
-</dl>
-
-<h2 class="text-xl font-semibold mt-6 mb-3">Schedules</h2>
-<% if @schedules.empty? %>
-  <p>No maintenance schedules for this table.</p>
-<% else %>
-  <table class="w-full border-collapse">
-    <thead>
-      <tr>
-        <th class="text-left p-2 border-b border-gray-200 font-semibold">Operation</th>
-        <th class="text-left p-2 border-b border-gray-200 font-semibold">Cron</th>
-        <th class="text-left p-2 border-b border-gray-200 font-semibold">Paused</th>
-        <th class="text-left p-2 border-b border-gray-200 font-semibold">Failures</th>
-        <% if current_user.admin? %>
-          <th class="text-left p-2 border-b border-gray-200 font-semibold" colspan="2"></th>
-        <% end %>
-      </tr>
-    </thead>
-    <tbody>
-      <% @schedules.each do |schedule| %>
-        <tr>
-          <td class="p-2 border-b border-gray-200"><%= schedule.operation %></td>
-          <td class="p-2 border-b border-gray-200"><%= schedule.cron %></td>
-          <td class="p-2 border-b border-gray-200"><%= schedule.paused? ? "yes" : "no" %></td>
-          <td class="p-2 border-b border-gray-200"><%= schedule.consecutive_failures %></td>
-          <% if current_user.admin? %>
-            <td class="p-2 border-b border-gray-200"><%= link_to "View", maintenance_schedule_path(schedule), class: "text-blue-600 hover:text-blue-800" %></td>
-            <td class="p-2 border-b border-gray-200"><%= button_to "Delete", maintenance_schedule_path(schedule), method: :delete,
-                              data: { turbo_confirm: "Delete this schedule?" } %></td>
-          <% end %>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
-<% end %>
-
-<% if current_user.admin? %>
-  <div class="flex gap-2 my-4">
-    <%= link_to "New schedule", new_maintenance_schedule_path(iceberg_table_id: @table.id), class: "text-blue-600 hover:text-blue-800" %>
-    <%= button_to "Run maintenance now", run_maintenance_iceberg_table_path(@table), method: :post %>
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow">
+      <%= t("tables.show.eyebrow_prefix") %>
+      <%= link_to @table.catalog.name, @table.catalog, class: "link" %>
+    </p>
+    <h1 class="page-title-mono"><%= @table.fully_qualified_name %></h1>
   </div>
-<% end %>
 
-<h2 class="text-xl font-semibold mt-6 mb-3">Recent executions</h2>
-<table class="w-full border-collapse">
-  <thead>
-    <tr>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Status</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Step</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Retries</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Error</th>
-      <th class="text-left p-2 border-b border-gray-200 font-semibold">Ran at</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @executions.each do |execution| %>
-      <tr>
-        <td class="p-2 border-b border-gray-200"><%= execution.status %></td>
-        <td class="p-2 border-b border-gray-200"><%= execution.current_step %></td>
-        <td class="p-2 border-b border-gray-200"><%= execution.retry_count %></td>
-        <td class="p-2 border-b border-gray-200"><%= execution.error_message %></td>
-        <td class="p-2 border-b border-gray-200"><%= execution.created_at.to_fs(:db) %></td>
-      </tr>
-    <% end %>
-    <% if @executions.empty? %>
-      <tr><td colspan="5" class="p-2 border-b border-gray-200">No executions yet.</td></tr>
-    <% end %>
-  </tbody>
-</table>
+  <% if current_user.admin? %>
+    <div class="page-actions">
+      <%= link_to t("tables.show.new_schedule"),
+                  new_maintenance_schedule_path(iceberg_table_id: @table.id),
+                  class: "btn btn-default" %>
+      <%= button_to t("tables.show.run_now"),
+                    run_maintenance_iceberg_table_path(@table), method: :post,
+                    class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>
+
+<section class="panel mb-6">
+  <div class="panel-body">
+    <dl class="dl">
+      <div>
+        <dt class="dl-term"><%= t("tables.show.score") %></dt>
+        <dd class="dl-desc"><%= render "shared/health", table: @table %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("tables.show.status") %></dt>
+        <dd class="dl-desc">
+          <span class="badge <%= health_badge_class(@table.health_status) %>">
+            <span class="badge-dot"></span><%= @table.health_status %>
+          </span>
+        </dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("tables.show.last_write") %></dt>
+        <dd class="dl-desc-mono"><%= timestamp(@table.last_data_update) %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("tables.show.trino_id") %></dt>
+        <dd class="dl-desc-mono text-xs"><%= @table.trino_identifier %></dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<section class="panel mb-6">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("tables.show.schedules_title") %></h2>
+    <span class="panel-note"><%= t("tables.show.schedules_note",
+                                   count: @schedules.size,
+                                   total: MaintenanceSchedule::OPERATIONS.size) %></span>
+  </div>
+
+  <% if @schedules.empty? %>
+    <div class="empty">
+      <p class="empty-title"><%= t("tables.show.empty_title") %></p>
+      <p class="empty-hint"><%= t("tables.show.empty_hint") %></p>
+      <% if current_user.admin? %>
+        <div class="empty-action">
+          <%= link_to t("tables.show.create_schedule"),
+                      new_maintenance_schedule_path(iceberg_table_id: @table.id),
+                      class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><%= t("tables.show.col_operation") %></th>
+            <th><%= t("tables.show.col_cron") %></th>
+            <th><%= t("tables.show.col_state") %></th>
+            <th><%= t("tables.show.col_failures") %></th>
+            <% if current_user.admin? %>
+              <th><span class="sr-only"><%= t("tables.show.col_actions") %></span></th>
+            <% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% @schedules.each do |schedule| %>
+            <tr>
+              <td><%= link_to schedule.operation, schedule, class: "link-mono" %></td>
+              <td class="cell-id"><%= schedule.cron %></td>
+              <td>
+                <% if schedule.paused? %>
+                  <span class="badge badge-critical"><span class="badge-dot"></span><%= t("tables.show.paused") %></span>
+                <% else %>
+                  <span class="badge badge-healthy"><span class="badge-dot"></span><%= t("tables.show.active") %></span>
+                <% end %>
+              </td>
+              <td class="cell-num"><%= schedule.consecutive_failures %></td>
+              <% if current_user.admin? %>
+                <td class="text-right whitespace-nowrap">
+                  <%= link_to t("tables.show.open"), maintenance_schedule_path(schedule),
+                              class: "btn btn-default btn-sm" %>
+                  <%= button_to t("tables.show.delete"), maintenance_schedule_path(schedule),
+                                method: :delete,
+                                class: "btn btn-danger btn-sm ml-1 inline-flex",
+                                form: { class: "inline-block" },
+                                data: { turbo_confirm: t("tables.show.delete_confirm") } %>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</section>
+
+<%= render "shared/executions", executions: @executions %>
