@@ -1,42 +1,48 @@
-<% content_for :title, "#{t("auth.sign_in_title")} — LakeDeepDiver" %>
+<% content_for :title, "#{t('auth.sign_in.title')} — #{t('auth.brand')}" %>
 
-<div class="mx-auto max-w-sm">
-  <div class="page-head">
-    <div>
-      <p class="page-eyebrow">LakeDeepDiver</p>
-      <h1 class="page-title"><%= t("auth.sign_in_title") %></h1>
+<h2 class="auth-card-title"><%= t("auth.sign_in.title") %></h2>
+<p class="auth-card-sub"><%= t("auth.sign_in.subtitle") %></p>
+
+<% if AuthConfig.sso_enabled? %>
+  <%= button_to t("auth.sign_in.sso", provider: AuthConfig.provider_label),
+                user_openid_connect_omniauth_authorize_path,
+                data: { turbo: false },
+                class: "btn btn-sso" %>
+
+  <% if AuthConfig.local_login_enabled? %>
+    <p class="auth-divider"><%= t("auth.sign_in.or") %></p>
+  <% end %>
+<% end %>
+
+<% if AuthConfig.local_login_enabled? %>
+  <%= form_for(resource, as: resource_name,
+               url: session_path(resource_name), class: "form-grid") do |f| %>
+    <div class="field">
+      <%= f.label :email, t("auth.fields.email"), class: "field-label" %>
+      <%= f.email_field :email, autofocus: !AuthConfig.sso_enabled?,
+                        autocomplete: "email", class: "field-input" %>
     </div>
-  </div>
 
-  <section class="panel">
-    <div class="panel-body">
-      <%= form_for(resource, as: resource_name,
-                   url: session_path(resource_name), class: "form-grid") do |f| %>
-        <div class="field">
-          <%= f.label :email, t("auth.email"), class: "field-label" %>
-          <%= f.email_field :email, autofocus: true, autocomplete: "email",
-                            class: "field-input" %>
-        </div>
-
-        <div class="field">
-          <%= f.label :password, t("auth.password"), class: "field-label" %>
-          <%= f.password_field :password, autocomplete: "current-password",
-                               class: "field-input" %>
-        </div>
-
-        <% if devise_mapping.rememberable? %>
-          <label class="field-check">
-            <%= f.check_box :remember_me, class: "field-checkbox" %>
-            <%= t("auth.remember_me") %>
-          </label>
-        <% end %>
-
-        <div class="form-actions">
-          <%= f.submit t("auth.submit"), class: "btn btn-primary" %>
-          <%= link_to t("auth.forgot"), new_password_path(resource_name),
-                      class: "link text-sm" %>
-        </div>
-      <% end %>
+    <div class="field">
+      <%= f.label :password, t("auth.fields.password"), class: "field-label" %>
+      <%= f.password_field :password, autocomplete: "current-password",
+                           class: "field-input" %>
     </div>
-  </section>
-</div>
+
+    <% if devise_mapping.rememberable? %>
+      <label class="field-check">
+        <%= f.check_box :remember_me, class: "field-checkbox" %>
+        <%= t("auth.fields.remember_me") %>
+      </label>
+    <% end %>
+
+    <%= f.submit t("auth.sign_in.submit"), class: "btn btn-primary btn-block" %>
+
+    <% if devise_mapping.recoverable? %>
+      <p class="text-center">
+        <%= link_to t("auth.sign_in.forgot"), new_password_path(resource_name),
+                    class: "link text-sm" %>
+      </p>
+    <% end %>
+  <% end %>
+<% end %>

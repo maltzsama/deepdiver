@@ -7,7 +7,14 @@ class ApplicationController < ActionController::Base
 
   before_action :authenticate_user!
 
+  layout :layout_by_resource
+
   private
+
+  # Devise screens use the auth layout (no header/navigation).
+  def layout_by_resource
+    devise_controller? ? "auth" : "application"
+  end
 
   def require_admin!
     return if current_user.admin?

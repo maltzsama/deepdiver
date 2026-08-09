@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>">
+  <head>
+    <title><%= content_for(:title) || t("auth.brand") %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <div class="auth-shell">
+      <section class="auth-brand">
+        <%= render "shared/strata_backdrop" %>
+
+        <div class="auth-brand-inner">
+          <p class="auth-mark"><%= t("auth.eyebrow") %></p>
+          <h1 class="auth-title"><%= t("auth.brand") %></h1>
+          <p class="auth-tagline"><%= t("auth.tagline") %></p>
+
+          <dl class="auth-facts">
+            <div>
+              <dd class="auth-fact-value"><%= MaintenanceSchedule::OPERATIONS.size %></dd>
+              <dt class="auth-fact-label"><%= t("auth.facts.operations") %></dt>
+            </div>
+            <div>
+              <dd class="auth-fact-value"><%= Catalog.count %></dd>
+              <dt class="auth-fact-label"><%= t("auth.facts.catalogs") %></dt>
+            </div>
+            <div>
+              <dd class="auth-fact-value"><%= IcebergTable.count %></dd>
+              <dt class="auth-fact-label"><%= t("auth.facts.tables") %></dt>
+            </div>
+          </dl>
+        </div>
+
+        <p class="auth-foot"><%= t("auth.footer") %></p>
+      </section>
+
+      <section class="auth-panel">
+        <div class="auth-card">
+          <div class="auth-mobile-brand">
+            <p class="auth-mark"><%= t("auth.eyebrow") %></p>
+            <p class="mt-1 text-2xl font-semibold text-abyss-900"><%= t("auth.brand") %></p>
+          </div>
+
+          <%= render "shared/flash" %>
+          <%= yield %>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

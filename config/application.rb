@@ -39,7 +39,9 @@ module Lakedeepdiver
     # Don't generate system test files.
     config.generators.system_tests = nil
 
-    # English is the initial UI language; other locales can be added later.
+    # English is the initial UI language; pt-BR is available for later.
+    config.i18n.available_locales = [ :en, :"pt-BR" ]
     config.i18n.default_locale = :en
+    config.i18n.fallbacks = [ :en ]
   end
 end

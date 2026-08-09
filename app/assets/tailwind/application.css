@@ -186,6 +186,33 @@
   .dl-term     { @apply font-mono text-xs uppercase tracking-widest text-abyss-500; }
   .dl-desc     { @apply mt-1 text-sm text-abyss-900; }
   .dl-desc-mono{ @apply mt-1 font-mono text-sm text-abyss-900 break-all; }
+
+  /* ---------- authentication screen ---------- */
+  .auth-shell  { @apply min-h-screen bg-abyss-950 lg:grid lg:grid-cols-5; }
+
+  .auth-brand  { @apply relative hidden flex-col justify-between overflow-hidden p-12 lg:col-span-3 lg:flex; }
+  .auth-strata { @apply pointer-events-none absolute inset-0 h-full w-full; }
+  .auth-brand-inner { @apply relative z-10 max-w-xl; }
+  .auth-mark   { @apply font-mono text-xs uppercase tracking-[0.3em] text-frost-500; }
+  .auth-title  { @apply mt-6 text-5xl font-semibold tracking-tight text-white; }
+  .auth-tagline{ @apply mt-4 max-w-md text-lg text-abyss-300; }
+  .auth-facts  { @apply mt-12 grid max-w-md grid-cols-3 gap-6 border-t border-white/10 pt-8; }
+  .auth-fact-value { @apply font-mono text-3xl tabular-nums text-frost-500; }
+  .auth-fact-label { @apply mt-1 font-mono text-[10px] uppercase tracking-widest text-abyss-500; }
+  .auth-foot   { @apply relative z-10 font-mono text-xs text-abyss-700; }
+
+  .auth-panel  { @apply flex min-h-screen items-center justify-center bg-abyss-50 px-6 py-12 lg:col-span-2 lg:min-h-0; }
+  .auth-card   { @apply w-full max-w-sm; }
+  .auth-mobile-brand { @apply mb-8 lg:hidden; }
+  .auth-card-title { @apply text-xl font-semibold text-abyss-900; }
+  .auth-card-sub   { @apply mb-6 mt-1 text-sm text-abyss-500; }
+
+  .auth-divider { @apply my-6 flex items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-abyss-300; }
+  .auth-divider::before,
+  .auth-divider::after { @apply h-px flex-1 bg-abyss-100; content: ""; }
+
+  .btn-sso { @apply w-full border-abyss-900 bg-abyss-900 text-white hover:bg-abyss-700; }
+  .btn-block { @apply w-full; }
 }
 
 @keyframes chain-pulse {
