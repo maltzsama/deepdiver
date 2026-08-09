@@ -34,7 +34,7 @@ class HttpTransport
     request.body = body if body
 
     response = Net::HTTP.start(request.uri.hostname, request.uri.port,
-                               use_ssl: request.uri.scheme == "https") do |http|
+                               **ssl_options(request.uri)) do |http|
       http.request(request)
     end
 
@@ -47,5 +47,16 @@ class HttpTransport
     return {} if body.nil? || body.empty?
 
     JSON.parse(body)
+  end
+
+  # Internal company CA, mounted into the pod via Secret/ConfigMap. Without it,
+  # HTTPS against Polaris/Trino fails with "certificate verify failed".
+  def ssl_options(uri)
+    return { use_ssl: false } unless uri.scheme == "https"
+
+    options = { use_ssl: true, open_timeout: 10, read_timeout: 60 }
+    ca_file = ENV["INTERNAL_CA_FILE"]
+    options[:ca_file] = ca_file if ca_file.present? && File.exist?(ca_file)
+    options
   end
 end
