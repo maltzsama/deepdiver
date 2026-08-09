@@ -4,7 +4,7 @@ class ScheduleDispatchJobTest < ActiveSupport::TestCase
   test "enqueues runs only for matching, non-paused schedules" do
     due = build_schedule(cron: "* * * * *")
     not_due = build_schedule(operation: "expire_snapshots", cron: "0 0 1 1 *")
-    paused = build_schedule(operation: "rewrite_manifests", cron: "* * * * *", is_paused: true)
+    paused = build_schedule(operation: "optimize_manifests", cron: "* * * * *", is_paused: true)
 
     ScheduleDispatchJob.perform_now
 

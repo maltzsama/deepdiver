@@ -1,5 +1,5 @@
 class MaintenanceSchedule < ApplicationRecord
-  OPERATIONS = %w[optimize expire_snapshots remove_orphan_files rewrite_manifests].freeze
+  OPERATIONS = %w[optimize expire_snapshots remove_orphan_files optimize_manifests].freeze
 
   # Standard 5-field cron expression: minute hour day-of-month month day-of-week.
   CRON_PATTERN = /\A(\*|\d+|\d+\/\d+|\d+(?:-\d+)?(?:,[0-9*\/-]+)*|\*\/\d+)(\s+\S+){4}\z/
