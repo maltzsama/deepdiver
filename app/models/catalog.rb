@@ -13,7 +13,7 @@ class Catalog < ApplicationRecord
   validates :endpoint, presence: true
 
   # Name of the catalog inside Trino. Derived from the record name, because
-  # the application provisions Trino (see Phase B). The override exists for
+  # the application provisions Trino itself. The override exists for
   # when the name is not a valid identifier or collides.
   def trino_catalog_name
     trino_catalog_name_override.presence || derived_trino_catalog_name
