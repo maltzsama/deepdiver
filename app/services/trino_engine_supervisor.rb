@@ -57,4 +57,34 @@ module TrinoEngineSupervisor
       MaintenanceOrchestrator.start_execution_on_engine(execution.id)
     end
   end
+
+  # A freshness run was enqueued: same logic as on_execution_enqueued - bring
+  # the engine up when down, cancel the drain when draining.
+  def on_freshness_run_enqueued(run)
+    current = state
+
+    case current.status
+    when "up", "starting"
+      nil
+    when "draining"
+      current.update!(status: "up", drain_started_at: nil, status_changed_at: Time.current)
+    else # down | failed
+      current.update!(status: "starting", start_attempts: 0,
+                      last_error: nil, status_changed_at: Time.current)
+      MaintenanceOrchestrator.supervise_engine_start
+    end
+  end
+
+  # A freshness run finished: drain when demand has cleared, like
+  # on_execution_finished.
+  def on_freshness_run_finished(run)
+    return if TrinoDemand.any?
+
+    current = state
+    return unless current.status == "up"
+
+    current.update!(status: "draining", drain_started_at: Time.current,
+                    status_changed_at: Time.current)
+    MaintenanceOrchestrator.drain_engine
+  end
 end

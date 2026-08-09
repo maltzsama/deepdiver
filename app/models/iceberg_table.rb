@@ -4,6 +4,9 @@ class IcebergTable < ApplicationRecord
   belongs_to :catalog
   has_many :maintenance_schedules, dependent: :destroy
   has_one :maintenance_plan, dependent: :destroy
+  has_one :table_freshness_sla, dependent: :destroy
+  has_one :latest_freshness_check, -> { order(checked_at: :desc) }, class_name: "FreshnessCheck"
+  has_many :freshness_checks, dependent: :destroy
   has_many :execution_histories, dependent: :destroy
 
   enum :health_status, HEALTH_STATUSES.to_h { |s| [ s, s ] }

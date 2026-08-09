@@ -53,6 +53,7 @@ Rails.application.configure do
   # Use Solid Queue as the Active Job backend (database-backed, no Redis).
   config.active_job.queue_adapter = :solid_queue
   config.solid_queue.connects_to = { database: { writing: :queue } }
+  config.solid_queue.recurring_schedule_path = Rails.root.join("config/recurring.yml")
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.

@@ -3,21 +3,23 @@ require "net/http"
 # Minimal Slack webhook. No-op (with a logger) when the SLACK_WEBHOOK_URL env
 # var is not configured.
 class SlackAlert
-  def self.notify(message)
-    new(message).call
+  def self.notify(message, webhook: nil)
+    new(message, webhook: webhook).call
   end
 
-  def initialize(message)
+  def initialize(message, webhook: nil)
     @message = message
+    @webhook = webhook
   end
 
   def call
-    unless ENV["SLACK_WEBHOOK_URL"]
-      Rails.logger.info("SlackAlert skipped (SLACK_WEBHOOK_URL not configured): #{@message}")
+    url = @webhook.presence || ENV["SLACK_WEBHOOK_URL"]
+    unless url
+      Rails.logger.info("SlackAlert skipped (no webhook configured): #{@message}")
       return
     end
 
-    post(ENV["SLACK_WEBHOOK_URL"])
+    post(url)
   rescue StandardError => e
     Rails.logger.warn("Failed to send Slack alert: #{e.message}")
   end
