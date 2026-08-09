@@ -1,9 +1,10 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
-# This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
-# docker build -t lakedeepdiver .
-# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name lakedeepdiver lakedeepdiver
+# This Dockerfile is designed for production images shipped with the Helm chart
+# (infra/helm/lakedeepdiver). Build and push by hand:
+# docker build -t registry.example.com/lakedeepdiver:<version> .
+# docker push registry.example.com/lakedeepdiver:<version>
 
 # For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
 
