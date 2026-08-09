@@ -2,11 +2,26 @@ default: &default
   dispatchers:
     - polling_interval: 1
       batch_size: 500
+      # Recurring tasks only here. See the duplication note below.
+      recurring_tasks: true
   workers:
-    - queues: [ maintenance, sync, default ]
-      threads: 3
-      processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>
+    # Maintenance: serial by design. A single coordinator runs one heavy query
+    # at a time; more threads would only contend for the same engine.
+    - queues: maintenance
+      threads: 1
       polling_interval: 1
+
+    # Freshness: one sweep at a time, but in its own process so it never waits
+    # behind an optimize.
+    - queues: freshness
+      threads: 1
+      polling_interval: 1
+
+    # Everything else: catalog sync, Slack alerts, ad-hoc jobs.
+    # WITHOUT this, sync and alerts stop running the moment named queues exist.
+    - queues: "*"
+      threads: 3
+      polling_interval: 2
 
 development:
   <<: *default
