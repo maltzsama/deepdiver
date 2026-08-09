@@ -12,7 +12,7 @@ class IcebergTableTest < ActiveSupport::TestCase
   end
 
   test "trino_identifier keeps a nested namespace as one quoted part" do
-    catalog = Catalog.new(name: "x", trino_catalog_name: "polaris_prod", catalog_type: "polaris",
+    catalog = Catalog.new(name: "x", trino_catalog_name_override: "polaris_prod", catalog_type: "polaris",
                           endpoint: "http://x")
     table = IcebergTable.new(catalog: catalog, namespace: "bronze.vendas.raw", name: "pedidos")
 
@@ -22,7 +22,7 @@ class IcebergTableTest < ActiveSupport::TestCase
   end
 
   test "trino_identifier quotes unusual characters and escapes embedded quotes" do
-    catalog = Catalog.new(name: "x", trino_catalog_name: "polaris_prod", catalog_type: "polaris",
+    catalog = Catalog.new(name: "x", trino_catalog_name_override: "polaris_prod", catalog_type: "polaris",
                           endpoint: "http://x")
     table = IcebergTable.new(catalog: catalog, namespace: "ns-com-hifen", name: "Table \"Big\"")
 

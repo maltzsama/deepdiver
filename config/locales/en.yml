@@ -26,6 +26,8 @@ en:
       eyebrow: "Catalog"
       subtitle_span: "tables"
       sync_now: "Sync now"
+      test_connection: "Test connection"
+      edit: "Edit"
       delete: "Delete"
       delete_confirm: "Delete this catalog and all its tables?"
       tables_title: "Tables"
@@ -46,17 +48,31 @@ en:
       name_hint: "How this catalog appears in this application."
       name_placeholder: "polaris_prod"
       trino_name: "Trino catalog name"
-      trino_name_hint: "Name of the file in Trino's etc/catalog/<name>.properties. This is what goes into the maintenance SQL."
-      trino_name_placeholder: "iceberg"
+      trino_name_hint: "Derived as %{derived}. Override only when the name is not a valid Trino identifier or collides."
       type: "Type"
       endpoint: "Endpoint"
       endpoint_hint: "Base URL of the catalog REST API."
       endpoint_placeholder: "https://polaris.dados.svc"
-      properties: "Properties"
-      properties_hint: "JSON. Credentials live here - never version this value anywhere."
-      properties_placeholder: '{"bearerToken": "..."}'
       submit: "Save catalog"
       cancel: "Cancel"
+      auth: "Authentication"
+      auth_method: "Auth method"
+      client_id: "Client ID"
+      client_secret: "Client secret"
+      secret_set_at: "Secret set %{when} · ends in %{hint}"
+      secret_keep: "Leave blank to keep the current secret"
+      secret_hint: "The secret is stored encrypted and is never shown again."
+      scope: "Scope"
+      advanced: "Advanced"
+    auth_methods:
+      none: "None"
+      bearer_static: "Static bearer token"
+      oauth2_client_credentials: "OAuth2 client credentials"
+    verify:
+      ok: "Connection verified."
+      failed: "Connection failed: %{error}"
+    edit:
+      title: "Edit catalog"
 
   tables:
     show:

@@ -26,8 +26,12 @@ end
 
 class CatalogClientTest < ActiveSupport::TestCase
   def build_catalog
-    Catalog.new(name: "analytics", catalog_type: "polaris", endpoint: "http://polaris:8181",
-                properties: { "bearerToken" => "secret" })
+    catalog = Catalog.find_or_create_by!(name: "analytics") do |c|
+      c.catalog_type = "polaris"
+      c.endpoint = "http://polaris:8181"
+    end
+    catalog.create_catalog_credential!(auth_method: "bearer_static", secret: "secret") unless catalog.catalog_credential
+    catalog
   end
 
   test "namespaces are flattened to dotted strings" do

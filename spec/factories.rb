@@ -13,12 +13,16 @@ FactoryBot.define do
     sequence(:name) { |n| "catalog-#{n}" }
     catalog_type { "nessie" }
     endpoint { "http://nessie:19120/api/v1" }
-    trino_catalog_name { name }
 
     factory :polaris_catalog do
       catalog_type { "polaris" }
       endpoint { "http://polaris:8181" }
     end
+  end
+
+  factory :catalog_credential do
+    catalog
+    auth_method { "none" }
   end
 
   factory :iceberg_table do

@@ -8,7 +8,6 @@ if Rails.env.development? || ENV["SEED_DEMO"]
   catalog = Catalog.find_or_create_by!(name: "analytics") do |c|
     c.catalog_type = "nessie"
     c.endpoint = "http://nessie.default.svc.cluster.local:19120/api/v1"
-    c.trino_catalog_name = "analytics"
   end
 
   table = catalog.iceberg_tables.find_or_create_by!(namespace: "reporting", name: "dwd_orders") do |t|

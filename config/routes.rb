@@ -15,9 +15,10 @@ Rails.application.routes.draw do
 
   root "dashboard#index"
 
-  resources :catalogs, only: %i[index show new create destroy] do
+  resources :catalogs, only: %i[index show new create edit update destroy] do
     member do
       post :sync
+      post :verify
     end
   end
 
