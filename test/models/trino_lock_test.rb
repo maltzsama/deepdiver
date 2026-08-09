@@ -4,7 +4,7 @@ class TrinoLockTest < ActiveSupport::TestCase
   test "acquire returns the lock and a second acquire returns false" do
     first = TrinoLock.acquire(999)
     assert_kind_of TrinoLock, first
-    assert_equal "999", first.owner
+    assert_equal 999, first.execution_history_id
 
     assert_equal false, TrinoLock.acquire(22)
   end
@@ -33,6 +33,6 @@ class TrinoLockTest < ActiveSupport::TestCase
 
     assert TrinoLock.acquire(fresh.id)
 
-    assert_equal fresh.id.to_s, TrinoLock.first.owner
+    assert_equal fresh.id, TrinoLock.first.execution_history_id
   end
 end

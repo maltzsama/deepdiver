@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_09_200003) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_09_200004) do
   create_table "catalogs", force: :cascade do |t|
     t.string "catalog_type", null: false
     t.datetime "created_at", null: false
@@ -69,7 +69,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200003) do
     t.datetime "created_at", null: false
     t.bigint "execution_history_id"
     t.string "key", default: "global", null: false
-    t.string "owner"
     t.datetime "updated_at", null: false
     t.index ["execution_history_id"], name: "index_trino_locks_on_execution_history_id"
     t.index ["key"], name: "index_trino_locks_on_key", unique: true

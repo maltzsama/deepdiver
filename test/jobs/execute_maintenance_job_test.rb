@@ -17,7 +17,7 @@ class ExecuteMaintenanceJobTest < ActiveSupport::TestCase
 
     # The engine stays up and the lock stays ours during the retry window.
     lock = TrinoLock.find_by(key: TrinoLock::GLOBAL_KEY)
-    assert_equal execution.id.to_s, lock.owner
+    assert_equal execution.id, lock.execution_history_id
   end
 
   test "the retry run clears the awaiting_retry flag" do
