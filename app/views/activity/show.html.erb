@@ -8,7 +8,11 @@
   </div>
 </div>
 
-<meta http-equiv="refresh" content="10">
+<div class="mb-2 flex items-center justify-end gap-2 text-xs text-abyss-500">
+  <span id="auto-refresh-label"><%= t("activity.auto_refresh_on") %></span>
+  <button id="auto-refresh-toggle" class="btn btn-default btn-sm" type="button"><%= t("activity.pause") %></button>
+  <%= link_to t("activity.refresh_now"), activity_path, class: "link text-xs" %>
+</div>
 
 <section class="panel mb-6">
   <div class="panel-head">
@@ -122,3 +126,65 @@
     </section>
   </div>
 </div>
+
+<script>
+  (function() {
+    let timer = null;
+    let paused = false;
+    const INTERVAL = 30; // seconds
+    const label = document.getElementById("auto-refresh-label");
+    const toggle = document.getElementById("auto-refresh-toggle");
+
+    function updateLabel(text) {
+      if (label) label.textContent = text;
+    }
+
+    function tick() {
+      if (paused || document.visibilityState !== "visible") return;
+      window.location.reload();
+    }
+
+    function countdown(remaining) {
+      updateLabel(
+        remaining === 0
+          ? "<%= t('activity.refreshing') %>"
+          : "<%= t('activity.next_in') %> " + remaining + "s"
+      );
+      timer = setTimeout(function() {
+        if (remaining <= 1) { tick(); } else { countdown(remaining - 1); }
+      }, 1000);
+    }
+
+    function start() {
+      clearTimeout(timer);
+      countdown(INTERVAL);
+    }
+
+    function stop() {
+      clearTimeout(timer);
+      timer = null;
+    }
+
+    document.addEventListener("visibilitychange", function() {
+      if (document.visibilityState === "visible" && !paused) {
+        start();
+      } else {
+        stop();
+      }
+    });
+
+    toggle && toggle.addEventListener("click", function() {
+      paused = !paused;
+      if (paused) {
+        stop();
+        updateLabel("<%= t('activity.paused') %>");
+        toggle.textContent = "<%= t('activity.resume') %>";
+      } else {
+        toggle.textContent = "<%= t('activity.pause') %>";
+        start();
+      }
+    });
+
+    start();
+  })();
+</script>

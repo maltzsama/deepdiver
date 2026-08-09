@@ -42,6 +42,13 @@ en:
       empty: "The queue is empty."
       waiting_lock: "waiting for its table's lock"
       waiting_engine: "waiting for the engine"
+    auto_refresh_on: "Auto-refreshing when visible"
+    next_in: "next in"
+    refreshing: "refreshing…"
+    refresh_now: "Refresh now"
+    pause: "Pause"
+    resume: "Resume"
+    paused: "Paused"
 
   plans:
     index:
