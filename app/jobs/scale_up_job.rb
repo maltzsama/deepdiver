@@ -4,7 +4,9 @@ class ScaleUpJob < ApplicationJob
 
   def perform(execution_history_id)
     execution = ExecutionHistory.find(execution_history_id)
-    execution.update!(current_step: :scale_up)
+    # Stamp only on the first pass; retries keep the original instant.
+    execution.update!(current_step: :scale_up,
+                      scale_up_started_at: execution.scale_up_started_at || Time.current)
 
     if exceeded_timeout?(execution)
       ExecutionFailureHandler.handle(execution, "Trino did not become ready within #{SCALE_UP_TIMEOUT}")
@@ -26,7 +28,10 @@ class ScaleUpJob < ApplicationJob
   private
 
   def exceeded_timeout?(execution)
-    Time.current - execution.created_at >= SCALE_UP_TIMEOUT
+    started = execution.scale_up_started_at
+    return false if started.nil?
+
+    Time.current - started >= SCALE_UP_TIMEOUT
   end
 
   # Unexpected exit while scaling: make sure the engine is not left running.
