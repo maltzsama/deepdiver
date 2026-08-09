@@ -38,7 +38,7 @@ class MaintenanceSqlBuilder
       "(file_size_threshold => '#{config["file_size_threshold"] || FILE_SIZE_THRESHOLD_DEFAULT}')"
     when "expire_snapshots", "remove_orphan_files"
       "(retention_threshold => '#{config["retention_threshold"] || RETENTION_THRESHOLD_DEFAULT}')"
-    when "rewrite_manifests"
+    when "optimize_manifests"
       ""
     end
   end

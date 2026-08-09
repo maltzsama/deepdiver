@@ -28,8 +28,8 @@ class MaintenanceSqlBuilderTest < ActiveSupport::TestCase
                  { "retention_threshold" => "14d" }
   end
 
-  test "rewrite_manifests has no arguments" do
-    assert_built "rewrite_manifests",
-                 "ALTER TABLE \"analytics\".\"reporting\".\"dwd_orders\" EXECUTE rewrite_manifests"
+  test "optimize_manifests has no arguments" do
+    assert_built "optimize_manifests",
+                 "ALTER TABLE \"analytics\".\"reporting\".\"dwd_orders\" EXECUTE optimize_manifests"
   end
 end
