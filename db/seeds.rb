@@ -23,3 +23,11 @@ if Rails.env.development? || ENV["SEED_DEMO"]
 end
 
 puts "Seeded #{User.count} users, #{Catalog.count} catalogs, #{IcebergTable.count} tables."
+
+if ENV["BOOTSTRAP_ADMIN_EMAIL"].present?
+  user = User.find_or_initialize_by(email: ENV.fetch("BOOTSTRAP_ADMIN_EMAIL"))
+  user.password ||= ENV.fetch("BOOTSTRAP_ADMIN_PASSWORD")
+  user.role = :admin
+  user.save!
+  puts "admin ensured: #{user.email}"
+end
