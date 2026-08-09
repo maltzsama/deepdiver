@@ -1,0 +1,83 @@
+<% content_for :title, "#{t("operations.index.title")} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("operations.index.eyebrow") %></p>
+    <h1 class="page-title"><%= t("operations.index.title") %></h1>
+    <p class="page-sub"><%= t("operations.index.subtitle") %></p>
+  </div>
+</div>
+
+<%= render "shared/filters",
+           url: execution_histories_path,
+           fields: [
+             { name: :catalog_id, label: t("tables.filter_catalog"),
+               options: @catalogs.map { |c| [ c.name, c.id ] } },
+             { name: :operation, label: t("operations.filter_operation"),
+               options: MaintenanceSchedule::OPERATIONS.map { |o| [ o, o ] } },
+             { name: :status, label: t("operations.filter_status"),
+               options: ExecutionHistory::STATUSES.map { |s| [ s, s ] } }
+           ] %>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("operations.index.result") %></h2>
+    <span class="panel-note"><%= t("operations.index.count", count: @executions.size) %></span>
+  </div>
+
+  <% if @executions.empty? %>
+    <div class="empty">
+      <p class="empty-title"><%= t("operations.index.empty_title") %></p>
+      <p class="empty-hint">
+        <% if request.query_parameters.any? %>
+          <%= t("operations.index.empty_filters_hint") %>
+        <% else %>
+          <%= t("operations.index.empty_none_hint") %>
+        <% end %>
+      </p>
+    </div>
+  <% else %>
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><%= t("operations.index.col_table") %></th>
+            <th><%= t("operations.index.col_operation") %></th>
+            <th><%= t("operations.index.col_status") %></th>
+            <th><%= t("operations.index.col_step") %></th>
+            <th><%= t("operations.index.col_attempts") %></th>
+            <th><%= t("operations.index.col_when") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @executions.each do |execution| %>
+            <% schedule = execution.maintenance_schedule %>
+            <tr>
+              <td>
+                <%= link_to schedule.iceberg_table.fully_qualified_name,
+                            schedule.iceberg_table, class: "link-mono" %>
+                <span class="ml-2 text-xs cell-muted"><%= schedule.iceberg_table.catalog.name %></span>
+              </td>
+              <td><span class="badge badge-neutral"><%= schedule.operation %></span></td>
+              <td>
+                <span class="badge <%= execution_status_badge_class(execution.status) %>">
+                  <span class="badge-dot"></span><%= execution.status %>
+                </span>
+              </td>
+              <td><%= render "shared/step_chain", execution: execution %></td>
+              <td class="cell-num"><%= execution.retry_count %></td>
+              <td><%= timestamp(execution.created_at) %></td>
+            </tr>
+            <% if execution.error_message.present? %>
+              <tr>
+                <td colspan="6" class="!py-2">
+                  <p class="font-mono text-xs text-critical-600 break-all"><%= execution.error_message %></p>
+                </td>
+              </tr>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</section>

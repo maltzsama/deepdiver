@@ -33,6 +33,8 @@
                             active_when: controller_name == "iceberg_tables" %>
             <%= nav_link_to t("layout.nav.catalogs"), catalogs_path,
                             active_when: controller_name == "catalogs" %>
+            <%= nav_link_to t("layout.nav.operations"), execution_histories_path,
+                            active_when: controller_name == "execution_histories" %>
             <%= nav_link_to t("layout.nav.schedules"), maintenance_schedules_path,
                             active_when: controller_name == "maintenance_schedules" %>
           </nav>
