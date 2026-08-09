@@ -315,7 +315,7 @@ en:
       covered: "Covered tables"
       apply_title: "Apply to tables"
       apply_note: "creates or updates one schedule per table"
-      apply_hint: "Tables that already have %{operation} under another policy are skipped - no policy steals another's schedule."
+      apply_hint: "Tables already managed by another policy are skipped - no policy steals another's plan."
       apply_submit: "Apply policy"
       managed_title: "Managed schedules"
       empty_title: "This policy does not cover any table yet"

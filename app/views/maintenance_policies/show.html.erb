@@ -23,7 +23,14 @@
     <dl class="dl">
       <div>
         <dt class="dl-term"><%= t("policies.show.operation") %></dt>
-        <dd class="dl-desc"><span class="badge badge-neutral"><%= @policy.operation %></span></dd>
+        <dd class="dl-desc">
+          <div class="flex flex-wrap gap-1">
+            <% @policy.steps_config.each do |operation, config| %>
+              <% next if config["enabled"] == false %>
+              <span class="badge badge-neutral"><%= operation %></span>
+            <% end %>
+          </div>
+        </dd>
       </div>
       <div>
         <dt class="dl-term"><%= t("policies.show.cron") %></dt>
@@ -31,11 +38,11 @@
       </div>
       <div>
         <dt class="dl-term"><%= t("policies.show.params") %></dt>
-        <dd class="dl-desc-mono text-xs"><%= @policy.config.presence&.to_json || t("policies.show.params_default") %></dd>
+        <dd class="dl-desc-mono text-xs"><%= @policy.steps_config.presence&.to_json || t("policies.show.params_default") %></dd>
       </div>
       <div>
         <dt class="dl-term"><%= t("policies.show.covered") %></dt>
-        <dd class="dl-desc-mono"><%= @schedules.size %></dd>
+        <dd class="dl-desc-mono"><%= @plans.size %></dd>
       </div>
     </dl>
   </div>
@@ -50,7 +57,7 @@
     <div class="panel-body">
       <%= form_with url: apply_maintenance_policy_path(@policy), method: :post do %>
         <p class="field-hint mb-3">
-          <%= t("policies.show.apply_hint", operation: @policy.operation) %>
+          <%= t("policies.show.apply_hint") %>
         </p>
 
         <div class="max-h-80 overflow-y-auto rounded border border-abyss-100">
@@ -60,7 +67,7 @@
                 <tr>
                   <td class="w-8">
                     <%= check_box_tag "iceberg_table_ids[]", table.id,
-                                      @schedules.any? { |s| s.iceberg_table_id == table.id },
+                                      @plans.any? { |p| p.iceberg_table_id == table.id },
                                       id: "table_#{table.id}", class: "field-checkbox" %>
                   </td>
                   <td>
@@ -90,10 +97,10 @@
 <section class="panel">
   <div class="panel-head">
     <h2 class="panel-title"><%= t("policies.show.managed_title") %></h2>
-    <span class="panel-note"><%= @schedules.size %></span>
+    <span class="panel-note"><%= @plans.size %></span>
   </div>
 
-  <% if @schedules.empty? %>
+  <% if @plans.empty? %>
     <div class="empty">
       <p class="empty-title"><%= t("policies.show.empty_title") %></p>
       <p class="empty-hint"><%= t("policies.show.empty_hint") %></p>
@@ -109,17 +116,17 @@
           </tr>
         </thead>
         <tbody>
-          <% @schedules.each do |schedule| %>
+          <% @plans.each do |plan| %>
             <tr>
-              <td><%= link_to schedule.iceberg_table.fully_qualified_name, schedule, class: "link-mono" %></td>
+              <td><%= link_to plan.iceberg_table.fully_qualified_name, plan.iceberg_table, class: "link-mono" %></td>
               <td>
-                <% if schedule.paused? %>
+                <% if plan.paused? %>
                   <span class="badge badge-critical"><span class="badge-dot"></span><%= t("policies.show.paused") %></span>
                 <% else %>
                   <span class="badge badge-healthy"><span class="badge-dot"></span><%= t("policies.show.active") %></span>
                 <% end %>
               </td>
-              <td class="cell-num"><%= schedule.consecutive_failures %></td>
+              <td class="cell-num"><%= plan.consecutive_failures %></td>
             </tr>
           <% end %>
         </tbody>
