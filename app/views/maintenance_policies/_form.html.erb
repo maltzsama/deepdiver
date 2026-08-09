@@ -1,0 +1,71 @@
+<section class="panel">
+  <div class="panel-body">
+    <%= form_with model: policy, class: "form-grid" do |f| %>
+      <% if policy.errors.any? %>
+        <div class="errors">
+          <p class="errors-title">
+            <%= t("policies.form.errors_#{policy.errors.count == 1 ? "one" : "other"}",
+                  count: policy.errors.count) %>
+          </p>
+          <ul class="errors-list">
+            <% policy.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="field">
+        <%= f.label :name, t("policies.form.name"), class: "field-label" %>
+        <%= f.text_field :name, class: "field-input",
+                         placeholder: t("policies.form.name_placeholder") %>
+      </div>
+
+      <div class="field">
+        <%= f.label :description, t("policies.form.description"), class: "field-label" %>
+        <p class="field-hint"><%= t("policies.form.description_hint") %></p>
+        <%= f.text_area :description, rows: 2, class: "field-input" %>
+      </div>
+
+      <div class="field">
+        <%= f.label :operation, t("policies.form.operation"), class: "field-label" %>
+        <p class="field-hint"><%= t("policies.form.operation_hint") %></p>
+        <%= f.select :operation, MaintenanceSchedule::OPERATIONS, {}, class: "field-input field-input-mono" %>
+      </div>
+
+      <div class="field">
+        <%= f.label :cron, t("policies.form.cron"), class: "field-label" %>
+        <p class="field-hint"><%= t("policies.form.cron_hint") %></p>
+        <%= f.text_field :cron, class: "field-input field-input-mono",
+                         placeholder: t("policies.form.cron_placeholder") %>
+      </div>
+
+      <div class="field-group">
+        <p class="field-group-title"><%= t("policies.form.params_title") %></p>
+        <p class="field-hint mb-4"><%= t("policies.form.params_hint") %></p>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="field">
+            <%= label_tag "maintenance_policy[config][file_size_threshold]",
+                          t("policies.form.file_size"), class: "field-label" %>
+            <%= text_field_tag "maintenance_policy[config][file_size_threshold]",
+                               policy.config&.dig("file_size_threshold"),
+                               class: "field-input field-input-mono", placeholder: "128MB" %>
+          </div>
+          <div class="field">
+            <%= label_tag "maintenance_policy[config][retention_threshold]",
+                          t("policies.form.retention"), class: "field-label" %>
+            <%= text_field_tag "maintenance_policy[config][retention_threshold]",
+                               policy.config&.dig("retention_threshold"),
+                               class: "field-input field-input-mono", placeholder: "7d" %>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <%= f.submit t("policies.form.submit"), class: "btn btn-primary" %>
+        <%= link_to t("policies.form.cancel"), maintenance_policies_path, class: "link text-sm" %>
+      </div>
+    <% end %>
+  </div>
+</section>

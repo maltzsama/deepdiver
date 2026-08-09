@@ -1,0 +1,11 @@
+<% content_for :title, "#{t("policies.new.title")} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("policies.index.eyebrow") %></p>
+    <h1 class="page-title"><%= t("policies.new.title") %></h1>
+    <p class="page-sub"><%= t("policies.new.subtitle") %></p>
+  </div>
+</div>
+
+<%= render "form", policy: @policy %>

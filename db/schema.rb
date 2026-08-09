@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_09_200004) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_09_200005) do
   create_table "catalogs", force: :cascade do |t|
     t.string "catalog_type", null: false
     t.datetime "created_at", null: false
@@ -51,6 +51,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200004) do
     t.index ["catalog_id"], name: "index_iceberg_tables_on_catalog_id"
   end
 
+  create_table "maintenance_policies", force: :cascade do |t|
+    t.json "config", default: {}
+    t.datetime "created_at", null: false
+    t.string "cron", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.string "operation", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_maintenance_policies_on_name", unique: true
+  end
+
   create_table "maintenance_schedules", force: :cascade do |t|
     t.json "config", default: {}
     t.integer "consecutive_failures", default: 0, null: false
@@ -58,10 +69,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200004) do
     t.string "cron", null: false
     t.integer "iceberg_table_id", null: false
     t.boolean "is_paused", default: false, null: false
+    t.integer "maintenance_policy_id"
     t.string "operation", null: false
     t.datetime "updated_at", null: false
     t.index ["iceberg_table_id", "operation"], name: "index_maintenance_schedules_on_iceberg_table_id_and_operation", unique: true
     t.index ["iceberg_table_id"], name: "index_maintenance_schedules_on_iceberg_table_id"
+    t.index ["maintenance_policy_id"], name: "index_maintenance_schedules_on_maintenance_policy_id"
   end
 
   create_table "trino_locks", force: :cascade do |t|
@@ -90,4 +103,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_200004) do
   add_foreign_key "execution_histories", "maintenance_schedules"
   add_foreign_key "iceberg_tables", "catalogs"
   add_foreign_key "maintenance_schedules", "iceberg_tables"
+  add_foreign_key "maintenance_schedules", "maintenance_policies"
 end
