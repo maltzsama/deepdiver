@@ -1,61 +1,91 @@
-# Scores table health on a 0-100 scale from the synchronised metadata.
-#   unknown  - no snapshot information yet
-#   healthy  - score >= 70
-#   warning  - 40 <= score < 70
-#   critical - score < 40
+# Scores 0-100 from what maintenance actually fixes.
 #
-# Penalties are accumulating, so large stale data always bottoms out at 0.
+# Each component returns a value, its contribution and the operation that
+# resolves it - the UI shows this, so the number stops being opaque.
+#
+# A component without data is EXCLUDED and the total is normalised over the
+# available weights. Missing data never becomes a penalty.
 class HealthEvaluator
-  STALE_24H = 40
-  STALE_48H = 60
-  STALE_7D = 80
-  SNAPSHOT_FLOOR = 50
-  SNAPSHOT_HIGH = 200
-  SNAPSHOT_PENALTY = 10
-  SNAPSHOT_HIGH_PENALTY = 20
-
+  DEFAULT_TARGET_FILE_SIZE = 128 * 1024 * 1024
   HEALTHY_BOUNDARY = 70
   WARNING_BOUNDARY = 40
 
-  def self.evaluate(extractor, now: Time.current)
-    new(extractor, now: now).call
+  WEIGHTS = {
+    fragmentation:    40,
+    snapshot_buildup: 30,
+    delete_overhead: 20,
+    manifest_buildup: 10
+  }.freeze
+
+  def self.evaluate(extractor, plan: nil, now: Time.current)
+    new(extractor, plan: plan, now: now).call
   end
 
-  def initialize(extractor, now:)
+  def initialize(extractor, plan: nil, now: Time.current)
     @extractor = extractor
+    @plan = plan
     @now = now
   end
 
   def call
-    last_at = @extractor.last_snapshot_at
-    return { score: nil, status: :unknown } unless last_at
+    components = {
+      fragmentation:    fragmentation,
+      snapshot_buildup: snapshot_buildup,
+      delete_overhead:  delete_overhead,
+      manifest_buildup: manifest_buildup
+    }
 
-    score = 100
-    score -= staleness_penalty(last_at)
-    score -= snapshot_count_penalty(@extractor.snapshot_count)
+    available = components.reject { |_key, value| value.nil? }
+    return { score: nil, status: :unknown, components: components } if available.empty?
 
-    { score: score.clamp(0, 100).to_i, status: status_for(score.clamp(0, 100).to_i) }
+    total_weight = available.keys.sum { |key| WEIGHTS[key] }
+    earned = available.sum { |key, ratio| WEIGHTS[key] * ratio }
+    score = ((earned / total_weight.to_f) * 100).round
+
+    { score: score, status: status_for(score), components: components,
+      coverage: (total_weight / WEIGHTS.values.sum.to_f * 100).round }
   end
 
   private
 
-  def staleness_penalty(last_at)
-    age = @now - last_at
-    if age > 7.days
-      STALE_7D
-    elsif age > 48.hours
-      STALE_48H
-    elsif age > 24.hours
-      STALE_24H
-    else
-      0
-    end
+  # Each component returns 0.0 (worst) to 1.0 (best), or nil when there is no
+  # data.
+  def fragmentation
+    average = @extractor.average_file_size
+    return nil if average.nil?
+
+    (average.to_f / target_file_size).clamp(0.0, 1.0)
   end
 
-  def snapshot_count_penalty(count)
-    return 0 if count <= SNAPSHOT_FLOOR
+  def snapshot_buildup
+    count = @extractor.snapshot_count
+    return nil if count.nil? || count.zero?
 
-    count > SNAPSHOT_HIGH ? SNAPSHOT_HIGH_PENALTY : SNAPSHOT_PENALTY
+    budget = expected_snapshot_budget
+    (1.0 - ((count - budget).to_f / budget)).clamp(0.0, 1.0)
+  end
+
+  def delete_overhead
+    records = @extractor.total_records
+    deletes = [ @extractor.position_deletes, @extractor.equality_deletes ].compact.sum
+    return nil if records.nil? || records.zero? || (@extractor.position_deletes.nil? && @extractor.equality_deletes.nil?)
+
+    (1.0 - (deletes.to_f / records) * 10).clamp(0.0, 1.0)
+  end
+
+  # No data source yet - see the note below.
+  def manifest_buildup = nil
+
+  def target_file_size
+    @extractor.properties["write.target-file-size-bytes"]&.to_i.presence || DEFAULT_TARGET_FILE_SIZE
+  end
+
+  def expected_snapshot_budget
+    return 50 if @plan.nil?
+
+    days = @plan.maintenance_steps.find_by(operation: "expire_snapshots")
+                &.config&.dig("retention_threshold").to_s[/\d+/]&.to_i || 7
+    [ days * 10, 10 ].max
   end
 
   def status_for(score)

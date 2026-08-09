@@ -1,52 +1,39 @@
 require "test_helper"
 
 class HealthEvaluatorTest < ActiveSupport::TestCase
-  def extractor(last_at:, snapshots: 0)
-    metadata = {}
-    metadata["snapshots"] = (1..snapshots).map do |i|
-      { "snapshot-id" => i, "timestamp-ms" => (last_at.to_f * 1000).to_i }
-    end
+  def extractor(metadata = {})
     TableMetadataExtractor.new(metadata)
   end
 
-  test "unknown when there is no snapshot info" do
-    result = HealthEvaluator.evaluate(TableMetadataExtractor.new({}))
+  def summary_metadata(data_files:, size_bytes:, snapshots:, records: nil,
+                       position_deletes: nil, equality_deletes: nil)
+    summary = { "total-data-files" => data_files.to_s, "total-files-size-in-bytes" => size_bytes.to_s }
+    summary["total-records"] = records.to_s if records
+    summary["total-position-deletes"] = position_deletes.to_s if position_deletes
+    summary["total-equality-deletes"] = equality_deletes.to_s if equality_deletes
+    { "current-snapshot-id" => 1,
+      "snapshots" => (1..snapshots).map do |i|
+        { "snapshot-id" => i, "timestamp-ms" => 1_700_000_000_000, "summary" => summary }
+      end }
+  end
+
+  test "unknown when there is no metadata" do
+    result = HealthEvaluator.evaluate(extractor({}))
     assert_equal :unknown, result[:status]
     assert_nil result[:score]
   end
 
-  test "healthy for a recent snapshot" do
-    result = HealthEvaluator.evaluate(extractor(last_at: 10.minutes.ago, snapshots: 5))
+  test "healthy for a well compacted cold table" do
+    result = HealthEvaluator.evaluate(
+      extractor(summary_metadata(data_files: 10, size_bytes: 10 * 128 * 1024 * 1024, snapshots: 5))
+    )
     assert_equal :healthy, result[:status]
-    assert_equal 100, result[:score]
   end
 
-  test "warning when the last snapshot is more than a day old" do
-    result = HealthEvaluator.evaluate(extractor(last_at: 30.hours.ago, snapshots: 5))
-    assert_equal :warning, result[:status]
-    assert_equal 60, result[:score]
-  end
-
-  test "warning when the last snapshot is a few days old" do
-    result = HealthEvaluator.evaluate(extractor(last_at: 3.days.ago, snapshots: 5))
-    assert_equal :warning, result[:status]
-    assert_equal 40, result[:score]
-  end
-
-  test "critical when the last snapshot is over a week old" do
-    result = HealthEvaluator.evaluate(extractor(last_at: 10.days.ago, snapshots: 5))
+  test "critical for tiny files and a huge snapshot count" do
+    result = HealthEvaluator.evaluate(
+      extractor(summary_metadata(data_files: 500, size_bytes: 1000 * 1024 * 1024, snapshots: 900))
+    )
     assert_equal :critical, result[:status]
-    assert_equal 20, result[:score]
-  end
-
-  test "snapshot count over the floor adds a penalty" do
-    result = HealthEvaluator.evaluate(extractor(last_at: 10.minutes.ago, snapshots: 60))
-    assert_equal :healthy, result[:status]
-    assert_equal 90, result[:score]
-  end
-
-  test "heavy snapshot count adds a larger penalty" do
-    result = HealthEvaluator.evaluate(extractor(last_at: 10.minutes.ago, snapshots: 300))
-    assert_equal 80, result[:score]
   end
 end
