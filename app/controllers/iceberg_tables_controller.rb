@@ -7,7 +7,7 @@ class IcebergTablesController < ApplicationController
     @catalogs   = Catalog.order(:name)
     @namespaces = IcebergTable.distinct.order(:namespace).pluck(:namespace)
 
-    @tables = IcebergTable.includes(:catalog, :maintenance_plan)
+    @tables = IcebergTable.includes(:catalog, :maintenance_plan, :table_freshness_sla, :latest_freshness_check)
                           .left_joins(:maintenance_schedules)
                           .select("iceberg_tables.*, COUNT(maintenance_schedules.id) AS schedules_count")
                           .group("iceberg_tables.id")
@@ -18,6 +18,14 @@ class IcebergTablesController < ApplicationController
 
     if params[:no_plan].present?
       @tables = @tables.where.not(id: MaintenancePlan.select(:iceberg_table_id))
+    end
+
+    if params[:freshness].present?
+      case params[:freshness]
+      when "late"    then @tables = @tables.where(id: TableFreshnessSla.where(status: "late").select(:iceberg_table_id))
+      when "error"   then @tables = @tables.where(id: TableFreshnessSla.where(status: "error").select(:iceberg_table_id))
+      when "no_sla"  then @tables = @tables.where.not(id: TableFreshnessSla.select(:iceberg_table_id))
+      end
     end
 
     if params[:q].present?
@@ -32,6 +40,8 @@ class IcebergTablesController < ApplicationController
     @table = IcebergTable.find(params[:id])
     @schedules = @table.maintenance_schedules.order(:operation)
     @executions = @table.execution_histories.latest.limit(20)
+    @freshness_sla = @table.table_freshness_sla
+    @freshness_checks = @table.freshness_checks.latest.limit(30)
   end
 
   # Fallback for the table-level "run now": runs the table's plan.

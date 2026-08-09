@@ -19,7 +19,11 @@
              { name: :health_status, label: t("tables.filter_status"),
                options: IcebergTable::HEALTH_STATUSES.map { |s| [ s, s ] } },
              { name: :no_plan, label: t("tables.filter_no_plan"),
-               options: [ [ t("tables.index.no_plan_option"), "1" ] ] }
+               options: [ [ t("tables.index.no_plan_option"), "1" ] ] },
+             { name: :freshness, label: t("tables.filter_freshness"),
+               options: [ [ t("tables.index.fresh_late_filter"), "late" ],
+                          [ t("tables.index.fresh_no_sla_filter"), "no_sla" ],
+                          [ t("tables.index.fresh_error_filter"), "error" ] ] }
            ] %>
 
 <section class="panel">
@@ -52,6 +56,7 @@
             <th><%= t("tables.index.col_records") %></th>
             <th><%= t("tables.index.col_snapshots") %></th>
             <th><%= t("tables.index.col_plan") %></th>
+            <th><%= t("tables.index.col_freshness") %></th>
             <th><%= t("tables.index.col_last_write") %></th>
             <% if current_user.admin? %>
               <th><span class="sr-only"><%= t("tables.index.col_actions") %></span></th>
@@ -79,6 +84,10 @@
                 <% else %>
                   <span class="badge badge-warning"><%= t("tables.index.no_plan") %></span>
                 <% end %>
+              </td>
+              <td>
+                <% freshness = freshness_label(table) %>
+                <span class="badge <%= freshness[1] %>"><span class="badge-dot"></span><%= freshness[0] %></span>
               </td>
               <td><%= timestamp(table.last_data_update) %></td>
               <% if current_user.admin? %>
