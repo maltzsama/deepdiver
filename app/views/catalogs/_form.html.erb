@@ -1,8 +1,8 @@
-<%= form_with model: catalog, class: "schedule-form" do |form| %>
+<%= form_with model: catalog, class: "space-y-4 max-w-lg" do |form| %>
   <% if catalog.errors.any? %>
-    <div id="error_explanation">
-      <h2><%= pluralize(catalog.errors.count, "error") %> prevented this catalog from being saved:</h2>
-      <ul>
+    <div id="error_explanation" class="bg-red-50 text-red-800 p-4 rounded border border-red-300 mb-4">
+      <h2 class="font-semibold"><%= pluralize(catalog.errors.count, "error") %> prevented this catalog from being saved:</h2>
+      <ul class="list-disc list-inside">
         <% catalog.errors.full_messages.each do |message| %>
           <li><%= message %></li>
         <% end %>
@@ -11,31 +11,31 @@
   <% end %>
 
   <div>
-    <%= form.label :name %>
-    <%= form.text_field :name %>
+    <%= form.label :name, class: "block text-sm font-medium mb-1" %>
+    <%= form.text_field :name, class: "w-full border border-gray-300 rounded px-3 py-1.5" %>
   </div>
 
   <div>
-    <%= form.label :trino_catalog_name, "Trino catalog name" %>
-    <p><small>Name of the catalog file in Trino's etc/catalog/&lt;name&gt;.properties</small></p>
-    <%= form.text_field :trino_catalog_name %>
+    <%= form.label :trino_catalog_name, "Trino catalog name", class: "block text-sm font-medium mb-1" %>
+    <p class="text-xs text-gray-500 mb-1">Name of the catalog file in Trino's etc/catalog/&lt;name&gt;.properties</p>
+    <%= form.text_field :trino_catalog_name, class: "w-full border border-gray-300 rounded px-3 py-1.5" %>
   </div>
 
   <div>
-    <%= form.label :catalog_type %>
-    <%= form.select :catalog_type, Catalog::CATALOG_TYPES %>
+    <%= form.label :catalog_type, class: "block text-sm font-medium mb-1" %>
+    <%= form.select :catalog_type, Catalog::CATALOG_TYPES, {}, class: "w-full border border-gray-300 rounded px-3 py-1.5" %>
   </div>
 
   <div>
-    <%= form.label :endpoint %>
-    <%= form.url_field :endpoint %>
+    <%= form.label :endpoint, class: "block text-sm font-medium mb-1" %>
+    <%= form.url_field :endpoint, class: "w-full border border-gray-300 rounded px-3 py-1.5" %>
   </div>
 
   <div>
-    <%= form.label :properties %>
-    <p><small>JSON, e.g. {"bearerToken": "..."}</small></p>
-    <%= form.text_area :properties, value: catalog.properties&.to_json %>
+    <%= form.label :properties, class: "block text-sm font-medium mb-1" %>
+    <p class="text-xs text-gray-500 mb-1">JSON, e.g. {"bearerToken": "..."}</p>
+    <%= form.text_area :properties, value: catalog.properties&.to_json, class: "w-full border border-gray-300 rounded px-3 py-1.5 font-mono text-sm" %>
   </div>
 
-  <%= form.submit %>
+  <%= form.submit class: "bg-gray-900 text-white px-4 py-2 rounded cursor-pointer" %>
 <% end %>

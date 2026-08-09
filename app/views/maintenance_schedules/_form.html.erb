@@ -1,7 +1,7 @@
-<%= form_with model: schedule do |f| %>
+<%= form_with model: schedule, class: "space-y-4 max-w-lg" do |f| %>
   <% if schedule.errors.any? %>
-    <div id="error_explanation">
-      <ul>
+    <div id="error_explanation" class="bg-red-50 text-red-800 p-4 rounded border border-red-300 mb-4">
+      <ul class="list-disc list-inside">
         <% schedule.errors.full_messages.each do |message| %>
           <li><%= message %></li>
         <% end %>
@@ -10,41 +10,43 @@
   <% end %>
 
   <div>
-    <%= f.label :iceberg_table_id, "Table" %>
+    <%= f.label :iceberg_table_id, "Table", class: "block text-sm font-medium mb-1" %>
     <%= f.collection_select :iceberg_table_id, IcebergTable.order(:name).includes(:catalog),
-                            :id, :fully_qualified_name %>
+                            :id, :fully_qualified_name, {}, class: "w-full border border-gray-300 rounded px-3 py-1.5" %>
   </div>
 
   <div>
-    <%= f.label :operation %>
-    <%= f.select :operation, MaintenanceSchedule::OPERATIONS %>
+    <%= f.label :operation, class: "block text-sm font-medium mb-1" %>
+    <%= f.select :operation, MaintenanceSchedule::OPERATIONS, {}, class: "w-full border border-gray-300 rounded px-3 py-1.5" %>
   </div>
 
   <div>
-    <%= f.label :cron %>
-    <%= f.text_field :cron, placeholder: "0 3 * * *" %>
+    <%= f.label :cron, class: "block text-sm font-medium mb-1" %>
+    <%= f.text_field :cron, placeholder: "0 3 * * *", class: "w-full border border-gray-300 rounded px-3 py-1.5" %>
   </div>
 
-  <div>
-    <%= f.label :is_paused %>
+  <div class="flex items-center gap-2">
     <%= f.check_box :is_paused %>
+    <%= f.label :is_paused, class: "text-sm" %>
   </div>
 
   <div>
-    <%= f.label :config, "Config" %>
+    <p class="text-sm font-medium mb-1">Config</p>
   </div>
   <div>
-    <%= f.label "config[file_size_threshold]", "File size threshold (only for optimize)" %>
+    <%= f.label "config[file_size_threshold]", "File size threshold (only for optimize)", class: "block text-sm mb-1" %>
     <%= text_field_tag "maintenance_schedule[config][file_size_threshold]",
                        schedule.config&.dig("file_size_threshold"),
-                       placeholder: "128MB" %>
+                       placeholder: "128MB",
+                       class: "w-full border border-gray-300 rounded px-3 py-1.5" %>
   </div>
   <div>
-    <%= f.label "config[retention_threshold]", "Retention threshold (only for expire_snapshots / remove_orphan_files)" %>
+    <%= f.label "config[retention_threshold]", "Retention threshold (only for expire_snapshots / remove_orphan_files)", class: "block text-sm mb-1" %>
     <%= text_field_tag "maintenance_schedule[config][retention_threshold]",
                        schedule.config&.dig("retention_threshold"),
-                       placeholder: "7d" %>
+                       placeholder: "7d",
+                       class: "w-full border border-gray-300 rounded px-3 py-1.5" %>
   </div>
 
-  <%= f.submit %>
+  <%= f.submit class: "bg-gray-900 text-white px-4 py-2 rounded cursor-pointer" %>
 <% end %>

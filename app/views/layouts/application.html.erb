@@ -19,34 +19,35 @@
     <link rel="apple-touch-icon" href="/icon.png">
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <header class="app-header">
-      <a class="app-brand" href="<%= root_path %>">LakeDeepDiver</a>
-      <nav class="app-nav">
-        <%= link_to "Dashboard", root_path %>
-        <%= link_to "Catalogs", catalogs_path %>
-        <%= link_to "Schedules", maintenance_schedules_path %>
+  <body class="min-h-screen bg-gray-50 text-gray-900">
+    <header class="flex items-center justify-between px-6 py-3 bg-gray-900 text-white">
+      <a href="<%= root_path %>" class="font-bold text-lg text-white no-underline">LakeDeepDiver</a>
+      <nav class="flex gap-4">
+        <%= link_to "Dashboard", root_path, class: "text-gray-300 hover:text-white" %>
+        <%= link_to "Catalogs", catalogs_path, class: "text-gray-300 hover:text-white" %>
+        <%= link_to "Schedules", maintenance_schedules_path, class: "text-gray-300 hover:text-white" %>
       </nav>
-      <div class="app-session">
+      <div class="flex items-center gap-3 text-sm">
         <% if user_signed_in? %>
-          <span class="app-user"><%= current_user.email %></span>
-          <%= button_to "Log out", destroy_user_session_path, method: :delete, class: "link-button" %>
+          <span class="text-gray-300"><%= current_user.email %></span>
+          <%= button_to "Log out", destroy_user_session_path, method: :delete,
+                        class: "bg-transparent border-none cursor-pointer hover:underline text-gray-300 hover:text-white p-0 text-sm" %>
         <% end %>
       </div>
     </header>
 
     <% if notice.present? %>
-      <p class="flash flash-notice"><%= notice %></p>
+      <p class="bg-green-100 text-green-800 border border-green-300 p-3 text-sm rounded m-4"><%= notice %></p>
     <% end %>
     <% if alert.present? %>
-      <p class="flash flash-alert"><%= alert %></p>
+      <p class="bg-red-100 text-red-800 border border-red-300 p-3 text-sm rounded m-4"><%= alert %></p>
     <% end %>
 
-    <main class="app-main">
+    <main class="container mx-auto px-4 py-6 max-w-5xl">
       <%= yield %>
     </main>
   </body>
