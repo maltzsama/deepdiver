@@ -21,7 +21,9 @@
         <th>Cron</th>
         <th>Paused</th>
         <th>Failures</th>
-        <th colspan="2"></th>
+        <% if current_user.admin? %>
+          <th colspan="2"></th>
+        <% end %>
       </tr>
     </thead>
     <tbody>

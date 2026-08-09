@@ -25,7 +25,7 @@
         <td><%= table.health_score %></td>
         <td><%= table.health_status %></td>
         <td><%= table.last_data_update&.presence ? table.last_data_update.to_fs(:db) : "&mdash;".html_safe %></td>
-        <td><%= table.maintenance_schedules.count %></td>
+        <td><%= table.schedules_count %></td>
       </tr>
     <% end %>
   </tbody>

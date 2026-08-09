@@ -7,7 +7,11 @@ class CatalogsController < ApplicationController
 
   def show
     @catalog = Catalog.find(params[:id])
-    @tables = @catalog.iceberg_tables.order(:namespace, :name)
+    @tables = @catalog.iceberg_tables
+                  .left_joins(:maintenance_schedules)
+                  .select("iceberg_tables.*, COUNT(maintenance_schedules.id) AS schedules_count")
+                  .group("iceberg_tables.id")
+                  .order(:namespace, :name)
   end
 
   def new
