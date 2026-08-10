@@ -1,4 +1,25 @@
 module ApplicationHelper
+  # Selected theme for the <html data-theme> attribute. Dark is the default;
+  # "light" (paper) is what the toggle in the topbar persists via cookie.
+  def html_theme
+    %w[light dark].include?(cookies[:theme]) ? cookies[:theme] : "dark"
+  end
+
+  # Operators may trigger maintenance runs; everything else that mutates a
+  # plan stays admin-only.
+  def can_run_maintenance?
+    current_user&.admin? || current_user&.operator?
+  end
+
+  def user_status_badge_class(status)
+    case status.to_s
+    when "active"    then "badge-ok"
+    when "invited"   then "badge-warn"
+    when "suspended" then "badge-err"
+    else "badge-mute"
+    end
+  end
+
   def health_badge_class(status)
     case status.to_s
     when "healthy"  then "badge-ok"
@@ -19,26 +40,26 @@ module ApplicationHelper
 
   def execution_step_badge_class(status)
     case status.to_s
-    when "succeeded" then "badge-healthy"
-    when "failed"    then "badge-critical"
+    when "succeeded" then "badge-ok"
+    when "failed"    then "badge-err"
     when "running"   then "badge-running"
-    else "badge-neutral"
+    else "badge-mute"
     end
   end
 
   def freshness_badge_class(status)
     case status.to_s
-    when "ok"      then "badge-healthy"
-    when "late"    then "badge-critical"
-    when "warning" then "badge-warning"
-    when "error"   then "badge-critical"
-    else "badge-neutral"
+    when "ok"      then "badge-ok"
+    when "late"    then "badge-err"
+    when "warning" then "badge-warn"
+    when "error"   then "badge-err"
+    else "badge-mute"
     end
   end
 
   def strata_fill_class(status)
     case status.to_s
-    when "healthy"  then "strata-fill-healthy"
+    when "healthy"  then "strata-fill-ok"
     when "critical" then "strata-fill-critical"
     else "strata-fill-warning"
     end
@@ -79,6 +100,8 @@ module ApplicationHelper
       "clock" => '<circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 4v4l3 2" stroke="currentColor" stroke-width="1.5"/>',
       "preset" => '<circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.5"/>',
       "list" => '<path d="M2 3h12M2 8h12M2 13h8" stroke="currentColor" stroke-width="1.5"/>',
+      "user" => '<circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2.5 14c0-2.6 2.5-4.2 5.5-4.2S13.5 11.4 13.5 14" stroke="currentColor" stroke-width="1.5"/>',
+      "team" => '<circle cx="5.5" cy="6" r="2.6" stroke="currentColor" stroke-width="1.5"/><circle cx="11" cy="7" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M1.5 13.5c0-2.2 1.8-3.4 4-3.4s4 1.2 4 3.4M10.5 10.5c1.5-.6 3.5-.3 4.2 2" stroke="currentColor" stroke-width="1.5"/>'
     }
 
     link_to(path, class: classes) do
@@ -120,16 +143,16 @@ module ApplicationHelper
   # [label, badge_class] for the freshness column, or nil.
   def freshness_label(table)
     sla = table.table_freshness_sla
-    return [ t("tables.index.fresh_no_sla"), "badge-neutral" ] if sla.nil? || !sla.enabled
+    return [ t("tables.index.fresh_no_sla"), "badge-mute" ] if sla.nil? || !sla.enabled
 
     delay = freshness_delay_label(table.latest_freshness_check&.delay_seconds)
     case sla.status
-    when "ok"      then [ delay || "ok", "badge-healthy" ]
-    when "warning" then [ delay || "warning", "badge-warning" ]
-    when "late"    then [ t("tables.index.fresh_late", delay: delay || "?"), "badge-critical" ]
-    when "error"   then [ t("tables.index.fresh_error"), "badge-critical" ]
-    when "no_data" then [ t("tables.index.fresh_no_data"), "badge-neutral" ]
-    else [ "—", "badge-neutral" ]
+    when "ok"      then [ delay || "ok", "badge-ok" ]
+    when "warning" then [ delay || "warning", "badge-warn" ]
+    when "late"    then [ t("tables.index.fresh_late", delay: delay || "?"), "badge-err" ]
+    when "error"   then [ t("tables.index.fresh_error"), "badge-err" ]
+    when "no_data" then [ t("tables.index.fresh_no_data"), "badge-mute" ]
+    else [ "—", "badge-mute" ]
     end
   end
 
