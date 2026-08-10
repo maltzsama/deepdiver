@@ -39,6 +39,6 @@ RSpec.describe "GET /", type: :request do
     get root_path
 
     expect(assigns(:last_sync_at)).to be_present
-    expect(response.body).to include("Not real-time")
+    expect(response.body).to include("Synced less than a minute ago")
   end
 end
