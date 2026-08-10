@@ -58,7 +58,7 @@
             <th><%= t("tables.index.col_plan") %></th>
             <th><%= t("tables.index.col_freshness") %></th>
             <th><%= t("tables.index.col_last_write") %></th>
-            <% if current_user.admin? %>
+            <% if can_run_maintenance? %>
               <th><span class="sr-only"><%= t("tables.index.col_actions") %></span></th>
             <% end %>
           </tr>
@@ -72,7 +72,7 @@
                 <span class="badge <%= health_badge_class(table.health_status) %>">
                   <span class="badge-dot"></span><%= table.health_status %>
                 </span>
-                <span class="ml-1 font-mono text-xs text-abyss-700"><%= table.health_score %></span>
+                <span class="ml-1 font-mono text-xs text-cosmos-fg-soft"><%= table.health_score %></span>
               </td>
               <td class="cell-num"><%= table.total_data_files || "—" %></td>
               <td class="cell-num"><%= table.average_file_size ? number_to_human_size(table.average_file_size) : "—" %></td>
@@ -90,7 +90,7 @@
                 <span class="badge <%= freshness[1] %>"><span class="badge-dot"></span><%= freshness[0] %></span>
               </td>
               <td><%= timestamp(table.last_data_update) %></td>
-              <% if current_user.admin? %>
+              <% if can_run_maintenance? %>
                 <td class="text-right whitespace-nowrap">
                   <%= button_to t("tables.index.run"), run_maintenance_iceberg_table_path(table),
                                 method: :post, class: "btn btn-default btn-sm" %>

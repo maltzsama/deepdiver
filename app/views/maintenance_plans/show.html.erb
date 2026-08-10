@@ -7,16 +7,18 @@
     <p class="page-sub"><%= t("plans.show.subtitle", cron: @plan.cron) %></p>
   </div>
 
-  <% if current_user.admin? %>
+  <% if current_user.admin? || current_user.operator? %>
     <div class="page-actions">
       <%= button_to t("plans.show.run_now"), run_maintenance_plan_path(@plan), method: :post,
                     class: "btn btn-primary" %>
-      <% if @plan.paused? %>
-        <%= button_to t("plans.show.resume"), resume_maintenance_plan_path(@plan), method: :post,
-                      class: "btn btn-default" %>
-      <% else %>
-        <%= button_to t("plans.show.pause"), pause_maintenance_plan_path(@plan), method: :post,
-                      class: "btn btn-default" %>
+      <% if current_user.admin? %>
+        <% if @plan.paused? %>
+          <%= button_to t("plans.show.resume"), resume_maintenance_plan_path(@plan), method: :post,
+                        class: "btn btn-default" %>
+        <% else %>
+          <%= button_to t("plans.show.pause"), pause_maintenance_plan_path(@plan), method: :post,
+                        class: "btn btn-default" %>
+        <% end %>
       <% end %>
     </div>
   <% end %>

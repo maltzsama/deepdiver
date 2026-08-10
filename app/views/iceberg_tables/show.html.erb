@@ -9,16 +9,18 @@
     <h1 class="page-title-mono"><%= @table.fully_qualified_name %></h1>
   </div>
 
-  <% if current_user.admin? %>
-    <div class="page-actions">
-      <%= link_to t("tables.show.new_schedule"),
-                  new_maintenance_schedule_path(iceberg_table_id: @table.id),
-                  class: "btn btn-default" %>
+  <div class="page-actions">
+    <% if can_run_maintenance? %>
       <%= button_to t("tables.show.run_now"),
                     run_maintenance_iceberg_table_path(@table), method: :post,
                     class: "btn btn-primary" %>
-    </div>
-  <% end %>
+    <% end %>
+    <% if current_user.admin? %>
+      <%= link_to t("tables.show.new_schedule"),
+                  new_maintenance_schedule_path(iceberg_table_id: @table.id),
+                  class: "btn btn-default" %>
+    <% end %>
+  </div>
 </div>
 
 <section class="panel mb-6">
