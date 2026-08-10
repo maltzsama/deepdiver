@@ -42,7 +42,7 @@
             <td>
               <%= form_with model: user, method: :patch, class: "inline-flex items-center gap-2" do |form| %>
                 <%= form.select :role, User::ROLES.map { |role| [ t("users.roles.#{role}"), role ] }, {},
-                                class: "bg-cosmos-sunk border border-cosmos-line-2 text-cosmos-fg font-mono text-xs px-2 py-1 rounded cursor-pointer hover:border-cosmos-line-bold",
+                                class: "field-input field-input-mono py-1 text-xs cursor-pointer",
                                 onchange: "this.form.requestSubmit()",
                                 disabled: user == current_user %>
               <% end %>

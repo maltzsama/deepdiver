@@ -40,6 +40,7 @@
    The `--color-*` theme tokens below are bound to these lives via
    `@theme inline`, so switching `data-theme` re-themes every utility. */
 :root {
+  color-scheme: dark;
   --bg:        #0B0B0A;
   --surface:   #141413;
   --soft:      #1A1A18;
@@ -65,6 +66,7 @@
 }
 
 [data-theme="light"] {
+  color-scheme: light;
   --bg:        #F4F1E8;   /* paper   */
   --surface:   #FFFFFF;
   --soft:      #ECE8DC;   /* paper-2 */
@@ -123,6 +125,19 @@
   --radius-panel: 6px;
 }
 
+/* ---- type scale (CR-71) ----
+   Three functional sizes plus the numeric variant; the app should not reach
+   for 12/13/14px in a dozen different ways. The scale is static (not part of
+   the runtime `--color-*` live set), so it lives in a regular `@theme` block
+   and also turns each entry into a `text-*` utility (text-body, text-small,
+   text-micro, text-num). */
+@theme {
+  --text-micro: 10px;
+  --text-small: 12px;
+  --text-body:  14px;
+  --text-num:   13px;
+}
+
 /* ===================================================================
    Components. They exist so the next dev does not have to memorise 14
    utilities per button. If a pattern shows up 3+ times, it becomes a
@@ -135,7 +150,7 @@
   .app-main    { @apply mx-auto w-full max-w-7xl px-4 py-8 sm:px-6; }
 
   /* Signed-in shell: sidebar column + content. The sidebar width is driven by
-     --sidebar-w so collapsing it (52px) also widens the content track. */
+     --sidebar-w so collapsing it (45px) also widens the content track. */
   .app-shell-grid {
     display: grid;
     grid-template-columns: var(--sidebar-w, 220px) 1fr;
@@ -143,7 +158,7 @@
     height: 100vh;
     overflow: hidden;
   }
-  .app-shell-grid:has(.sidebar.collapsed) { --sidebar-w: 52px; }
+  .app-shell-grid:has(.sidebar.collapsed) { --sidebar-w: 45px; }
   .sidebar { width: var(--sidebar-w, 220px); }
 
   .app-header  { @apply sticky top-0 z-20 border-b border-cosmos-line bg-cosmos-surface; }
@@ -162,35 +177,35 @@
 
   /* ---------- page header ---------- */
   .page-head   { @apply mb-6 flex flex-wrap items-start justify-between gap-4; }
-  .page-eyebrow{ @apply font-mono text-xs uppercase tracking-widest text-cosmos-fg-mute; }
-  .page-title  { @apply mt-1 text-2xl font-semibold tracking-tight text-cosmos-fg; }
-  .page-title-mono { @apply mt-1 font-mono text-xl font-semibold tracking-tight text-cosmos-fg break-all; }
-  .page-sub    { @apply mt-1 text-sm text-cosmos-fg-soft; }
+  .page-eyebrow{ @apply font-mono text-micro font-bold uppercase tracking-[0.2em] text-red-DEFAULT; }
+  .page-title  { @apply mt-1 font-display text-2xl font-extrabold tracking-tight text-cosmos-fg; }
+  .page-title-mono { @apply mt-1 font-mono text-2xl font-bold tracking-tight text-cosmos-fg break-all; }
+  .page-sub    { @apply mt-1 text-body text-cosmos-fg-mute; }
   .page-actions{ @apply flex flex-wrap items-center gap-2; }
 
   /* ---------- stat cards ---------- */
   .stat-card   { @apply bg-cosmos-surface p-3.5 flex flex-col gap-1.5 min-h-[100px]; }
-  .stat-label  { @apply font-mono text-[10px] font-semibold tracking-[0.14em] uppercase text-cosmos-fg-mute; }
-  .stat-value  { @apply font-display text-3xl font-extrabold tracking-tight leading-none text-cosmos-fg; }
-  .stat-sub    { @apply font-mono text-[11px] text-cosmos-fg-mute; }
+  .stat-label  { @apply font-mono text-micro font-semibold tracking-[0.14em] uppercase text-cosmos-fg-mute; }
+  .stat-value  { @apply font-display text-3xl font-extrabold tracking-tight leading-none text-cosmos-fg tabular-nums; }
+  .stat-sub    { @apply font-mono text-small text-cosmos-fg-mute; }
   .stat-track  { @apply h-[3px] bg-cosmos-sunk border border-cosmos-line-2 mt-auto; }
   .stat-fill   { @apply h-full bg-cosmos-fg transition-all; }
 
   /* ---------- panels ---------- */
   .panel       { @apply rounded-[var(--radius-panel)] border border-cosmos-line bg-cosmos-surface; }
   .panel-head  { @apply flex items-center justify-between px-4 h-9 border-b border-cosmos-line bg-cosmos-soft; }
-  .panel-title { @apply font-mono text-[11px] font-bold tracking-[0.12em] uppercase text-cosmos-fg; }
-  .panel-meta  { @apply font-mono text-[11px] text-cosmos-fg-mute; }
-  .panel-note  { @apply font-mono text-xs text-cosmos-fg-mute; }
+  .panel-title { @apply font-mono text-micro font-bold tracking-[0.12em] uppercase text-cosmos-fg; }
+  .panel-meta  { @apply font-mono text-small text-cosmos-fg-mute; }
+  .panel-note  { @apply font-mono text-small text-cosmos-fg-mute; }
   .panel-body  { @apply p-4; }
 
   /* ---------- tables ---------- */
-  .data-table  { @apply w-full border-collapse text-sm; }
+  .data-table  { @apply w-full border-collapse text-body; }
   .data-table thead th {
-    @apply text-left px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.14em]
+    @apply text-left px-3 py-2 font-mono text-micro font-bold uppercase tracking-[0.14em]
            text-cosmos-fg-mute border-b border-cosmos-line bg-cosmos-sunk whitespace-nowrap;
   }
-  .data-table tbody td { @apply px-3 py-2.5 border-b border-cosmos-line-2 text-cosmos-fg-soft align-middle; }
+  .data-table tbody td { @apply px-3 py-2.5 border-b border-cosmos-line-2 text-cosmos-fg-soft align-middle text-body; }
   .data-table tbody tr:last-child td { @apply border-b-0; }
   .data-table tbody tr { @apply transition hover:bg-cosmos-soft; }
   .data-table-scroll { @apply -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0; }
@@ -207,9 +222,10 @@
   .data-table tr.table-subrow:hover td { background: var(--sunk); }
   .data-table tr.table-subrow:last-child td { border-bottom-width: 0; }
 
-  .cell-id     { @apply font-mono text-sm text-cosmos-fg; }
-  .cell-muted  { @apply text-cosmos-fg-mute; }
-  .cell-num    { @apply font-mono text-sm text-cosmos-fg-soft; }
+  .cell-id     { @apply font-mono text-body text-cosmos-fg break-all; }
+  .cell-muted  { @apply text-small text-cosmos-fg-mute; }
+  .cell-num    { @apply font-mono text-num tabular-nums text-cosmos-fg-soft; }
+  .cell-meta   { @apply text-small text-cosmos-fg-mute; }
 
   /* ---------- links ---------- */
   .link        { @apply text-red-DEFAULT underline-offset-2 hover:underline
@@ -229,7 +245,7 @@
 
   /* ---------- status badges (single palette) ---------- */
   .badge { @apply inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5
-            font-mono text-[10px] font-bold uppercase whitespace-nowrap; }
+            font-mono text-micro font-bold uppercase whitespace-nowrap; }
   .badge-ok      { @apply border-ok-DEFAULT text-ok-DEFAULT bg-ok-soft; }
   .badge-warn    { @apply border-warn-DEFAULT text-warn-DEFAULT bg-warn-soft; }
   .badge-err     { @apply border-red-DEFAULT text-red-DEFAULT bg-red-soft; }
@@ -267,21 +283,21 @@
   .chain-here-ok   { @apply bg-ok-DEFAULT ring-ok-soft size-2.5; }
   .chain-here-fail { @apply bg-red-DEFAULT ring-red-soft size-2.5; }
   .chain-todo  { @apply bg-cosmos-line-2; }
-  .chain-label { @apply ml-2 font-mono text-xs text-cosmos-fg-mute; }
+  .chain-label { @apply ml-2 font-mono text-small text-cosmos-fg-mute; }
   .chain-here-retry { @apply bg-warn-DEFAULT size-2.5 ring-2 ring-warn-soft; animation: chain-pulse 2s ease-in-out infinite; }
-  .chain-retry-badge { @apply ml-1.5 rounded bg-warn-soft px-1.5 py-0.5 font-mono text-[10px] font-medium text-warn-DEFAULT; }
+  .chain-retry-badge { @apply ml-1.5 rounded bg-warn-soft px-1.5 py-0.5 font-mono text-micro font-medium text-warn-DEFAULT; }
 
   /* ---------- forms ---------- */
   .form-grid   { @apply grid gap-5 sm:max-w-2xl; }
   .field       { @apply flex flex-col gap-1.5; }
-  .field-label { @apply text-sm font-medium text-cosmos-fg; }
-  .field-hint  { @apply text-xs text-cosmos-fg-mute; }
-  .field-input { @apply w-full rounded border border-cosmos-line-2 bg-cosmos-sunk px-3 py-2 text-sm
+  .field-label { @apply text-body font-medium text-cosmos-fg; }
+  .field-hint  { @apply text-small text-cosmos-fg-mute; }
+  .field-input { @apply w-full rounded border border-cosmos-line-2 bg-cosmos-sunk px-3 py-2 text-body
                   text-cosmos-fg shadow-sm transition
                   placeholder:text-cosmos-fg-mute
                   focus:border-red-DEFAULT focus:outline-2 focus:outline-offset-0 focus:outline-red-DEFAULT; }
   .field-input-mono { @apply font-mono; }
-  .field-check { @apply flex items-center gap-2 text-sm text-cosmos-fg; }
+  .field-check { @apply flex items-center gap-2 text-body text-cosmos-fg; }
   .field-checkbox { @apply size-4 rounded border-cosmos-line-2 accent-red-DEFAULT text-red-DEFAULT
                      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-DEFAULT; }
 
@@ -304,30 +320,30 @@
   }
 
   .field-group { @apply rounded-[var(--radius-panel)] border border-cosmos-line bg-cosmos-soft/60 p-4; }
-  .field-group-title { @apply mb-3 font-mono text-xs uppercase tracking-widest text-cosmos-fg-mute; }
+  .field-group-title { @apply mb-3 font-mono text-small uppercase tracking-widest text-cosmos-fg-mute; }
   .form-actions{ @apply flex items-center gap-3 pt-2; }
 
   /* ---------- validation errors ---------- */
   .errors      { @apply rounded-[var(--radius-panel)] border border-red-DEFAULT/40 bg-red-soft p-4; }
-  .errors-title{ @apply text-sm font-semibold text-red-DEFAULT; }
-  .errors-list { @apply mt-2 list-disc space-y-1 pl-5 text-sm text-red-DEFAULT; }
+  .errors-title{ @apply text-body font-semibold text-red-DEFAULT; }
+  .errors-list { @apply mt-2 list-disc space-y-1 pl-5 text-body text-red-DEFAULT; }
 
   /* ---------- flash ---------- */
-  .flash       { @apply mb-4 flex items-start gap-2 rounded-[var(--radius-panel)] border px-4 py-3 text-sm; }
+  .flash       { @apply mb-4 flex items-start gap-2 rounded-[var(--radius-panel)] border px-4 py-3 text-body; }
   .flash-notice{ @apply border-ok-DEFAULT/40 bg-ok-soft text-ok-DEFAULT; }
   .flash-alert { @apply border-red-DEFAULT/40 bg-red-soft text-red-DEFAULT; }
 
   /* ---------- empty state ---------- */
-  .empty       { @apply px-4 py-12 text-center; }
-  .empty-title { @apply text-sm font-medium text-cosmos-fg; }
-  .empty-hint  { @apply mx-auto mt-1 max-w-sm text-sm text-cosmos-fg-mute; }
+  .empty       { @apply px-4 py-14 text-center; }
+  .empty-title { @apply text-base font-semibold text-cosmos-fg; }
+  .empty-hint  { @apply mx-auto mt-1.5 max-w-sm text-body text-cosmos-fg-mute; }
   .empty-action{ @apply mt-4; }
 
   /* ---------- definition list ---------- */
   .dl          { @apply grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4; }
-  .dl-term     { @apply font-mono text-xs uppercase tracking-widest text-cosmos-fg-mute; }
-  .dl-desc     { @apply mt-1 text-sm text-cosmos-fg; }
-  .dl-desc-mono{ @apply mt-1 font-mono text-sm text-cosmos-fg break-all; }
+  .dl-term     { @apply font-mono text-small uppercase tracking-widest text-cosmos-fg-mute; }
+  .dl-desc     { @apply mt-1 text-body text-cosmos-fg; }
+  .dl-desc-mono{ @apply mt-1 font-mono text-body text-cosmos-fg break-all; }
 
   /* ---------- authentication screen (always dark) ----------
      The auth pages are pre-login and stick to the dark theme even when

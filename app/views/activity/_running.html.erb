@@ -70,10 +70,10 @@
         <% queued.each_with_index do |execution, index| %>
           <div class="flex items-center justify-between gap-3 px-4 py-3">
             <div class="min-w-0">
-              <p class="truncate font-mono text-xs text-cosmos-fg">
+              <p class="truncate font-mono text-small text-cosmos-fg" title="<%= execution.iceberg_table.fully_qualified_name %>">
                 <%= link_to execution.iceberg_table.fully_qualified_name, execution.iceberg_table, class: "link-mono" %>
               </p>
-              <p class="cell-muted text-xs">
+              <p class="cell-muted text-small">
                 <%= index + 1 %> · <%= execution.waiting_reason %>
               </p>
             </div>
