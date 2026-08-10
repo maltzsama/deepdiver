@@ -7,6 +7,39 @@ FactoryBot.define do
     trait :admin do
       role { "admin" }
     end
+
+    trait :operator do
+      role { "operator" }
+    end
+
+    trait :invited do
+      status { "invited" }
+    end
+
+    trait :suspended do
+      status { "suspended" }
+    end
+  end
+
+  factory :team do
+    sequence(:name) { |n| "Team #{n}" }
+  end
+
+  factory :team_membership do
+    team
+    user
+  end
+
+  factory :team_catalog_scope do
+    team
+    catalog
+  end
+
+  factory :role_change_log do
+    user
+    association :changed_by, factory: :user
+    from_role { 0 }
+    to_role { 0 }
   end
 
   factory :catalog do
