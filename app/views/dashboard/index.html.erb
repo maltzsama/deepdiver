@@ -1,5 +1,12 @@
 <% content_for :title, "Overview — LakeDeepDiver" %>
 
+<% if @open_error_count && @open_error_count.positive? %>
+  <a href="<%= error_events_path %>"
+     class="flash flash-alert mb-5 no-underline block">
+    <%= t("error_events.overview_banner", count: @open_error_count) %>
+  </a>
+<% end %>
+
 <div class="flex items-center justify-between mb-5 pb-3 border-b border-cosmos-line">
   <div>
     <p class="font-mono text-[10px] font-bold tracking-[0.2em] uppercase text-red-DEFAULT">Control Plane</p>
@@ -25,7 +32,7 @@
 <% healthy = (@health_counts || {})["healthy"] || 0 %>
 <% critical = (@health_counts || {})["critical"] || 0 %>
 <% warning = (@health_counts || {})["warning"] || 0 %>
-<div class="grid grid-cols-4 gap-px bg-cosmos-line border border-cosmos-line mb-5">
+<div class="grid grid-cols-2 gap-px bg-cosmos-line border border-cosmos-line mb-5 md:grid-cols-3 lg:grid-cols-5">
   <%= render "shared/stat_card", label: "Tables", value: total, unit: "across all catalogs",
              track_pct: 100 %>
   <%= render "shared/stat_card", label: "Healthy", value: healthy,
@@ -39,35 +46,105 @@
   <%= render "shared/stat_card", label: "Active Plans", value: MaintenancePlan.dispatchable.count,
              unit: "#{MaintenancePlan.where(is_paused: true).count} paused",
              track_pct: 100 %>
+  <% late = @freshness_counts.fetch("late", 0) %>
+  <% sla_total = @freshness_counts.values.sum %>
+  <%= link_to execution_histories_path(kind: "freshness"), class: "block" do %>
+    <%= render "shared/stat_card",
+          label: t("dashboard.index.sla_card_label"),
+          value: late,
+          value_class: late.positive? ? "text-red-DEFAULT" : "text-ok-DEFAULT",
+          fill_class: late.positive? ? "bg-red-DEFAULT" : "bg-ok-DEFAULT",
+          unit: t("dashboard.index.sla_card_unit"),
+          track_pct: sla_total.zero? ? 0 : (late.to_f / sla_total * 100) %>
+  <% end %>
 </div>
 
-<!-- Tabela de piores notas -->
+<!-- Precisa de acao -->
 <div class="panel">
   <div class="panel-head">
-    <h2 class="panel-title">Worst Health</h2>
-    <%= link_to "View all →", iceberg_tables_path, class: "font-mono text-xs text-cosmos-fg-mute hover:text-cosmos-fg" %>
+    <h2 class="panel-title"><%= t("dashboard.index.triage_title") %></h2>
+    <span class="panel-note">
+      <% if @triage.any? %>
+        <%= t("dashboard.index.triage_note", count: @triage.size) %>
+      <% end %>
+    </span>
   </div>
-  <div class="p-4">
-    <% if (@worst_health_tables || []).empty? %>
-      <div class="text-center text-cosmos-fg-mute py-8 font-mono text-sm">All tables healthy ✨</div>
-    <% else %>
+
+  <% if @triage.empty? %>
+    <div class="panel-body text-center py-10">
+      <p class="text-sm text-cosmos-fg-soft"><%= t("dashboard.index.triage_empty_title") %></p>
+      <p class="text-xs text-cosmos-fg-mute mt-1"><%= t("dashboard.index.triage_empty_hint") %></p>
+    </div>
+  <% else %>
+    <div class="panel-body p-0 data-table-scroll">
       <table class="data-table">
-        <thead><tr><th>Table</th><th>Catalog</th><th>Health</th><th>Status</th><th>Last Write</th><% if can_run_maintenance? %><th></th><% end %></tr></thead>
+        <thead>
+          <tr>
+            <th><%= t("dashboard.index.col_table") %></th>
+            <th><%= t("dashboard.index.col_maintenance") %></th>
+            <th><%= t("dashboard.index.col_freshness") %></th>
+            <th><%= t("dashboard.index.col_since") %></th>
+            <th></th>
+          </tr>
+        </thead>
         <tbody>
-          <% @worst_health_tables.each do |table| %>
+          <% @triage.each do |row| %>
             <tr>
-              <td class="cell-id"><%= link_to table.fully_qualified_name, table, class: "hover:underline" %></td>
-              <td class="cell-muted"><%= table.catalog.name %></td>
-              <td><%= render "shared/health", table: table %></td>
-              <td><span class="badge <%= health_badge_class(table.health_status) %>"><span class="badge-dot"></span><%= table.health_status %></span></td>
-              <td class="cell-muted"><%= table.last_data_update&.to_fs(:db) || "—" %></td>
-              <% if can_run_maintenance? %>
-                <td><%= button_to "Run", run_maintenance_iceberg_table_path(table), method: :post, class: "px-3 py-1 font-mono text-[10px] font-semibold bg-cosmos-surface border border-cosmos-line text-cosmos-fg-soft hover:bg-cosmos-soft hover:text-cosmos-fg cursor-pointer" %></td>
-              <% end %>
+              <td class="cell-id">
+                <%= link_to row.table.fully_qualified_name, row.table, class: "hover:underline" %>
+                <span class="text-xs text-cosmos-fg-mute ml-2"><%= row.table.catalog.name %></span>
+              </td>
+
+              <%# Coluna de manutenção — vermelha só se for esse o problema %>
+              <td>
+                <% if row.reasons.include?(:health) %>
+                  <span class="badge badge-err">
+                    <span class="badge-dot"></span><%= row.table.health_score %>
+                  </span>
+                <% elsif row.table.health_score %>
+                  <span class="text-xs text-cosmos-fg-mute"><%= row.table.health_score %></span>
+                <% else %>
+                  <span class="text-xs text-cosmos-fg-mute">—</span>
+                <% end %>
+              </td>
+
+              <%# Coluna de frescor %>
+              <td>
+                <% if row.reasons.include?(:freshness) %>
+                  <span class="badge <%= row.sla.status == "late" ? "badge-err" : "badge-warn" %>">
+                    <span class="badge-dot"></span>
+                    <% if row.sla.breached_since %>
+                      <%= distance_of_time_in_words(row.sla.breached_since, Time.current) %>
+                    <% else %>
+                      <%= t("freshness.status.#{row.sla.status}") %>
+                    <% end %>
+                  </span>
+                <% elsif row.sla&.enabled? %>
+                  <span class="text-xs text-cosmos-fg-mute">on track</span>
+                <% else %>
+                  <span class="text-xs text-cosmos-fg-mute">no SLA</span>
+                <% end %>
+              </td>
+
+              <td class="cell-muted">
+                <% if row.degraded_at %>
+                  <%= distance_of_time_in_words(row.degraded_at, Time.current) %> ago
+                <% else %>
+                  <span class="text-cosmos-fg-mute">—</span>
+                <% end %>
+              </td>
+
+              <td class="text-right">
+                <% if row.reasons.include?(:health) && row.table.maintenance_plan && can_run_maintenance? %>
+                  <%= button_to t("dashboard.index.run_now"),
+                        run_maintenance_plan_path(row.table.maintenance_plan),
+                        method: :post, class: "link text-xs" %>
+                <% end %>
+              </td>
             </tr>
           <% end %>
         </tbody>
       </table>
-    <% end %>
-  </div>
+    </div>
+  <% end %>
 </div>

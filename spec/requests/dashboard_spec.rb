@@ -24,21 +24,27 @@ RSpec.describe "GET /", type: :request do
     expect(assigns(:total_tables)).to eq(0)
   end
 
-  it "excludes tables without a score from the worst-health list" do
-    with_score = create(:iceberg_table, catalog:, health_score: 30, health_status: "critical")
-    create(:iceberg_table, catalog:, health_score: nil, health_status: "unknown")
-
-    get root_path
-
-    expect(assigns(:worst_health_tables)).to contain_exactly(with_score)
-  end
-
   it "reports when the last sync happened" do
-    create(:iceberg_table, catalog:)
+    create(:iceberg_table, catalog:, metadata_synced_at: 5.seconds.ago)
 
     get root_path
 
     expect(assigns(:last_sync_at)).to be_present
-    expect(response.body).to include("Synced less than a minute ago")
+    expect(response.body).to match(/Synced less than a minute ago/)
+  end
+
+  it "includes tables needing action in the triage list" do
+    create(:iceberg_table, catalog:, health_status: "critical",
+                           health_score: 20, health_status_changed_at: 2.days.ago)
+
+    get root_path
+
+    expect(assigns(:triage).map(&:table).map(&:health_status)).to eq([ "critical" ])
+  end
+
+  it "shows an empty state when nothing needs action" do
+    get root_path
+
+    expect(response.body).to include("Nothing needs attention")
   end
 end

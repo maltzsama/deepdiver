@@ -17,11 +17,16 @@ class CatalogSyncService
           begin
             upsert_table(namespace, table_name)
           rescue StandardError => e
+            ErrorEvent.record(catalog: @catalog, schema: namespace, table: table_name,
+                              operation: "sync-table", source_system: "catalog",
+                              error_class: e.class.name, message: e.message)
             errors << "#{namespace}.#{table_name}: #{e.message}"
             Rails.logger.warn("Sync failed for #{namespace}.#{table_name}: #{e.message}")
           end
         end
       rescue StandardError => e
+        ErrorEvent.record(catalog: @catalog, schema: namespace, operation: "sync-namespace",
+                          source_system: "catalog", error_class: e.class.name, message: e.message)
         errors << "namespace #{namespace}: #{e.message}"
         Rails.logger.warn("Sync failed for namespace #{namespace}: #{e.message}")
       end
@@ -42,6 +47,7 @@ class CatalogSyncService
     extractor = TableMetadataExtractor.new(payload["metadata"] || payload)
 
     table = @catalog.iceberg_tables.find_or_create_by!(namespace: namespace, name: table_name)
+    previous_status = table.health_status
     health = HealthEvaluator.evaluate(extractor, plan: table.maintenance_plan, now: @now)
 
     attributes = {
@@ -66,6 +72,11 @@ class CatalogSyncService
       attributes[:health_score] = health[:score]
       attributes[:health_status] = health[:status].to_s
     end
+
+    # Só carimba quando MUDA de estado. Sem isso, todo sync reiniciaria o
+    # relógio e a ordenação por "quebrou agora" seria sempre a ordem do sync.
+    attributes[:health_status_changed_at] = @now if attributes[:health_status] &&
+                                                    attributes[:health_status] != previous_status
 
     table.update!(attributes)
     table

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_10_173000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_10_231001) do
   create_table "catalog_credentials", force: :cascade do |t|
     t.string "auth_method", default: "none", null: false
     t.integer "catalog_id", null: false
@@ -37,6 +37,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_173000) do
     t.string "trino_catalog_name_override"
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_catalogs_on_name", unique: true
+  end
+
+  create_table "error_events", force: :cascade do |t|
+    t.integer "catalog_id"
+    t.json "context", default: {}
+    t.datetime "created_at", null: false
+    t.string "error_class", default: "StandardError", null: false
+    t.datetime "first_seen_at", null: false
+    t.datetime "last_seen_at", null: false
+    t.string "message", default: "", null: false
+    t.integer "occurrence_count", default: 1, null: false
+    t.string "operation", default: "catalog-sync", null: false
+    t.string "schema", default: "", null: false
+    t.string "severity", default: "error", null: false
+    t.string "source_column"
+    t.string "source_system", default: "deeplake", null: false
+    t.string "status", default: "open", null: false
+    t.string "table", default: "", null: false
+    t.datetime "updated_at", null: false
+    t.index ["catalog_id", "status"], name: "index_error_events_on_catalog_id_and_status"
+    t.index ["catalog_id"], name: "index_error_events_on_catalog_id"
+    t.index ["operation", "status"], name: "index_error_events_on_operation_and_status"
+    t.index ["schema", "table"], name: "index_error_events_on_schema_and_table"
   end
 
   create_table "execution_histories", force: :cascade do |t|
@@ -115,6 +138,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_173000) do
     t.bigint "equality_deletes"
     t.integer "health_score"
     t.string "health_status", default: "unknown", null: false
+    t.datetime "health_status_changed_at"
     t.datetime "last_data_update"
     t.datetime "metadata_synced_at"
     t.string "name", null: false
@@ -135,6 +159,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_173000) do
     t.datetime "updated_at", null: false
     t.index ["catalog_id", "namespace", "name"], name: "index_iceberg_tables_on_catalog_id_and_namespace_and_name", unique: true
     t.index ["catalog_id"], name: "index_iceberg_tables_on_catalog_id"
+    t.index ["health_status", "health_status_changed_at"], name: "idx_on_health_status_health_status_changed_at_0caff44fb9"
     t.index ["total_data_files"], name: "index_iceberg_tables_on_total_data_files"
     t.index ["total_size_bytes"], name: "index_iceberg_tables_on_total_size_bytes"
   end
@@ -279,10 +304,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_173000) do
 
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.string "display_name"
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: ""
     t.datetime "invited_at"
     t.bigint "invited_by_id"
+    t.datetime "last_seen_at"
+    t.string "locale", default: "en", null: false
     t.string "provider"
     t.datetime "remember_created_at"
     t.datetime "reset_password_sent_at"
@@ -291,6 +319,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_173000) do
     t.string "status", default: "active", null: false
     t.datetime "suspended_at"
     t.bigint "suspended_by_id"
+    t.string "theme", default: "dark", null: false
     t.string "uid"
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
@@ -300,6 +329,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_173000) do
   end
 
   add_foreign_key "catalog_credentials", "catalogs"
+  add_foreign_key "error_events", "catalogs"
   add_foreign_key "execution_histories", "iceberg_tables"
   add_foreign_key "execution_histories", "maintenance_plans"
   add_foreign_key "execution_histories", "maintenance_schedules"

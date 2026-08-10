@@ -1,0 +1,67 @@
+<% content_for :title, "#{t("error_events.title")} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("error_events.eyebrow") %></p>
+    <h1 class="page-title"><%= t("error_events.title") %></h1>
+    <p class="page-sub"><%= t("error_events.subtitle", open: @open_count) %></p>
+  </div>
+</div>
+
+<% if @events.empty? %>
+  <section class="panel">
+    <div class="empty">
+      <p class="empty-title"><%= t("error_events.empty_title") %></p>
+      <p class="empty-hint"><%= t("error_events.empty_hint") %></p>
+    </div>
+  </section>
+<% else %>
+  <section class="panel mb-4">
+    <div class="panel-body flex flex-wrap items-center gap-2">
+      <% ErrorEvent::STATUSES.each do |status| %>
+        <%= link_to status,
+                    error_events_path(status: status, operation: params[:operation]),
+                    class: "badge #{status == (params[:status] || "open") ? "badge-ok" : "badge-mute"}" %>
+      <% end %>
+      <span class="font-mono text-small text-cosmos-fg-mute ml-auto">
+        <%= ErrorEvent.group(:status).count.map { |s, c| "#{s}: #{c}" }.join(" · ") %>
+      </span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><%= t("error_events.col_table") %></th>
+            <th><%= t("error_events.col_operation") %></th>
+            <th><%= t("error_events.col_message") %></th>
+            <th><%= t("error_events.col_since") %></th>
+            <th><%= t("error_events.col_count") %></th>
+            <th><%= t("error_events.col_status") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @events.each do |event| %>
+            <tr>
+              <td class="cell-id">
+                <%= event.catalog&.name || event.source_system %>
+                <span class="cell-meta"><%= [ event.schema, event.table ].reject(&:blank?).join(".") %></span>
+              </td>
+              <td><span class="badge badge-mute"><%= event.operation %></span></td>
+              <td class="cell-muted"><%= event.message %></td>
+              <td class="cell-num" title="<%= event.first_seen_at&.iso8601 %>"><%= time_ago_in_words(event.first_seen_at) rescue "—" %></td>
+              <td class="cell-num"><%= event.occurrence_count %></td>
+              <td>
+                <span class="badge <%= {"open" => "badge-err", "acknowledged" => "badge-warn", "resolved" => "badge-ok"}[event.status] %>">
+                  <%= event.status %>
+                </span>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% end %>

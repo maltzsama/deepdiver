@@ -15,12 +15,25 @@ Rails.application.routes.draw do
 
   root "dashboard#index"
 
-  # Paper/ink theme toggle (cookie-backed).
+  # Paper/ink theme toggle (account preference since CR-69).
   post "theme/toggle" => "theme#toggle", as: :toggle_theme
+
+  # Own-account preferences (CR-69).
+  resource :profile, only: %i[show update], controller: "profiles" do
+    patch :password, on: :collection
+  end
 
   # What is happening right now.
   resource :activity, only: :show, controller: "activity" do
     member { post :restart }
+  end
+
+  # Superfície de erro (CR-72): opens the list of recorded failures.
+  resources :error_events, only: %i[index] do
+    collection do
+      post :acknowledge
+      post :resolve
+    end
   end
 
   resources :catalogs, only: %i[index show new create edit update destroy] do
@@ -43,7 +56,7 @@ Rails.application.routes.draw do
   end
 
   # Maintenance plans.
-  resources :maintenance_plans, only: %i[index show] do
+  resources :maintenance_plans, only: %i[index show edit update] do
     member do
       post :run
       post :pause

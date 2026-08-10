@@ -8,6 +8,28 @@ class TableMetadataExtractor
     @metadata = metadata
   end
 
+  # Rebuilds an extractor from the metadata already persisted on the table
+  # (CR-42 columns), without calling the catalog again. Summary fields come
+  # straight from the snapshot the sync chose as current.
+  def self.from_persisted(table)
+    summary = {}
+    summary["total-records"] = table.total_records if table.total_records
+    summary["total-data-files"] = table.total_data_files if table.total_data_files
+    summary["total-files-size-in-bytes"] = table.total_size_bytes if table.total_size_bytes
+    summary["total-position-deletes"] = table.position_deletes if table.position_deletes
+    summary["total-equality-deletes"] = table.equality_deletes if table.equality_deletes
+
+    count = table.snapshot_count || 0
+    snapshots = Array.new(count) { {} }
+    snapshots.last["summary"] = summary if snapshots.any?
+
+    new(
+      "properties" => table.properties_json || {},
+      "snapshots" => snapshots,
+      "current-snapshot-id" => 0
+    )
+  end
+
   def table_uuid       = @metadata["table-uuid"]
   def storage_location = @metadata["location"]
   def properties       = @metadata["properties"] || {}
