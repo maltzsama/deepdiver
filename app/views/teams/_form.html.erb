@@ -1,0 +1,83 @@
+<%#
+  Team form. Scoped catalogs: nothing selected means every catalog.
+%>
+<section class="panel">
+  <div class="panel-body">
+    <%= form_with model: team, class: "form-grid" do |form| %>
+      <% if team.errors.any? %>
+        <div class="errors">
+          <p class="errors-title">
+            <%= t("teams.form.errors_#{team.errors.count == 1 ? "one" : "other"}", count: team.errors.count) %>
+          </p>
+          <ul class="errors-list">
+            <% team.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="field">
+        <%= form.label :name, t("teams.form.name"), class: "field-label" %>
+        <%= form.text_field :name, required: true, class: "field-input",
+                            placeholder: t("teams.form.name_placeholder") %>
+      </div>
+
+      <div class="field">
+        <%= form.label :description, t("teams.form.description"), class: "field-label" %>
+        <p class="field-hint"><%= t("teams.form.description_hint") %></p>
+        <%= form.text_area :description, rows: 2, class: "field-input" %>
+      </div>
+
+      <div class="field-group">
+        <p class="field-group-title"><%= t("teams.form.scope_title") %></p>
+        <p class="field-hint mb-4"><%= t("teams.form.scope_hint") %></p>
+
+        <div class="field rounded border border-cosmos-line p-3">
+          <label class="field-check">
+            <%= check_box_tag "team[scoped_all]", "1", team.scoped_to_all_catalogs?, disabled: true, class: "field-checkbox" %>
+            <span class="font-mono text-xs"><%= t("teams.index.all_catalogs") %></span>
+          </label>
+          <p class="field-hint ml-6"><%= t("teams.form.scoped_all_note") %></p>
+        </div>
+
+        <div class="field rounded border border-cosmos-line p-3 mt-3">
+          <% Catalog.order(:name).each do |catalog| %>
+            <label class="field-check">
+              <%= check_box_tag "team[catalog_ids][]", catalog.id,
+                                team.catalog_ids.include?(catalog.id),
+                                class: "field-checkbox" %>
+              <span class="font-mono text-xs"><%= catalog.name %></span>
+            </label>
+          <% end %>
+          <% if Catalog.count.zero? %>
+            <p class="field-hint"><%= t("teams.form.no_catalogs") %></p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <p class="field-group-title"><%= t("teams.form.members_title") %></p>
+        <div class="field rounded border border-cosmos-line p-3">
+          <% User.active.order(:email).each do |user| %>
+            <label class="field-check">
+              <%= check_box_tag "team[user_ids][]", user.id,
+                                team.member_ids.include?(user.id),
+                                class: "field-checkbox" %>
+              <span class="font-mono text-xs"><%= user.email %></span>
+            </label>
+          <% end %>
+          <% if User.active.count.zero? %>
+            <p class="field-hint"><%= t("teams.form.no_users") %></p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <%= form.submit team.persisted? ? t("teams.form.submit_update") : t("teams.form.submit_create"),
+                        class: "btn btn-primary" %>
+        <%= link_to t("teams.form.cancel"), team.persisted? ? team : teams_path, class: "link text-sm" %>
+      </div>
+    <% end %>
+  </div>
+</section>

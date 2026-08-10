@@ -1,0 +1,11 @@
+<% content_for :title, "New team — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("teams.index.eyebrow") %></p>
+    <h1 class="page-title"><%= t("teams.new.title") %></h1>
+    <p class="page-sub"><%= t("teams.index.subtitle") %></p>
+  </div>
+</div>
+
+<%= render "form", team: @team %>
