@@ -40,10 +40,17 @@
       <div class="sidebar-section-title">Operations</div>
       <%= nav_link_to maintenance_plans_path, icon: "clock" do %>
         <span>Plans</span>
-        <span class="sidebar-badge"><%= compact_number(MaintenancePlan.dispatchable.count) %></span>
+        <span class="sidebar-badge"><%= compact_number(MaintenancePlan.count) %></span>
       <% end %>
       <%= nav_link_to maintenance_policies_path, icon: "preset" do %><span>Policies</span><% end %>
       <%= nav_link_to execution_histories_path, icon: "list" do %><span>History</span><% end %>
+      <% open_errors = ErrorEvent.open.count %>
+      <%= nav_link_to error_events_path, icon: "activity" do %>
+        <span>Errors</span>
+        <% if open_errors.positive? %>
+          <span class="sidebar-badge"><%= compact_number(open_errors) %></span>
+        <% end %>
+      <% end %>
     </div>
 
     <% if current_user.admin? %>
@@ -56,9 +63,7 @@
   </nav>
 
   <!-- Rodapé da Sidebar -->
-  <div class="border-t border-cosmos-line p-3 flex items-center gap-2 flex-shrink-0 min-h-11">
-    <span class="w-1.5 h-1.5 bg-ok-DEFAULT rounded-full flex-shrink-0"></span>
-    <span class="font-mono text-[11px] text-cosmos-fg-mute flex-1 truncate"><%= current_user.email %></span>
+  <div class="border-t border-cosmos-line p-3 flex items-center justify-center flex-shrink-0 min-h-11">
     <button class="sidebar-collapse" title="Collapse sidebar" onclick="this.closest('.sidebar').classList.toggle('collapsed')">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
         <path d="M10 3l-5 5 5 5" stroke="currentColor" stroke-width="1.5"/>
@@ -77,7 +82,7 @@
   .sidebar-section-title {
     padding: 12px 14px 4px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.2em;
     text-transform: uppercase;
@@ -120,7 +125,7 @@
     flex-shrink: 0;
   }
   .sidebar-collapse:hover { background: #1A1A18; color: #F4F1E8; }
-  .sidebar.collapsed { width: 52px; }
+  .sidebar.collapsed { width: 45px; }
   .sidebar.collapsed .sidebar-link span:not(.icon) { display: none; }
   .sidebar.collapsed .sidebar-section-title { display: none; }
   .sidebar.collapsed .sidebar-badge { display: none; }

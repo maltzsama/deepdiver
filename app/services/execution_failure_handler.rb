@@ -27,6 +27,11 @@ class ExecutionFailureHandler
 
   def fail_execution
     @execution.update!(status: :failed, error_message: @error_message)
+
+    ErrorEvent.record(catalog: @table&.catalog, schema: @table&.namespace,
+                      table: @table&.name, operation: "execution",
+                      source_system: "engine", error_class: "ExecutionFailure",
+                      message: @error_message)
   end
 
   def increment_and_maybe_pause

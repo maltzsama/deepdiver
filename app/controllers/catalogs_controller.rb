@@ -8,6 +8,7 @@ class CatalogsController < ApplicationController
 
   def show
     authorize @catalog
+    @open_error_count = ErrorEvent.open.catalog_events(@catalog).count
     @tables = @catalog.iceberg_tables
                   .left_joins(:maintenance_schedules)
                   .select("iceberg_tables.*, COUNT(maintenance_schedules.id) AS schedules_count")
@@ -18,6 +19,7 @@ class CatalogsController < ApplicationController
   def new
     authorize Catalog
     @catalog = Catalog.new
+    @catalog.build_catalog_credential
   end
 
   def create
@@ -27,6 +29,7 @@ class CatalogsController < ApplicationController
     if @catalog.save
       redirect_to @catalog, notice: "Catalog created."
     else
+      @catalog.build_catalog_credential if @catalog.catalog_credential.nil?
       render :new, status: :unprocessable_entity
     end
   end

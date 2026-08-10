@@ -55,6 +55,8 @@ class SuperviseEngineStartJob < ApplicationJob
       MaintenanceOrchestrator.supervise_engine_start
     else
       state.update!(status: "failed", last_error: error.message, status_changed_at: Time.current)
+      ErrorEvent.record(catalog: nil, schema: "engine", operation: "engine-start",
+                        source_system: "engine", error_class: error.class.name, message: error.message)
       SlackAlert.notify("Trino failed to start after #{state.start_attempts} attempts: #{error.message}")
       fail_pending_executions!(error.message)
     end

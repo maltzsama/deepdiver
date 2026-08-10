@@ -39,10 +39,16 @@ class IcebergTablesController < ApplicationController
 
   def show
     authorize @table
+    @open_error_count = ErrorEvent.open.table_events(@table).count
     @schedules = @table.maintenance_schedules.order(:operation)
     @executions = @table.execution_histories.latest.limit(20)
     @freshness_sla = @table.table_freshness_sla
     @freshness_checks = @table.freshness_checks.latest.limit(30)
+
+    # Rebuilds the decomposition from the stored metadata (CR-42 columns) so the
+    # score can explain itself without a new catalog round-trip.
+    @extractor = TableMetadataExtractor.from_persisted(@table)
+    @evaluation = HealthEvaluator.evaluate(@extractor, plan: @table.maintenance_plan)
   end
 
   # Fallback for the table-level "run now": runs the table's plan.
