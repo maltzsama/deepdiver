@@ -1,136 +1,91 @@
-<% content_for :title, "#{t("dashboard.index.title")} — LakeDeepDiver" %>
+<% content_for :title, "Overview — LakeDeepDiver" %>
 
-<div class="page-head">
+<div class="flex items-center justify-between mb-5 pb-3 border-b border-cosmos-line">
   <div>
-    <p class="page-eyebrow"><%= t("dashboard.index.eyebrow") %></p>
-    <h1 class="page-title"><%= t("dashboard.index.title") %></h1>
-    <p class="page-sub">
+    <p class="font-mono text-[10px] font-bold tracking-[0.2em] uppercase text-red-DEFAULT">Control Plane</p>
+    <h1 class="font-display text-2xl font-extrabold tracking-tight text-cosmos-fg">Overview</h1>
+    <p class="text-sm text-cosmos-fg-mute">
       <% if @last_sync_at %>
-        <%= t("dashboard.index.sync_ago", ago: time_ago_in_words(@last_sync_at),
-                                          at: @last_sync_at.to_fs(:db)) %>
+        Synced <%= time_ago_in_words(@last_sync_at) %> ago
       <% else %>
-        <%= t("dashboard.index.sync_none") %>
+        No sync yet
       <% end %>
     </p>
   </div>
-</div>
-
-<%= render "shared/health_summary", counts: @health_counts, total: @total_tables %>
-
-<div class="grid gap-6 lg:grid-cols-3">
-  <section class="panel lg:col-span-2">
-    <div class="panel-head">
-      <h2 class="panel-title"><%= t("dashboard.index.worst_title") %></h2>
-      <%= link_to t("dashboard.index.view_all_tables"), iceberg_tables_path, class: "link text-sm" %>
-    </div>
-
-    <% if @worst_health_tables.empty? %>
-      <div class="empty">
-        <p class="empty-title"><%= t("dashboard.index.worst_empty_title") %></p>
-        <p class="empty-hint"><%= t("dashboard.index.worst_empty_hint") %></p>
-        <div class="empty-action">
-          <%= link_to t("dashboard.index.go_to_catalogs"), catalogs_path, class: "btn btn-primary" %>
-        </div>
-      </div>
-    <% else %>
-      <div class="data-table-scroll">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th><%= t("dashboard.index.col_table") %></th>
-              <th><%= t("dashboard.index.col_catalog") %></th>
-              <th><%= t("dashboard.index.col_health") %></th>
-              <th><%= t("dashboard.index.col_status") %></th>
-              <th><%= t("dashboard.index.col_last_write") %></th>
-              <% if current_user.admin? %>
-                <th><span class="sr-only"><%= t("dashboard.index.col_actions") %></span></th>
-              <% end %>
-            </tr>
-          </thead>
-          <tbody>
-            <% @worst_health_tables.each do |table| %>
-              <tr>
-                <td><%= link_to table.fully_qualified_name, table, class: "link-mono" %></td>
-                <td class="cell-muted"><%= table.catalog.name %></td>
-                <td><%= render "shared/health", table: table %></td>
-                <td>
-                  <span class="badge <%= health_badge_class(table.health_status) %>">
-                    <span class="badge-dot"></span><%= table.health_status %>
-                  </span>
-                </td>
-                <td><%= timestamp(table.last_data_update) %></td>
-                <% if current_user.admin? %>
-                  <td class="text-right whitespace-nowrap">
-                    <%= button_to t("dashboard.index.run"), run_maintenance_iceberg_table_path(table),
-                                  method: :post, class: "btn btn-default btn-sm" %>
-                  </td>
-                <% end %>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-    <% end %>
-  </section>
-
-  <div class="flex flex-col gap-6">
-    <section class="panel">
-      <div class="panel-head">
-        <h2 class="panel-title"><%= t("dashboard.index.paused_title") %></h2>
-        <% if @paused_schedules.any? %>
-          <span class="badge badge-critical"><%= @paused_schedules.size %></span>
-        <% end %>
-      </div>
-
-      <% if @paused_schedules.empty? %>
-        <div class="empty">
-          <p class="empty-title"><%= t("dashboard.index.paused_empty_title") %></p>
-          <p class="empty-hint"><%= t("dashboard.index.paused_empty_hint") %></p>
-        </div>
-      <% else %>
-        <ul class="divide-y divide-abyss-50">
-          <% @paused_schedules.each do |schedule| %>
-            <li class="px-4 py-3">
-              <%= link_to schedule.iceberg_table.fully_qualified_name, schedule, class: "link-mono" %>
-              <p class="mt-1 flex items-center gap-2 text-xs">
-                <span class="badge badge-neutral"><%= schedule.operation %></span>
-                <span class="font-mono text-critical-600">
-                  <%= t("dashboard.index.failures", count: schedule.consecutive_failures) %>
-                </span>
-              </p>
-            </li>
-          <% end %>
-        </ul>
-      <% end %>
-    </section>
-
-    <section class="panel">
-      <div class="panel-head">
-        <h2 class="panel-title"><%= t("dashboard.index.last_ops_title") %></h2>
-        <%= link_to t("dashboard.index.view_all_ops"), execution_histories_path, class: "link text-sm" %>
-      </div>
-
-      <% if @recent_executions.empty? %>
-        <div class="empty">
-          <p class="empty-title"><%= t("dashboard.index.last_ops_empty_title") %></p>
-        </div>
-      <% else %>
-        <ul class="divide-y divide-abyss-50">
-          <% @recent_executions.each do |execution| %>
-            <li class="flex items-center justify-between gap-3 px-4 py-2.5">
-              <div class="min-w-0">
-                <p class="truncate font-mono text-xs text-abyss-900">
-                  <%= execution.iceberg_table.fully_qualified_name %>
-                </p>
-                <p class="cell-muted text-xs"><%= execution.operation_label %></p>
-              </div>
-              <span class="badge <%= execution_status_badge_class(execution.status) %>">
-                <span class="badge-dot"></span><%= execution.status %>
-              </span>
-            </li>
-          <% end %>
-        </ul>
-      <% end %>
-    </section>
+  <div class="flex items-center gap-3">
+    <span class="font-mono text-[10px] text-cosmos-fg-mute">cosmonaut-dev</span>
+    <a href="<%= root_path %>" class="px-3 py-1.5 font-mono text-[11px] font-semibold bg-cosmos-surface border border-cosmos-line text-cosmos-fg-soft hover:bg-cosmos-soft hover:text-cosmos-fg cursor-pointer no-underline">
+      ↻ Refresh
+    </a>
   </div>
 </div>
+
+<!-- Stats Cards -->
+<% total = @total_tables || 0 %>
+<div class="grid grid-cols-4 gap-px bg-cosmos-line border border-cosmos-line mb-5">
+  <div class="stat-card">
+    <div class="stat-label">Tables</div>
+    <div class="stat-value"><%= total %></div>
+    <div class="stat-sub">across all catalogs</div>
+    <div class="stat-track"><div class="stat-fill" style="width:100%"></div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Healthy</div>
+    <div class="stat-value text-ok-DEFAULT"><%= (@health_counts || {})["healthy"] || 0 %></div>
+    <div class="stat-sub"><%= total.positive? ? ((@health_counts["healthy"].to_f / total * 100).round(1) rescue 0) : 0 %>% availability</div>
+    <div class="stat-track"><div class="stat-fill bg-ok-DEFAULT" style="width:<%= total.positive? ? (@health_counts["healthy"].to_f / total * 100) : 0 %>%"></div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Critical</div>
+    <div class="stat-value text-red-DEFAULT"><%= (@health_counts || {})["critical"] || 0 %></div>
+    <div class="stat-sub"><%= (@health_counts || {})["warning"] || 0 %> warning</div>
+    <div class="stat-track"><div class="stat-fill bg-red-DEFAULT" style="width:<%= total.positive? ? (@health_counts["critical"].to_f / total * 100) : 0 %>%"></div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Active Plans</div>
+    <div class="stat-value"><%= MaintenancePlan.dispatchable.count %></div>
+    <div class="stat-sub"><%= MaintenancePlan.where(is_paused: true).count %> paused</div>
+    <div class="stat-track"><div class="stat-fill" style="width:100%"></div></div>
+  </div>
+</div>
+
+<!-- Tabela de piores notas -->
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="panel-title">Worst Health</h2>
+    <%= link_to "View all →", iceberg_tables_path, class: "font-mono text-xs text-cosmos-fg-mute hover:text-cosmos-fg" %>
+  </div>
+  <div class="p-4">
+    <% if (@worst_health_tables || []).empty? %>
+      <div class="text-center text-cosmos-fg-mute py-8 font-mono text-sm">All tables healthy ✨</div>
+    <% else %>
+      <table class="data-table">
+        <thead><tr><th>Table</th><th>Catalog</th><th>Health</th><th>Status</th><th>Last Write</th><% if current_user.admin? %><th></th><% end %></tr></thead>
+        <tbody>
+          <% @worst_health_tables.each do |table| %>
+            <tr>
+              <td class="cell-id"><%= link_to table.fully_qualified_name, table, class: "hover:underline" %></td>
+              <td class="cell-muted"><%= table.catalog.name %></td>
+              <td><%= render "shared/health", table: table %></td>
+              <td><span class="badge <%= health_badge_class(table.health_status) %>"><span class="badge-dot"></span><%= table.health_status %></span></td>
+              <td class="cell-muted"><%= table.last_data_update&.to_fs(:db) || "—" %></td>
+              <% if current_user.admin? %>
+                <td><%= button_to "Run", run_maintenance_iceberg_table_path(table), method: :post, class: "px-3 py-1 font-mono text-[10px] font-semibold bg-cosmos-surface border border-cosmos-line text-cosmos-fg-soft hover:bg-cosmos-soft hover:text-cosmos-fg cursor-pointer" %></td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+</div>
+
+<!-- Estilos exclusivos desta página -->
+<style>
+  .stat-card { @apply bg-cosmos-surface p-3.5 flex flex-col gap-1.5 min-h-[100px]; }
+  .stat-label { @apply font-mono text-[10px] font-semibold tracking-[0.14em] uppercase text-cosmos-fg-mute; }
+  .stat-value { @apply font-display text-3xl font-extrabold tracking-tight leading-none text-cosmos-fg; }
+  .stat-sub { @apply font-mono text-[11px] text-cosmos-fg-mute; }
+  .stat-track { @apply h-[3px] bg-cosmos-sunk border border-cosmos-line-2 mt-auto; }
+  .stat-fill { @apply h-full bg-cosmos-fg transition-all; }
+</style>

@@ -1,63 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <title><%= content_for(:title) || "LakeDeepDiver" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="LakeDeepDiver">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-
     <%= yield :head %>
 
-    <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="app-shell">
-    <header class="app-header">
-      <div class="app-headbar">
-        <a class="app-brand" href="<%= root_path %>">
-          <span class="app-brand-mark">&#9672;</span> LakeDeepDiver
-        </a>
-
-        <% if user_signed_in? %>
-          <nav class="app-nav">
-            <%= nav_link_to t("layout.nav.overview"), root_path, active_when: current_page?(root_path) %>
-            <%= nav_link_to t("layout.nav.in_progress"), activity_path,
-                            active_when: controller_name == "activity" %>
-            <%= nav_link_to t("layout.nav.tables"), iceberg_tables_path,
-                            active_when: controller_name == "iceberg_tables" %>
-            <%= nav_link_to t("layout.nav.catalogs"), catalogs_path,
-                            active_when: controller_name == "catalogs" %>
-            <%= nav_link_to t("layout.nav.plans"), maintenance_plans_path,
-                            active_when: controller_name == "maintenance_plans" %>
-            <%= nav_link_to t("layout.nav.history"), execution_histories_path,
-                            active_when: controller_name == "execution_histories" %>
-            <%= nav_link_to t("layout.nav.policies"), maintenance_policies_path,
-                            active_when: controller_name == "maintenance_policies" %>
-          </nav>
-
-          <div class="app-session">
-            <span class="app-user"><%= current_user.email %></span>
-            <% if current_user.admin? %>
-              <span class="badge badge-neutral"><%= t("layout.session.admin") %></span>
-            <% end %>
-            <%= button_to t("layout.session.sign_out"), destroy_user_session_path, method: :delete,
-                          class: "btn btn-default btn-sm" %>
-          </div>
-        <% end %>
+  <body class="min-h-screen bg-cosmos-bg text-cosmos-fg font-sans antialiased">
+    <% if user_signed_in? %>
+      <div class="grid grid-cols-[220px_1fr] grid-rows-[48px_1fr] h-screen overflow-hidden">
+        <%= render "shared/sidebar" %>
+        <%= render "shared/topbar" %>
+        <main class="col-start-2 row-start-2 overflow-y-auto p-5 bg-cosmos-bg">
+          <%= render "shared/flash" %>
+          <%= yield %>
+        </main>
       </div>
-    </header>
-
-    <main class="app-main">
-      <%= render "shared/flash" %>
-      <%= yield %>
-    </main>
+    <% else %>
+      <main>
+        <%= render "shared/flash" %>
+        <%= yield %>
+      </main>
+    <% end %>
   </body>
 </html>

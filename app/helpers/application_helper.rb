@@ -1,24 +1,20 @@
 module ApplicationHelper
-  HEALTH_BADGE = {
-    "healthy"  => "badge-healthy",
-    "warning"  => "badge-warning",
-    "critical" => "badge-critical",
-    "unknown"  => "badge-unknown"
-  }.freeze
-
-  STATUS_BADGE = {
-    "success" => "badge-healthy",
-    "failed"  => "badge-critical",
-    "running" => "badge-running",
-    "pending" => "badge-neutral"
-  }.freeze
-
   def health_badge_class(status)
-    HEALTH_BADGE.fetch(status.to_s, "badge-unknown")
+    case status.to_s
+    when "healthy"  then "badge-ok"
+    when "warning"  then "badge-warn"
+    when "critical" then "badge-err"
+    else "badge-mute"
+    end
   end
 
   def execution_status_badge_class(status)
-    STATUS_BADGE.fetch(status.to_s, "badge-neutral")
+    case status.to_s
+    when "success" then "badge-ok"
+    when "failed"  then "badge-err"
+    when "running" then "badge-running"
+    else "badge-mute"
+    end
   end
 
   def execution_step_badge_class(status)
@@ -70,15 +66,32 @@ module ApplicationHelper
     :running
   end
 
-  def nav_link_to(label, path, active_when:)
-    classes = [ "app-nav-link" ]
-    classes << "app-nav-link-active" if active_when
-    if block_given?
-      link_to path, class: classes.join(" ") do
-        yield
+  def nav_link_to(path, icon: nil, &block)
+    active = current_page?(path) || (path.is_a?(String) && request.path.start_with?(path))
+    classes = "sidebar-link"
+    classes += " active" if active
+
+    icon_svgs = {
+      "grid" => '<rect x="1" y="1" width="6" height="6" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="1" width="6" height="6" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="9" width="6" height="6" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="6" height="6" stroke="currentColor" stroke-width="1.5"/>',
+      "activity" => '<circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 4v4l3 2" stroke="currentColor" stroke-width="1.5"/>',
+      "database" => '<ellipse cx="8" cy="3.5" rx="6" ry="2" stroke="currentColor" stroke-width="1.5"/><path d="M2 3.5v9c0 1.1 2.7 2 6 2s6-.9 6-2v-9" stroke="currentColor" stroke-width="1.5"/><path d="M2 8.5c0 1.1 2.7 2 6 2s6-.9 6-2" stroke="currentColor" stroke-width="1.5"/>',
+      "catalog" => '<path d="M2 3h12M2 3v10h12V3" stroke="currentColor" stroke-width="1.5"/><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.5"/>',
+      "clock" => '<circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 4v4l3 2" stroke="currentColor" stroke-width="1.5"/>',
+      "preset" => '<circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.5"/>',
+      "list" => '<path d="M2 3h12M2 8h12M2 13h8" stroke="currentColor" stroke-width="1.5"/>',
+    }
+
+    link_to(path, class: classes) do
+      out = "".html_safe
+      if icon && icon_svgs[icon]
+        out << content_tag(:span, class: "icon") do
+          content_tag(:svg, width: 14, height: 14, viewBox: "0 0 16 16", fill: "none") do
+            icon_svgs[icon].html_safe
+          end
+        end
       end
-    else
-      link_to label, path, class: classes.join(" ")
+      out << capture(&block) if block_given?
+      out
     end
   end
 
