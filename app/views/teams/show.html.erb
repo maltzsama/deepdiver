@@ -1,0 +1,84 @@
+<% content_for :title, "#{@team.name} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("teams.index.eyebrow") %></p>
+    <h1 class="page-title"><%= @team.name %></h1>
+    <% if @team.description.present? %>
+      <p class="page-sub"><%= @team.description %></p>
+    <% end %>
+  </div>
+  <div class="page-actions">
+    <%= link_to t("teams.index.edit"), edit_team_path(@team), class: "btn btn-default" %>
+    <%= button_to t("teams.index.delete"), @team, method: :delete,
+                  class: "btn btn-danger",
+                  data: { turbo_confirm: t("teams.index.delete_confirm", name: @team.name) } %>
+  </div>
+</div>
+
+<section class="panel mb-6">
+  <div class="panel-body">
+    <dl class="dl">
+      <div>
+        <dt class="dl-term"><%= t("teams.show.scope") %></dt>
+        <dd class="dl-desc">
+          <% if @team.scoped_to_all_catalogs? %>
+            <span class="badge badge-ok"><span class="badge-dot"></span><%= t("teams.index.all_catalogs") %></span>
+          <% else %>
+            <%= t("teams.index.count_catalogs", count: @team.catalogs.size) %>
+          <% end %>
+        </dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("teams.show.members") %></dt>
+        <dd class="dl-desc"><%= @team.members.size %></dd>
+      </div>
+    </dl>
+
+    <% unless @team.scoped_to_all_catalogs? || @team.catalogs.empty? %>
+      <p class="dl-term mb-2 mt-4"><%= t("teams.show.catalog_scope") %></p>
+      <div class="flex flex-wrap gap-2">
+        <% @team.catalogs.each do |catalog| %>
+          <span class="badge badge-neutral"><%= catalog.name %></span>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("teams.show.members_title") %></h2>
+    <span class="panel-note"><%= @team.members.size %></span>
+  </div>
+  <div class="data-table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><%= t("teams.show.col_name") %></th>
+          <th><%= t("teams.show.col_role") %></th>
+          <th><%= t("teams.show.col_status") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @team.members.order(:email).each do |member| %>
+          <tr>
+            <td class="cell-id"><%= member.email %></td>
+            <td class="cell-muted"><%= t("users.roles.#{member.role}") %></td>
+            <td>
+              <span class="badge <%= user_status_badge_class(member.status) %>">
+                <span class="badge-dot"></span><%= t("users.statuses.#{member.status}") %>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @team.members.empty? %>
+    <div class="empty">
+      <p class="empty-title"><%= t("teams.show.empty_members") %></p>
+    </div>
+  <% end %>
+</section>

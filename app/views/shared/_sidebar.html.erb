@@ -42,6 +42,14 @@
       <%= nav_link_to maintenance_policies_path, icon: "preset" do %><span>Policies</span><% end %>
       <%= nav_link_to execution_histories_path, icon: "list" do %><span>History</span><% end %>
     </div>
+
+    <% if current_user.admin? %>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Security</div>
+        <%= nav_link_to users_path, icon: "user" do %><span>Users</span><% end %>
+        <%= nav_link_to teams_path, icon: "team" do %><span>Teams</span><% end %>
+      </div>
+    <% end %>
   </nav>
 
   <!-- Rodapé da Sidebar -->

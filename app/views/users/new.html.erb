@@ -1,0 +1,43 @@
+<% content_for :title, "Invite user — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("users.new.eyebrow") %></p>
+    <h1 class="page-title"><%= t("users.new.title") %></h1>
+    <p class="page-sub"><%= t("users.new.subtitle") %></p>
+  </div>
+</div>
+
+<%= form_with model: @user, url: users_path, class: "form-grid" do |form| %>
+  <% if @user.errors.any? %>
+    <div class="errors">
+      <p class="errors-title">
+        <%= t("users.form.errors_#{@user.errors.count == 1 ? "one" : "other"}", count: @user.errors.count) %>
+      </p>
+      <ul class="errors-list">
+        <% @user.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= form.label :email, t("users.new.email"), class: "field-label" %>
+    <%= form.email_field :email, required: true, autocomplete: "off",
+                         placeholder: t("users.new.email_placeholder"),
+                         class: "field-input field-input-mono" %>
+  </div>
+
+  <div class="field">
+    <%= form.label :role, t("users.new.role"), class: "field-label" %>
+    <%= form.select :role, User::ROLES.map { |role| [ t("users.roles.#{role}"), role ] }, {},
+                    class: "field-input" %>
+    <p class="field-hint"><%= t("users.new.role_hint") %></p>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit t("users.new.submit"), class: "btn btn-primary" %>
+    <%= link_to t("users.new.cancel"), users_path, class: "link text-sm" %>
+  </div>
+<% end %>

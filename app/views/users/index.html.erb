@@ -1,0 +1,80 @@
+<% content_for :title, "Users — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("users.index.eyebrow") %></p>
+    <h1 class="page-title"><%= t("users.index.title") %></h1>
+    <p class="page-sub"><%= t("users.index.subtitle") %></p>
+  </div>
+  <div class="page-actions">
+    <%= link_to t("users.index.invite"), new_user_path, class: "btn btn-primary" %>
+  </div>
+</div>
+
+<div class="mb-4 flex flex-wrap items-center gap-2">
+  <%= link_to t("users.index.filter_all"), users_path,
+              class: "btn #{params[:status].blank? ? "btn-primary" : "btn-default"} btn-sm" %>
+  <% User::STATUSES.each do |status| %>
+    <%= link_to t("users.statuses.#{status}"), users_path(status: status),
+                class: "btn #{params[:status] == status ? "btn-primary" : "btn-default"} btn-sm" %>
+  <% end %>
+</div>
+
+<section class="panel">
+  <div class="data-table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><%= t("users.index.col_user") %></th>
+          <th><%= t("users.index.col_role") %></th>
+          <th><%= t("users.index.col_status") %></th>
+          <th><%= t("users.index.col_invited_by") %></th>
+          <th><span class="sr-only"><%= t("users.index.col_actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each do |user| %>
+          <tr>
+            <td>
+              <p class="cell-id"><%= user.email %></p>
+              <p class="cell-muted text-xs"><%= user.sso? ? t("users.index.sso") : t("users.index.local") %></p>
+            </td>
+            <td>
+              <%= form_with model: user, method: :patch, class: "inline-flex items-center gap-2" do |form| %>
+                <%= form.select :role, User::ROLES.map { |role| [ t("users.roles.#{role}"), role ] }, {},
+                                class: "bg-cosmos-sunk border border-cosmos-line-2 text-cosmos-fg font-mono text-xs px-2 py-1 rounded cursor-pointer hover:border-cosmos-line-bold",
+                                onchange: "this.form.requestSubmit()",
+                                disabled: user == current_user %>
+              <% end %>
+            </td>
+            <td>
+              <span class="badge <%= user_status_badge_class(user.status) %>">
+                <span class="badge-dot"></span><%= t("users.statuses.#{user.status}") %>
+              </span>
+            </td>
+            <td class="cell-muted text-sm"><%= user.invited_by&.email || "—" %></td>
+            <td class="text-right whitespace-nowrap">
+              <% if user == current_user %>
+                <span class="cell-muted text-xs"><%= t("users.index.you") %></span>
+              <% elsif user.suspended? %>
+                <%= button_to t("users.index.reactivate"), reactivate_user_path(user), method: :post,
+                              class: "btn btn-default btn-sm" %>
+              <% else %>
+                <%= button_to t("users.index.suspend"), suspend_user_path(user), method: :post,
+                              class: "btn btn-danger btn-sm",
+                              data: { turbo_confirm: t("users.index.suspend_confirm", email: user.email) } %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @users.empty? %>
+    <div class="empty">
+      <p class="empty-title"><%= t("users.index.empty_title") %></p>
+      <p class="empty-hint"><%= t("users.index.empty_hint") %></p>
+    </div>
+  <% end %>
+</section>
