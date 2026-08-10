@@ -24,10 +24,15 @@ with an ephemeral Trino engine on Kubernetes.
 
 ```bash
 bin/setup                 # installs gems and DB (dev/test on sqlite3)
-bin/rails server
+bin/dev                   # web server + Tailwind CSS watcher
 bin/rails jobs            # Solid Queue workers + recurring tasks
 bin/rails test            # test suite
 ```
+
+`bin/dev` runs both the Rails server and the Tailwind watcher (`bin/rails
+tailwindcss:watch`), so the compiled stylesheet stays in sync with
+`app/assets/tailwind/application.css`. If you only run `bin/rails server`,
+rebuild the CSS once with `bin/rails tailwindcss:build`.
 
 Default seeded user: `admin@example.com` / `changeme!` (admin).
 
