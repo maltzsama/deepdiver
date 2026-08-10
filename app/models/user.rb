@@ -5,14 +5,67 @@ class User < ApplicationRecord
          :recoverable, :rememberable, :validatable,
          :omniauthable, omniauth_providers: %i[openid_connect]
 
-  enum :role, { viewer: 0, admin: 1 }
+  ROLES = %w[viewer operator admin].freeze
+  STATUSES = %w[active invited suspended].freeze
 
-  def admin?
-    role == "admin"
-  end
+  enum :role, { viewer: 0, operator: 1, admin: 2 }, default: :viewer
+  attribute :status, :string, default: "active"
+
+  has_many :memberships, class_name: "TeamMembership", dependent: :destroy
+  has_many :teams, through: :memberships
+  has_many :role_change_logs, dependent: :destroy
+  has_many :invited_users, class_name: "User", foreign_key: "invited_by_id", inverse_of: :invited_by
+  belongs_to :invited_by, class_name: "User", optional: true
+  belongs_to :suspended_by, class_name: "User", optional: true
+
+  validates :role, inclusion: { in: ROLES }
+  validates :status, inclusion: { in: STATUSES }
+
+  scope :active, -> { where(status: "active") }
+  scope :invited, -> { where(status: "invited") }
+  scope :suspended, -> { where(status: "suspended") }
+
+  def active?      = status == "active"
+  def invited?     = status == "invited"
+  def suspended?   = status == "suspended"
 
   def sso?
     provider.present?
+  end
+
+  # Suspended accounts cannot sign in, even via the IdP. Without this, an
+  # OIDC session would keep working after an admin suspends the user.
+  def active_for_authentication?
+    super && active?
+  end
+
+  def inactive_message
+    suspended? ? :suspended : super
+  end
+
+  # Suspend / reactivate with an audit trail.
+  def suspend!(by: nil, reason: nil)
+    update!(status: "suspended", suspended_at: Time.current, suspended_by_id: by&.id)
+  end
+
+  def reactivate!(by: nil)
+    update!(status: "active", suspended_at: nil, suspended_by_id: nil)
+  end
+
+  # Promote / demote a user. Every change is recorded in role_change_logs.
+  def change_role!(new_role, changed_by:, reason: nil)
+    new_role = new_role.to_s
+    return self if role == new_role
+
+    old_role = role
+    update!(role: new_role)
+    role_change_logs.create!(
+      changed_by: changed_by,
+      from_role: self.class.roles.fetch(old_role),
+      to_role: self.class.roles.fetch(new_role),
+      reason: reason
+    )
+    self
   end
 
   # Finds or creates the account from what the IdP returned.
@@ -32,6 +85,8 @@ class User < ApplicationRecord
     user.uid      = auth.uid
     user.password = Devise.friendly_token(32) if user.new_record?
     user.role   ||= :viewer
+    # First SSO login converts an invited account into a live one.
+    user.status = "active" if user.invited?
     user.save!
     user
   end
