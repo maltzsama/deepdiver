@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_10_231001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_11_200000) do
   create_table "catalog_credentials", force: :cascade do |t|
     t.string "auth_method", default: "none", null: false
     t.integer "catalog_id", null: false
@@ -291,6 +291,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_231001) do
     t.index ["name"], name: "index_teams_on_name", unique: true
   end
 
+  create_table "trino_catalog_registry", primary_key: ["cluster_id", "catalog_name"], force: :cascade do |t|
+    t.string "catalog_name", null: false
+    t.string "catalog_version"
+    t.string "cluster_id", null: false
+    t.string "connector_name", null: false
+    t.boolean "enabled", default: true, null: false
+    t.json "properties", null: false
+    t.text "sync_error"
+    t.string "sync_status", default: "pending", null: false
+    t.datetime "updated_at", default: -> { "now()" }, null: false
+    t.string "updated_by", default: "baleia", null: false
+    t.index ["cluster_id"], name: "trino_catalog_registry_cluster_enabled_idx", where: "enabled"
+    t.check_constraint "catalog_name GLOB '[a-z][a-z0-9_]*' AND length(catalog_name) <= 63\n     AND catalog_name NOT IN ('system', 'jmx', 'tpch', 'tpcds', 'memory')\n     AND connector_name GLOB '[a-z][a-z0-9_]*' AND length(connector_name) <= 63", name: "trino_catalog_registry_name_format"
+    t.check_constraint "sync_status IN ('pending', 'synced', 'error')", name: "trino_catalog_registry_sync_status_format"
+  end
+
+  create_table "trino_clusters", id: :string, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_trino_clusters_on_name", unique: true
+  end
+
   create_table "trino_engine_states", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "drain_started_at"
@@ -351,6 +374,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_231001) do
   add_foreign_key "team_catalog_scopes", "teams"
   add_foreign_key "team_memberships", "teams"
   add_foreign_key "team_memberships", "users"
+  add_foreign_key "trino_catalog_registry", "trino_clusters", column: "cluster_id"
   add_foreign_key "users", "users", column: "invited_by_id"
   add_foreign_key "users", "users", column: "suspended_by_id"
 end
