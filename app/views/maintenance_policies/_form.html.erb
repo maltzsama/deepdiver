@@ -39,7 +39,7 @@
         <p class="field-hint mb-4"><%= t("policies.form.params_hint") %></p>
 
         <% MaintenancePlan::CANONICAL_ORDER.each do |operation| %>
-          <div class="field rounded border border-abyss-100 p-3">
+          <div class="field rounded border border-cosmos-line p-3">
             <label class="field-check">
               <%= hidden_field_tag "maintenance_policy[steps_config][#{operation}][enabled]", "0" %>
               <%= check_box_tag "maintenance_policy[steps_config][#{operation}][enabled]", "1",

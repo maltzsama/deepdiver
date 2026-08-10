@@ -14,10 +14,10 @@
     <input type="radio" name="metadata-tab" id="tab-snapshots" class="peer/snapshots sr-only">
     <input type="radio" name="metadata-tab" id="tab-metrics" class="peer/metrics sr-only">
 
-    <div class="mb-4 flex gap-1 border-b border-abyss-100">
-      <label for="tab-info" class="cursor-pointer border-b-2 border-transparent px-3 py-1.5 text-sm text-abyss-500 hover:text-abyss-900 peer-checked/info:border-frost-600 peer-checked/info:text-frost-700"><%= t("tables.metadata.info_tab") %></label>
-      <label for="tab-snapshots" class="cursor-pointer border-b-2 border-transparent px-3 py-1.5 text-sm text-abyss-500 hover:text-abyss-900 peer-checked/snapshots:border-frost-600 peer-checked/snapshots:text-frost-700"><%= t("tables.metadata.snapshots_tab") %></label>
-      <label for="tab-metrics" class="cursor-pointer border-b-2 border-transparent px-3 py-1.5 text-sm text-abyss-500 hover:text-abyss-900 peer-checked/metrics:border-frost-600 peer-checked/metrics:text-frost-700"><%= t("tables.metadata.metrics_tab") %></label>
+    <div class="mb-4 flex gap-1 border-b border-cosmos-line">
+      <label for="tab-info" class="cursor-pointer border-b-2 border-transparent px-3 py-1.5 text-sm text-cosmos-fg-mute hover:text-cosmos-fg peer-checked/info:border-red-DEFAULT peer-checked/info:text-red-DEFAULT"><%= t("tables.metadata.info_tab") %></label>
+      <label for="tab-snapshots" class="cursor-pointer border-b-2 border-transparent px-3 py-1.5 text-sm text-cosmos-fg-mute hover:text-cosmos-fg peer-checked/snapshots:border-red-DEFAULT peer-checked/snapshots:text-red-DEFAULT"><%= t("tables.metadata.snapshots_tab") %></label>
+      <label for="tab-metrics" class="cursor-pointer border-b-2 border-transparent px-3 py-1.5 text-sm text-cosmos-fg-mute hover:text-cosmos-fg peer-checked/metrics:border-red-DEFAULT peer-checked/metrics:text-red-DEFAULT"><%= t("tables.metadata.metrics_tab") %></label>
     </div>
 
     <div class="peer-checked/info:block hidden">
@@ -64,7 +64,7 @@
         <p class="cell-muted text-sm"><%= t("tables.metadata.no_data", field: "partitioning") %></p>
       <% else %>
         <% @table.partition_json.each do |spec| %>
-          <p class="mb-1 text-xs font-mono text-abyss-700">
+          <p class="mb-1 text-xs font-mono text-cosmos-fg-soft">
             spec <%= spec["spec-id"] %>: <%= (spec["fields"] || []).map { |f| "#{f["transform"]}(#{f["name"]})" }.join(", ") %>
           </p>
         <% end %>

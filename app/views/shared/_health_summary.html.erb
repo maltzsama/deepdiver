@@ -4,14 +4,14 @@
 <div class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
   <div class="panel px-4 py-3">
     <p class="dl-term"><%= t("health_summary.tables") %></p>
-    <p class="mt-1 font-mono text-2xl tabular-nums text-abyss-900"><%= total %></p>
+    <p class="mt-1 font-mono text-2xl tabular-nums text-cosmos-fg"><%= total %></p>
   </div>
 
-  <% [ [ "critical", t("health_summary.critical"), "text-critical-600" ],
-       [ "warning",  t("health_summary.warning"),  "text-warn-600" ],
-       [ "healthy",  t("health_summary.healthy"),  "text-healthy-600" ] ].each do |status, label, color| %>
+  <% [ [ "critical", t("health_summary.critical"), "text-red-DEFAULT" ],
+       [ "warning",  t("health_summary.warning"),  "text-warn-DEFAULT" ],
+       [ "healthy",  t("health_summary.healthy"),  "text-ok-DEFAULT" ] ].each do |status, label, color| %>
     <%= link_to iceberg_tables_path(health_status: status),
-                class: "panel px-4 py-3 transition hover:border-abyss-300" do %>
+                class: "panel px-4 py-3 transition hover:border-cosmos-line-2" do %>
       <p class="dl-term"><%= label %></p>
       <p class="mt-1 font-mono text-2xl tabular-nums <%= color %>">
         <%= counts.fetch(status, 0) %>
