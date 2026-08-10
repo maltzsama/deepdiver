@@ -22,31 +22,23 @@
 
 <!-- Stats Cards -->
 <% total = @total_tables || 0 %>
+<% healthy = (@health_counts || {})["healthy"] || 0 %>
+<% critical = (@health_counts || {})["critical"] || 0 %>
+<% warning = (@health_counts || {})["warning"] || 0 %>
 <div class="grid grid-cols-4 gap-px bg-cosmos-line border border-cosmos-line mb-5">
-  <div class="stat-card">
-    <div class="stat-label">Tables</div>
-    <div class="stat-value"><%= total %></div>
-    <div class="stat-sub">across all catalogs</div>
-    <div class="stat-track"><div class="stat-fill" style="width:100%"></div></div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Healthy</div>
-    <div class="stat-value text-ok-DEFAULT"><%= (@health_counts || {})["healthy"] || 0 %></div>
-    <div class="stat-sub"><%= total.positive? ? ((@health_counts["healthy"].to_f / total * 100).round(1) rescue 0) : 0 %>% availability</div>
-    <div class="stat-track"><div class="stat-fill bg-ok-DEFAULT" style="width:<%= total.positive? ? (@health_counts["healthy"].to_f / total * 100) : 0 %>%"></div></div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Critical</div>
-    <div class="stat-value text-red-DEFAULT"><%= (@health_counts || {})["critical"] || 0 %></div>
-    <div class="stat-sub"><%= (@health_counts || {})["warning"] || 0 %> warning</div>
-    <div class="stat-track"><div class="stat-fill bg-red-DEFAULT" style="width:<%= total.positive? ? (@health_counts["critical"].to_f / total * 100) : 0 %>%"></div></div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Active Plans</div>
-    <div class="stat-value"><%= MaintenancePlan.dispatchable.count %></div>
-    <div class="stat-sub"><%= MaintenancePlan.where(is_paused: true).count %> paused</div>
-    <div class="stat-track"><div class="stat-fill" style="width:100%"></div></div>
-  </div>
+  <%= render "shared/stat_card", label: "Tables", value: total, unit: "across all catalogs",
+             track_pct: 100 %>
+  <%= render "shared/stat_card", label: "Healthy", value: healthy,
+             value_class: "text-ok-DEFAULT", fill_class: "bg-ok-DEFAULT",
+             unit: "#{total.positive? ? (healthy.to_f / total * 100).round(1) : 0}% availability",
+             track_pct: total.positive? ? (healthy.to_f / total * 100) : 0 %>
+  <%= render "shared/stat_card", label: "Critical", value: critical,
+             value_class: "text-red-DEFAULT", fill_class: "bg-red-DEFAULT",
+             unit: "#{warning} warning",
+             track_pct: total.positive? ? (critical.to_f / total * 100) : 0 %>
+  <%= render "shared/stat_card", label: "Active Plans", value: MaintenancePlan.dispatchable.count,
+             unit: "#{MaintenancePlan.where(is_paused: true).count} paused",
+             track_pct: 100 %>
 </div>
 
 <!-- Tabela de piores notas -->
@@ -60,7 +52,7 @@
       <div class="text-center text-cosmos-fg-mute py-8 font-mono text-sm">All tables healthy ✨</div>
     <% else %>
       <table class="data-table">
-        <thead><tr><th>Table</th><th>Catalog</th><th>Health</th><th>Status</th><th>Last Write</th><% if current_user.admin? %><th></th><% end %></tr></thead>
+        <thead><tr><th>Table</th><th>Catalog</th><th>Health</th><th>Status</th><th>Last Write</th><% if can_run_maintenance? %><th></th><% end %></tr></thead>
         <tbody>
           <% @worst_health_tables.each do |table| %>
             <tr>
@@ -69,7 +61,7 @@
               <td><%= render "shared/health", table: table %></td>
               <td><span class="badge <%= health_badge_class(table.health_status) %>"><span class="badge-dot"></span><%= table.health_status %></span></td>
               <td class="cell-muted"><%= table.last_data_update&.to_fs(:db) || "—" %></td>
-              <% if current_user.admin? %>
+              <% if can_run_maintenance? %>
                 <td><%= button_to "Run", run_maintenance_iceberg_table_path(table), method: :post, class: "px-3 py-1 font-mono text-[10px] font-semibold bg-cosmos-surface border border-cosmos-line text-cosmos-fg-soft hover:bg-cosmos-soft hover:text-cosmos-fg cursor-pointer" %></td>
               <% end %>
             </tr>
@@ -79,13 +71,3 @@
     <% end %>
   </div>
 </div>
-
-<!-- Estilos exclusivos desta página -->
-<style>
-  .stat-card { @apply bg-cosmos-surface p-3.5 flex flex-col gap-1.5 min-h-[100px]; }
-  .stat-label { @apply font-mono text-[10px] font-semibold tracking-[0.14em] uppercase text-cosmos-fg-mute; }
-  .stat-value { @apply font-display text-3xl font-extrabold tracking-tight leading-none text-cosmos-fg; }
-  .stat-sub { @apply font-mono text-[11px] text-cosmos-fg-mute; }
-  .stat-track { @apply h-[3px] bg-cosmos-sunk border border-cosmos-line-2 mt-auto; }
-  .stat-fill { @apply h-full bg-cosmos-fg transition-all; }
-</style>
