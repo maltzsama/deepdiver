@@ -40,7 +40,7 @@
               <td class="cell-num"><%= execution.retry_count %></td>
               <td class="max-w-md">
                 <% if execution.error_message.present? %>
-                  <span class="font-mono text-xs text-critical-600 line-clamp-2"
+                  <span class="font-mono text-xs text-red-DEFAULT line-clamp-2"
                         title="<%= execution.error_message %>"><%= execution.error_message %></span>
                 <% else %>
                   <span class="cell-muted">—</span>

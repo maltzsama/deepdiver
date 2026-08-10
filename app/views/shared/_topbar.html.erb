@@ -14,6 +14,20 @@
 
   <!-- Ferramentas / Usuário -->
   <div class="ml-auto flex items-center gap-1.5">
+    <%= button_to toggle_theme_path, method: :post, class: "topbar-btn", title: "Toggle paper/ink theme",
+                  aria_label: "Toggle theme" do %>
+      <% if html_theme == "light" %>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M13 3l-1 1M4 12l-1 1" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      <% else %>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M13.5 9.5A6 6 0 0 1 6.5 2.5a6 6 0 1 0 7 7z" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      <% end %>
+    <% end %>
+
     <button class="topbar-btn" aria-label="Notifications">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <path d="M3 6a5 5 0 0 1 10 0v3l1 2H2l1-2zM6 13a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.5"/>
