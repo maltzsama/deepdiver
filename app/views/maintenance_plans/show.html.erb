@@ -9,6 +9,7 @@
 
   <% if current_user.admin? || current_user.operator? %>
     <div class="page-actions">
+      <%= link_to t("plans.show.edit"), edit_maintenance_plan_path(@plan), class: "btn btn-default" if current_user.admin? %>
       <%= button_to t("plans.show.run_now"), run_maintenance_plan_path(@plan), method: :post,
                     class: "btn btn-primary" %>
       <% if current_user.admin? %>
