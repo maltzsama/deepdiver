@@ -1,3 +1,4 @@
 class IcebergTablePolicy < ApplicationPolicy
-  def run_maintenance? = user&.admin?
+  # Operators may trigger maintenance on a table; only admins manage plans.
+  def run_maintenance? = user&.admin? || user&.operator?
 end

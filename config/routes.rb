@@ -15,6 +15,9 @@ Rails.application.routes.draw do
 
   root "dashboard#index"
 
+  # Paper/ink theme toggle (cookie-backed).
+  post "theme/toggle" => "theme#toggle", as: :toggle_theme
+
   # What is happening right now.
   resource :activity, only: :show, controller: "activity" do
     member { post :restart }
@@ -54,4 +57,14 @@ Rails.application.routes.draw do
   end
 
   resources :maintenance_schedules
+
+  # User & team administration (CR-64).
+  resources :users, only: %i[index new create update] do
+    member do
+      post :suspend
+      post :reactivate
+    end
+  end
+
+  resources :teams
 end
