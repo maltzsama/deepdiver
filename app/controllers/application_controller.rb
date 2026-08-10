@@ -1,4 +1,6 @@
 class ApplicationController < ActionController::Base
+  include Pundit::Authorization
+
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
@@ -7,18 +9,17 @@ class ApplicationController < ActionController::Base
 
   before_action :authenticate_user!
 
-  layout :layout_by_resource
+  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
-  private
+  layout :layout_by_resource
 
   # Devise screens use the auth layout (no header/navigation).
   def layout_by_resource
     devise_controller? ? "auth" : "application"
   end
 
-  def require_admin!
-    return if current_user.admin?
-
+  # Pundit: after a failed authorization, redirect with an alert.
+  def user_not_authorized(exception)
     flash[:alert] = "You do not have permission to perform that action"
     redirect_back(fallback_location: root_path)
   end

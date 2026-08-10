@@ -2,6 +2,7 @@
 # awaiting a commit-conflict retry, and queued.
 class ActivityController < ApplicationController
   def show
+    authorize :activity, :show?
     @engine_state = TrinoEngineSupervisor.state
     @running = ExecutionHistory.includes(:iceberg_table, :execution_steps, maintenance_plan: :maintenance_steps)
                                .where(status: "running")
@@ -12,6 +13,7 @@ class ActivityController < ApplicationController
   end
 
   def restart
+    authorize :activity, :restart?
     TrinoEngineSupervisor.restart!
     redirect_to activity_path, notice: "Engine start re-triggered."
   end

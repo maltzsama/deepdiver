@@ -1,12 +1,13 @@
 class CatalogsController < ApplicationController
-  before_action :require_admin!, only: %i[new create edit update destroy sync verify]
   before_action :set_catalog, only: %i[show edit update destroy sync verify]
 
   def index
+    authorize Catalog
     @catalogs = Catalog.order(:name)
   end
 
   def show
+    authorize @catalog
     @tables = @catalog.iceberg_tables
                   .left_joins(:maintenance_schedules)
                   .select("iceberg_tables.*, COUNT(maintenance_schedules.id) AS schedules_count")
@@ -15,10 +16,12 @@ class CatalogsController < ApplicationController
   end
 
   def new
+    authorize Catalog
     @catalog = Catalog.new
   end
 
   def create
+    authorize Catalog
     @catalog = Catalog.new(catalog_params)
 
     if @catalog.save
@@ -28,9 +31,12 @@ class CatalogsController < ApplicationController
     end
   end
 
-  def edit; end
+  def edit
+    authorize @catalog
+  end
 
   def update
+    authorize @catalog
     if @catalog.update(catalog_params)
       redirect_to @catalog, notice: "Catalog updated."
     else
@@ -39,16 +45,19 @@ class CatalogsController < ApplicationController
   end
 
   def destroy
+    authorize @catalog
     @catalog.destroy
     redirect_to catalogs_path, notice: "Catalog deleted."
   end
 
   def sync
+    authorize @catalog
     MaintenanceOrchestrator.sync_catalog(@catalog.id)
     redirect_to @catalog, notice: "Catalog sync enqueued."
   end
 
   def verify
+    authorize @catalog
     result = @catalog.verify_connection!
 
     if result[:ok]
@@ -70,7 +79,6 @@ class CatalogsController < ApplicationController
       catalog_credential_attributes: %i[id auth_method client_id secret scope token_path]
     )
 
-    # A blank secret means "keep the current one", not "delete it".
     creds = permitted[:catalog_credential_attributes]
     creds&.delete(:secret) if creds && creds[:secret].blank?
 

@@ -1,9 +1,10 @@
 class IcebergTablesController < ApplicationController
-  before_action :require_admin!, only: %i[run_maintenance]
+  before_action :set_table, only: %i[show run_maintenance]
 
   # Global view: every table of every catalog, with filters. With 100+
   # tables, browsing catalog by catalog does not scale.
   def index
+    authorize IcebergTable
     @catalogs   = Catalog.order(:name)
     @namespaces = IcebergTable.distinct.order(:namespace).pluck(:namespace)
 
@@ -37,7 +38,7 @@ class IcebergTablesController < ApplicationController
   end
 
   def show
-    @table = IcebergTable.find(params[:id])
+    authorize @table
     @schedules = @table.maintenance_schedules.order(:operation)
     @executions = @table.execution_histories.latest.limit(20)
     @freshness_sla = @table.table_freshness_sla
@@ -46,7 +47,7 @@ class IcebergTablesController < ApplicationController
 
   # Fallback for the table-level "run now": runs the table's plan.
   def run_maintenance
-    @table = IcebergTable.find(params[:id])
+    authorize @table, :run_maintenance?
     plan = @table.maintenance_plan
 
     if plan && !plan.is_paused
@@ -55,5 +56,11 @@ class IcebergTablesController < ApplicationController
     else
       redirect_to @table, alert: "This table has no active plan to run."
     end
+  end
+
+  private
+
+  def set_table
+    @table = IcebergTable.find(params[:id])
   end
 end

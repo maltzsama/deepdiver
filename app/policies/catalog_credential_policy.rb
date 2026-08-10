@@ -1,0 +1,2 @@
+class CatalogCredentialPolicy < ApplicationPolicy
+end

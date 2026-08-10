@@ -24,7 +24,7 @@ module ActivityBroadcaster
       "activity",
       target: "activity-running",
       partial: "activity/running",
-      locals: { running: running, queued: queued }
+      locals: { running: running, queued: queued, show_actions: false }
     )
   end
 end

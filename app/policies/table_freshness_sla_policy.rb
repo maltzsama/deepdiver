@@ -1,0 +1,2 @@
+class TableFreshnessSlaPolicy < ApplicationPolicy
+end

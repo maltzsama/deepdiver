@@ -1,5 +1,6 @@
 class DashboardController < ApplicationController
   def index
+    authorize :dashboard
     @health_counts = IcebergTable.group(:health_status).count
     @total_tables  = @health_counts.values.sum
 
