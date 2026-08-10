@@ -70,3 +70,42 @@ RSpec.describe "GET /execution_histories", type: :request do
     expect(response.body).to include("commit conflict")
   end
 end
+
+RSpec.describe "GET /execution_histories (unified feed)", type: :request do
+  let(:user)   { create(:user) }
+  let(:table)  { create(:iceberg_table) }
+
+  before { sign_in user }
+
+  it "interleaves maintenance and freshness by time, most recent first" do
+    plan = create(:maintenance_plan, iceberg_table: table)
+    create(:execution_history, maintenance_plan: plan, iceberg_table: table,
+                               started_at: 2.hours.ago, status: :success)
+    create(:freshness_check, iceberg_table: table, checked_at: 1.hour.ago, status: "late")
+
+    get execution_histories_path
+
+    events = assigns(:events)
+    expect(events.map { |e| e[:kind] }).to eq(%i[freshness maintenance])
+  end
+
+  it "filters to freshness only when asked" do
+    plan = create(:maintenance_plan, iceberg_table: table)
+    create(:execution_history, maintenance_plan: plan, iceberg_table: table, started_at: 1.hour.ago)
+    create(:freshness_check, iceberg_table: table, checked_at: 30.minutes.ago, status: "ok")
+
+    get execution_histories_path, params: { kind: "freshness" }
+
+    expect(assigns(:events).map { |e| e[:kind] }.uniq).to eq([ :freshness ])
+  end
+
+  it "maps a maintenance status filter onto the closest freshness status" do
+    create(:freshness_check, iceberg_table: table, status: "error")
+    create(:freshness_check, iceberg_table: table, status: "ok")
+
+    get execution_histories_path, params: { status: "failed" }
+
+    statuses = assigns(:events).select { |e| e[:kind] == :freshness }.map { |e| e[:record].status }
+    expect(statuses).to eq([ "error" ])
+  end
+end
