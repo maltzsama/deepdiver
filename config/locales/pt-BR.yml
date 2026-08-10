@@ -28,3 +28,12 @@ pt-BR:
       confirm_password: "Confirmar nova senha"
       current_password: "Senha atual (precisamos dela para confirmar as mudanças)"
       update: "Atualizar"
+
+  activerecord:
+    errors:
+      models:
+        catalog:
+          attributes:
+            trino_catalog_name_override:
+              invalid_format: "precisa começar com letra minúscula e conter só letras, números e _ (máx. %{max}). Derivado: %{derived}"
+              reserved: "%{name} é reservado pelo Trino (%{reserved})"

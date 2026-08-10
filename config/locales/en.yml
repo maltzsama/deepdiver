@@ -688,3 +688,12 @@ en:
     failure:
       suspended: "Your account has been suspended. Contact an administrator."
 
+  activerecord:
+    errors:
+      models:
+        catalog:
+          attributes:
+            trino_catalog_name_override:
+              invalid_format: "must start with a lowercase letter and contain only letters, numbers and _ (max %{max}). Derived: %{derived}"
+              reserved: "%{name} is reserved by Trino (%{reserved})"
+
