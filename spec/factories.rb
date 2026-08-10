@@ -19,6 +19,11 @@ FactoryBot.define do
     trait :suspended do
       status { "suspended" }
     end
+
+    trait :sso do
+      provider { "openid_connect" }
+      uid { "https://idp.example.com/user-1" }
+    end
   end
 
   factory :team do
@@ -86,6 +91,14 @@ FactoryBot.define do
 
   factory :freshness_run do
     status { "pending" }
+  end
+
+  factory :freshness_check do
+    iceberg_table
+    checked_at { Time.current }
+    status { "ok" }
+    delay_seconds { 0 }
+    sla_minutes { 120 }
   end
 
   factory :maintenance_plan do

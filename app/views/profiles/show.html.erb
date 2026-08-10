@@ -1,0 +1,87 @@
+<% content_for :title, "Profile — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("profiles.show.eyebrow") %></p>
+    <h1 class="page-title"><%= t("profiles.show.title") %></h1>
+    <p class="page-sub"><%= t("profiles.show.subtitle", email: current_user.email) %></p>
+  </div>
+</div>
+
+<%= render "shared/flash" %>
+
+<section class="panel mb-6">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("profiles.show.preferences_title") %></h2>
+  </div>
+  <div class="panel-body">
+    <% if current_user.errors.any? %>
+      <div class="errors mb-4">
+        <ul class="errors-list">
+          <% current_user.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <%= form_with model: current_user, url: profile_path, method: :patch, class: "form-grid" do |f| %>
+      <div class="field">
+        <%= f.label :display_name, t("profiles.show.display_name"), class: "field-label" %>
+        <p class="field-hint"><%= t("profiles.show.display_name_hint") %></p>
+        <%= f.text_field :display_name,
+                         class: "field-input",
+                         placeholder: current_user.email %>
+      </div>
+
+      <div class="field">
+        <%= f.label :locale, t("profiles.show.locale"), class: "field-label" %>
+        <%= f.select :locale, options_for_select([["English", "en"], ["Português", "pt-BR"]], current_user.locale),
+                     {}, class: "field-input" %>
+      </div>
+
+      <div class="field">
+        <%= f.label :theme, t("profiles.show.theme"), class: "field-label" %>
+        <%= f.select :theme,
+                     options_for_select([[t("profiles.show.theme_dark"), "dark"],
+                                         [t("profiles.show.theme_light"), "light"]],
+                                        current_user.theme),
+                     {}, class: "field-input" %>
+      </div>
+
+      <%= f.submit t("profiles.show.save"), class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</section>
+
+<section class="panel mb-6">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("profiles.show.security_title") %></h2>
+  </div>
+  <div class="panel-body">
+    <% if current_user.sso? %>
+      <p class="field-hint"><%= t("profiles.show.sso_managed") %></p>
+    <% else %>
+      <%= form_with model: current_user, url: password_profile_path, method: :patch,
+                    class: "form-grid", id: "password-form" do |f| %>
+        <div class="field">
+          <%= f.label :current_password, t("profiles.show.current_password"), class: "field-label" %>
+          <%= f.password_field :current_password, autocomplete: "current-password", class: "field-input" %>
+        </div>
+
+        <div class="field">
+          <%= f.label :password, t("profiles.show.new_password"), class: "field-label" %>
+          <p class="field-hint"><%= t("profiles.show.password_hint") %></p>
+          <%= f.password_field :password, autocomplete: "new-password", class: "field-input" %>
+        </div>
+
+        <div class="field">
+          <%= f.label :password_confirmation, t("profiles.show.password_confirmation"), class: "field-label" %>
+          <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "field-input" %>
+        </div>
+
+        <%= f.submit t("profiles.show.change_password"), class: "btn btn-default" %>
+      <% end %>
+    <% end %>
+  </div>
+</section>

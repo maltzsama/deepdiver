@@ -8,10 +8,18 @@ class ApplicationController < ActionController::Base
   stale_when_importmap_changes
 
   before_action :authenticate_user!
+  before_action :set_locale_and_theme, if: :user_signed_in?
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
   layout :layout_by_resource
+
+  # Language and theme are account preferences (CR-69), read from the profile
+  # instead of the old cookie. Auth screens keep the dark paper look.
+  def set_locale_and_theme
+    I18n.locale = current_user.locale if current_user.locale.in?(I18n.available_locales.map(&:to_s))
+    @theme = current_user.theme
+  end
 
   # Devise screens use the auth layout (no header/navigation).
   def layout_by_resource

@@ -16,7 +16,7 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="min-h-screen bg-cosmos-bg text-cosmos-fg font-sans antialiased">
+  <body class="min-h-screen bg-cosmos-bg text-cosmos-fg font-sans antialiased" data-theme="<%= html_theme %>">
     <% if user_signed_in? %>
       <div class="app-shell-grid">
         <%= render "shared/sidebar" %>
