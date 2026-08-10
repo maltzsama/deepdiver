@@ -17,8 +17,10 @@
       <% if engine_state.last_error.present? %>
         <span class="cell-muted font-mono text-xs"><%= engine_state.last_error %></span>
       <% end %>
-      <%= button_to t("activity.engine.retry"), restart_activity_path, method: :post,
-                    class: "btn btn-default btn-sm" %>
+      <% if defined?(current_user) && current_user&.admin? %>
+        <%= button_to t("activity.engine.retry"), restart_activity_path, method: :post,
+                      class: "btn btn-default btn-sm" %>
+      <% end %>
     <% else %>
       <span class="badge badge-neutral"><span class="badge-dot"></span><%= t("activity.engine.down") %></span>
     <% end %>

@@ -2,9 +2,10 @@
 # this screen answers "what ran on the lake today", chain-aware: each row is an
 # execution with its nested steps.
 class ExecutionHistoriesController < ApplicationController
-  before_action :require_admin!, only: %i[cancel]
+  before_action :set_execution, only: %i[cancel]
 
   def index
+    authorize ExecutionHistory
     @catalogs = Catalog.order(:name)
 
     @executions = ExecutionHistory
@@ -36,10 +37,16 @@ class ExecutionHistoriesController < ApplicationController
   # Operator cancellation of a running execution: mark it failed, free the
   # table lock and let the supervisor decide about the engine.
   def cancel
-    execution = ExecutionHistory.find(params[:id])
-    execution.update!(status: :failed, error_message: "cancelled by operator", finished_at: Time.current)
-    TableLock.release(execution)
+    authorize @execution, :cancel?
+    @execution.update!(status: :failed, error_message: "cancelled by operator", finished_at: Time.current)
+    TableLock.release(@execution)
     TrinoEngineSupervisor.demand_finished!
     redirect_to activity_path, notice: "Execution cancelled."
+  end
+
+  private
+
+  def set_execution
+    @execution = ExecutionHistory.find(params[:id])
   end
 end

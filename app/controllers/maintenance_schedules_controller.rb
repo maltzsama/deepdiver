@@ -1,21 +1,24 @@
 class MaintenanceSchedulesController < ApplicationController
-  before_action :require_admin!, except: %i[index show]
+  before_action :set_schedule, only: %i[show edit update destroy]
 
   def index
+    authorize MaintenanceSchedule
     @schedules = MaintenanceSchedule.includes(iceberg_table: :catalog).order(:iceberg_table_id)
   end
 
   def show
-    @schedule = MaintenanceSchedule.find(params[:id])
+    authorize @schedule
     @executions = @schedule.execution_histories.latest.limit(20)
   end
 
   def new
+    authorize MaintenanceSchedule
     @schedule = MaintenanceSchedule.new
     @schedule.iceberg_table_id = params[:iceberg_table_id] if params[:iceberg_table_id]
   end
 
   def create
+    authorize MaintenanceSchedule
     @schedule = MaintenanceSchedule.new(schedule_params)
 
     if @schedule.save
@@ -26,12 +29,11 @@ class MaintenanceSchedulesController < ApplicationController
   end
 
   def edit
-    @schedule = MaintenanceSchedule.find(params[:id])
+    authorize @schedule
   end
 
   def update
-    @schedule = MaintenanceSchedule.find(params[:id])
-
+    authorize @schedule
     if @schedule.update(schedule_params)
       redirect_to @schedule, notice: "Schedule updated."
     else
@@ -40,10 +42,16 @@ class MaintenanceSchedulesController < ApplicationController
   end
 
   def destroy
-    @schedule = MaintenanceSchedule.find(params[:id])
+    authorize @schedule
     @table = @schedule.iceberg_table
     @schedule.destroy
     redirect_to @table, notice: "Schedule deleted."
+  end
+
+  private
+
+  def set_schedule
+    @schedule = MaintenanceSchedule.find(params[:id])
   end
 
   private

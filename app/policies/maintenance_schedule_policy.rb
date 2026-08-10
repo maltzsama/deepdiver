@@ -1,0 +1,2 @@
+class MaintenanceSchedulePolicy < ApplicationPolicy
+end

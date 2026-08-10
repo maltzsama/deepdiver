@@ -1,12 +1,13 @@
 class MaintenancePoliciesController < ApplicationController
-  before_action :require_admin!, except: %i[index show]
   before_action :set_policy, only: %i[show edit update destroy apply]
 
   def index
+    authorize MaintenancePolicy
     @policies = MaintenancePolicy.order(:name)
   end
 
   def show
+    authorize @policy
     @plans = @policy.maintenance_plans.includes(:iceberg_table)
     @candidates = IcebergTable.includes(:catalog, maintenance_plan: :maintenance_policy)
                               .order(:namespace, :name)
@@ -14,10 +15,12 @@ class MaintenancePoliciesController < ApplicationController
   end
 
   def new
+    authorize MaintenancePolicy
     @policy = MaintenancePolicy.new
   end
 
   def create
+    authorize MaintenancePolicy
     @policy = MaintenancePolicy.new(policy_params)
 
     if @policy.save
@@ -27,9 +30,12 @@ class MaintenancePoliciesController < ApplicationController
     end
   end
 
-  def edit; end
+  def edit
+    authorize @policy
+  end
 
   def update
+    authorize @policy
     if @policy.update(policy_params)
       # Propagate to the plans derived from this policy.
       count = @policy.propagate!
@@ -40,12 +46,14 @@ class MaintenancePoliciesController < ApplicationController
   end
 
   def destroy
+    authorize @policy
     @policy.destroy
     redirect_to maintenance_policies_path, notice: "Policy deleted."
   end
 
   # Applies the policy to a set of tables at once, creating/updating their plans.
   def apply
+    authorize @policy, :apply?
     ids = Array(params[:iceberg_table_ids]).reject(&:blank?)
     result = @policy.apply_to!(IcebergTable.where(id: ids))
 
