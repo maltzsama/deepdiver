@@ -1,12 +1,21 @@
 # Mirror of the Baleia plugin registry table (trino_catalog_registry) in
-# Postgres. The plugin reads this at Trino boot.
+# Postgres. The plugin reads this at Trino boot (Database.java v0.2.1:
+# SELECT catalog_name, connector_name, properties::text, JOINed onto
+# trino_clusters.name, filtered by enabled).
 #
-# PENDING: the exact schema (column names/types) must come from the plugin
-# repo's docker/initdb/01-schema.sql before this model and its migration are
-# implemented. The Baleia provisioner is only active behind
-# TRINO_PROVISIONER=baleia, so this stays a stub until the schema is confirmed.
+# The application writes rows directly here - no catalog_version hash, no
+# CREATE CATALOG. 'baleia' is the only allowed writer from the app side; the
+# 'trino' value is reserved for the coordinator writing back.
 class TrinoCatalogRegistry < ApplicationRecord
-  def self.upsert_from(catalog)
-    raise NotImplementedError, "registry schema pending: read docker/initdb/01-schema.sql from the Baleia repo"
-  end
+  self.table_name = "trino_catalog_registry"
+
+  WRITER = "baleia"
+  SYNC_STATUSES = %w[pending synced error].freeze
+
+  belongs_to :trino_cluster, foreign_key: :cluster_id
+
+  validates :catalog_name, presence: true
+  validates :connector_name, presence: true
+  validates :sync_status, inclusion: { in: SYNC_STATUSES }
+  validates :updated_by, inclusion: { in: [ WRITER, "trino" ] }
 end
