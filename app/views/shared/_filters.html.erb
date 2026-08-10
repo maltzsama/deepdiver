@@ -11,6 +11,7 @@
       <%= select_tag field[:name],
                      options_for_select(field[:options], params[field[:name]]),
                      include_blank: t("filters.all"),
+                     onchange: "this.form.requestSubmit()",
                      class: "field-input py-1.5 text-sm min-w-40" %>
     </div>
   <% end %>

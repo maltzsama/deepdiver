@@ -8,30 +8,13 @@ class ExecutionHistoriesController < ApplicationController
     authorize ExecutionHistory
     @catalogs = Catalog.order(:name)
 
-    @executions = ExecutionHistory
-                  .includes(iceberg_table: :catalog, execution_steps: :maintenance_step)
-                  .latest
-
-    if params[:catalog_id].present?
-      @executions = @executions.joins(:iceberg_table)
-                               .where(iceberg_tables: { catalog_id: params[:catalog_id] })
-    end
-
-    if params[:operation].present?
-      @executions = @executions.joins(:execution_steps)
-                               .where(execution_steps: { operation: params[:operation] })
-                               .distinct
-    end
-
-    if params[:stopped_at_step].present?
-      @executions = @executions.joins(:execution_steps)
-                               .where(execution_steps: { operation: params[:stopped_at_step], status: "failed" })
-                               .distinct
-    end
-
-    @executions = @executions.where(status: params[:status]) if params[:status].present?
-
-    @executions = @executions.limit(200)
+    # One timeline for both kinds of work the tool runs: maintenance
+    # executions and freshness scans. The two sources are queried separately
+    # (they share no columns worth a UNION) and interleaved by time here.
+    @events = (Array(maintenance_events) + Array(freshness_events))
+              .sort_by { |event| event[:at] }
+              .reverse
+              .first(200)
   end
 
   # Operator cancellation of a running execution: mark it failed, free the
@@ -48,5 +31,42 @@ class ExecutionHistoriesController < ApplicationController
 
   def set_execution
     @execution = ExecutionHistory.find(params[:id])
+  end
+
+  def maintenance_events
+    return [] if params[:kind] == "freshness"
+
+    scope = ExecutionHistory.includes(iceberg_table: :catalog, execution_steps: :maintenance_step)
+    scope = scope.joins(:iceberg_table).where(iceberg_tables: { catalog_id: params[:catalog_id] }) if params[:catalog_id].present?
+    scope = scope.where(status: params[:status]) if params[:status].present?
+    scope = scope.joins(:execution_steps).where(execution_steps: { operation: params[:operation] }).distinct if params[:operation].present?
+    if params[:stopped_at_step].present?
+      scope = scope.joins(:execution_steps)
+                   .where(execution_steps: { operation: params[:stopped_at_step], status: "failed" })
+                   .distinct
+    end
+
+    scope.latest.limit(200).map do |execution|
+      { kind: :maintenance, at: execution.started_at || execution.created_at,
+        record: execution, table: execution.iceberg_table }
+    end
+  end
+
+  def freshness_events
+    return [] if params[:kind] == "maintenance"
+
+    scope = FreshnessCheck.includes(iceberg_table: :catalog)
+    scope = scope.joins(:iceberg_table).where(iceberg_tables: { catalog_id: params[:catalog_id] }) if params[:catalog_id].present?
+    scope = scope.where(status: freshness_status_filter) if params[:status].present?
+
+    scope.latest.limit(200).map do |check|
+      { kind: :freshness, at: check.checked_at, record: check, table: check.iceberg_table }
+    end
+  end
+
+  # The status filter speaks maintenance ("failed"/"success"); map it onto the
+  # closest freshness meaning so filtering does not wipe one side of the feed.
+  def freshness_status_filter
+    { "failed" => "error", "success" => "ok" }.fetch(params[:status], params[:status])
   end
 end

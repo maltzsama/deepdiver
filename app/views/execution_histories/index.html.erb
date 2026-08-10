@@ -11,12 +11,15 @@
 <%= render "shared/filters",
            url: execution_histories_path,
            fields: [
+             { name: :kind, label: t("operations.filter_kind"),
+               options: [ [ t("operations.kind_maintenance"), "maintenance" ],
+                          [ t("operations.kind_freshness"), "freshness" ] ] },
              { name: :catalog_id, label: t("tables.filter_catalog"),
                options: @catalogs.map { |c| [ c.name, c.id ] } },
-             { name: :operation, label: t("operations.filter_operation"),
-               options: MaintenancePlan::CANONICAL_ORDER.map { |o| [ o, o ] } },
              { name: :status, label: t("operations.filter_status"),
                options: ExecutionHistory::STATUSES.map { |s| [ s, s ] } },
+             { name: :operation, label: t("operations.filter_operation"),
+               options: MaintenancePlan::CANONICAL_ORDER.map { |o| [ o, o ] } },
              { name: :stopped_at_step, label: t("operations.filter_stopped_at"),
                options: MaintenancePlan::CANONICAL_ORDER.map { |o| [ o, o ] } }
            ] %>
@@ -24,10 +27,10 @@
 <section class="panel">
   <div class="panel-head">
     <h2 class="panel-title"><%= t("operations.index.result") %></h2>
-    <span class="panel-note"><%= t("operations.index.count", count: @executions.size) %></span>
+    <span class="panel-note"><%= t("operations.index.count", count: @events.size) %></span>
   </div>
 
-  <% if @executions.empty? %>
+  <% if @events.empty? %>
     <div class="empty">
       <p class="empty-title"><%= t("operations.index.empty_title") %></p>
       <p class="empty-hint">
@@ -40,59 +43,96 @@
     </div>
   <% else %>
     <div class="data-table-scroll">
-      <table class="data-table">
+      <table class="data-table table-fixed">
         <thead>
           <tr>
-            <th><%= t("operations.index.col_table") %></th>
-            <th><%= t("operations.index.col_chain") %></th>
-            <th><%= t("operations.index.col_status") %></th>
-            <th><%= t("operations.index.col_duration") %></th>
-            <th><%= t("operations.index.col_when") %></th>
+            <th class="w-[28%]"><%= t("operations.index.col_table") %></th>
+            <th class="w-[22%]"><%= t("operations.index.col_chain") %></th>
+            <th class="w-[16%]"><%= t("operations.index.col_status") %></th>
+            <th class="w-[14%]"><%= t("operations.index.col_duration") %></th>
+            <th class="w-[20%]"><%= t("operations.index.col_when") %></th>
           </tr>
         </thead>
         <tbody>
-          <% @executions.each do |execution| %>
-            <tr>
-              <td>
-                <%= link_to execution.iceberg_table.fully_qualified_name,
-                            execution.iceberg_table, class: "link-mono" %>
-                <span class="ml-2 text-xs cell-muted"><%= execution.iceberg_table.catalog.name %></span>
-              </td>
-              <td><%= render "shared/step_chain", execution: execution %></td>
-              <td>
-                <span class="badge <%= execution_status_badge_class(execution.status) %>">
-                  <span class="badge-dot"></span><%= execution.status %>
-                </span>
-              </td>
-              <td class="cell-num"><%= duration_label(execution.duration) || "—" %></td>
-              <td><%= timestamp(execution.created_at) %></td>
-            </tr>
-            <tr class="table-subrow">
-              <td colspan="5">
-                <div class="flex flex-col gap-1.5">
-                  <% execution.execution_steps.each do |step| %>
-                    <div class="grid grid-cols-[10rem_minmax(0,1fr)] items-center gap-x-3 text-xs">
-                      <span class="font-mono text-cosmos-fg-soft"><%= step.operation %></span>
-                      <span class="flex flex-wrap items-center gap-2">
-                        <span class="badge <%= execution_step_badge_class(step.status) %>"><%= step.status %></span>
-                        <% if step.started_at %>
-                          <span class="cell-muted"><%= duration_label(step.duration) %> · <%= timestamp(step.started_at) %></span>
-                        <% end %>
-                        <% if step.retry_count.positive? %>
-                          <span class="badge badge-warning"><%= t("operations.index.retries", count: step.retry_count) %></span>
-                        <% end %>
-                        <% if step.error_message.present? %>
-                          <span class="font-mono text-red-DEFAULT break-all" title="<%= step.error_message %>"><%= step.error_message %></span>
-                        <% end %>
-                      </span>
-                    </div>
+          <% @events.each do |event| %>
+            <% if event[:kind] == :freshness %>
+              <% check = event[:record] %>
+              <tr>
+                <td>
+                  <span class="badge badge-mute"><span class="badge-dot"></span><%= t("operations.kind_freshness") %></span>
+                  <span class="ml-2">
+                    <%= link_to event[:table].fully_qualified_name, event[:table], class: "link-mono" %>
+                    <span class="ml-2 text-xs cell-muted"><%= event[:table].catalog.name %></span>
+                  </span>
+                </td>
+                <td>
+                  <span class="text-xs cell-muted"><%= t("operations.freshness_sla", sla: check.sla_minutes) %></span>
+                  <% if check.error_message.present? %>
+                    <span class="ml-2 font-mono text-xs text-red-DEFAULT break-all" title="<%= check.error_message %>"><%= check.error_message %></span>
                   <% end %>
-                  <% if execution.error_message.present? %>
-                    <p class="font-mono text-xs text-red-DEFAULT break-all"><%= execution.error_message %></p>
-                  <% end %>
-                </div>
-              </td>
-            </tr>
+                </td>
+                <td>
+                  <span class="badge <%= freshness_badge_class(check.status) %>">
+                    <span class="badge-dot"></span><%= check.status %>
+                  </span>
+                </td>
+                <td class="cell-num"><%= freshness_delay_label(check.delay_seconds) || "—" %></td>
+                <td><%= timestamp(check.checked_at) %></td>
+              </tr>
+            <% else %>
+              <% execution = event[:record] %>
+              <tr>
+                <td>
+                  <span class="badge badge-mute"><span class="badge-dot"></span><%= t("operations.kind_maintenance") %></span>
+                  <span class="ml-2">
+                    <%= link_to event[:table].fully_qualified_name, event[:table], class: "link-mono" %>
+                    <span class="ml-2 text-xs cell-muted"><%= event[:table].catalog.name %></span>
+                  </span>
+                </td>
+                <td><%= render "shared/step_chain", execution: execution %></td>
+                <td>
+                  <span class="badge <%= execution_status_badge_class(execution.status) %>">
+                    <span class="badge-dot"></span><%= execution.status %>
+                  </span>
+                </td>
+                <td class="cell-num"><%= duration_label(execution.duration) || "—" %></td>
+                <td><%= timestamp(execution.created_at) %></td>
+              </tr>
+              <tr class="table-subrow">
+                <td colspan="5">
+                  <div class="flex flex-col">
+                    <% execution.execution_steps.each do |step| %>
+                      <div class="grid grid-cols-[28%_22%_16%_14%_20%] items-center gap-x-3 py-1.5">
+                        <div></div>
+                        <div class="font-mono text-xs text-cosmos-fg-soft"><%= step.operation %></div>
+                        <div class="flex flex-wrap items-center gap-2">
+                          <span class="badge <%= execution_step_badge_class(step.status) %>"><%= step.status %></span>
+                          <% if step.retry_count.positive? %>
+                            <span class="badge badge-warning"><%= t("operations.index.retries", count: step.retry_count) %></span>
+                          <% end %>
+                        </div>
+                        <div class="text-xs">
+                          <% if step.started_at %>
+                            <span class="cell-muted"><%= duration_label(step.duration) || "—" %></span>
+                          <% end %>
+                        </div>
+                        <div class="text-xs">
+                          <% if step.started_at %>
+                            <span class="cell-muted"><%= timestamp(step.started_at) %></span>
+                          <% end %>
+                        </div>
+                      </div>
+                      <% if step.error_message.present? %>
+                        <p class="py-1 font-mono text-xs text-red-DEFAULT break-all"><%= step.error_message %></p>
+                      <% end %>
+                    <% end %>
+                    <% if execution.error_message.present? %>
+                      <p class="mt-2 font-mono text-xs text-red-DEFAULT break-all"><%= execution.error_message %></p>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
           <% end %>
         </tbody>
       </table>
