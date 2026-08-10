@@ -80,7 +80,7 @@
               <td class="cell-num"><%= table.snapshot_count || "—" %></td>
               <td>
                 <% if (plan = table.maintenance_plan) %>
-                  <%= link_to t("tables.index.plan_link"), plan, class: "link text-xs" %>
+                  <%= link_to t("tables.index.plan_link"), plan, class: "badge badge-neutral" %>
                 <% else %>
                   <span class="badge badge-warning"><%= t("tables.index.no_plan") %></span>
                 <% end %>
