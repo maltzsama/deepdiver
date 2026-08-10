@@ -46,11 +46,11 @@
   --sunk:      #050504;
   --fg:        #ECE8DC;
   --fg-soft:   #8A857A;
-  --fg-mute:   #6A655A;
+  --fg-mute:   #857F70;
   --line:      rgba(236, 232, 220, 0.1);
   --line-2:    rgba(236, 232, 220, 0.2);
 
-  --red:       #C8102E;
+  --red:       #E0475B;
   --red-deep:  #8B0A1F;
   --red-soft:  #3A1418;
 
@@ -134,6 +134,18 @@
   .app-shell   { @apply min-h-screen bg-cosmos-bg text-cosmos-fg font-sans antialiased; }
   .app-main    { @apply mx-auto w-full max-w-7xl px-4 py-8 sm:px-6; }
 
+  /* Signed-in shell: sidebar column + content. The sidebar width is driven by
+     --sidebar-w so collapsing it (52px) also widens the content track. */
+  .app-shell-grid {
+    display: grid;
+    grid-template-columns: var(--sidebar-w, 220px) 1fr;
+    grid-template-rows: 48px 1fr;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .app-shell-grid:has(.sidebar.collapsed) { --sidebar-w: 52px; }
+  .sidebar { width: var(--sidebar-w, 220px); }
+
   .app-header  { @apply sticky top-0 z-20 border-b border-cosmos-line bg-cosmos-surface; }
   .app-headbar { @apply mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:px-6; }
   .app-brand   { @apply font-mono text-sm font-semibold tracking-tight text-cosmos-fg; }
@@ -182,6 +194,18 @@
   .data-table tbody tr:last-child td { @apply border-b-0; }
   .data-table tbody tr { @apply transition hover:bg-cosmos-soft; }
   .data-table-scroll { @apply -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0; }
+
+  /* Detail sub-row (e.g. per-execution steps in the history log). Sits under
+     its parent row, indented to the first column, without the row-hover bleed
+     and with its own muted band so the hierarchy reads as one unit. */
+  .data-table tr.table-subrow td {
+    background: var(--sunk);
+    padding: 0.5rem 0.75rem 0.75rem;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--line-2);
+  }
+  .data-table tr.table-subrow:hover td { background: var(--sunk); }
+  .data-table tr.table-subrow:last-child td { border-bottom-width: 0; }
 
   .cell-id     { @apply font-mono text-sm text-cosmos-fg; }
   .cell-muted  { @apply text-cosmos-fg-mute; }
@@ -260,6 +284,25 @@
   .field-check { @apply flex items-center gap-2 text-sm text-cosmos-fg; }
   .field-checkbox { @apply size-4 rounded border-cosmos-line-2 accent-red-DEFAULT text-red-DEFAULT
                      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-DEFAULT; }
+
+  /* Comboboxes share the input look: native arrow off, themed chevron on,
+     same height/padding as text inputs so filter bars line up. */
+  select.field-input,
+  select.field-input-mono {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%238A857A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.625rem center;
+    background-size: 1rem;
+    padding-right: 2.25rem;
+  }
+  select.field-input option,
+  select.field-input-mono option {
+    color: var(--fg);
+    background-color: var(--surface);
+  }
+
   .field-group { @apply rounded-[var(--radius-panel)] border border-cosmos-line bg-cosmos-soft/60 p-4; }
   .field-group-title { @apply mb-3 font-mono text-xs uppercase tracking-widest text-cosmos-fg-mute; }
   .form-actions{ @apply flex items-center gap-3 pt-2; }

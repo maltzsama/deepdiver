@@ -87,8 +87,29 @@ module ApplicationHelper
     :running
   end
 
+  # Compares a nav target against the current path. "/" matches only the root
+  # (otherwise every page would look selected); other paths match by prefix so
+  # nested actions stay highlighted on their section.
+  def active_path?(path)
+    current = request.path
+    return current == path || current == "#{path}/" if path == "/"
+
+    current == path || current.start_with?(path.end_with?("/") ? path : "#{path}/")
+  end
+
+  # 1234 -> "1k", 1234_500 -> "1.2k", 10_000 -> "10k". Used for the sidebar
+  # counters so big lakes stay readable.
+  def compact_number(number)
+    n = number.to_i
+    case n
+    when 0...1_000      then n.to_s
+    when 1_000...10_000 then format("%.1fk", n / 1000.0).sub(".0k", "k")
+    else                     format("%.0fk", n / 1000.0)
+    end
+  end
+
   def nav_link_to(path, icon: nil, &block)
-    active = current_page?(path) || (path.is_a?(String) && request.path.start_with?(path))
+    active = current_page?(path) || (path.is_a?(String) && active_path?(path))
     classes = "sidebar-link"
     classes += " active" if active
 

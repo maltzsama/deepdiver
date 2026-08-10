@@ -1,4 +1,4 @@
-<aside class="sidebar col-start-1 row-span-2 bg-[#050504] border-r border-cosmos-line flex flex-col overflow-hidden w-[220px]">
+<aside class="sidebar col-start-1 row-span-2 bg-[#050504] border-r border-cosmos-line flex flex-col overflow-hidden">
 
   <!-- Logo e Nome -->
   <div class="h-12 min-h-12 flex items-center px-3.5 gap-2.5 border-b border-cosmos-line flex-shrink-0">
@@ -27,9 +27,12 @@
       <div class="sidebar-section-title">Data</div>
       <%= nav_link_to iceberg_tables_path, icon: "database" do %>
         <span>Tables</span>
-        <span class="sidebar-badge"><%= IcebergTable.count %></span>
+        <span class="sidebar-badge"><%= compact_number(IcebergTable.count) %></span>
       <% end %>
-      <%= nav_link_to catalogs_path, icon: "catalog" do %><span>Catalogs</span><% end %>
+      <%= nav_link_to catalogs_path, icon: "catalog" do %>
+        <span>Catalogs</span>
+        <span class="sidebar-badge"><%= compact_number(Catalog.count) %></span>
+      <% end %>
     </div>
 
     <% # Seção 3 %>
@@ -37,7 +40,7 @@
       <div class="sidebar-section-title">Operations</div>
       <%= nav_link_to maintenance_plans_path, icon: "clock" do %>
         <span>Plans</span>
-        <span class="sidebar-badge"><%= MaintenancePlan.dispatchable.count %></span>
+        <span class="sidebar-badge"><%= compact_number(MaintenancePlan.dispatchable.count) %></span>
       <% end %>
       <%= nav_link_to maintenance_policies_path, icon: "preset" do %><span>Policies</span><% end %>
       <%= nav_link_to execution_histories_path, icon: "list" do %><span>History</span><% end %>

@@ -15,7 +15,7 @@
   <!-- Ferramentas / Usuário -->
   <div class="ml-auto flex items-center gap-1.5">
     <%= button_to toggle_theme_path, method: :post, class: "topbar-btn", title: "Toggle paper/ink theme",
-                  aria_label: "Toggle theme" do %>
+                  aria: { label: "Toggle theme" } do %>
       <% if html_theme == "light" %>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/>

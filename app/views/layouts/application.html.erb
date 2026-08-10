@@ -18,7 +18,7 @@
 
   <body class="min-h-screen bg-cosmos-bg text-cosmos-fg font-sans antialiased">
     <% if user_signed_in? %>
-      <div class="grid grid-cols-[220px_1fr] grid-rows-[48px_1fr] h-screen overflow-hidden">
+      <div class="app-shell-grid">
         <%= render "shared/sidebar" %>
         <%= render "shared/topbar" %>
         <main class="col-start-2 row-start-2 overflow-y-auto p-5 bg-cosmos-bg">
