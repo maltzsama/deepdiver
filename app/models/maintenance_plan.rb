@@ -16,6 +16,8 @@ class MaintenancePlan < ApplicationRecord
   has_many :maintenance_steps, -> { order(:position) }, dependent: :destroy
   has_many :execution_histories, dependent: :destroy
 
+  accepts_nested_attributes_for :maintenance_steps, allow_destroy: false
+
   validates :cron, presence: true
   validate  :cron_is_parseable
 
