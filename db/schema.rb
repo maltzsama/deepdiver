@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_10_083137) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_10_173000) do
   create_table "catalog_credentials", force: :cascade do |t|
     t.string "auth_method", default: "none", null: false
     t.integer "catalog_id", null: false
@@ -194,6 +194,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_083137) do
     t.index ["maintenance_plan_id"], name: "index_maintenance_steps_on_maintenance_plan_id"
   end
 
+  create_table "role_change_logs", force: :cascade do |t|
+    t.integer "changed_by_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "from_role", null: false
+    t.string "reason"
+    t.integer "to_role", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["changed_by_id"], name: "index_role_change_logs_on_changed_by_id"
+    t.index ["user_id"], name: "index_role_change_logs_on_user_id"
+  end
+
   create_table "table_freshness_slas", force: :cascade do |t|
     t.datetime "breached_since"
     t.datetime "created_at", null: false
@@ -226,6 +238,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_083137) do
     t.index ["iceberg_table_id"], name: "index_table_locks_on_iceberg_table_id", unique: true
   end
 
+  create_table "team_catalog_scopes", force: :cascade do |t|
+    t.integer "catalog_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["catalog_id"], name: "index_team_catalog_scopes_on_catalog_id"
+    t.index ["team_id", "catalog_id"], name: "index_team_catalog_scopes_on_team_id_and_catalog_id", unique: true
+    t.index ["team_id"], name: "index_team_catalog_scopes_on_team_id"
+  end
+
+  create_table "team_memberships", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["team_id", "user_id"], name: "index_team_memberships_on_team_id_and_user_id", unique: true
+    t.index ["team_id"], name: "index_team_memberships_on_team_id"
+    t.index ["user_id"], name: "index_team_memberships_on_user_id"
+  end
+
+  create_table "teams", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_teams_on_name", unique: true
+  end
+
   create_table "trino_engine_states", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "drain_started_at"
@@ -241,16 +281,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_083137) do
     t.datetime "created_at", null: false
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: ""
+    t.datetime "invited_at"
+    t.bigint "invited_by_id"
     t.string "provider"
     t.datetime "remember_created_at"
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token"
     t.integer "role", default: 0, null: false
+    t.string "status", default: "active", null: false
+    t.datetime "suspended_at"
+    t.bigint "suspended_by_id"
     t.string "uid"
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+    t.index ["status"], name: "index_users_on_status"
   end
 
   add_foreign_key "catalog_credentials", "catalogs"
@@ -266,7 +312,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_083137) do
   add_foreign_key "maintenance_schedules", "iceberg_tables"
   add_foreign_key "maintenance_schedules", "maintenance_policies"
   add_foreign_key "maintenance_steps", "maintenance_plans"
+  add_foreign_key "role_change_logs", "users"
+  add_foreign_key "role_change_logs", "users", column: "changed_by_id"
   add_foreign_key "table_freshness_slas", "iceberg_tables"
   add_foreign_key "table_locks", "execution_histories"
   add_foreign_key "table_locks", "iceberg_tables"
+  add_foreign_key "team_catalog_scopes", "catalogs"
+  add_foreign_key "team_catalog_scopes", "teams"
+  add_foreign_key "team_memberships", "teams"
+  add_foreign_key "team_memberships", "users"
+  add_foreign_key "users", "users", column: "invited_by_id"
+  add_foreign_key "users", "users", column: "suspended_by_id"
 end
