@@ -20,6 +20,8 @@ class User < ApplicationRecord
 
   validates :role, inclusion: { in: ROLES }
   validates :status, inclusion: { in: STATUSES }
+  validates :locale, inclusion: { in: %w[en pt-BR] }
+  validates :theme, inclusion: { in: %w[light dark] }
 
   scope :active, -> { where(status: "active") }
   scope :invited, -> { where(status: "invited") }

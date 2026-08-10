@@ -1,21 +1,24 @@
 <header class="col-start-2 row-start-1 bg-cosmos-soft border-b border-cosmos-line flex items-center px-4 gap-4 min-w-0">
 
-  <!-- Campo de Busca (Fake) -->
-  <div class="flex-1 max-w-[520px] relative">
+  <!-- Campo de Busca -->
+  <%= form_with url: iceberg_tables_path, method: :get, class: "flex-1 max-w-[520px] relative",
+                data: { controller: "search" } do %>
     <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-cosmos-fg-mute pointer-events-none" viewBox="0 0 16 16" fill="none">
       <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/>
       <path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5"/>
     </svg>
-    <input type="text" placeholder="Search tables, catalogs, policies..." 
-           class="w-full h-8 pl-8 pr-20 bg-cosmos-sunk border border-cosmos-line-2 text-cosmos-fg font-sans text-sm outline-none focus:border-cosmos-line-bold rounded-none" 
-           disabled />
+    <input type="search" name="q" value="<%= params[:q] %>" placeholder="Search tables, catalogs, policies..."
+           autocomplete="off"
+           data-search-target="input"
+           class="w-full h-8 pl-8 pr-20 bg-cosmos-sunk border border-cosmos-line-2 text-cosmos-fg font-sans text-sm outline-none focus:border-cosmos-line-bold rounded-none" />
     <kbd class="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[10px] text-cosmos-fg-mute bg-cosmos-bg border border-cosmos-line-2 px-1.5 py-0.5">⌘K</kbd>
-  </div>
+  <% end %>
 
   <!-- Ferramentas / Usuário -->
   <div class="ml-auto flex items-center gap-1.5">
     <%= button_to toggle_theme_path, method: :post, class: "topbar-btn", title: "Toggle paper/ink theme",
-                  aria: { label: "Toggle theme" } do %>
+                  aria: { label: "Toggle theme" },
+                  form: { data: { turbo: false } } do %>
       <% if html_theme == "light" %>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/>
@@ -28,18 +31,22 @@
       <% end %>
     <% end %>
 
-    <button class="topbar-btn" aria-label="Notifications">
+    <%= link_to execution_histories_path(status: "failed"), class: "topbar-btn", aria: { label: "Notifications" },
+                title: t("topbar.notifications") do %>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <path d="M3 6a5 5 0 0 1 10 0v3l1 2H2l1-2zM6 13a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.5"/>
       </svg>
       <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-DEFAULT rounded-full"></span>
-    </button>
+    <% end %>
 
     <span class="font-mono text-[11px] text-cosmos-fg-mute px-1">v0.1.0</span>
 
-    <div class="w-7 h-7 bg-red-DEFAULT text-[#F4F1E8] flex items-center justify-center font-bold text-xs">
-      <%= current_user.email.first.upcase %>
-    </div>
+    <%= link_to profile_path, class: "topbar-btn", title: t("profiles.show.title"),
+                aria: { label: "Profile" } do %>
+      <span class="w-7 h-7 bg-red-DEFAULT text-[#F4F1E8] flex items-center justify-center font-bold text-xs">
+        <%= (current_user.display_name.presence || current_user.email).first.upcase %>
+      </span>
+    <% end %>
   </div>
 </header>
 
@@ -49,7 +56,9 @@
     height: 32px; min-width: 32px; padding: 0 8px;
     display: inline-flex; align-items: center; justify-content: center;
     background: transparent; border: 1px solid transparent;
-    color: #8A857A; cursor: pointer; position: relative;
+    color: var(--fg-mute); cursor: pointer; position: relative;
+    text-decoration: none;
   }
-  .topbar-btn:hover { background: #1A1A18; border-color: rgba(236,232,220,0.1); }
+  .topbar-btn:hover { background: var(--sunk); border-color: var(--line); color: var(--fg); }
+  .topbar-btn:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
 </style>

@@ -1,7 +1,10 @@
 module ApplicationHelper
   # Selected theme for the <html data-theme> attribute. Dark is the default;
-  # "light" (paper) is what the toggle in the topbar persists via cookie.
+  # the theme toggle (CR-69) persists it on the account. The cookie is kept as
+  # a fallback for the anonymous/auth screens, where there is no signed-in user.
   def html_theme
+    return @theme if @theme.in?(%w[light dark])
+
     %w[light dark].include?(cookies[:theme]) ? cookies[:theme] : "dark"
   end
 
@@ -77,10 +80,10 @@ module ApplicationHelper
     STEP_LABELS.fetch(step.to_s, step.to_s)
   end
 
-  # Visual state of an execution. Returns :retrying, :failed or :running.
-  # A running execution with a positive retry count is waiting for the next
-  # commit-conflict attempt - its own demand keeps the engine up.
-  def execution_visual_state(execution)
+# Visual state of an execution. Returns :retrying, :failed or :running.
+# A running execution with a positive retry count is waiting for the next
+# commit-conflict attempt - its own demand keeps the engine up.
+def execution_visual_state(execution)
     return :failed if execution.status == "failed"
     return :retrying if execution.status == "running" && execution.retry_count.positive?
 
