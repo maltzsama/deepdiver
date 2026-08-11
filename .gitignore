@@ -36,6 +36,9 @@
 # Editor/manual backup files.
 *.bkp
 
+# Generated documentation (rdoc). CI builds and deploys it to GitHub Pages.
+/doc
+
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
