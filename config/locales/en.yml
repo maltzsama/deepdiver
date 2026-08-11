@@ -381,7 +381,7 @@ en:
     eyebrow: "Iceberg table maintenance"
     tagline: "Schedule, run and track compaction, snapshot expiry and orphan cleanup — with a record of every step."
     version: "v0.1.0"
-    footer: "Restricted access. Internal use."
+    footer: "Licensed under the Apache License 2.0."
     facts:
       operations: "Operations"
       catalogs: "Catalogs"
