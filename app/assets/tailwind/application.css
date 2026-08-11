@@ -1,14 +1,9 @@
 @import "tailwindcss";
 
 /* ===================================================================
-   LakeDeepDiver - design tokens (CR-63: paper/ink, single palette).
+   LakeDeepDiver - design tokens
    Dark is the default theme; light (paper) is offered via the theme
-   toggle (cookie). Both share the same set of variables, switched by
-   `data-theme` on <html>. The sidebar stays dark in both themes.
-
-   Zero external requests: fonts ship locally in app/assets/fonts as
-   woff2 (Inter, Inter Tight, JetBrains Mono) and are declared below
-   with @font-face.
+   toggle. Both share the same set of variables, switched by `data-theme`.
    =================================================================== */
 
 /* ---- local fonts ---- */
@@ -36,63 +31,70 @@
   font-display: swap;
 }
 
-/* ---- runtime variables ----
-   The `--color-*` theme tokens below are bound to these lives via
-   `@theme inline`, so switching `data-theme` re-themes every utility. */
+/* ---- runtime variables ---- */
 :root {
   color-scheme: dark;
-  --bg:        #0B0B0A;
-  --surface:   #141413;
-  --soft:      #1A1A18;
-  --sunk:      #050504;
-  --fg:        #ECE8DC;
-  --fg-soft:   #8A857A;
-  --fg-mute:   #857F70;
-  --line:      rgba(236, 232, 220, 0.1);
-  --line-2:    rgba(236, 232, 220, 0.2);
+  --bg:        #08080B; /* Fundo mais profundo */
+  --surface:   #101015;
+  --soft:      #16161D;
+  --sunk:      #050507;
+  --fg:        #F5F5F7;
+  --fg-soft:   #A1A1AA;
+  --fg-mute:   #71717A;
+  --line:      rgba(255, 255, 255, 0.06);
+  --line-2:    rgba(255, 255, 255, 0.12);
+  --line-bold: rgba(255, 255, 255, 0.18);
 
-  --red:       #E0475B;
-  --red-deep:  #8B0A1F;
-  --red-soft:  #3A1418;
+  --red:       #FF4D6D;
+  --red-deep:  #C81E37;
+  --red-soft:  rgba(255, 77, 109, 0.1);
 
-  --ok:        #3E8E54;
-  --ok-soft:   #16281B;
+  --ok:        #4ADE80;
+  --ok-soft:   rgba(74, 222, 128, 0.1);
 
-  --warn:      #D08A3A;
-  --warn-soft: #2A1F12;
+  --warn:      #FBBF24;
+  --warn-soft: rgba(251, 191, 36, 0.1);
 
-  --info:      #4A7FB5;
-  --info-soft: #16263A;
+  --info:      #60A5FA;
+  --info-soft: rgba(96, 165, 250, 0.1);
+
+  --shadow-panel: 0 1px 3px 0 rgba(0,0,0,0.3), 0 1px 2px -1px rgba(0,0,0,0.4);
+  --shadow-hover: 0 10px 30px -10px rgba(0,0,0,0.6);
+  --glow-red:     0 0 20px rgba(255, 77, 109, 0.25);
 }
 
 [data-theme="light"] {
   color-scheme: light;
-  --bg:        #F4F1E8;   /* paper   */
+  --bg:        #FAFAF9;   /* paper */
   --surface:   #FFFFFF;
-  --soft:      #ECE8DC;   /* paper-2 */
-  --sunk:      #E3DECD;
-  --fg:        #141414;   /* ink     */
-  --fg-soft:   #4A463A;
-  --fg-mute:   #736E5E;
-  --line:      rgba(20, 20, 20, 0.12);
-  --line-2:    rgba(20, 20, 20, 0.25);
+  --soft:      #F4F4F5;
+  --sunk:      #E4E4E7;
+  --fg:        #09090B;   /* ink */
+  --fg-soft:   #3F3F46;
+  --fg-mute:   #71717A;
+  --line:      rgba(0, 0, 0, 0.06);
+  --line-2:    rgba(0, 0, 0, 0.12);
+  --line-bold: rgba(0, 0, 0, 0.2);
 
-  --red:       #C8102E;
-  --red-deep:  #8B0A1F;
-  --red-soft:  #F8E2E5;
+  --red:       #E11D48;
+  --red-deep:  #BE123C;
+  --red-soft:  rgba(225, 29, 72, 0.08);
 
-  --ok:        #2F6B3A;
-  --ok-soft:   #E1EFE3;
+  --ok:        #16A34A;
+  --ok-soft:   rgba(22, 163, 74, 0.08);
 
-  --warn:      #B8762B;
-  --warn-soft: #F4E9D4;
+  --warn:      #D97706;
+  --warn-soft: rgba(217, 119, 6, 0.08);
 
-  --info:      #2C5982;
-  --info-soft: #E0E9F1;
+  --info:      #2563EB;
+  --info-soft: rgba(37, 99, 235, 0.08);
+
+  --shadow-panel: 0 1px 2px 0 rgba(0,0,0,0.03), 0 1px 6px -1px rgba(0,0,0,0.02);
+  --shadow-hover: 0 12px 24px -12px rgba(0,0,0,0.15);
+  --glow-red:     0 0 12px rgba(225, 29, 72, 0.15);
 }
 
-/* Utility-facing tokens. Everything declared here becomes a Tailwind
-   utility: --color-cosmos-bg -> bg-cosmos-bg, text-cosmos-fg, etc. */
+/* Utility-facing tokens */
 @theme inline {
   --color-cosmos-bg:         var(--bg);
   --color-cosmos-surface:    var(--surface);
@@ -103,7 +105,7 @@
   --color-cosmos-fg-mute:    var(--fg-mute);
   --color-cosmos-line:       var(--line);
   --color-cosmos-line-2:     var(--line-2);
-  --color-cosmos-line-bold:  var(--line-2);
+  --color-cosmos-line-bold:  var(--line-bold);
 
   --color-red-DEFAULT: var(--red);
   --color-red-deep:    var(--red-deep);
@@ -122,15 +124,10 @@
   --font-display: "Inter Tight", "Inter", system-ui, sans-serif;
   --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
 
-  --radius-panel: 6px;
+  --radius-panel: 8px; /* Aumentado de 6px para 8px, fica mais moderno */
 }
 
-/* ---- type scale (CR-71) ----
-   Three functional sizes plus the numeric variant; the app should not reach
-   for 12/13/14px in a dozen different ways. The scale is static (not part of
-   the runtime `--color-*` live set), so it lives in a regular `@theme` block
-   and also turns each entry into a `text-*` utility (text-body, text-small,
-   text-micro, text-num). */
+/* ---- type scale (CR-71) ---- */
 @theme {
   --text-micro: 10px;
   --text-small: 12px;
@@ -139,179 +136,203 @@
 }
 
 /* ===================================================================
-   Components. They exist so the next dev does not have to memorise 14
-   utilities per button. If a pattern shows up 3+ times, it becomes a
-   class here.
+   Components - PIKA EDITION
    =================================================================== */
 @layer components {
 
   /* ---------- structure ---------- */
-  .app-shell   { @apply min-h-screen bg-cosmos-bg text-cosmos-fg font-sans antialiased; }
-  .app-main    { @apply mx-auto w-full max-w-7xl px-4 py-8 sm:px-6; }
+  .app-shell { 
+    @apply min-h-screen bg-cosmos-bg text-cosmos-fg font-sans antialiased; 
+    background-image: 
+      radial-gradient(circle at 15% 10%, rgba(255, 77, 109, 0.03) 0%, transparent 40%), 
+      radial-gradient(circle at 85% 90%, rgba(96, 165, 250, 0.02) 0%, transparent 35%);
+    background-attachment: fixed;
+  }
+  .app-main { @apply mx-auto w-full max-w-7xl px-4 py-8 sm:px-6; }
 
-  /* Signed-in shell: sidebar column + content. The sidebar width is driven by
-     --sidebar-w so collapsing it (45px) also widens the content track. */
   .app-shell-grid {
     display: grid;
-    grid-template-columns: var(--sidebar-w, 220px) 1fr;
-    grid-template-rows: 48px 1fr;
+    grid-template-columns: var(--sidebar-w, 240px) 1fr;
+    grid-template-rows: 56px 1fr;
     height: 100vh;
     overflow: hidden;
   }
-  .app-shell-grid:has(.sidebar.collapsed) { --sidebar-w: 45px; }
-  .sidebar { width: var(--sidebar-w, 220px); }
+  .app-shell-grid:has(.sidebar.collapsed) { --sidebar-w: 56px; }
+  .sidebar { 
+    width: var(--sidebar-w, 240px); 
+    border-right: 1px solid var(--line-2);
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(12px);
+  }
 
-  .app-header  { @apply sticky top-0 z-20 border-b border-cosmos-line bg-cosmos-surface; }
+  .app-header { 
+    @apply sticky top-0 z-20 border-b border-cosmos-line bg-cosmos-surface/80 backdrop-blur-xl; 
+  }
   .app-headbar { @apply mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:px-6; }
-  .app-brand   { @apply font-mono text-sm font-semibold tracking-tight text-cosmos-fg; }
-  .app-brand-mark { @apply text-red-DEFAULT; }
+  .app-brand { @apply font-mono text-body font-bold tracking-tight text-cosmos-fg; }
+  .app-brand-mark { @apply text-red-DEFAULT drop-shadow-[0_0_8px_var(--red-soft)]; }
 
-  .app-nav     { @apply flex items-center gap-1; }
-  .app-nav-link{ @apply rounded px-3 py-1.5 text-sm text-cosmos-fg-mute transition
-                  hover:bg-cosmos-soft hover:text-cosmos-fg
-                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-DEFAULT; }
-  .app-nav-link-active { @apply bg-red-soft text-red-DEFAULT font-medium; }
+  .app-nav { @apply flex items-center gap-1; }
+  .app-nav-link { 
+    @apply rounded-md px-3 py-1.5 text-body text-cosmos-fg-mute transition-all duration-200
+           hover:bg-cosmos-soft hover:text-cosmos-fg hover:shadow-sm
+           focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-DEFAULT; 
+  }
+  .app-nav-link-active { @apply bg-red-soft text-red-DEFAULT font-medium shadow-[inset_0_0_0_1px_var(--line-bold)]; }
 
-  .app-session { @apply ml-auto flex items-center gap-3 text-sm; }
-  .app-user    { @apply hidden font-mono text-xs text-cosmos-fg-mute sm:inline; }
+  .app-session { @apply ml-auto flex items-center gap-3 text-body; }
+  .app-user { @apply hidden font-mono text-small text-cosmos-fg-mute sm:inline; }
 
   /* ---------- page header ---------- */
-  .page-head   { @apply mb-6 flex flex-wrap items-start justify-between gap-4; }
-  .page-eyebrow{ @apply font-mono text-micro font-bold uppercase tracking-[0.2em] text-red-DEFAULT; }
-  .page-title  { @apply mt-1 font-display text-2xl font-extrabold tracking-tight text-cosmos-fg; }
-  .page-title-mono { @apply mt-1 font-mono text-2xl font-bold tracking-tight text-cosmos-fg break-all; }
-  .page-sub    { @apply mt-1 text-body text-cosmos-fg-mute; }
-  .page-actions{ @apply flex flex-wrap items-center gap-2; }
+  .page-head { @apply mb-8 flex flex-wrap items-start justify-between gap-4; }
+  .page-eyebrow { @apply font-mono text-micro font-bold uppercase tracking-[0.2em] text-red-DEFAULT; }
+  .page-title { @apply mt-1.5 font-display text-3xl font-extrabold tracking-tight text-cosmos-fg; }
+  .page-title-mono { @apply mt-1.5 font-mono text-3xl font-bold tracking-tight text-cosmos-fg break-all; }
+  .page-sub { @apply mt-2 text-body text-cosmos-fg-mute; }
+  .page-actions { @apply flex flex-wrap items-center gap-2; }
 
   /* ---------- stat cards ---------- */
-  .stat-card   { @apply bg-cosmos-surface p-3.5 flex flex-col gap-1.5 min-h-[100px]; }
-  .stat-label  { @apply font-mono text-micro font-semibold tracking-[0.14em] uppercase text-cosmos-fg-mute; }
-  .stat-value  { @apply font-display text-3xl font-extrabold tracking-tight leading-none text-cosmos-fg tabular-nums; }
-  .stat-sub    { @apply font-mono text-small text-cosmos-fg-mute; }
-  .stat-track  { @apply h-[3px] bg-cosmos-sunk border border-cosmos-line-2 mt-auto; }
-  .stat-fill   { @apply h-full bg-cosmos-fg transition-all; }
+  .stat-card { 
+    @apply bg-cosmos-surface p-4 flex flex-col gap-1.5 min-h-[120px] rounded-[var(--radius-panel)] 
+           border border-cosmos-line shadow-[var(--shadow-panel)] transition-all duration-300
+           hover:border-cosmos-line-bold hover:shadow-[var(--shadow-hover)] hover:-translate-y-0.5 relative overflow-hidden; 
+  }
+  .stat-card::before {
+    @apply absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cosmos-line-bold to-transparent content-[''];
+  }
+  .stat-label { @apply font-mono text-micro font-semibold tracking-[0.14em] uppercase text-cosmos-fg-mute; }
+  .stat-value { @apply font-display text-4xl font-extrabold tracking-tight leading-none text-cosmos-fg tabular-nums mt-1; }
+  .stat-sub { @apply font-mono text-small text-cosmos-fg-mute mt-auto pt-2; }
+  .stat-track { @apply h-[3px] w-full bg-cosmos-sunk border border-cosmos-line-2 mt-2 overflow-hidden rounded-full; }
+  .stat-fill { @apply h-full bg-gradient-to-r from-red-deep to-red-DEFAULT transition-all duration-500 rounded-full; }
 
   /* ---------- panels ---------- */
-  .panel       { @apply rounded-[var(--radius-panel)] border border-cosmos-line bg-cosmos-surface; }
-  .panel-head  { @apply flex items-center justify-between px-4 h-9 border-b border-cosmos-line bg-cosmos-soft; }
+  .panel { 
+    @apply rounded-[var(--radius-panel)] border border-cosmos-line bg-cosmos-surface 
+           shadow-[var(--shadow-panel)] transition-all duration-300; 
+  }
+  .panel-head { @apply flex items-center justify-between px-4 h-11 border-b border-cosmos-line bg-cosmos-soft/50 rounded-t-[var(--radius-panel)]; }
   .panel-title { @apply font-mono text-micro font-bold tracking-[0.12em] uppercase text-cosmos-fg; }
-  .panel-meta  { @apply font-mono text-small text-cosmos-fg-mute; }
-  .panel-note  { @apply font-mono text-small text-cosmos-fg-mute; }
-  .panel-body  { @apply p-4; }
+  .panel-meta { @apply font-mono text-small text-cosmos-fg-mute; }
+  .panel-note { @apply font-mono text-small text-cosmos-fg-mute; }
+  .panel-body { @apply p-5; }
 
   /* ---------- tables ---------- */
-  .data-table  { @apply w-full border-collapse text-body; }
+  .data-table { @apply w-full border-collapse text-body; }
   .data-table thead th {
-    @apply text-left px-3 py-2 font-mono text-micro font-bold uppercase tracking-[0.14em]
-           text-cosmos-fg-mute border-b border-cosmos-line bg-cosmos-sunk whitespace-nowrap;
+    @apply text-left px-4 py-3 font-mono text-micro font-bold uppercase tracking-[0.14em]
+           text-cosmos-fg-mute border-b border-cosmos-line-2 bg-cosmos-soft/30 backdrop-blur-sm sticky top-0;
   }
-  .data-table tbody td { @apply px-3 py-2.5 border-b border-cosmos-line-2 text-cosmos-fg-soft align-middle text-body; }
+  .data-table tbody td { @apply px-4 py-3 border-b border-cosmos-line text-cosmos-fg-soft align-middle transition-colors duration-150 text-body; }
   .data-table tbody tr:last-child td { @apply border-b-0; }
-  .data-table tbody tr { @apply transition hover:bg-cosmos-soft; }
+  .data-table tbody tr { @apply transition-all duration-200 hover:bg-red-soft/30; }
   .data-table-scroll { @apply -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0; }
 
-  /* Detail sub-row (e.g. per-execution steps in the history log). Sits under
-     its parent row, indented to the first column, without the row-hover bleed
-     and with its own muted band so the hierarchy reads as one unit. */
   .data-table tr.table-subrow td {
     background: var(--sunk);
-    padding: 0.5rem 0.75rem 0.75rem;
+    padding: 0.75rem 1rem 1rem;
     border-bottom-width: 1px;
     border-bottom-color: var(--line-2);
   }
   .data-table tr.table-subrow:hover td { background: var(--sunk); }
   .data-table tr.table-subrow:last-child td { border-bottom-width: 0; }
 
-  .cell-id     { @apply font-mono text-body text-cosmos-fg break-all; }
-  .cell-muted  { @apply text-small text-cosmos-fg-mute; }
-  .cell-num    { @apply font-mono text-num tabular-nums text-cosmos-fg-soft; }
-  .cell-meta   { @apply text-small text-cosmos-fg-mute; }
+  .cell-id { @apply font-mono text-body font-medium text-cosmos-fg break-all; }
+  .cell-muted { @apply text-small text-cosmos-fg-mute; }
+  .cell-num { @apply font-mono text-num tabular-nums text-cosmos-fg-soft; }
+  .cell-meta { @apply text-small text-cosmos-fg-mute; }
 
   /* ---------- links ---------- */
-  .link        { @apply text-red-DEFAULT underline-offset-2 hover:underline
-                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-DEFAULT; }
-  .link-mono   { @apply font-mono text-[13px] text-red-DEFAULT underline-offset-2 hover:underline
-                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-DEFAULT; }
+  .link { @apply text-red-DEFAULT underline-offset-2 hover:underline transition-colors
+          focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-DEFAULT; }
+  .link-mono { @apply font-mono text-num text-red-DEFAULT underline-offset-2 hover:underline transition-colors
+               focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-DEFAULT; }
 
   /* ---------- buttons ---------- */
-  .btn { @apply inline-flex items-center justify-center gap-1.5 rounded border px-3 py-1.5
-          text-sm font-medium transition
-          focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-DEFAULT
-          disabled:cursor-not-allowed disabled:opacity-50; }
-  .btn-primary { @apply border-red-DEFAULT bg-red-DEFAULT text-white hover:bg-red-deep; }
-  .btn-default { @apply border-cosmos-line-2 bg-cosmos-surface text-cosmos-fg hover:bg-cosmos-soft; }
-  .btn-danger  { @apply border-red-DEFAULT bg-cosmos-surface text-red-DEFAULT hover:bg-red-soft; }
-  .btn-sm      { @apply px-2 py-1 text-xs; }
+  .btn { 
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md border px-3.5 py-2
+           text-body font-medium transition-all duration-200 active:scale-[0.98]
+           focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-DEFAULT
+           disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100; 
+  }
+  .btn-primary { 
+    @apply border-red-DEFAULT bg-gradient-to-b from-red-DEFAULT to-red-deep text-white shadow-[var(--glow-red)]
+           hover:brightness-110 hover:shadow-[0_0_25px_var(--red-soft)]; 
+  }
+  .btn-default { 
+    @apply border-cosmos-line-bold bg-cosmos-surface text-cosmos-fg hover:bg-cosmos-soft hover:border-cosmos-fg-mute
+           hover:shadow-sm; 
+  }
+  .btn-danger { 
+    @apply border-red-DEFAULT/50 bg-cosmos-surface text-red-DEFAULT hover:bg-red-soft hover:border-red-DEFAULT; 
+  }
+  .btn-sm { @apply px-2.5 py-1 text-small rounded; }
 
-  /* ---------- status badges (single palette) ---------- */
-  .badge { @apply inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5
-            font-mono text-micro font-bold uppercase whitespace-nowrap; }
-  .badge-ok      { @apply border-ok-DEFAULT text-ok-DEFAULT bg-ok-soft; }
-  .badge-warn    { @apply border-warn-DEFAULT text-warn-DEFAULT bg-warn-soft; }
-  .badge-err     { @apply border-red-DEFAULT text-red-DEFAULT bg-red-soft; }
-  .badge-mute    { @apply border-cosmos-fg-mute/50 text-cosmos-fg-mute bg-cosmos-soft; }
-  .badge-running { @apply border-ok-DEFAULT text-ok-DEFAULT bg-ok-soft animate-pulse; }
+  /* ---------- status badges ---------- */
+  .badge { @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5
+            font-mono text-micro font-bold uppercase whitespace-nowrap backdrop-blur-sm transition-colors; }
+  .badge-ok      { @apply border-ok-DEFAULT/30 text-ok-DEFAULT bg-ok-soft; }
+  .badge-warn    { @apply border-warn-DEFAULT/30 text-warn-DEFAULT bg-warn-soft; }
+  .badge-err     { @apply border-red-DEFAULT/30 text-red-DEFAULT bg-red-soft; }
+  .badge-mute    { @apply border-cosmos-line-bold text-cosmos-fg-mute bg-cosmos-soft; }
+  .badge-running { @apply border-ok-DEFAULT/30 text-ok-DEFAULT bg-ok-soft animate-pulse; }
 
-  .badge-dot { @apply size-1.5 rounded-full bg-current; }
+  .badge-dot { @apply size-1.5 rounded-full bg-current drop-shadow-[0_0_4px_currentColor]; }
 
-  /* Legacy names kept as aliases so old markup and helpers keep working. */
-  .badge-healthy  { @apply border-ok-DEFAULT text-ok-DEFAULT bg-ok-soft; }
-  .badge-warning  { @apply border-warn-DEFAULT text-warn-DEFAULT bg-warn-soft; }
-  .badge-critical { @apply border-red-DEFAULT text-red-DEFAULT bg-red-soft; }
-  .badge-unknown  { @apply border-cosmos-fg-mute/50 text-cosmos-fg-mute bg-cosmos-soft; }
-  .badge-neutral  { @apply border-cosmos-fg-mute/50 text-cosmos-fg-mute bg-cosmos-soft; }
+  /* Legacy names kept as aliases */
+  .badge-healthy  { @apply border-ok-DEFAULT/30 text-ok-DEFAULT bg-ok-soft; }
+  .badge-warning  { @apply border-warn-DEFAULT/30 text-warn-DEFAULT bg-warn-soft; }
+  .badge-critical { @apply border-red-DEFAULT/30 text-red-DEFAULT bg-red-soft; }
+  .badge-unknown  { @apply border-cosmos-line-bold text-cosmos-fg-mute bg-cosmos-soft; }
+  .badge-neutral  { @apply border-cosmos-line-bold text-cosmos-fg-mute bg-cosmos-soft; }
 
-  /* ---------- strata bar (health score) ----------
-     The score is accumulated sediment: snapshots, small files, orphans.
-     The bar shows how much "clean" is left.                       */
-  .strata      { @apply flex items-center gap-2; }
-  .strata-rail { @apply h-1.5 w-16 overflow-hidden rounded-full bg-cosmos-line; }
-  .strata-fill { @apply h-full rounded-full transition-[width]; }
-  .strata-fill-ok       { @apply bg-ok-DEFAULT; }
-  .strata-fill-warning  { @apply bg-warn-DEFAULT; }
-  .strata-fill-critical { @apply bg-red-DEFAULT; }
-  .strata-value{ @apply font-mono text-xs tabular-nums text-cosmos-fg-soft w-8 text-right; }
+  /* ---------- strata bar ---------- */
+  .strata { @apply flex items-center gap-2; }
+  .strata-rail { @apply h-2 w-20 overflow-hidden rounded-full bg-cosmos-sunk border border-cosmos-line; }
+  .strata-fill { @apply h-full rounded-full transition-all duration-500 ease-out; }
+  .strata-fill-ok       { @apply bg-gradient-to-r from-ok-DEFAULT/50 to-ok-DEFAULT; }
+  .strata-fill-warning  { @apply bg-gradient-to-r from-warn-DEFAULT/50 to-warn-DEFAULT; }
+  .strata-fill-critical { @apply bg-gradient-to-r from-red-DEFAULT/50 to-red-DEFAULT; }
+  .strata-value { @apply font-mono text-num tabular-nums text-cosmos-fg-soft w-8 text-right; }
 
-  /* ---------- step chain (signature element) ----------
-     Shows where the execution stopped. This is the central requirement:
-     "visibility into which step it stopped at".                    */
-  .chain       { @apply flex items-center gap-0.5; }
-  .chain-step  { @apply relative flex items-center; }
-  .chain-node  { @apply size-2 rounded-full ring-2 ring-cosmos-surface; }
-  .chain-link  { @apply h-0.5 w-4; }
-  .chain-done    { @apply bg-ok-DEFAULT; }
-  .chain-here-ok   { @apply bg-ok-DEFAULT ring-ok-soft size-2.5; }
-  .chain-here-fail { @apply bg-red-DEFAULT ring-red-soft size-2.5; }
-  .chain-todo  { @apply bg-cosmos-line-2; }
+  /* ---------- step chain ---------- */
+  .chain { @apply flex items-center gap-0.5; }
+  .chain-step { @apply relative flex items-center; }
+  .chain-node { @apply size-2 rounded-full ring-2 ring-cosmos-surface transition-all duration-300; }
+  .chain-link { @apply h-0.5 w-5 transition-colors; }
+  .chain-done { @apply bg-ok-DEFAULT shadow-[0_0_6px_var(--ok-soft)]; }
+  .chain-here-ok { @apply bg-ok-DEFAULT ring-ok-soft size-3 shadow-[0_0_10px_var(--ok-soft)]; }
+  .chain-here-fail { @apply bg-red-DEFAULT ring-red-soft size-3 shadow-[0_0_12px_var(--red-soft)]; }
+  .chain-todo { @apply bg-cosmos-line-2; }
   .chain-label { @apply ml-2 font-mono text-small text-cosmos-fg-mute; }
-  .chain-here-retry { @apply bg-warn-DEFAULT size-2.5 ring-2 ring-warn-soft; animation: chain-pulse 2s ease-in-out infinite; }
+  .chain-here-retry { @apply bg-warn-DEFAULT size-3 ring-2 ring-warn-soft shadow-[0_0_10px_var(--warn-soft)]; animation: chain-pulse 2s ease-in-out infinite; }
   .chain-retry-badge { @apply ml-1.5 rounded bg-warn-soft px-1.5 py-0.5 font-mono text-micro font-medium text-warn-DEFAULT; }
 
   /* ---------- forms ---------- */
-  .form-grid   { @apply grid gap-5 sm:max-w-2xl; }
-  .field       { @apply flex flex-col gap-1.5; }
+  .form-grid { @apply grid gap-6 sm:max-w-2xl; }
+  .field { @apply flex flex-col gap-1.5; }
   .field-label { @apply text-body font-medium text-cosmos-fg; }
-  .field-hint  { @apply text-small text-cosmos-fg-mute; }
-  .field-input { @apply w-full rounded border border-cosmos-line-2 bg-cosmos-sunk px-3 py-2 text-body
-                  text-cosmos-fg shadow-sm transition
-                  placeholder:text-cosmos-fg-mute
-                  focus:border-red-DEFAULT focus:outline-2 focus:outline-offset-0 focus:outline-red-DEFAULT; }
+  .field-hint { @apply text-small text-cosmos-fg-mute; }
+  .field-input { 
+    @apply w-full rounded-md border border-cosmos-line-2 bg-cosmos-sunk px-3.5 py-2.5 text-body
+           text-cosmos-fg shadow-inner transition-all duration-200
+           placeholder:text-cosmos-fg-mute placeholder:font-mono placeholder:text-small
+           focus:border-red-DEFAULT focus:outline-none focus:ring-4 focus:ring-red-soft; 
+  }
   .field-input-mono { @apply font-mono; }
   .field-check { @apply flex items-center gap-2 text-body text-cosmos-fg; }
   .field-checkbox { @apply size-4 rounded border-cosmos-line-2 accent-red-DEFAULT text-red-DEFAULT
                      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-DEFAULT; }
 
-  /* Comboboxes share the input look: native arrow off, themed chevron on,
-     same height/padding as text inputs so filter bars line up. */
   select.field-input,
   select.field-input-mono {
     appearance: none;
     -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%238A857A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%23A1A1AA' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 0.625rem center;
+    background-position: right 0.875rem center;
     background-size: 1rem;
-    padding-right: 2.25rem;
+    padding-right: 2.5rem;
   }
   select.field-input option,
   select.field-input-mono option {
@@ -319,66 +340,89 @@
     background-color: var(--surface);
   }
 
-  .field-group { @apply rounded-[var(--radius-panel)] border border-cosmos-line bg-cosmos-soft/60 p-4; }
-  .field-group-title { @apply mb-3 font-mono text-small uppercase tracking-widest text-cosmos-fg-mute; }
-  .form-actions{ @apply flex items-center gap-3 pt-2; }
+  .field-group { @apply rounded-[var(--radius-panel)] border border-cosmos-line bg-cosmos-soft/40 p-5 backdrop-blur-sm; }
+  .field-group-title { @apply mb-4 font-mono text-small uppercase tracking-widest text-cosmos-fg-mute; }
+  .form-actions { @apply flex items-center gap-3 pt-4; }
 
   /* ---------- validation errors ---------- */
-  .errors      { @apply rounded-[var(--radius-panel)] border border-red-DEFAULT/40 bg-red-soft p-4; }
-  .errors-title{ @apply text-body font-semibold text-red-DEFAULT; }
+  .errors { @apply rounded-[var(--radius-panel)] border border-red-DEFAULT/40 bg-red-soft p-4 backdrop-blur-sm; }
+  .errors-title { @apply text-body font-semibold text-red-DEFAULT; }
   .errors-list { @apply mt-2 list-disc space-y-1 pl-5 text-body text-red-DEFAULT; }
 
   /* ---------- flash ---------- */
-  .flash       { @apply mb-4 flex items-start gap-2 rounded-[var(--radius-panel)] border px-4 py-3 text-body; }
-  .flash-notice{ @apply border-ok-DEFAULT/40 bg-ok-soft text-ok-DEFAULT; }
+  .flash { @apply mb-4 flex items-start gap-2 rounded-[var(--radius-panel)] border px-4 py-3 text-body backdrop-blur-md; }
+  .flash-notice { @apply border-ok-DEFAULT/40 bg-ok-soft text-ok-DEFAULT; }
   .flash-alert { @apply border-red-DEFAULT/40 bg-red-soft text-red-DEFAULT; }
 
   /* ---------- empty state ---------- */
-  .empty       { @apply px-4 py-14 text-center; }
+  .empty { @apply px-4 py-20 text-center; }
   .empty-title { @apply text-base font-semibold text-cosmos-fg; }
-  .empty-hint  { @apply mx-auto mt-1.5 max-w-sm text-body text-cosmos-fg-mute; }
-  .empty-action{ @apply mt-4; }
+  .empty-hint { @apply mx-auto mt-2 max-w-sm text-body text-cosmos-fg-mute; }
+  .empty-action { @apply mt-6; }
 
   /* ---------- definition list ---------- */
-  .dl          { @apply grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4; }
-  .dl-term     { @apply font-mono text-small uppercase tracking-widest text-cosmos-fg-mute; }
-  .dl-desc     { @apply mt-1 text-body text-cosmos-fg; }
-  .dl-desc-mono{ @apply mt-1 font-mono text-body text-cosmos-fg break-all; }
+  .dl { @apply grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-4; }
+  .dl-term { @apply font-mono text-small uppercase tracking-widest text-cosmos-fg-mute; }
+  .dl-desc { @apply mt-1 text-body text-cosmos-fg; }
+  .dl-desc-mono { @apply mt-1 font-mono text-body text-cosmos-fg break-all; }
 
-  /* ---------- authentication screen (always dark) ----------
-     The auth pages are pre-login and stick to the dark theme even when
-     the signed-in app is showing the light theme: the toggle only lives
-     inside the app shell. */
-  .auth-shell  { @apply min-h-screen bg-[#050504] text-cosmos-fg font-sans lg:grid lg:grid-cols-5; }
-
-  .auth-brand  { @apply relative hidden flex-col justify-between overflow-hidden p-12 lg:col-span-3 lg:flex; }
-  .auth-strata { @apply pointer-events-none absolute inset-0 h-full w-full; }
-  .auth-brand-inner { @apply relative z-10 max-w-xl; }
-  .auth-mark   { @apply font-mono text-xs uppercase tracking-[0.3em] text-red-DEFAULT; }
-  .auth-title  { @apply mt-6 text-5xl font-semibold tracking-tight text-[#F4F1E8]; }
-  .auth-tagline{ @apply mt-4 max-w-md text-lg text-cosmos-fg-soft; }
-  .auth-facts  { @apply mt-12 grid max-w-md grid-cols-3 gap-6 border-t border-cosmos-line pt-8; }
+  /* ---------- authentication screen ---------- */
+  .auth-shell {
+    @apply min-h-screen bg-[#05050A] text-cosmos-fg font-sans lg:grid lg:grid-cols-5 relative overflow-hidden;
+  }
+  .auth-brand {
+    @apply relative hidden flex-col items-center overflow-hidden p-12 lg:col-span-3 lg:flex z-10 text-center;
+  }
+  /* CSS-only backdrop: fine grid + red radial glow, like the reference. */
+  .auth-brand::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 77, 109, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 77, 109, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .auth-brand::after {
+    content: "";
+    position: absolute; top: 50%; left: 50%;
+    width: 520px; height: 520px; transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(255, 77, 109, 0.16) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .auth-brand-inner { @apply relative z-10 my-auto flex max-w-xl flex-col items-center gap-6; }
+  .auth-logo-box {
+    @apply flex h-[72px] w-[72px] items-center justify-center rounded-[20px]
+           border border-red-DEFAULT/30 bg-red-DEFAULT/10;
+  }
+  .auth-logo-box svg { @apply h-9 w-9; }
+  .auth-title { @apply text-4xl font-bold tracking-tight text-[#F4F1E8]; }
+  .auth-tagline { @apply max-w-md text-body text-cosmos-fg-soft leading-relaxed; }
+  .auth-version {
+    @apply font-mono text-micro text-cosmos-fg-mute rounded-full border border-cosmos-line
+           bg-white/[0.04] px-3 py-1;
+  }
+  .auth-facts { @apply mt-8 grid w-full max-w-md grid-cols-3 gap-6 border-t border-cosmos-line pt-8; }
   .auth-fact-value { @apply font-mono text-3xl tabular-nums text-red-DEFAULT; }
-  .auth-fact-label { @apply mt-1 font-mono text-[10px] uppercase tracking-widest text-cosmos-fg-mute; }
-  .auth-foot   { @apply relative z-10 font-mono text-xs text-cosmos-fg-mute; }
+  .auth-fact-label { @apply mt-1 font-mono text-micro uppercase tracking-widest text-cosmos-fg-mute; }
+  .auth-foot { @apply relative z-10 font-mono text-small text-cosmos-fg-mute; }
 
-  .auth-panel  { @apply flex min-h-screen items-center justify-center bg-cosmos-surface px-6 py-12 lg:col-span-2 lg:min-h-0 border-l border-cosmos-line; }
-  .auth-card   { @apply w-full max-w-sm; }
+  .auth-panel { @apply flex min-h-screen items-center justify-center bg-cosmos-surface/50 px-6 py-12 lg:col-span-2 lg:min-h-0 border-l border-cosmos-line backdrop-blur-xl z-10; }
+  .auth-card { @apply w-full max-w-sm; }
   .auth-mobile-brand { @apply mb-8 lg:hidden; }
-  .auth-card-title { @apply text-xl font-semibold text-cosmos-fg; }
-  .auth-card-sub   { @apply mb-6 mt-1 text-sm text-cosmos-fg-soft; }
+  .auth-card-title { @apply text-2xl font-bold tracking-tight text-cosmos-fg; }
+  .auth-card-sub { @apply mb-8 mt-1 text-body text-cosmos-fg-soft; }
 
-  .auth-divider { @apply my-6 flex items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-cosmos-fg-mute; }
+  .auth-divider { @apply my-8 flex items-center gap-3 font-mono text-micro uppercase tracking-widest text-cosmos-fg-mute; }
   .auth-divider::before,
   .auth-divider::after { @apply h-px flex-1 bg-cosmos-line; content: ""; }
 
-  .btn-sso { @apply w-full border-cosmos-line-2 bg-cosmos-soft text-cosmos-fg hover:bg-cosmos-sunk hover:border-red-DEFAULT; }
+  .btn-sso { @apply w-full border-cosmos-line-2 bg-cosmos-soft text-cosmos-fg hover:bg-cosmos-sunk hover:border-red-DEFAULT hover:shadow-sm transition-all duration-200; }
   .btn-block { @apply w-full; }
 }
 
 @keyframes chain-pulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.45; }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(1.2); }
 }
 
 @media (prefers-reduced-motion: reduce) {
