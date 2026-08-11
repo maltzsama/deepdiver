@@ -8,8 +8,8 @@ Trino engine.
 
 ```bash
 # Build and push the image once per release (tag is x.y.z).
-docker build -t registry.example.com/lakedeepdiver:0.1.0 .
-docker push registry.example.com/lakedeepdiver:0.1.0
+docker build -t registry.example.com/lakedeepdiver:0.1.0 . <!-- x-release-please-version -->
+docker push registry.example.com/lakedeepdiver:0.1.0 <!-- x-release-please-version -->
 
 # Render and validate without a cluster.
 helm lint infra/helm/lakedeepdiver
@@ -26,7 +26,7 @@ helm upgrade --install lakedeepdiver infra/helm/lakedeepdiver \
 
 | Value | Default | Meaning |
 |---|---|---|
-| `image.repository` / `image.tag` | `lakedeepdiver` / `0.1.0` | Image and pinned `x.y.z` tag (never `latest` in prod). |
+| `image.repository` / `image.tag` | `lakedeepdiver` / `0.1.0` <!-- x-release-please-version --> | Image and pinned `x.y.z` tag (never `latest` in prod). |
 | `replicaCount` | `1` | Web pod replicas. |
 | `worker.enabled` / `worker.replicaCount` | `true` / `1` | Solid Queue supervisor (`./bin/jobs`) replicas. |
 | `appSecrets.existingSecret` | — | Out-of-band Secret with `DATABASE_URL`, `DB_QUEUE_URL`, `RAILS_MASTER_KEY`, `SECRET_KEY_BASE`. |

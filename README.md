@@ -55,8 +55,8 @@ The app ships as a Docker image consumed by the Helm chart under `infra/helm/` (
 Redis/Kamal). Deployment is not wired into CI.
 
 ```bash
-docker build -t registry.example.com/lakedeepdiver:0.1.0 .
-docker push registry.example.com/lakedeepdiver:0.1.0
+docker build -t registry.example.com/lakedeepdiver:0.1.0 . <!-- x-release-please-version -->
+docker push registry.example.com/lakedeepdiver:0.1.0 <!-- x-release-please-version -->
 
 helm upgrade --install lakedeepdiver infra/helm/lakedeepdiver \
   --namespace lakedeepdiver --create-namespace \
