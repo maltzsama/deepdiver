@@ -1,6 +1,7 @@
 # The "what is happening right now" screen: engine state, executions running,
 # awaiting a commit-conflict retry, and queued.
 class ActivityController < ApplicationController
+  # Shows the live engine state, running executions, and queued executions.
   def show
     authorize :activity, :show?
     @engine_state = TrinoEngineSupervisor.state
@@ -12,6 +13,8 @@ class ActivityController < ApplicationController
                               .order(:created_at)
   end
 
+  # Re-triggers the engine start through the supervisor and redirects back to
+  # the activity screen.
   def restart
     authorize :activity, :restart?
     TrinoEngineSupervisor.restart!

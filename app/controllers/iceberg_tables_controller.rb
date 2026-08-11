@@ -1,3 +1,6 @@
+# Manages the global view of iceberg tables across all catalogs: a filterable
+# list and per-table detail (schedules, executions, freshness, health), plus a
+# "run now" fallback. Each action authorizes with Pundit.
 class IcebergTablesController < ApplicationController
   before_action :set_table, only: %i[show run_maintenance]
 
@@ -37,6 +40,8 @@ class IcebergTablesController < ApplicationController
     @tables = @tables.order(Arel.sql("health_score ASC NULLS LAST"), :namespace, :name)
   end
 
+  # Shows one table with its open errors, schedules, recent executions,
+  # freshness SLA/checks, and a health evaluation rebuilt from stored metadata.
   def show
     authorize @table
     @open_error_count = ErrorEvent.open.table_events(@table).count
@@ -66,6 +71,7 @@ class IcebergTablesController < ApplicationController
 
   private
 
+  # Loads the iceberg table for the current request.
   def set_table
     @table = IcebergTable.find(params[:id])
   end

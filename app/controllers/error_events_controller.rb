@@ -1,4 +1,8 @@
+# Manages error events: a filterable list of operation failures plus bulk
+# acknowledge and resolve actions. Each action authorizes with Pundit.
 class ErrorEventsController < ApplicationController
+  # Lists error events, filterable by operation, status, and catalog, capped
+  # at the 200 most recent.
   def index
     authorize ErrorEvent
     scope = ErrorEvent.order(occurrence_count: :desc, last_seen_at: :desc)
@@ -11,6 +15,8 @@ class ErrorEventsController < ApplicationController
     @open_count = ErrorEvent.open.count
   end
 
+  # Marks the selected open error events as acknowledged in batches and
+  # redirects back.
   def acknowledge
     authorize ErrorEvent
     params.fetch(:ids, []).each_slice(100) do |ids|
@@ -20,6 +26,8 @@ class ErrorEventsController < ApplicationController
                   notice: "#{Array(params[:ids]).size} error(s) acknowledged."
   end
 
+  # Marks the selected open or acknowledged error events as resolved in
+  # batches and redirects back.
   def resolve
     authorize ErrorEvent
     params.fetch(:ids, []).each_slice(100) do |ids|

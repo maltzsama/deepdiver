@@ -1,4 +1,9 @@
+# Renders the landing overview: triage list, paused plans, health and
+# freshness counters, and the age of the last metadata sync. Authorization is
+# a simple Pundit check on the :dashboard policy.
 class DashboardController < ApplicationController
+  # Assembles the dashboard data: triage queries, paused plans, aggregate
+  # health/freshness counts, open errors, and the last sync timestamp.
   def index
     authorize :dashboard
     @triage = TriageQuery.new.call

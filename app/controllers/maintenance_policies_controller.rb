@@ -1,11 +1,17 @@
+# Manages maintenance policies: reusable maintenance definitions that can be
+# applied to many tables at once, creating or updating their plans. CRUD plus
+# an apply action with a preview; each action authorizes with Pundit.
 class MaintenancePoliciesController < ApplicationController
   before_action :set_policy, only: %i[show edit update destroy apply]
 
+  # Lists all maintenance policies ordered by name.
   def index
     authorize MaintenancePolicy
     @policies = MaintenancePolicy.order(:name)
   end
 
+  # Shows a policy with its derived plans, candidate tables, and a preview of
+  # what applying the policy would do.
   def show
     authorize @policy
     @plans = @policy.maintenance_plans.includes(:iceberg_table)
@@ -14,11 +20,13 @@ class MaintenancePoliciesController < ApplicationController
     @apply_preview = preview_for(@policy, @candidates)
   end
 
+  # Renders the form for creating a maintenance policy.
   def new
     authorize MaintenancePolicy
     @policy = MaintenancePolicy.new
   end
 
+  # Creates a policy and redirects to it, or re-renders the form on failure.
   def create
     authorize MaintenancePolicy
     @policy = MaintenancePolicy.new(policy_params)
@@ -30,10 +38,13 @@ class MaintenancePoliciesController < ApplicationController
     end
   end
 
+  # Renders the edit form for a policy.
   def edit
     authorize @policy
   end
 
+  # Updates the policy, propagates the change to its derived plans, and
+  # redirects, or re-renders the form on failure.
   def update
     authorize @policy
     if @policy.update(policy_params)
@@ -45,6 +56,7 @@ class MaintenancePoliciesController < ApplicationController
     end
   end
 
+  # Destroys the policy and redirects to the policies index.
   def destroy
     authorize @policy
     @policy.destroy
@@ -65,6 +77,7 @@ class MaintenancePoliciesController < ApplicationController
 
   private
 
+  # Loads the maintenance policy for the current request.
   def set_policy
     @policy = MaintenancePolicy.find(params[:id])
   end

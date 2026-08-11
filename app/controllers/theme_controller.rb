@@ -1,3 +1,6 @@
+# Switches the paper/ink theme for the current user. The theme is an account
+# preference (the current user is already authenticated, so no explicit Pundit
+# call is needed).
 class ThemeController < ApplicationController
   THEMES = %w[light dark].freeze
 
