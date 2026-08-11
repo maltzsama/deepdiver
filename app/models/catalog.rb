@@ -1,3 +1,6 @@
+# A data catalog registered in the application and provisioned into Trino.
+# Holds the catalog type, endpoint, and connection credential, and derives a
+# valid Trino catalog name from the record name.
 class Catalog < ApplicationRecord
   CATALOG_TYPES = %w[polaris nessie].freeze
 
@@ -24,6 +27,9 @@ class Catalog < ApplicationRecord
     trino_catalog_name_override.presence || derived_trino_catalog_name
   end
 
+  # Derives a valid Trino catalog name from the record name, slugifying it and
+  # prefixing names that start with a digit or collide with a reserved word.
+  # @return [String] the derived, truncated catalog name
   def derived_trino_catalog_name
     slug = name.to_s.downcase
                .gsub(/[^a-z0-9_]/, "_")
@@ -40,6 +46,8 @@ class Catalog < ApplicationRecord
     slug.first(TRINO_NAME_MAX)
   end
 
+  # Human-readable representation of the catalog.
+  # @return [String] the catalog name
   def to_s
     name
   end

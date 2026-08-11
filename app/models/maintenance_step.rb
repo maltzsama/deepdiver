@@ -1,3 +1,5 @@
+# One step in a maintenance plan's chain, with its own cadence override and
+# per-step configuration.
 class MaintenanceStep < ApplicationRecord
   belongs_to :maintenance_plan
 
@@ -20,6 +22,8 @@ class MaintenanceStep < ApplicationRecord
 
   private
 
+  # Validates that cadence_cron is parseable and that it ever aligns with the
+  # plan's cron, so the step cannot silently never run.
   def cadence_cron_is_parseable
     return if cadence_cron.blank?
 

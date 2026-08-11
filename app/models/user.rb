@@ -1,3 +1,5 @@
+# An application account. Accounts come from the IdP via OIDC or are created
+# locally by seeding or invites; roles and suspension are managed in-app.
 class User < ApplicationRecord
   # :registerable REMOVED - accounts come from the IdP or are created by seed.
   # With SSO on, public self-registration is an open door.
@@ -27,10 +29,18 @@ class User < ApplicationRecord
   scope :invited, -> { where(status: "invited") }
   scope :suspended, -> { where(status: "suspended") }
 
+  # Whether the user's account is active.
+  # @return [Boolean]
   def active?      = status == "active"
+  # Whether the user was invited but has not signed in yet.
+  # @return [Boolean]
   def invited?     = status == "invited"
+  # Whether the user's account is suspended.
+  # @return [Boolean]
   def suspended?   = status == "suspended"
 
+  # Whether the user signed in through the SSO provider.
+  # @return [Boolean]
   def sso?
     provider.present?
   end
@@ -41,6 +51,9 @@ class User < ApplicationRecord
     super && active?
   end
 
+  # Message shown when an inactive user tries to sign in; suspended accounts
+  # get a dedicated message.
+  # @return [Symbol, String]
   def inactive_message
     suspended? ? :suspended : super
   end
@@ -50,6 +63,8 @@ class User < ApplicationRecord
     update!(status: "suspended", suspended_at: Time.current, suspended_by_id: by&.id)
   end
 
+  # Reactivates the user's account and clears suspension metadata.
+  # @param by [User, nil] the admin performing the reactivation
   def reactivate!(by: nil)
     update!(status: "active", suspended_at: nil, suspended_by_id: nil)
   end

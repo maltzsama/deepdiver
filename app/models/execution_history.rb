@@ -1,3 +1,5 @@
+# One run of a maintenance plan or a legacy schedule operation against a table.
+# Tracks status, timing, retries, and the individual chain steps executed.
 class ExecutionHistory < ApplicationRecord
   STATUSES = %w[pending running success failed skipped].freeze
 
@@ -16,14 +18,20 @@ class ExecutionHistory < ApplicationRecord
 
   before_validation :set_iceberg_table_id
 
+  # Whether the execution ended in failure.
+  # @return [Boolean]
   def failed?
     status == "failed"
   end
 
+  # Whether the execution has reached a terminal state.
+  # @return [Boolean]
   def finished?
     %w[success failed skipped].include?(status)
   end
 
+  # Whether the execution is currently running and has already been retried.
+  # @return [Boolean]
   def retrying?
     status == "running" && retry_count.positive?
   end
@@ -38,6 +46,8 @@ class ExecutionHistory < ApplicationRecord
     TableLock.exists?(iceberg_table_id: iceberg_table_id) ? :lock : :engine
   end
 
+  # Wall-clock duration of the execution, when both start and end are known.
+  # @return [Float, nil]
   def duration
     return nil if started_at.nil? || finished_at.nil?
 
@@ -58,6 +68,8 @@ class ExecutionHistory < ApplicationRecord
 
   private
 
+  # Backfills iceberg_table_id from the maintenance_schedule or maintenance_plan
+  # when it was not supplied directly.
   def set_iceberg_table_id
     self.iceberg_table_id ||= maintenance_schedule&.iceberg_table_id || maintenance_plan&.iceberg_table_id
   end

@@ -7,15 +7,24 @@ module TrinoDemand
 
   module_function
 
+  # Total executions and freshness sweeps currently needing the engine, after
+  # reaping orphaned ones.
+  # @return [Integer]
   def count
     reap_orphans!
     maintenance_count + freshness_count
   end
 
+  # Number of maintenance executions currently pending or running.
+  # @return [Integer]
   def maintenance_count = ExecutionHistory.where(status: ACTIVE_EXECUTION_STATUSES).count
 
+  # Number of freshness sweeps currently pending or running.
+  # @return [Integer]
   def freshness_count = FreshnessRun.where(status: ACTIVE_RUN_STATUSES).count
 
+  # Whether anything currently needs the engine.
+  # @return [Boolean]
   def any? = count.positive?
 
   # Detail for the "in progress" screen.

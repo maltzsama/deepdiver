@@ -1,3 +1,5 @@
+# A scheduled maintenance routine for a single table: a cron schedule plus an
+# ordered chain of maintenance steps that together describe what to run.
 class MaintenancePlan < ApplicationRecord
   # Default order. My reasoning, not verified in the docs - worth a review from
   # whoever knows your workload:
@@ -23,14 +25,21 @@ class MaintenancePlan < ApplicationRecord
 
   scope :dispatchable, -> { where(is_paused: false) }
 
+  # Whether dispatch of this plan is paused.
+  # @return [Boolean]
   def paused?
     is_paused
   end
 
+  # The maintenance steps that are currently enabled.
+  # @return [Array<MaintenanceStep>]
   def enabled_steps
     maintenance_steps.select(&:enabled)
   end
 
+  # Whether the plan's cron matches the given instant.
+  # @param time [Time] the instant to test, defaulting to now
+  # @return [Boolean]
   def scheduled_at?(time = Time.current)
     parsed = Fugit::Cron.parse(cron)
     return false if parsed.nil?
@@ -52,6 +61,7 @@ class MaintenancePlan < ApplicationRecord
 
   private
 
+  # Validates that cron is a parseable expression, adding an error otherwise.
   def cron_is_parseable
     return if cron.blank?
 

@@ -1,3 +1,5 @@
+# A table in a catalog discovered or registered by the application. Tracks the
+# table's health, freshness history, maintenance schedules, and executions.
 class IcebergTable < ApplicationRecord
   HEALTH_STATUSES = %w[unknown healthy warning critical].freeze
 
@@ -15,10 +17,14 @@ class IcebergTable < ApplicationRecord
   validates :name, uniqueness: { scope: %i[catalog_id namespace] }
   validates :health_score, numericality: { only_integer: true, in: 0..100 }, allow_nil: true
 
+  # Namespace and table name joined with a dot.
+  # @return [String]
   def fully_qualified_name
     "#{namespace}.#{name}"
   end
 
+  # Average size of the table's data files, or nil when the stats are unknown.
+  # @return [Integer, nil]
   def average_file_size
     return nil if total_size_bytes.nil? || total_data_files.nil? || total_data_files.zero?
 
@@ -36,6 +42,10 @@ class IcebergTable < ApplicationRecord
 
   private
 
+  # Quotes an identifier for use inside a Trino SQL statement, escaping any
+  # embedded double quotes.
+  # @param part [String] the identifier part to quote
+  # @return [String] the quoted identifier
   def quote_identifier(part)
     %("#{part.to_s.gsub('"', '""')}")
   end
