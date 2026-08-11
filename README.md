@@ -1,5 +1,8 @@
 # LakeDeepDiver
 
+[![CI](https://github.com/maltzsama/lakedeepdiver/actions/workflows/ci.yml/badge.svg)](https://github.com/maltzsama/lakedeepdiver/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+
 Rails 8 control plane for Iceberg table maintenance (optimize, expire snapshots, orphan/rewrite)
 with an ephemeral Trino engine on Kubernetes.
 
@@ -7,7 +10,7 @@ with an ephemeral Trino engine on Kubernetes.
 
 - Devise authentication with an `admin` role (RBAC on mutating routes).
 - Catalog sync from Iceberg REST catalogs (Polaris and Nessie) driven by `CatalogSyncService` +
-  `HEdlthEvaluator` health scoring.
+  `HealthEvaluator` health scoring.
 - Maintenance dispatch by model `dispatchable` schedules via Fugit cron and Solid Queue
   recurring tasks.
 - Ports/adapters Trino runtime: `FakeTrinoRuntime` in dev/test, `RealTrinoRuntime`
@@ -62,3 +65,7 @@ helm upgrade --install lakedeepdiver infra/helm/lakedeepdiver \
 
 Charts never store secrets or certificates; `infra/helm/lakedeepdiver/README.md` documents
 parameters, RBAC and the internal CA trust.
+
+## License
+
+LakeDeepDiver is licensed under the [Apache License 2.0](LICENSE).
