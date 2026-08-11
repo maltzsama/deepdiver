@@ -4,6 +4,8 @@
 module ActivityBroadcaster
   module_function
 
+  # Re-renders the /activity Turbo Stream channel: the engine strip and the
+  # running/queued lists, so the page updates without a full reload.
   def broadcast!
     state = TrinoEngineSupervisor.state
     running = ExecutionHistory.includes(:iceberg_table, :execution_steps, maintenance_plan: :maintenance_steps)

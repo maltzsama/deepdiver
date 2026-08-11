@@ -4,11 +4,16 @@
 class FreshnessAlerter
   ESCALATION_FACTOR = 2
 
+  # Creates the alerter for a freshness SLA and its latest probe result.
+  #
+  # @param sla [TableFreshnessSla] the SLA to update
+  # @param result [FreshnessProbe::Result] the latest probe result
   def initialize(sla, result)
     @sla = sla
     @result = result
   end
 
+  # Applies the probe result to the SLA with hysteresis and alerts as needed.
   def call
     previous = @sla.status
     current = map_status(@result.status)
@@ -25,10 +30,19 @@ class FreshnessAlerter
 
   private
 
+  # Maps a probe status into a valid SLA status, defaulting unknown values.
+  #
+  # @param status [Object] the raw probe status
+  # @return [String] a TableFreshnessSla status
   def map_status(status)
     TableFreshnessSla::STATUSES.include?(status.to_s) ? status.to_s : "unknown"
   end
 
+  # Whether the transition warrants an alert (late entry, recovery, or escalation).
+  #
+  # @param current [String] the new SLA status
+  # @param previous [String] the previous SLA status
+  # @return [Boolean] true when an alert should be sent
   def should_notify?(current, previous)
     return true if current == "late" && previous != "late"
     return true if current == "ok" && previous == "late"
@@ -37,11 +51,18 @@ class FreshnessAlerter
     false
   end
 
+  # Whether the delay has doubled the SLA budget.
+  #
+  # @return [Boolean] true when the delay exceeds twice the budget
   def escalated?
     budget = @sla.sla_minutes * 60
     (@result.delay_seconds || 0) > budget * ESCALATION_FACTOR
   end
 
+  # Sends the alert message and stamps last_alert_at/level on the SLA.
+  #
+  # @param current [String] the new SLA status
+  # @param previous [String] the previous SLA status
   def notify!(current, previous)
     delay = @result.delay_seconds
     table = @sla.iceberg_table.fully_qualified_name
@@ -61,6 +82,10 @@ class FreshnessAlerter
     @sla.update!(last_alert_at: Time.current, last_alert_level: level)
   end
 
+  # Formats a delay in seconds as a compact human-readable string.
+  #
+  # @param seconds [Integer, nil] the delay in seconds
+  # @return [String] e.g. "45 min" or "2.5 h"
   def human(seconds)
     return "0s" if seconds.nil?
 

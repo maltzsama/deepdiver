@@ -5,9 +5,14 @@ require "json"
 # Injected into the clients so tests can substitute a fake transport and never
 # touch the network.
 class HttpTransport
+  # Raised for non-success HTTP responses, carrying the status and body.
   class ApiError < StandardError
     attr_reader :status, :response_body
 
+    # Creates the error with the HTTP status and response body.
+    #
+    # @param status [Integer] the HTTP status code
+    # @param response_body [String, nil] the response body
     def initialize(status, response_body)
       @status = status
       @response_body = response_body
@@ -15,14 +20,33 @@ class HttpTransport
     end
   end
 
+  # Performs a GET request and parses the JSON response.
+  #
+  # @param uri [String] the request URI
+  # @param headers [Hash] extra HTTP headers
+  # @return [Hash] the parsed JSON response
+  # @raise [ApiError] on non-success responses
   def get(uri, headers: {})
     perform(Net::HTTP::Get.new(URI.parse(uri.to_s)), headers: headers, body: nil)
   end
 
+  # Performs a POST request with a body and parses the JSON response.
+  #
+  # @param uri [String] the request URI
+  # @param body [String] the request body
+  # @param headers [Hash] extra HTTP headers
+  # @return [Hash] the parsed JSON response
+  # @raise [ApiError] on non-success responses
   def post(uri, body:, headers: {})
     perform(Net::HTTP::Post.new(URI.parse(uri.to_s)), headers: headers, body: body)
   end
 
+  # Performs a DELETE request and parses the JSON response.
+  #
+  # @param uri [String] the request URI
+  # @param headers [Hash] extra HTTP headers
+  # @return [Hash] the parsed JSON response
+  # @raise [ApiError] on non-success responses
   def delete(uri, headers: {})
     perform(Net::HTTP::Delete.new(URI.parse(uri.to_s)), headers: headers, body: nil)
   end
@@ -36,6 +60,12 @@ class HttpTransport
 
   private
 
+  # Executes a request, applies headers/body and raises on non-success responses.
+  #
+  # @param request [Net::HTTPRequest] the request to send
+  # @param headers [Hash] extra HTTP headers
+  # @param body [String, nil] the request body
+  # @return [Hash] the parsed JSON response
   def perform(request, headers:, body:)
     headers&.each { |key, value| request[key] = value }
     request.body = body if body
@@ -50,6 +80,10 @@ class HttpTransport
     parse(response.body)
   end
 
+  # Parses a JSON body, treating empty bodies as an empty hash.
+  #
+  # @param body [String, nil] the raw response body
+  # @return [Hash] the parsed JSON
   def parse(body)
     return {} if body.nil? || body.empty?
 

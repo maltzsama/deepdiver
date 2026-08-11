@@ -15,6 +15,9 @@ module TrinoEngineSupervisor
 
   module_function
 
+  # Returns the single engine-state row, creating it on first use.
+  #
+  # @return [TrinoEngineState] the state row
   def state = TrinoEngineState.first_or_create!(status: "down", status_changed_at: Time.current)
 
   # Single entry point for ANY demand source. Maintenance and freshness call
@@ -43,6 +46,7 @@ module TrinoEngineSupervisor
     end
   end
 
+  # Marks the engine draining when demand ends while it is up.
   def demand_finished!
     current = state
     current.with_lock do
@@ -105,6 +109,11 @@ module TrinoEngineSupervisor
     end
   end
 
+  # Persists a state transition and broadcasts the new engine activity.
+  #
+  # @param record [TrinoEngineState] the state row
+  # @param status [String] the target status
+  # @param extra [Hash] additional attributes to write
   def transition!(record, status, **extra)
     record.update!(status: status, status_changed_at: Time.current,
                    generation: record.generation + 1, **extra)

@@ -6,10 +6,14 @@
 class TrinoCatalogProjection
   WRITER = "baleia"
 
+  # Creates the projection for a cluster name.
+  #
+  # @param cluster_name [String] the Trino cluster name
   def initialize(cluster_name: ENV.fetch("TRINO_CLUSTER_NAME", "default"))
     @cluster_name = cluster_name
   end
 
+  # Upserts every catalog into the registry and soft-deletes removed ones.
   def sync_all!
     cluster_id = ensure_cluster!
 
@@ -35,6 +39,10 @@ class TrinoCatalogProjection
     TrinoCluster.find_or_create_by!(name: @cluster_name).id
   end
 
+  # Upserts one catalog row into the registry.
+  #
+  # @param cluster_id [Integer] the cluster id
+  # @param catalog [Catalog] the catalog to mirror
   def upsert(cluster_id, catalog)
     TrinoCatalogRegistry.upsert(
       {

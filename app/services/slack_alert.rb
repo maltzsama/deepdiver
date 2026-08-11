@@ -3,15 +3,24 @@ require "net/http"
 # Minimal Slack webhook. No-op (with a logger) when the SLACK_WEBHOOK_URL env
 # var is not configured.
 class SlackAlert
+  # Convenience entry point that sends a message to a webhook.
+  #
+  # @param message [String] the alert text
+  # @param webhook [String, nil] an optional override webhook URL
   def self.notify(message, webhook: nil)
     new(message, webhook: webhook).call
   end
 
+  # Creates the alert with a message and optional webhook override.
+  #
+  # @param message [String] the alert text
+  # @param webhook [String, nil] an optional override webhook URL
   def initialize(message, webhook: nil)
     @message = message
     @webhook = webhook
   end
 
+  # Posts the alert, skipping with a log when no webhook is configured.
   def call
     url = @webhook.presence || ENV["SLACK_WEBHOOK_URL"]
     unless url
@@ -26,6 +35,9 @@ class SlackAlert
 
   private
 
+  # POSTs the JSON payload to the webhook URL.
+  #
+  # @param url [String] the webhook URL
   def post(url)
     uri = URI.parse(url)
     request = Net::HTTP::Post.new(uri)

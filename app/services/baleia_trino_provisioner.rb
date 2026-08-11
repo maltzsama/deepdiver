@@ -4,6 +4,8 @@
 # the engine is ephemeral, the boot happens on every window - there is no
 # runtime CREATE CATALOG.
 class BaleiaTrinoProvisioner < ChartTrinoProvisioner
+  # Syncs the catalog registry (the plugin reads it at boot), then applies the
+  # Helm chart so the cluster comes up with the catalog already available.
   def create!
     # The plugin reads at boot. A stale registry means the cluster comes up
     # without the catalog, and maintenance fails with "catalog not found".

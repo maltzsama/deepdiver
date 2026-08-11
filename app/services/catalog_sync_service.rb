@@ -2,12 +2,20 @@
 # catalog REST API, read TableMetadata (last snapshot, snapshot count) and
 # refresh the local health signals. Never touches Trino.
 class CatalogSyncService
+  # Creates the sync service for a catalog, defaulting the client and clock.
+  #
+  # @param catalog [Catalog] the catalog to sync
+  # @param client [CatalogClient, nil] an injectable catalog client
+  # @param now [Time] the reference clock for health evaluation
   def initialize(catalog, client: nil, now: Time.current)
     @catalog = catalog
     @client = client || CatalogClientFactory.for(catalog)
     @now = now
   end
 
+  # Syncs every namespace/table of the catalog and refreshes local health signals.
+  #
+  # @return [Hash] the list of collected errors under the `errors` key
   def sync
     errors = []
 
@@ -42,6 +50,11 @@ class CatalogSyncService
 
   private
 
+  # Creates or updates a table row from catalog metadata and its health score.
+  #
+  # @param namespace [String] the dotted namespace path
+  # @param table_name [String] the table name
+  # @return [IcebergTable] the persisted table
   def upsert_table(namespace, table_name)
     payload = @client.table_metadata(namespace, table_name)
     extractor = TableMetadataExtractor.new(payload["metadata"] || payload)
