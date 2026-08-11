@@ -1,3 +1,5 @@
+# Runs a single step of a maintenance execution and enqueues the next one,
+# chaining through the materialised plan until every step has finished.
 class ExecuteMaintenanceJob < ApplicationJob
   queue_as :maintenance
 
@@ -8,6 +10,7 @@ class ExecuteMaintenanceJob < ApplicationJob
   # steps - the TrinoEngineSupervisor owns that. The chain was materialised by
   # run_plan with each step's cadence already resolved; order is always
   # maintenance_steps.position.
+  # @param execution_history_id [Integer] the id of the execution being worked through.
   def perform(execution_history_id)
     execution = ExecutionHistory.find(execution_history_id)
     execution.update!(started_at: Time.current) if execution.started_at.nil?
@@ -21,6 +24,10 @@ class ExecuteMaintenanceJob < ApplicationJob
 
   private
 
+  # Finds the next pending step for the execution, ordered by the maintenance
+  # plan's position.
+  # @param execution [ExecutionHistory] the execution whose steps are inspected.
+  # @return [ExecutionStep, nil] the next pending step, or nil when none remain.
   def next_step_for(execution)
     execution.execution_steps
              .joins(:maintenance_step)
@@ -29,6 +36,11 @@ class ExecuteMaintenanceJob < ApplicationJob
              .first
   end
 
+  # Marks the step running, executes its SQL on Trino, records the result, and
+  # enqueues the next step. Fails the step and notifies the supervisor on error,
+  # retrying on commit conflicts.
+  # @param execution [ExecutionHistory] the execution owning the step.
+  # @param result_row [ExecutionStep] the step record to run.
   def run_step(execution, result_row)
     maintenance_step = result_row.maintenance_step
     result_row.update!(status: "running", started_at: Time.current)
@@ -53,6 +65,11 @@ class ExecuteMaintenanceJob < ApplicationJob
     TrinoEngineSupervisor.demand_finished!
   end
 
+  # Handles a Trino commit conflict on a step: fails it after the retry limit,
+  # otherwise increments the retry counter and re-enqueues the execution.
+  # @param execution [ExecutionHistory] the execution owning the step.
+  # @param result_row [ExecutionStep] the step that hit the conflict.
+  # @param error [TrinoRuntime::CommitConflict] the raised conflict error.
   def handle_commit_conflict(execution, result_row, error)
     if result_row.retry_count >= MAX_RETRIES
       result_row.update!(status: "failed", finished_at: Time.current,
@@ -66,6 +83,9 @@ class ExecuteMaintenanceJob < ApplicationJob
     end
   end
 
+  # Marks the execution successful, resets the plan's failure counter, and
+  # notifies the supervisor that demand has finished.
+  # @param execution [ExecutionHistory] the execution that just completed.
   def finish_chain(execution)
     execution.update!(status: :success, current_step: "done", finished_at: Time.current)
     execution.maintenance_plan.update!(consecutive_failures: 0)

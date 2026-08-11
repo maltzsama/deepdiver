@@ -1,7 +1,10 @@
+# View helpers shared across the application, covering theme selection,
+# permission checks, badge classes, navigation, and formatting.
 module ApplicationHelper
   # Selected theme for the <html data-theme> attribute. Dark is the default;
   # the theme toggle (CR-69) persists it on the account. The cookie is kept as
   # a fallback for the anonymous/auth screens, where there is no signed-in user.
+  # @return [String] "light" or "dark".
   def html_theme
     return @theme if @theme.in?(%w[light dark])
 
@@ -10,10 +13,14 @@ module ApplicationHelper
 
   # Operators may trigger maintenance runs; everything else that mutates a
   # plan stays admin-only.
+  # @return [Boolean] true when the current user is an admin or an operator.
   def can_run_maintenance?
     current_user&.admin? || current_user&.operator?
   end
 
+  # Maps a user account status to its badge CSS class.
+  # @param status [String, Symbol] the user status.
+  # @return [String] the badge class for the status.
   def user_status_badge_class(status)
     case status.to_s
     when "active"    then "badge-ok"
@@ -23,6 +30,9 @@ module ApplicationHelper
     end
   end
 
+  # Maps a table health status to its badge CSS class.
+  # @param status [String, Symbol] the health status.
+  # @return [String] the badge class for the status.
   def health_badge_class(status)
     case status.to_s
     when "healthy"  then "badge-ok"
@@ -32,6 +42,9 @@ module ApplicationHelper
     end
   end
 
+  # Maps an execution status to its badge CSS class.
+  # @param status [String, Symbol] the execution status.
+  # @return [String] the badge class for the status.
   def execution_status_badge_class(status)
     case status.to_s
     when "success" then "badge-ok"
@@ -41,6 +54,9 @@ module ApplicationHelper
     end
   end
 
+  # Maps an execution step status to its badge CSS class.
+  # @param status [String, Symbol] the step status.
+  # @return [String] the badge class for the status.
   def execution_step_badge_class(status)
     case status.to_s
     when "succeeded" then "badge-ok"
@@ -50,6 +66,9 @@ module ApplicationHelper
     end
   end
 
+  # Maps a freshness status to its badge CSS class.
+  # @param status [String, Symbol] the freshness status.
+  # @return [String] the badge class for the status.
   def freshness_badge_class(status)
     case status.to_s
     when "ok"      then "badge-ok"
@@ -60,6 +79,9 @@ module ApplicationHelper
     end
   end
 
+  # Maps a health status to the fill colour class used on the health strata bars.
+  # @param status [String, Symbol] the health status.
+  # @return [String] the strata fill class for the status.
   def strata_fill_class(status)
     case status.to_s
     when "healthy"  then "strata-fill-ok"
@@ -76,6 +98,10 @@ module ApplicationHelper
     "done"          => "done"
   }.freeze
 
+  # Returns the human label for an execution step, falling back to the raw
+  # step name when it has no mapping.
+  # @param step [String, Symbol] the step identifier.
+  # @return [String] the human-readable step label.
   def step_label(step)
     STEP_LABELS.fetch(step.to_s, step.to_s)
   end
@@ -93,6 +119,8 @@ def execution_visual_state(execution)
   # Compares a nav target against the current path. "/" matches only the root
   # (otherwise every page would look selected); other paths match by prefix so
   # nested actions stay highlighted on their section.
+  # @param path [String] the nav target to compare against the request path.
+  # @return [Boolean] true when the current path matches the target.
   def active_path?(path)
     current = request.path
     return current == path || current == "#{path}/" if path == "/"
@@ -102,6 +130,8 @@ def execution_visual_state(execution)
 
   # 1234 -> "1k", 1234_500 -> "1.2k", 10_000 -> "10k". Used for the sidebar
   # counters so big lakes stay readable.
+  # @param number [Numeric] the number to compact.
+  # @return [String] the compacted, human-readable number.
   def compact_number(number)
     n = number.to_i
     case n
@@ -111,6 +141,11 @@ def execution_visual_state(execution)
     end
   end
 
+  # Renders a sidebar navigation link with an optional inline SVG icon,
+  # marking the link active when it matches the current page.
+  # @param path [String] the destination of the link.
+  # @param icon [String, nil] the icon key for the link, or nil for no icon.
+  # @return [ActiveSupport::SafeBuffer] the rendered link markup.
   def nav_link_to(path, icon: nil, &block)
     active = current_page?(path) || (path.is_a?(String) && active_path?(path))
     classes = "sidebar-link"
@@ -142,6 +177,10 @@ def execution_visual_state(execution)
     end
   end
 
+  # Formats a duration in seconds as a short human label (e.g. "45s", "12 min",
+  # "1.5 h"). Returns nil when given nil.
+  # @param seconds [Numeric, nil] the duration in seconds.
+  # @return [String, nil] the formatted duration, or nil when seconds is nil.
   def duration_label(seconds)
     return nil if seconds.nil?
 
@@ -155,6 +194,10 @@ def execution_visual_state(execution)
     end
   end
 
+  # Formats a freshness delay as a day count when it spans at least a day,
+  # otherwise defers to duration_label. Returns nil when given nil.
+  # @param seconds [Numeric, nil] the delay in seconds.
+  # @return [String, nil] the formatted delay, or nil when seconds is nil.
   def freshness_delay_label(seconds)
     return nil if seconds.nil?
 
@@ -165,6 +208,8 @@ def execution_visual_state(execution)
   end
 
   # [label, badge_class] for the freshness column, or nil.
+  # @param table [IcebergTable] the table whose freshness is shown.
+  # @return [Array, nil] the label and badge class, or nil when no SLA applies.
   def freshness_label(table)
     sla = table.table_freshness_sla
     return [ t("tables.index.fresh_no_sla"), "badge-mute" ] if sla.nil? || !sla.enabled
@@ -180,6 +225,10 @@ def execution_visual_state(execution)
     end
   end
 
+  # Renders a timestamp as a muted placeholder when blank, otherwise as a
+  # formatted cell with an ISO-8601 title tooltip.
+  # @param value [Time, DateTime, String, nil] the timestamp to display.
+  # @return [ActiveSupport::SafeBuffer] the rendered timestamp markup.
   def timestamp(value)
     return content_tag(:span, "—", class: "cell-muted") if value.blank?
 
@@ -187,6 +236,8 @@ def execution_visual_state(execution)
   end
 
   # Concise composition summary for the health tooltip in the tables list.
+  # @param table [IcebergTable] the table whose composition is summarised.
+  # @return [String] the tooltip text, or a "no data" translation when empty.
   def table_health_tooltip(table)
     parts = []
     if (avg = table.average_file_size)

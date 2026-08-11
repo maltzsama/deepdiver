@@ -6,6 +6,9 @@ class DrainEngineJob < ApplicationJob
 
   POLL_INTERVAL = ENV.fetch("TRINO_DRAIN_POLL_SECONDS", "10").to_i.seconds
 
+  # Polls the engine while it is draining, waiting for the grace period to
+  # elapse or all work to finish, then transitions to stopping and destroys
+  # the engine. No-op unless the engine is currently draining.
   def perform
     state = TrinoEngineSupervisor.state
     return unless state.status == "draining"
@@ -33,6 +36,9 @@ class DrainEngineJob < ApplicationJob
 
   private
 
+  # Returns whether the engine is still in the draining state, re-reading the
+  # persisted state so the loop notices if work has arrived.
+  # @return [Boolean] true while the engine status is "draining".
   def still_draining?
     TrinoEngineSupervisor.state.reload.status == "draining"
   end
