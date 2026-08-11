@@ -33,6 +33,9 @@
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 
+# Editor/manual backup files.
+*.bkp
+
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
