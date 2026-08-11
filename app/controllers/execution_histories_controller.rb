@@ -4,6 +4,8 @@
 class ExecutionHistoriesController < ApplicationController
   before_action :set_execution, only: %i[cancel]
 
+  # Lists the latest maintenance and freshness events interleaved into one
+  # timeline, with catalog/status/operation filters.
   def index
     authorize ExecutionHistory
     @catalogs = Catalog.order(:name)
@@ -29,10 +31,13 @@ class ExecutionHistoriesController < ApplicationController
 
   private
 
+  # Loads the execution for the current request.
   def set_execution
     @execution = ExecutionHistory.find(params[:id])
   end
 
+  # Builds the maintenance side of the timeline, applying the catalog, status,
+  # operation, and stopped-at-step filters.
   def maintenance_events
     return [] if params[:kind] == "freshness"
 
@@ -52,6 +57,8 @@ class ExecutionHistoriesController < ApplicationController
     end
   end
 
+  # Builds the freshness-scan side of the timeline, applying the catalog and
+  # status filters (via freshness_status_filter).
   def freshness_events
     return [] if params[:kind] == "maintenance"
 

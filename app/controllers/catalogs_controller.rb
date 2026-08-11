@@ -1,11 +1,17 @@
+# Manages catalogs: the external systems whose iceberg tables are tracked.
+# Provides the usual CRUD plus sync (re-scan metadata) and verify (test the
+# connection). Every action authorizes with Pundit.
 class CatalogsController < ApplicationController
   before_action :set_catalog, only: %i[show edit update destroy sync verify]
 
+  # Lists all catalogs ordered by name.
   def index
     authorize Catalog
     @catalogs = Catalog.order(:name)
   end
 
+  # Shows a catalog with its open error count and tables, each with a count of
+  # its maintenance schedules.
   def show
     authorize @catalog
     @open_error_count = ErrorEvent.open.catalog_events(@catalog).count
@@ -16,12 +22,14 @@ class CatalogsController < ApplicationController
                   .order(:namespace, :name)
   end
 
+  # Renders the form for creating a catalog, with a fresh credential object.
   def new
     authorize Catalog
     @catalog = Catalog.new
     @catalog.build_catalog_credential
   end
 
+  # Creates a catalog and redirects to it, or re-renders the form on failure.
   def create
     authorize Catalog
     @catalog = Catalog.new(catalog_params)
@@ -34,10 +42,12 @@ class CatalogsController < ApplicationController
     end
   end
 
+  # Renders the edit form for a catalog.
   def edit
     authorize @catalog
   end
 
+  # Updates the catalog and redirects to it, or re-renders the form on failure.
   def update
     authorize @catalog
     if @catalog.update(catalog_params)
@@ -47,18 +57,22 @@ class CatalogsController < ApplicationController
     end
   end
 
+  # Destroys the catalog and redirects to the catalogs index.
   def destroy
     authorize @catalog
     @catalog.destroy
     redirect_to catalogs_path, notice: "Catalog deleted."
   end
 
+  # Enqueues a metadata re-sync for the catalog and redirects to it.
   def sync
     authorize @catalog
     MaintenanceOrchestrator.sync_catalog(@catalog.id)
     redirect_to @catalog, notice: "Catalog sync enqueued."
   end
 
+  # Verifies the catalog connection and redirects with the outcome as notice
+  # or alert.
   def verify
     authorize @catalog
     result = @catalog.verify_connection!
@@ -72,10 +86,13 @@ class CatalogsController < ApplicationController
 
   private
 
+  # Loads the catalog for the current request.
   def set_catalog
     @catalog = Catalog.find(params[:id])
   end
 
+  # Strong parameters for a catalog, including nested credential attributes;
+  # drops the secret when it is left blank.
   def catalog_params
     permitted = params.require(:catalog).permit(
       :name, :catalog_type, :endpoint, :trino_catalog_name_override,

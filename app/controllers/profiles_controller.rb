@@ -1,4 +1,8 @@
+# Manages the signed-in user's own account: display name, locale, theme, and
+# password. Actions operate on current_user, so no Pundit authorization call
+# is needed.
 class ProfilesController < ApplicationController
+  # Renders the account preferences screen.
   def show
   end
 
@@ -30,6 +34,7 @@ class ProfilesController < ApplicationController
     params.require(:profile).permit(:display_name, :locale, :theme)
   end
 
+  # Strong parameters for a password change.
   def password_params
     params.require(:profile).permit(:current_password, :password, :password_confirmation)
   end

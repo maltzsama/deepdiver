@@ -1,3 +1,6 @@
+# Base controller for the whole app: requires an authenticated user, wires
+# Pundit authorization, and handles the per-user locale/theme and the layout
+# choice (auth vs. application).
 class ApplicationController < ActionController::Base
   include Pundit::Authorization
 
