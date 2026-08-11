@@ -1,8 +1,21 @@
 pt-BR:
+  layout:
+    topbar:
+      search_placeholder: "Buscar tabelas, catálogos, políticas..."
+      notifications: "Execuções com falha"
+      notifications_label: "Notificações"
+      theme_toggle_title: "Alternar tema paper/ink"
+      theme_toggle_label: "Alternar tema"
+      user_menu: "Menu do usuário"
+    session:
+      sign_out: "Sair"
+      admin: "admin"
+
   auth:
     brand: "LakeDeepDiver"
     eyebrow: "Manutenção de tabelas Iceberg"
     tagline: "Agende, execute e acompanhe compactação, expiração de snapshots e limpeza de órfãos — com histórico de cada etapa."
+    version: "v0.1.0"
     footer: "Acesso restrito. Uso interno."
     facts:
       operations: "Operações"

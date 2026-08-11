@@ -13,7 +13,12 @@ en:
       sign_out: "Sign out"
       admin: "admin"
     topbar:
+      search_placeholder: "Search tables, catalogs, policies..."
       notifications: "Failed executions"
+      notifications_label: "Notifications"
+      theme_toggle_title: "Toggle paper/ink theme"
+      theme_toggle_label: "Toggle theme"
+      user_menu: "User menu"
 
   profiles:
     show:
@@ -375,6 +380,7 @@ en:
     brand: "LakeDeepDiver"
     eyebrow: "Iceberg table maintenance"
     tagline: "Schedule, run and track compaction, snapshot expiry and orphan cleanup — with a record of every step."
+    version: "v0.1.0"
     footer: "Restricted access. Internal use."
     facts:
       operations: "Operations"
