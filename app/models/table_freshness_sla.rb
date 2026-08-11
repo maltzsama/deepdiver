@@ -1,3 +1,5 @@
+# The freshness contract for a table: which timestamp column is authoritative,
+# how it is encoded, and how stale the table may get before warning/late.
 class TableFreshnessSla < ApplicationRecord
   TIMESTAMP_TYPES = %w[timestamp_tz timestamp_ntz epoch_seconds epoch_millis epoch_micros].freeze
   STATUSES = %w[unknown ok warning late error no_data].freeze

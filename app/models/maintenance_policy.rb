@@ -51,6 +51,9 @@ class MaintenancePolicy < ApplicationRecord
 
   private
 
+  # Creates or updates the plan's steps so they match this policy's
+  # steps_config.
+  # @param plan [MaintenancePlan] the plan to sync steps for
   def sync_steps(plan)
     MaintenancePlan::CANONICAL_ORDER.each_with_index do |operation, position|
       step_config = steps_config[operation] || {}
@@ -64,6 +67,7 @@ class MaintenancePolicy < ApplicationRecord
     end
   end
 
+  # Validates that cron is a parseable expression, adding an error otherwise.
   def cron_is_parseable
     return if cron.blank?
 

@@ -9,16 +9,24 @@
 module AuthConfig
   module_function
 
+  # Whether SSO (OIDC) sign-in is enabled, read from SSO_ENABLED.
+  # @return [Boolean] true when SSO is enabled
   def sso_enabled?
     ENV.fetch("SSO_ENABLED", "true") == "true"
   end
 
+  # Whether the local email/password login is available. Always enabled when
+  # SSO is off; otherwise read from LOCAL_LOGIN_ENABLED.
+  # @return [Boolean] true when the local login form should show
   def local_login_enabled?
     return true unless sso_enabled?
 
     ENV.fetch("LOCAL_LOGIN_ENABLED", "true") == "true"
   end
 
+  # Label shown for the SSO button on the sign-in screen, from
+  # OIDC_PROVIDER_LABEL.
+  # @return [String] the provider display label
   def provider_label
     ENV.fetch("OIDC_PROVIDER_LABEL", "SSO")
   end

@@ -1,3 +1,5 @@
+# A lock held while an execution runs against a table, preventing concurrent
+# executions from racing on the same table.
 class TableLock < ApplicationRecord
   belongs_to :iceberg_table
   belongs_to :execution_history
@@ -12,6 +14,8 @@ class TableLock < ApplicationRecord
     false
   end
 
+  # Releases the lock held by the given execution.
+  # @param execution [ExecutionHistory] the execution releasing its lock
   def self.release(execution)
     where(execution_history_id: execution.id).delete_all
   end
