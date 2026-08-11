@@ -6,12 +6,20 @@ require "kubeclient"
 class K8sClient
   attr_reader :namespace, :deployment
 
+  # Wraps a configured Kubeclient and the deployment coordinates.
+  #
+  # @param kubeclient [Kubeclient::Client] the Kubernetes API client
+  # @param namespace [String] the deployment namespace
+  # @param deployment [String] the deployment name
   def initialize(kubeclient, namespace:, deployment:)
     @kubeclient = kubeclient
     @namespace = namespace
     @deployment = deployment
   end
 
+  # Sets the Deployment replica count via a JSON patch.
+  #
+  # @param replicas [Integer] the desired replica count
   def scale(replicas)
     @kubeclient.patch_deployment(deployment, namespace, [ {
                                                           op: :replace,
@@ -20,11 +28,17 @@ class K8sClient
                                                         } ])
   end
 
+  # Whether the Deployment has at least one ready replica.
+  #
+  # @return [Boolean] true when ready
   def ready?
     status = @kubeclient.get_deployment(deployment, namespace).status
     status["readyReplicas"].to_i >= 1
   end
 
+  # Whether the Deployment currently exists.
+  #
+  # @return [Boolean] true when the Deployment is found
   def deployment_exists?
     @kubeclient.get_deployment(deployment, namespace)
     true

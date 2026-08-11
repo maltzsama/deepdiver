@@ -3,12 +3,20 @@
 # ephemeral, so create!/destroy! scale the Deployment 1<->0 and health is read
 # from GET /v1/info.
 class ChartTrinoProvisioner
+  # Creates the provisioner with injectable k8s client, transport and base URL.
+  #
+  # @param k8s [TrinoK8sClient] the Kubernetes client
+  # @param transport [HttpTransport] the HTTP transport
+  # @param base_url [String] the Trino coordinator base URL
   def initialize(k8s: TrinoK8sClient.new, transport: HttpTransport.new, base_url: ENV.fetch("TRINO_URL"))
     @k8s = k8s
     @transport = transport
     @base_url = base_url
   end
 
+  # Whether the Trino Deployment currently exists.
+  #
+  # @return [Boolean] true if the Deployment is present
   def exists?
     @k8s.deployment_exists?
   end
@@ -21,6 +29,9 @@ class ChartTrinoProvisioner
     false
   end
 
+  # Whether the Deployment is fully rolled out and ready.
+  #
+  # @return [Boolean] true when at least one replica is ready
   def rollout_complete?
     @k8s.ready?
   end
@@ -34,14 +45,19 @@ class ChartTrinoProvisioner
     false
   end
 
+  # Scales the Deployment up to 1 replica.
   def create!
     @k8s.scale(1)
   end
 
+  # Scales the Deployment down to 0 replicas.
   def destroy!
     @k8s.scale(0)
   end
 
+  # Blocks until the Deployment disappears or the timeout elapses.
+  #
+  # @param timeout [ActiveSupport::Duration] how long to wait
   def wait_gone!(timeout:)
     deadline = Time.current + timeout
     sleep 1 until !exists? || Time.current > deadline

@@ -8,10 +8,15 @@
 # the database, because it is ephemeral and there is no reason to persist one
 # more secret.
 class CatalogTokenProvider
+  # Raised when the catalog cannot issue a token.
   class AuthError < StandardError; end
 
   EXPIRY_MARGIN = 60 # seconds before the real expiry
 
+  # Creates the token provider for a catalog with an injectable transport.
+  #
+  # @param catalog [Catalog] the catalog to authenticate against
+  # @param transport [HttpTransport] the HTTP transport to use
   def initialize(catalog, transport: HttpTransport.new)
     @catalog = catalog
     @credential = catalog.catalog_credential
@@ -28,16 +33,26 @@ class CatalogTokenProvider
 
   private
 
+  # Returns a cached, still-valid access token, requesting one on a miss.
+  #
+  # @return [String] the access token
   def access_token
     Rails.cache.fetch(cache_key, expires_in: cached_ttl) { request_token }
   end
 
+  # Cache key that changes whenever the credential (or its secret) changes.
+  #
+  # @return [String] the Rails cache key
   def cache_key = "catalog_token/#{@catalog.id}/#{@credential.updated_at.to_i}"
 
   # Without knowing expires_in before the call, the cache TTL is conservative;
   # request_token rewrites it with the real value.
   def cached_ttl = 5.minutes
 
+  # Performs the OAuth2 client-credentials grant and caches the token.
+  #
+  # @return [String] the access token
+  # @raise [AuthError] if the token request fails or returns no token
   def request_token
     body = URI.encode_www_form(
       grant_type: "client_credentials",
@@ -61,6 +76,9 @@ class CatalogTokenProvider
     raise AuthError, "failed to obtain a token from the catalog: #{e.message}"
   end
 
+  # Absolute URL of the OAuth2 token endpoint.
+  #
+  # @return [String] the token endpoint URL
   def token_url
     "#{@catalog.endpoint.chomp('/')}#{@credential.token_path}"
   end

@@ -2,11 +2,16 @@
 # column name. Used by the freshness probe (SELECT MAX of a watermark, distinct
 # recent partitions); the maintenance path keeps using TrinoRestClient.
 class TrinoClient
+  # Raised when Trino rejects a statement or fails to finish a query.
   class Error < StandardError; end
 
   POLL_INTERVAL = ENV.fetch("TRINO_QUERY_POLL_SECONDS", "1").to_i # seconds between nextUri calls
   MAX_POLL_SECONDS = ENV.fetch("TRINO_QUERY_MAX_SECONDS", "3600").to_i
 
+  # Creates the client with an endpoint and optional default catalog.
+  #
+  # @param endpoint [String] the Trino coordinator URL
+  # @param catalog_name [String, nil] the default catalog header value
   def initialize(endpoint: ENV.fetch("TRINO_URL"), catalog_name: nil)
     @endpoint = endpoint
     @catalog_name = catalog_name
@@ -18,23 +23,41 @@ class TrinoClient
     poll(statement(sql))
   end
 
+  # Runs SQL and returns the value of a single column in the first row.
+  #
+  # @param sql [String] the query
+  # @param column [String] the column to read
+  # @return [Object, nil] the first row's value
   def query_scalar(sql, column)
     rows = run_with_names(sql)
     rows.first&.fetch(column, nil)
   end
 
+  # Runs SQL and returns the values of a column across all rows.
+  #
+  # @param sql [String] the query
+  # @param column [String] the column to read
+  # @return [Array] the column values
   def query_column(sql, column)
     run_with_names(sql).filter_map { |row| row[column] }
   end
 
   private
 
+  # Submits a statement and returns the initial response, raising on rejection.
+  #
+  # @param sql [String] the query
+  # @return [Hash] the Trino statement response
   def statement(sql)
     @transport.post(uri("/v1/statement"), body: { "query" => sql }.to_json, headers: headers)
   rescue HttpTransport::ApiError => e
     raise Error, "Trino statement rejected: #{e.message}"
   end
 
+  # Follows nextUri until the query finishes, raising on error or timeout.
+  #
+  # @param response [Hash] the initial statement response
+  # @return [Hash] the final response with column names
   def poll(response)
     deadline = Time.current + MAX_POLL_SECONDS
     current = response
@@ -53,15 +76,26 @@ class TrinoClient
     end
   end
 
+  # Converts Trino data rows into hashes keyed by column name.
+  #
+  # @param response [Hash] a Trino response with columns and data
+  # @return [Array<Hash>] the rows
   def rows_with_names(response)
     names = (response["columns"] || []).map { |c| c["name"] }
     (response["data"] || []).map { |row| names.zip(row).to_h }
   end
 
+  # Resolves a path or absolute URL against the endpoint.
+  #
+  # @param path [String] the request path or URL
+  # @return [String] the absolute URL
   def uri(path)
     path.start_with?("http") ? path : URI.join("#{@endpoint}/", path).to_s
   end
 
+  # The Trino request headers, including the catalog when configured.
+  #
+  # @return [Hash] the headers
   def headers
     h = { "X-Trino-User" => "lakedeepdiver", "X-Trino-Source" => "lakedeepdiver-freshness" }
     h["X-Trino-Catalog"] = @catalog_name if @catalog_name.present?

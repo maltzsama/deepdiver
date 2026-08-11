@@ -1,4 +1,9 @@
+# Coordinates the maintenance lifecycle: materialises execution chains, pushes
+# them through the job backend and hands the engine lifecycle to the supervisor.
 module MaintenanceOrchestrator
+  # Returns the job-queue backend implementation (Solid Queue by default).
+  #
+  # @return [MaintenanceOrchestrator::Backend] the backend
   def self.backend
     @backend ||= SolidQueueBackend.new
   end
@@ -37,6 +42,11 @@ module MaintenanceOrchestrator
     execution
   end
 
+  # Why a step is skipped at a given time (disabled or outside its cadence).
+  #
+  # @param step [MaintenanceStep] the step to evaluate
+  # @param at [Time] the reference time
+  # @return [String, nil] the skip reason, or nil when due
   def self.skip_reason(step, at)
     return "step disabled" unless step.enabled
     return nil if step.due_at?(at)
@@ -57,6 +67,9 @@ module MaintenanceOrchestrator
     run
   end
 
+  # Dispatches a freshness sweep onto the backend.
+  #
+  # @param freshness_run_id [Integer] the run to start
   def self.start_freshness_sweep(freshness_run_id)
     backend.start_freshness_sweep(freshness_run_id)
   end
@@ -76,6 +89,9 @@ module MaintenanceOrchestrator
     end
   end
 
+  # Marks an execution skipped because its table lock is contended.
+  #
+  # @param execution [ExecutionHistory] the execution to skip
   def self.skip_for_overlap(execution)
     execution.update!(
       status: :skipped,
@@ -86,26 +102,41 @@ module MaintenanceOrchestrator
   end
   private_class_method :skip_for_overlap
 
+  # Enqueues a catalog sync through the backend.
+  #
+  # @param catalog_id [Integer] the catalog to sync
+  # @param force [Boolean] whether to force a full resync
   def self.sync_catalog(catalog_id, force: false)
     backend.sync_catalog(catalog_id, force: force)
   end
 
+  # Retries acquiring the table lock for an execution via the backend.
+  #
+  # @param execution_history_id [Integer] the execution to retry
   def self.retry_lock_acquisition(execution_history_id)
     backend.retry_lock_acquisition(execution_history_id)
   end
 
+  # Asks the backend to supervise the engine start.
   def self.supervise_engine_start
     backend.supervise_engine_start
   end
 
+  # Asks the backend to drain the engine.
   def self.drain_engine
     backend.drain_engine
   end
 
+  # Dispatches the maintenance chain of an execution via the backend.
+  #
+  # @param execution_history_id [Integer] the execution to run
   def self.execute_maintenance(execution_history_id)
     backend.execute_maintenance(execution_history_id)
   end
 
+  # Retries the maintenance of an execution via the backend.
+  #
+  # @param execution_history_id [Integer] the execution to retry
   def self.retry_maintenance(execution_history_id)
     backend.retry_maintenance(execution_history_id)
   end
