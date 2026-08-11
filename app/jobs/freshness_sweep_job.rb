@@ -4,6 +4,10 @@
 class FreshnessSweepJob < ApplicationJob
   queue_as :freshness
 
+  # Probes every enabled SLA in a single run, records each check, and updates
+  # the run with the aggregated counts. A failing table is recorded as an error
+  # without taking the whole sweep down.
+  # @param freshness_run_id [Integer] the id of the run being executed.
   def perform(freshness_run_id)
     run = FreshnessRun.find(freshness_run_id)
     run.update!(status: "running", started_at: Time.current)
@@ -36,6 +40,10 @@ class FreshnessSweepJob < ApplicationJob
 
   private
 
+  # Persists a FreshnessCheck row capturing the probe result for the SLA.
+  # @param sla [TableFreshnessSla] the SLA the check belongs to.
+  # @param result [FreshnessProbe::Result] the probe outcome to record.
+  # @return [FreshnessCheck] the created check record.
   def record_check(sla, result)
     FreshnessCheck.create!(
       iceberg_table_id: sla.iceberg_table_id,

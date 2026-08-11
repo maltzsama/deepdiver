@@ -1,3 +1,5 @@
+# Dispatches maintenance runs by checking every active, non-paused plan against
+# the current minute and enqueuing a run when its cron schedule matches.
 class ScheduleDispatchJob < ApplicationJob
   queue_as :maintenance
 

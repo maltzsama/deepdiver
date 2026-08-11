@@ -6,6 +6,9 @@ class SuperviseEngineStartJob < ApplicationJob
 
   POLL_INTERVAL = ENV.fetch("TRINO_START_POLL_SECONDS", "5").to_i.seconds
 
+  # Ensures the Trino cluster exists, waits until it is ready, then marks the
+  # engine up and releases pending executions. On failure it retries or marks
+  # the engine failed, failing every pending execution.
   def perform
     state = TrinoEngineSupervisor.state
     return unless state.status == "starting"
@@ -37,6 +40,8 @@ class SuperviseEngineStartJob < ApplicationJob
     TrinoProvisioner.create!
   end
 
+  # Polls until the cluster rollout is complete and healthy, raising a
+  # Timeout::Error if readiness takes longer than the configured timeout.
   def wait_until_ready!
     deadline = Time.current + TrinoEngineSupervisor::READY_TIMEOUT
 
@@ -48,6 +53,11 @@ class SuperviseEngineStartJob < ApplicationJob
     end
   end
 
+  # Reacts to a failed start: re-enqueues supervision and recreates the cluster
+  # while attempts remain, otherwise marks the engine failed, records an error
+  # event, alerts Slack, and fails every pending execution.
+  # @param state [TrinoEngineSupervisorState] the current engine state.
+  # @param error [Exception] the error that caused the failure.
   def handle_start_failure(state, error)
     if state.start_attempts < TrinoEngineSupervisor::MAX_START_ATTEMPTS
       Rails.logger.warn("Trino start failed (attempt #{state.start_attempts}): #{error.message}")
@@ -62,6 +72,9 @@ class SuperviseEngineStartJob < ApplicationJob
     end
   end
 
+  # Fails every pending execution with the given message and signals the
+  # supervisor that demand has finished so it can re-evaluate the state.
+  # @param message [String] the failure reason to record on each execution.
   def fail_pending_executions!(message)
     ExecutionHistory.where(status: "pending").find_each do |execution|
       ExecutionFailureHandler.handle(execution, "engine unavailable: #{message}")

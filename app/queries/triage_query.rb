@@ -10,6 +10,11 @@ class TriageQuery
 
   Row = Struct.new(:table, :sla, :degraded_at, :reasons, keyword_init: true)
 
+  # Builds one row per degraded table, sorted by most recently degraded first
+  # (tables that entered a bad state long ago are pushed to the end), then
+  # truncates to the given limit.
+  # @param limit [Integer] the maximum number of rows to return.
+  # @return [Array<TriageQuery::Row>] the most recently degraded tables.
   def call(limit: 50)
     rows = candidates.map { |table| build_row(table) }
 
@@ -20,6 +25,9 @@ class TriageQuery
 
   private
 
+  # Selects the distinct tables whose health or enabled freshness SLA is in a
+  # bad state, eager-loading their catalog, SLA, and maintenance plan.
+  # @return [ActiveRecord::Relation<IcebergTable>] the degraded tables.
   def candidates
     IcebergTable
       .includes(:catalog, :table_freshness_sla, :maintenance_plan)
@@ -32,6 +40,10 @@ class TriageQuery
       .distinct
   end
 
+  # Assembles a Row for a table, collecting the reasons it is degraded and the
+  # most recent instant it entered a bad state.
+  # @param table [IcebergTable] the table to build a row for.
+  # @return [TriageQuery::Row] the triage row for the table.
   def build_row(table)
     sla = table.table_freshness_sla
     reasons = []
