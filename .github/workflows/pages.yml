@@ -27,7 +27,7 @@ jobs:
           bundler-cache: true
 
       - name: Build RDoc
-        run: bundle exec rdoc -o doc --title "LakeDeepDiver" -a app lib
+        run: bundle exec rdoc -o doc --title "LakeDeepDiver" -a --main README.md
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
