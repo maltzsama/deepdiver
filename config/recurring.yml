@@ -3,3 +3,7 @@ production:
     class: EnqueueFreshnessSweepJob
     queue: freshness
     schedule: every hour at minute 5
+  catalog_sync:
+    class: EnqueueCatalogSyncJob
+    queue: sync
+    schedule: every 6 hours at minute 10

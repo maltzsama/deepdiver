@@ -14,8 +14,19 @@ class IcebergTable < ApplicationRecord
   enum :health_status, HEALTH_STATUSES.to_h { |s| [ s, s ] }
 
   validates :namespace, :name, presence: true
-  validates :name, uniqueness: { scope: %i[catalog_id namespace] }
+  validates :name, uniqueness: { scope: %i[catalog_id namespace],
+                                 conditions: -> { where(active: true) } }
+  validates :table_uuid, uniqueness: { scope: :catalog_id }, if: :table_uuid
   validates :health_score, numericality: { only_integer: true, in: 0..100 }, allow_nil: true
+
+  scope :active, -> { where(active: true) }
+  scope :inactive, -> { where(active: false) }
+
+  # Marks the table as inactive after being dropped from its catalog, keeping
+  # its history and configuration recorded.
+  def deactivate!(at: Time.current)
+    update!(active: false, deactivated_at: at)
+  end
 
   # Namespace and table name joined with a dot.
   # @return [String]

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_12_150000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"
@@ -144,8 +144,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_130000) do
   end
 
   create_table "iceberg_tables", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
     t.integer "catalog_id", null: false
     t.datetime "created_at", null: false
+    t.datetime "deactivated_at"
     t.bigint "equality_deletes"
     t.integer "health_score"
     t.string "health_status", default: "unknown", null: false
@@ -168,7 +170,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_130000) do
     t.bigint "total_records"
     t.bigint "total_size_bytes"
     t.datetime "updated_at", null: false
-    t.index ["catalog_id", "namespace", "name"], name: "index_iceberg_tables_on_catalog_id_and_namespace_and_name", unique: true
+    t.index ["catalog_id", "namespace", "name"], name: "index_iceberg_tables_on_catalog_id_and_namespace_and_name"
+    t.index ["catalog_id", "table_uuid"], name: "index_iceberg_tables_on_catalog_id_and_table_uuid", unique: true, where: "table_uuid IS NOT NULL"
     t.index ["catalog_id"], name: "index_iceberg_tables_on_catalog_id"
     t.index ["health_status", "health_status_changed_at"], name: "idx_on_health_status_health_status_changed_at_0caff44fb9"
     t.index ["total_data_files"], name: "index_iceberg_tables_on_total_data_files"
