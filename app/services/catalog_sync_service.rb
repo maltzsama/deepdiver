@@ -41,8 +41,13 @@ class CatalogSyncService
     end
 
     if errors.any?
-      SlackAlert.notify("Sync of catalog #{@catalog.name} finished with #{errors.size} failure(s): " \
-                        "#{errors.first(5).join('; ')}")
+      AlertChannelNotifier.notify(
+        subject: "Catalog sync failed: #{@catalog.name}",
+        message: "Sync of catalog #{@catalog.name} finished with #{errors.size} failure(s): " \
+                 "#{errors.first(5).join('; ')}",
+        severity: "severe",
+        context: { catalog: @catalog.name, error_count: errors.size, errors: errors.first(5).join("; ") }
+      )
     end
 
     { errors: errors }

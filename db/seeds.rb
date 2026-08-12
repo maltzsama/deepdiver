@@ -21,6 +21,29 @@ if Rails.env.development? || ENV["SEED_DEMO"]
   end
 end
 
+# Seed the global alert settings from env vars so the app works out of the box
+# without visiting the admin panel. SLACK_WEBHOOK_URL also creates a default
+# Slack channel pointing at #alerts.
+alert_settings = AlertSetting.instance
+alert_settings.update!(
+  smtp_address: ENV["SMTP_ADDRESS"].presence,
+  smtp_port: ENV["SMTP_PORT"].presence,
+  smtp_user_name: ENV["SMTP_USERNAME"].presence,
+  smtp_password: ENV["SMTP_PASSWORD"].presence,
+  smtp_from: ENV["SMTP_FROM"].presence || alert_settings.smtp_from,
+  slack_webhook_url: ENV["SLACK_WEBHOOK_URL"].presence || alert_settings.slack_webhook_url
+)
+
+if ENV["SLACK_WEBHOOK_URL"].present? && !AlertChannel.exists?(slack_channel: "#alerts")
+  AlertChannel.create!(
+    name: "Default alerts",
+    slack_channel: "#alerts",
+    min_severity: "warning",
+    cooldown_minutes: 60,
+    enabled: true
+  )
+end
+
 puts "Seeded #{User.count} users, #{Catalog.count} catalogs, #{IcebergTable.count} tables."
 
 if ENV["BOOTSTRAP_ADMIN_EMAIL"].present?
