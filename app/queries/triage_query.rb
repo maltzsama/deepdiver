@@ -30,6 +30,7 @@ class TriageQuery
   # @return [ActiveRecord::Relation<IcebergTable>] the degraded tables.
   def candidates
     IcebergTable
+      .active
       .includes(:catalog, :table_freshness_sla, :maintenance_plan)
       .left_joins(:table_freshness_sla)
       .where(

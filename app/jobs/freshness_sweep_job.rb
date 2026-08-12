@@ -12,7 +12,10 @@ class FreshnessSweepJob < ApplicationJob
     run = FreshnessRun.find(freshness_run_id)
     run.update!(status: "running", started_at: Time.current)
 
-    slas = TableFreshnessSla.where(enabled: true).includes(iceberg_table: :catalog)
+    slas = TableFreshnessSla.where(enabled: true)
+                           .joins(:iceberg_table)
+                           .where(iceberg_tables: { active: true })
+                           .includes(iceberg_table: :catalog)
 
     checked = late = errored = 0
 

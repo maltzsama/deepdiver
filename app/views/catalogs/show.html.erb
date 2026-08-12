@@ -35,6 +35,9 @@
   <div class="panel-head">
     <h2 class="panel-title"><%= t("catalogs.show.tables_title") %></h2>
     <span class="panel-note"><%= t("catalogs.show.subtitle_span", count: @tables.size) %></span>
+    <%= link_to t("catalogs.show.include_inactive"),
+                catalog_path(@catalog, inactive: params[:inactive].present? ? nil : "1"),
+                class: "link text-xs ml-auto" %>
   </div>
 
   <% if @tables.empty? %>
@@ -57,7 +60,12 @@
         <tbody>
           <% @tables.each do |table| %>
             <tr>
-              <td><%= link_to table.fully_qualified_name, table, class: "link-mono" %></td>
+              <td>
+                <%= link_to table.fully_qualified_name, table, class: "link-mono" %>
+                <% unless table.active? %>
+                  <span class="badge badge-mute ml-1"><%= t("catalogs.show.inactive") %></span>
+                <% end %>
+              </td>
               <td><%= render "shared/health", table: table %></td>
               <td>
                 <span class="badge <%= health_badge_class(table.health_status) %>">

@@ -70,4 +70,23 @@ RSpec.describe "Catalog credentials", type: :request do
 
     expect(response).to redirect_to(root_path)
   end
+
+  it "shows only active tables by default and includes inactive on request" do
+    admin = create(:user, :admin)
+    sign_in admin
+    catalog = create(:catalog)
+    active = create(:iceberg_table, catalog:, namespace: "bronze", name: "kept")
+    dropped = create(:iceberg_table, catalog:, namespace: "silver", name: "gone")
+    dropped.deactivate!
+
+    get catalog_path(catalog)
+    expect(response.body).to include("kept")
+    expect(response.body).not_to include("gone")
+
+    get catalog_path(catalog, inactive: "1")
+    expect(response.body).to include("kept")
+    expect(response.body).to include("gone")
+    expect(response.body).to include("inactive")
+    expect(active).to be_active
+  end
 end

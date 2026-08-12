@@ -25,6 +25,16 @@
     </div>
   <% end %>
 
+  <% if local_assigns.fetch(:checkbox, nil) %>
+    <div class="field flex items-end">
+      <label class="field-check">
+        <%= check_box_tag checkbox[:name], "1", params[checkbox[:name]].present?,
+                          onchange: "this.form.requestSubmit()", class: "field-checkbox" %>
+        <span class="font-mono text-xs"><%= checkbox[:label] %></span>
+      </label>
+    </div>
+  <% end %>
+
   <div class="flex items-center gap-2">
     <%= submit_tag t("filters.filter"), class: "btn btn-default",
                    data: { turbo_submits_with: t("filters.filtering") } %>

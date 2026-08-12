@@ -7,7 +7,9 @@ class ScheduleDispatchJob < ApplicationJob
   # non-paused maintenance plan against the current minute and enqueues a run
   # when its cron matches. Runs every minute in production.
   def perform
-    MaintenancePlan.dispatchable.find_each do |plan|
+    MaintenancePlan.dispatchable.joins(:iceberg_table)
+                   .where(iceberg_tables: { active: true })
+                   .find_each do |plan|
       begin
         next unless plan.scheduled_at?
 

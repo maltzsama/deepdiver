@@ -143,7 +143,10 @@ en:
       steps_meta: "Unchecked steps stay recorded but do not run."
       cadence: "Cadence (optional)"
       cadence_placeholder: "e.g. 0 6 * * 1"
-      threshold: "Parameter"
+      config_file_size_threshold: "File size threshold"
+      config_where: "Compact only rows matching (WHERE)"
+      config_retention_threshold: "Retention threshold"
+      config_snapshot_ids: "Snapshot IDs"
       submit: "Save changes"
       cancel: "Cancel"
 
@@ -159,13 +162,15 @@ en:
       col_tables: "Tables"
     show:
       eyebrow: "Catalog"
-      subtitle_span: "tables"
+      subtitle_span: "%{count}"
       sync_now: "Sync now"
       test_connection: "Test connection"
       edit: "Edit"
       delete: "Delete"
       delete_confirm: "Delete this catalog and all its tables?"
       tables_title: "Tables"
+      include_inactive: "Include inactive"
+      inactive: "inactive"
       empty_title: "No synced tables"
       empty_hint: "Run a sync to import the namespaces and tables of this catalog."
       col_table: "Table"
@@ -319,6 +324,8 @@ en:
     fresh_late_filter: "Late"
     fresh_no_sla_filter: "No SLA"
     fresh_error_filter: "Probe error"
+    include_inactive: "Include inactive"
+    inactive: "inactive"
 
   schedules:
     index:

@@ -82,6 +82,24 @@ RSpec.describe "GET /iceberg_tables", type: :request do
     expect(response.body).to include("3 table(s)")
     expect(response.body).not_to match(/\{\d+ =>/)
   end
+
+  it "hides inactive tables by default" do
+    critical_table.deactivate!
+
+    get iceberg_tables_path
+
+    expect(response.body).not_to include("sales")
+    expect(response.body).to include("customers")
+  end
+
+  it "includes inactive tables when the operator asks for them" do
+    critical_table.deactivate!
+
+    get iceberg_tables_path, params: { inactive: "1" }
+
+    expect(response.body).to include("sales")
+    expect(response.body).to include("inactive")
+  end
 end
 
 RSpec.describe "GET /iceberg_tables/:id", type: :request do
