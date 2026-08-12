@@ -25,7 +25,7 @@ RSpec.describe "FreshnessSlas", type: :request do
   describe "PATCH /iceberg_tables/:id/freshness_sla" do
     before { sign_in admin }
 
-    it "creates the SLA with custom severity bands" do
+    it "creates the SLA with custom severity bands and alert destination" do
       patch iceberg_table_freshness_sla_path(table),
             params: { table_freshness_sla: {
               enabled: "1",
@@ -37,7 +37,9 @@ RSpec.describe "FreshnessSlas", type: :request do
               warning_at_percent: "80",
               warning_after_minutes: "60",
               severe_after_minutes: "120",
-              critical_after_minutes: "240"
+              critical_after_minutes: "240",
+              slack_channel: "#support",
+              email_to: "support@example.com"
             } }
 
       sla = table.reload.table_freshness_sla
@@ -47,7 +49,9 @@ RSpec.describe "FreshnessSlas", type: :request do
         sla_minutes: 60,
         warning_after_minutes: 60,
         severe_after_minutes: 120,
-        critical_after_minutes: 240
+        critical_after_minutes: 240,
+        slack_channel: "#support",
+        email_to: "support@example.com"
       )
       expect(response).to redirect_to(table)
     end

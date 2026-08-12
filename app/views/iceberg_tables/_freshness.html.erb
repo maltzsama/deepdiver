@@ -43,6 +43,14 @@
                   severe: @freshness_sla.severe_after_minutes, critical: @freshness_sla.critical_after_minutes) %>
           </dd>
         </div>
+        <% if @freshness_sla.alert_configured? %>
+          <div>
+            <dt class="dl-term"><%= t("tables.freshness.alert_destination") %></dt>
+            <dd class="dl-desc-mono">
+              <%= [@freshness_sla.slack_channel.presence, @freshness_sla.email_to.presence].compact.join(" · ") %>
+            </dd>
+          </div>
+        <% end %>
       </dl>
 
       <h3 class="mb-2 text-sm font-semibold"><%= t("tables.freshness.history") %></h3>

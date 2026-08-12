@@ -83,9 +83,6 @@ Rails.application.routes.draw do
 
   resources :teams
 
-  # Alerting (CR-84): channels and the global SMTP/Slack settings.
-  resources :alert_channels, only: %i[index show new create edit update destroy] do
-    member { post :test }
-  end
+  # Global alert transport (CR-84): the SMTP server and the single Slack webhook.
   resource :alert_settings, only: %i[show update]
 end

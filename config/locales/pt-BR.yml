@@ -42,81 +42,14 @@ pt-BR:
       current_password: "Senha atual (precisamos dela para confirmar as mudanças)"
       update: "Atualizar"
 
-  alert_channels:
-    index:
-      eyebrow: "Segurança"
-      title: "Alertas"
-      subtitle: "Os canais decidem para onde vão as notificações — Slack, Email ou ambos."
-      new: "Novo canal"
-      settings: "Configurações"
-      col_name: "Nome"
-      col_destination: "Destino"
-      col_min_severity: "Severidade mín."
-      col_status: "Status"
-      col_actions: "Ações"
-      enabled: "Ativo"
-      disabled: "Inativo"
-      test: "Testar"
-      edit: "Editar"
-      delete: "Excluir"
-      delete_confirm: "Excluir o canal \"%{name}\"? Os alertas vão parar de ir para lá."
-      empty_title: "Nenhum canal"
-      empty_hint: "Crie um canal para direcionar alertas para um #canal do Slack ou um endereço de email."
-    new:
-      title: "Novo canal"
-    edit:
-      title: "Editar %{name}"
-    show:
-      destination: "Destino"
-      no_destination: "Nenhum destino configurado"
-      min_severity: "Severidade mínima"
-      cooldown: "Intervalo"
-      cooldown_value: "A cada %{minutes} min"
-      status: "Status"
-      last_sent: "Último envio"
-      last_error: "Último erro"
-    form:
-      errors_one: "%{count} problema impediu o salvamento"
-      errors_other: "%{count} problemas impediram o salvamento"
-      name: "Nome"
-      name_placeholder: "Engenharia de dados"
-      destination_title: "Destino"
-      destination_hint: "Preencha pelo menos um. Ambos são permitidos — o alerta vai para Slack e Email."
-      slack_channel: "#canal do Slack"
-      slack_channel_hint: "ex.: #support ou @support. Enviado pelo webhook global."
-      email_to: "Destinatários de email"
-      email_to_hint: "Endereços separados por vírgula. Enviados pelo servidor SMTP configurado abaixo."
-      min_severity: "Severidade mínima"
-      min_severity_hint: "Só alertas a partir desse nível chegam ao canal."
-      cooldown_minutes: "Intervalo (minutos)"
-      cooldown_hint: "Gap mínimo entre alertas deste canal. 0 envia sempre."
-      message_template: "Modelo de mensagem"
-      message_template_hint: "Opcional. Suporta %{subject}, %{message}, %{severity} e placeholders específicos da origem."
-      enabled: "Canal ativo"
-      submit_create: "Criar canal"
-      submit_update: "Salvar canal"
-      cancel: "Cancelar"
-    severities:
-      warning: "Aviso"
-      severe: "Grave"
-      critical: "Crítico"
-    test:
-      subject: "Alerta de teste"
-      message: "Este é um alerta de teste do LakeDeepDiver."
-    notices:
-      created: "Canal criado"
-      updated: "Canal atualizado"
-      destroyed: "Canal excluído"
-      test_sent: "Alerta de teste enviado para %{name}"
-
   alert_settings:
     eyebrow: "Segurança"
     title: "Configurações de alerta"
-    subtitle: "Configuração global de transporte usada por todos os canais de alerta."
+    subtitle: "Configuração global de transporte: servidor SMTP e webhook do Slack usados pelos alertas das tabelas."
     form:
       errors: "Corrija os problemas abaixo."
       smtp_title: "SMTP (Email)"
-      smtp_hint: "O servidor pelo qual os canais de Email entregam."
+      smtp_hint: "O servidor pelo qual os emails de alerta são entregues."
       smtp_address: "Endereço do servidor"
       smtp_port: "Porta"
       smtp_user_name: "Usuário"
@@ -124,10 +57,10 @@ pt-BR:
       smtp_from: "Endereço do remetente"
       smtp_from_hint: "Aparece como De: em cada email de alerta."
       slack_title: "Slack"
-      slack_hint: "Um webhook para toda a aplicação. Os canais escolhem um #canal a partir dele."
+      slack_hint: "Um webhook para toda a aplicação. As tabelas escolhem um #canal para postar alertas."
       slack_webhook_url: "URL do webhook"
       submit: "Salvar configurações"
-      cancel: "Voltar aos canais"
+      cancel: "Voltar"
     notices:
       updated: "Configurações de alerta atualizadas"
 
@@ -159,6 +92,12 @@ pt-BR:
       severe_after_minutes: "Grave após (minutos)"
       critical_after_minutes: "Crítico após (minutos)"
       band_hint: "Precisa estar em ordem: aviso < grave < crítico."
+      destination_title: "Destino do alerta"
+      destination_hint: "Para onde vão os alertas de frescor desta tabela. Ambos são permitidos."
+      slack_channel: "#canal do Slack"
+      slack_channel_hint: "ex.: #support. Enviado pelo webhook global."
+      email_to: "Destinatários de email"
+      email_to_hint: "Endereços separados por vírgula, enviados pelo servidor SMTP configurado."
       submit: "Salvar SLA"
       cancel: "Cancelar"
     notices:
@@ -167,10 +106,6 @@ pt-BR:
   activerecord:
     errors:
       models:
-        alert_channel:
-          attributes:
-            base:
-              no_destination: "Defina um #canal do Slack, um destinatário de email, ou ambos."
         table_freshness_sla:
           attributes:
             severe_after_minutes:

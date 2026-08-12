@@ -40,7 +40,8 @@ class FreshnessSlasController < ApplicationController
     params.require(:table_freshness_sla).permit(
       :enabled, :timestamp_column, :timestamp_type, :source_timezone,
       :partition_column, :partition_lookback, :sla_minutes, :warning_at_percent,
-      :warning_after_minutes, :severe_after_minutes, :critical_after_minutes
+      :warning_after_minutes, :severe_after_minutes, :critical_after_minutes,
+      :slack_channel, :email_to
     )
   end
 end

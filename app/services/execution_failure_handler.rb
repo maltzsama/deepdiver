@@ -1,6 +1,6 @@
 # Circuit breaker: marks an execution as failed, tracks consecutive failures on
-# the maintenance plan (pausing it after the plan's threshold), alerts through
-# the configured channels, and frees the per-table lock. The engine lifecycle
+# the maintenance plan (pausing it after the plan's threshold), records the
+# failure as an error event, and frees the per-table lock. The engine lifecycle
 # is the supervisor's job.
 class ExecutionFailureHandler
   # Convenience entry point: builds a handler and runs it.
@@ -32,7 +32,6 @@ class ExecutionFailureHandler
   def call
     fail_execution
     increment_and_maybe_pause
-    notify
     release_table_lock
 
     @execution
@@ -60,16 +59,6 @@ class ExecutionFailureHandler
 
     @plan.update!(is_paused: true)
     Rails.logger.warn("Plan #{@plan.id} paused after #{@plan.consecutive_failures} consecutive failures")
-  end
-
-  # Sends an alert for the failed maintenance through the alert channels.
-  def notify
-    AlertChannelNotifier.notify(
-      subject: "Maintenance failed: #{@table&.fully_qualified_name}",
-      message: "Maintenance failed for #{@table&.fully_qualified_name}: #{@error_message}",
-      severity: "severe",
-      context: { table: @table&.fully_qualified_name, error: @error_message }
-    )
   end
 
   # The engine is NOT brought down per execution - that is the supervisor's
