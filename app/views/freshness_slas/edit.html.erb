@@ -1,0 +1,114 @@
+<% content_for :title, t("freshness_slas.edit.title", table: @table.fully_qualified_name) %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("tables.freshness.title") %></p>
+    <h1 class="page-title"><%= t("freshness_slas.edit.title", table: @table.fully_qualified_name) %></h1>
+    <p class="page-sub"><%= t("freshness_slas.edit.subtitle") %></p>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-body">
+    <%= form_with model: @sla, url: iceberg_table_freshness_sla_path(@table), class: "form-grid" do |form| %>
+      <% if @sla.errors.any? %>
+        <div class="errors">
+          <p class="errors-title">
+            <%= t("freshness_slas.form.errors_#{@sla.errors.count == 1 ? "one" : "other"}", count: @sla.errors.count) %>
+          </p>
+          <ul class="errors-list">
+            <% @sla.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="field">
+        <label class="field-check">
+          <%= form.check_box :enabled, class: "field-checkbox" %>
+          <span class="font-mono text-xs"><%= t("freshness_slas.form.enabled") %></span>
+        </label>
+      </div>
+
+      <div class="field-group">
+        <p class="field-group-title"><%= t("freshness_slas.form.probe_title") %></p>
+        <p class="field-hint mb-4"><%= t("freshness_slas.form.probe_hint") %></p>
+
+        <div class="field">
+          <%= form.label :timestamp_column, t("freshness_slas.form.timestamp_column"), class: "field-label" %>
+          <%= form.text_field :timestamp_column, required: true, class: "field-input",
+                              placeholder: "load_timestamp" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :timestamp_type, t("freshness_slas.form.timestamp_type"), class: "field-label" %>
+          <%= form.select :timestamp_type,
+                          TableFreshnessSla::TIMESTAMP_TYPES.map { |t| [t, t] }, {},
+                          class: "field-input" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :source_timezone, t("freshness_slas.form.source_timezone"), class: "field-label" %>
+          <%= form.text_field :source_timezone, class: "field-input", placeholder: "UTC" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :partition_column, t("freshness_slas.form.partition_column"), class: "field-label" %>
+          <p class="field-hint"><%= t("freshness_slas.form.partition_hint") %></p>
+          <%= form.text_field :partition_column, class: "field-input", placeholder: "dt" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :partition_lookback, t("freshness_slas.form.partition_lookback"), class: "field-label" %>
+          <%= form.number_field :partition_lookback, min: 1, class: "field-input" %>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <p class="field-group-title"><%= t("freshness_slas.form.sla_title") %></p>
+        <p class="field-hint mb-4"><%= t("freshness_slas.form.sla_hint") %></p>
+
+        <div class="field">
+          <%= form.label :sla_minutes, t("freshness_slas.form.sla_minutes"), class: "field-label" %>
+          <p class="field-hint"><%= t("freshness_slas.form.sla_minutes_hint") %></p>
+          <%= form.number_field :sla_minutes, min: 1, class: "field-input" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :warning_at_percent, t("freshness_slas.form.warning_at_percent"), class: "field-label" %>
+          <p class="field-hint"><%= t("freshness_slas.form.warning_at_percent_hint") %></p>
+          <%= form.number_field :warning_at_percent, min: 1, max: 100, class: "field-input" %>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <p class="field-group-title"><%= t("freshness_slas.form.severity_title") %></p>
+        <p class="field-hint mb-4"><%= t("freshness_slas.form.severity_hint") %></p>
+
+        <div class="field">
+          <%= form.label :warning_after_minutes, t("freshness_slas.form.warning_after_minutes"), class: "field-label" %>
+          <p class="field-hint"><%= t("freshness_slas.form.band_hint") %></p>
+          <%= form.number_field :warning_after_minutes, min: 1, class: "field-input" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :severe_after_minutes, t("freshness_slas.form.severe_after_minutes"), class: "field-label" %>
+          <p class="field-hint"><%= t("freshness_slas.form.band_hint") %></p>
+          <%= form.number_field :severe_after_minutes, min: 1, class: "field-input" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :critical_after_minutes, t("freshness_slas.form.critical_after_minutes"), class: "field-label" %>
+          <p class="field-hint"><%= t("freshness_slas.form.band_hint") %></p>
+          <%= form.number_field :critical_after_minutes, min: 1, class: "field-input" %>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <%= form.submit t("freshness_slas.form.submit"), class: "btn btn-primary" %>
+        <%= link_to t("freshness_slas.form.cancel"), @table, class: "link text-sm" %>
+      </div>
+    <% end %>
+  </div>
+</section>

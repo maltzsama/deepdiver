@@ -1,0 +1,11 @@
+<% content_for :title, t("alert_channels.edit.title", name: @channel.name) %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("alert_channels.index.eyebrow") %></p>
+    <h1 class="page-title"><%= t("alert_channels.edit.title", name: @channel.name) %></h1>
+    <p class="page-sub"><%= t("alert_channels.index.subtitle") %></p>
+  </div>
+</div>
+
+<%= render "form", channel: @channel %>
