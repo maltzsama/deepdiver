@@ -1,5 +1,7 @@
 # Builds the exact Trino maintenance statement for a chain step, per the
-# unified `ALTER TABLE ... EXECUTE` syntax.
+# unified `ALTER TABLE ... EXECUTE` syntax. Values come from the step's config;
+# when a field is left blank the Trino default is used (defaults below are the
+# fallback only when the operator did not type anything).
 class MaintenanceSqlBuilder
   FILE_SIZE_THRESHOLD_DEFAULT = "128MB"
   RETENTION_THRESHOLD_DEFAULT = "7d"
@@ -58,12 +60,41 @@ class MaintenanceSqlBuilder
   # @return [String] the arguments, or "" for operations with none
   def arguments
     case operation
-    when "optimize"
-      "(file_size_threshold => '#{config["file_size_threshold"] || FILE_SIZE_THRESHOLD_DEFAULT}')"
-    when "expire_snapshots", "remove_orphan_files"
-      "(retention_threshold => '#{config["retention_threshold"] || RETENTION_THRESHOLD_DEFAULT}')"
-    when "optimize_manifests"
-      ""
+    when "optimize"            then optimize_arguments
+    when "expire_snapshots"    then expire_snapshots_arguments
+    when "remove_orphan_files" then orphan_arguments
+    when "optimize_manifests"  then ""
     end
+  end
+
+  # optimize(file_size_threshold => '128MB') WHERE <predicate>
+  #
+  # @return [String] the argument list, with an optional WHERE clause
+  def optimize_arguments
+    threshold = config["file_size_threshold"].presence || FILE_SIZE_THRESHOLD_DEFAULT
+    sql = "(file_size_threshold => '#{threshold}')"
+    sql += " WHERE #{config["where"]}" if config["where"].present?
+    sql
+  end
+
+  # expire_snapshots(retention_threshold => '7d', snapshot_ids => ARRAY[...])
+  #
+  # @return [String] the argument list
+  def expire_snapshots_arguments
+    retention = config["retention_threshold"].presence || RETENTION_THRESHOLD_DEFAULT
+    args = [ "retention_threshold => '#{retention}'" ]
+    if config["snapshot_ids"].present?
+      ids = config["snapshot_ids"].to_s.split(",").map(&:strip).reject(&:blank?).join(", ")
+      args << "snapshot_ids => ARRAY[#{ids}]"
+    end
+    "(#{args.join(', ')})"
+  end
+
+  # remove_orphan_files(retention_threshold => '7d')
+  #
+  # @return [String] the argument list
+  def orphan_arguments
+    retention = config["retention_threshold"].presence || RETENTION_THRESHOLD_DEFAULT
+    "(retention_threshold => '#{retention}')"
   end
 end
