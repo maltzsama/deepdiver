@@ -4,6 +4,8 @@
     <% if @freshness_sla&.enabled %>
       <span class="panel-note"><%= t("tables.freshness.sla_note", minutes: @freshness_sla.sla_minutes) %></span>
     <% end %>
+    <%= link_to t("tables.freshness.edit_sla"), edit_iceberg_table_freshness_sla_path(@table),
+                class: "btn btn-default btn-sm ml-auto" %>
   </div>
 
   <% if @freshness_sla.nil? || !@freshness_sla.enabled %>
@@ -33,6 +35,13 @@
         <div>
           <dt class="dl-term"><%= t("tables.freshness.sla") %></dt>
           <dd class="dl-desc-mono"><%= @freshness_sla.sla_minutes %> min</dd>
+        </div>
+        <div>
+          <dt class="dl-term"><%= t("tables.freshness.severity_bands") %></dt>
+          <dd class="dl-desc-mono">
+            <%= t("tables.freshness.band_value", warning: @freshness_sla.warning_after_minutes,
+                  severe: @freshness_sla.severe_after_minutes, critical: @freshness_sla.critical_after_minutes) %>
+          </dd>
         </div>
       </dl>
 

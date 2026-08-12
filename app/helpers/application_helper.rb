@@ -160,7 +160,8 @@ def execution_visual_state(execution)
       "preset" => '<circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.5"/>',
       "list" => '<path d="M2 3h12M2 8h12M2 13h8" stroke="currentColor" stroke-width="1.5"/>',
       "user" => '<circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2.5 14c0-2.6 2.5-4.2 5.5-4.2S13.5 11.4 13.5 14" stroke="currentColor" stroke-width="1.5"/>',
-      "team" => '<circle cx="5.5" cy="6" r="2.6" stroke="currentColor" stroke-width="1.5"/><circle cx="11" cy="7" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M1.5 13.5c0-2.2 1.8-3.4 4-3.4s4 1.2 4 3.4M10.5 10.5c1.5-.6 3.5-.3 4.2 2" stroke="currentColor" stroke-width="1.5"/>'
+      "team" => '<circle cx="5.5" cy="6" r="2.6" stroke="currentColor" stroke-width="1.5"/><circle cx="11" cy="7" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M1.5 13.5c0-2.2 1.8-3.4 4-3.4s4 1.2 4 3.4M10.5 10.5c1.5-.6 3.5-.3 4.2 2" stroke="currentColor" stroke-width="1.5"/>',
+      "bell" => '<path d="M8 1.5a4.5 4.5 0 0 0-4.5 4.5v3l-1 2h11l-1-2V6A4.5 4.5 0 0 0 8 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.5 12.5a1.6 1.6 0 0 0 3 0" stroke="currentColor" stroke-width="1.5"/>'
     }
 
     link_to(path, class: classes) do

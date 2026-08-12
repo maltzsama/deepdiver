@@ -1,0 +1,78 @@
+<section class="panel">
+  <div class="panel-body">
+    <%= form_with model: channel, class: "form-grid" do |form| %>
+      <% if channel.errors.any? %>
+        <div class="errors">
+          <p class="errors-title">
+            <%= t("alert_channels.form.errors_#{channel.errors.count == 1 ? "one" : "other"}", count: channel.errors.count) %>
+          </p>
+          <ul class="errors-list">
+            <% channel.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="field">
+        <%= form.label :name, t("alert_channels.form.name"), class: "field-label" %>
+        <%= form.text_field :name, required: true, class: "field-input",
+                            placeholder: t("alert_channels.form.name_placeholder") %>
+      </div>
+
+      <div class="field-group">
+        <p class="field-group-title"><%= t("alert_channels.form.destination_title") %></p>
+        <p class="field-hint mb-4"><%= t("alert_channels.form.destination_hint") %></p>
+
+        <div class="field">
+          <%= form.label :slack_channel, t("alert_channels.form.slack_channel"), class: "field-label" %>
+          <p class="field-hint"><%= t("alert_channels.form.slack_channel_hint") %></p>
+          <%= form.text_field :slack_channel, class: "field-input",
+                              placeholder: "#support" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :email_to, t("alert_channels.form.email_to"), class: "field-label" %>
+          <p class="field-hint"><%= t("alert_channels.form.email_to_hint") %></p>
+          <%= form.text_field :email_to, class: "field-input",
+                              placeholder: "support@example.com" %>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field">
+          <%= form.label :min_severity, t("alert_channels.form.min_severity"), class: "field-label" %>
+          <p class="field-hint"><%= t("alert_channels.form.min_severity_hint") %></p>
+          <%= form.select :min_severity,
+                          AlertChannel::SEVERITIES.map { |s| [t("alert_channels.severities.#{s}"), s] },
+                          {}, class: "field-input" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :cooldown_minutes, t("alert_channels.form.cooldown_minutes"), class: "field-label" %>
+          <p class="field-hint"><%= t("alert_channels.form.cooldown_hint") %></p>
+          <%= form.number_field :cooldown_minutes, min: 0, class: "field-input" %>
+        </div>
+      </div>
+
+      <div class="field">
+        <%= form.label :message_template, t("alert_channels.form.message_template"), class: "field-label" %>
+        <p class="field-hint"><%= t("alert_channels.form.message_template_hint") %></p>
+        <%= form.text_area :message_template, rows: 3, class: "field-input" %>
+      </div>
+
+      <div class="field">
+        <label class="field-check">
+          <%= form.check_box :enabled, class: "field-checkbox" %>
+          <span class="font-mono text-xs"><%= t("alert_channels.form.enabled") %></span>
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <%= form.submit channel.persisted? ? t("alert_channels.form.submit_update") : t("alert_channels.form.submit_create"),
+                        class: "btn btn-primary" %>
+        <%= link_to t("alert_channels.form.cancel"), channel.persisted? ? channel : alert_channels_path, class: "link text-sm" %>
+      </div>
+    <% end %>
+  </div>
+</section>

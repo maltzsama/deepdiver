@@ -270,12 +270,54 @@ en:
       watermark: "Watermark"
       partition: "Partition"
       sla: "SLA"
+      edit_sla: "Edit SLA"
+      severity_bands: "Severity bands"
+      band_value: "warning %{warning} min · severe %{severe} min · critical %{critical} min"
       history: "Check history"
       col_when: "Checked at"
       col_status: "Status"
       col_delay: "Delay"
       col_max_ts: "Max watermark"
       no_checks: "No checks recorded yet."
+    index:
+      eyebrow: "Data"
+      title: "Tables"
+      subtitle: "Every table across all catalogs, worst health first."
+      result: "Result"
+      count: "%{count} table(s)"
+      empty_title: "No tables found"
+      empty_filters_hint: "No results for these filters. Clear the filters to see everything."
+      empty_none_hint: "Register a catalog and run a sync."
+      col_table: "Table"
+      col_catalog: "Catalog"
+      col_health: "Health"
+      col_status: "Status"
+      col_last_write: "Last write"
+      col_schedules: "Schedules"
+      none_badge: "none"
+      col_files: "Files"
+      col_avg_size: "Avg size"
+      col_records: "Records"
+      col_snapshots: "Snapshots"
+      col_plan: "Plan"
+      plan_link: "Plan"
+      no_plan: "no plan"
+      no_plan_option: "No plan"
+      run: "Run"
+      col_actions: "Actions"
+    filter_catalog: "Catalog"
+    filter_namespace: "Namespace"
+    filter_status: "Status"
+    filter_no_plan: "Plan"
+    filter_freshness: "Freshness"
+    col_freshness: "Freshness"
+    fresh_no_sla: "no SLA"
+    fresh_late: "late %{delay}"
+    fresh_error: "probe error"
+    fresh_no_data: "no data"
+    fresh_late_filter: "Late"
+    fresh_no_sla_filter: "No SLA"
+    fresh_error_filter: "Probe error"
 
   schedules:
     index:
@@ -423,46 +465,6 @@ en:
     filtering: "Filtering…"
     clear: "Clear"
 
-  tables:
-    index:
-      eyebrow: "Data"
-      title: "Tables"
-      subtitle: "Every table across all catalogs, worst health first."
-      result: "Result"
-      count: "%{count} table(s)"
-      empty_title: "No tables found"
-      empty_filters_hint: "No results for these filters. Clear the filters to see everything."
-      empty_none_hint: "Register a catalog and run a sync."
-      col_table: "Table"
-      col_catalog: "Catalog"
-      col_health: "Health"
-      col_status: "Status"
-      col_last_write: "Last write"
-      col_schedules: "Schedules"
-      none_badge: "none"
-      col_files: "Files"
-      col_avg_size: "Avg size"
-      col_records: "Records"
-      col_snapshots: "Snapshots"
-      col_plan: "Plan"
-      plan_link: "Plan"
-      no_plan: "no plan"
-      no_plan_option: "No plan"
-      run: "Run"
-      col_actions: "Actions"
-    filter_catalog: "Catalog"
-    filter_namespace: "Namespace"
-    filter_status: "Status"
-    filter_no_plan: "Plan"
-    filter_freshness: "Freshness"
-    col_freshness: "Freshness"
-    fresh_no_sla: "no SLA"
-    fresh_late: "late %{delay}"
-    fresh_error: "probe error"
-    fresh_no_data: "no data"
-    fresh_late_filter: "Late"
-    fresh_no_sla_filter: "No SLA"
-    fresh_error_filter: "Probe error"
 
   operations:
     index:
@@ -690,6 +692,128 @@ en:
       updated: "Team updated"
       destroyed: "Team deleted"
 
+  alert_channels:
+    index:
+      eyebrow: "Security"
+      title: "Alerts"
+      subtitle: "Channels decide where alert notifications go — Slack, Email, or both."
+      new: "New channel"
+      settings: "Settings"
+      col_name: "Name"
+      col_destination: "Destination"
+      col_min_severity: "Min severity"
+      col_status: "Status"
+      col_actions: "Actions"
+      enabled: "Enabled"
+      disabled: "Disabled"
+      test: "Test"
+      edit: "Edit"
+      delete: "Delete"
+      delete_confirm: "Delete channel \"%{name}\"? Alerts will stop going there."
+      empty_title: "No channels"
+      empty_hint: "Create a channel to route alerts to a Slack #channel or an email address."
+    new:
+      title: "New channel"
+    edit:
+      title: "Edit %{name}"
+    show:
+      destination: "Destination"
+      no_destination: "No destination configured"
+      min_severity: "Min severity"
+      cooldown: "Cooldown"
+      cooldown_value: "Every %{minutes} min"
+      status: "Status"
+      last_sent: "Last sent"
+      last_error: "Last error"
+    form:
+      errors_one: "%{count} problem prevented the save"
+      errors_other: "%{count} problems prevented the save"
+      name: "Name"
+      name_placeholder: "Data Engineering"
+      destination_title: "Destination"
+      destination_hint: "Fill at least one. Both is allowed — the alert goes to Slack and Email."
+      slack_channel: "Slack #channel"
+      slack_channel_hint: "e.g. #support or @support. Sent to the global webhook."
+      email_to: "Email recipients"
+      email_to_hint: "Comma-separated addresses. Sent through the SMTP server configured below."
+      min_severity: "Min severity"
+      min_severity_hint: "Only alerts at or above this level reach the channel."
+      cooldown_minutes: "Cooldown (minutes)"
+      cooldown_hint: "Minimum gap between alerts to this channel. 0 sends every time."
+      message_template: "Message template"
+      message_template_hint: "Optional. Supports %{subject}, %{message}, %{severity} and origin-specific placeholders."
+      enabled: "Channel enabled"
+      submit_create: "Create channel"
+      submit_update: "Save channel"
+      cancel: "Cancel"
+    severities:
+      warning: "Warning"
+      severe: "Severe"
+      critical: "Critical"
+    test:
+      subject: "Test alert"
+      message: "This is a test alert from LakeDeepDiver."
+    notices:
+      created: "Channel created"
+      updated: "Channel updated"
+      destroyed: "Channel deleted"
+      test_sent: "Test alert sent to %{name}"
+
+  alert_settings:
+    eyebrow: "Security"
+    title: "Alert settings"
+    subtitle: "Global transport configuration used by every alert channel."
+    form:
+      errors: "Please fix the problems below."
+      smtp_title: "SMTP (Email)"
+      smtp_hint: "The server Email channels deliver through."
+      smtp_address: "Server address"
+      smtp_port: "Port"
+      smtp_user_name: "User name"
+      smtp_password: "Password"
+      smtp_from: "Sender address"
+      smtp_from_hint: "Shown as the From: of every alert email."
+      slack_title: "Slack"
+      slack_hint: "One webhook for the whole application. Channels pick a #channel from it."
+      slack_webhook_url: "Webhook URL"
+      submit: "Save settings"
+      cancel: "Back to channels"
+    notices:
+      updated: "Alert settings updated"
+
+  freshness_slas:
+    edit:
+      title: "Freshness SLA · %{table}"
+      subtitle: "What to probe and when a stale table is worth alerting about."
+    form:
+      errors_one: "%{count} problem prevented the save"
+      errors_other: "%{count} problems prevented the save"
+      enabled: "Monitor this table's freshness"
+      probe_title: "Probe"
+      probe_hint: "Which column carries the newest watermark and how to read it."
+      timestamp_column: "Watermark column"
+      timestamp_type: "Timestamp type"
+      source_timezone: "Source timezone"
+      partition_column: "Partition column"
+      partition_hint: "Optional. Prunes the probe to the recent partitions."
+      partition_lookback: "Partition lookback"
+      sla_title: "SLA"
+      sla_hint: "How stale the table may get before it is considered late."
+      sla_minutes: "SLA (minutes)"
+      sla_minutes_hint: "Delay past this is 'late'."
+      warning_at_percent: "Warning at % of SLA"
+      warning_at_percent_hint: "Delay past this share of the SLA shows 'warning'."
+      severity_title: "Severity bands"
+      severity_hint: "Delay (minutes) at which the alert escalates. Warning first, then severe, then critical."
+      warning_after_minutes: "Warning after (minutes)"
+      severe_after_minutes: "Severe after (minutes)"
+      critical_after_minutes: "Critical after (minutes)"
+      band_hint: "Must be ordered: warning < severe < critical."
+      submit: "Save SLA"
+      cancel: "Cancel"
+    notices:
+      updated: "Freshness SLA updated"
+
   devise:
     failure:
       suspended: "Your account has been suspended. Contact an administrator."
@@ -697,6 +821,16 @@ en:
   activerecord:
     errors:
       models:
+        alert_channel:
+          attributes:
+            base:
+              no_destination: "Set a Slack #channel, an email recipient, or both."
+        table_freshness_sla:
+          attributes:
+            severe_after_minutes:
+              must_exceed_warning: "must be greater than the warning threshold"
+            critical_after_minutes:
+              must_exceed_severe: "must be greater than the severe threshold"
         catalog:
           attributes:
             trino_catalog_name_override:

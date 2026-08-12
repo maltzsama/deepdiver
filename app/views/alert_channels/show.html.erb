@@ -1,0 +1,56 @@
+<% content_for :title, "#{@channel.name} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("alert_channels.index.eyebrow") %></p>
+    <h1 class="page-title"><%= @channel.name %></h1>
+    <p class="page-sub"><%= t("alert_channels.index.subtitle") %></p>
+  </div>
+  <div class="page-actions">
+    <%= button_to t("alert_channels.index.test"), test_alert_channel_path(@channel), method: :post, class: "btn btn-default" %>
+    <%= link_to t("alert_channels.index.edit"), edit_alert_channel_path(@channel), class: "btn btn-primary" %>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-body">
+    <dl class="dl">
+      <div>
+        <dt class="dl-term"><%= t("alert_channels.show.destination") %></dt>
+        <dd class="dl-desc">
+          <%= [@channel.slack_channel.presence, @channel.email_to.presence].compact.join(" · ").presence || t("alert_channels.show.no_destination") %>
+        </dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("alert_channels.show.min_severity") %></dt>
+        <dd class="dl-desc"><%= t("alert_channels.severities.#{@channel.min_severity}") %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("alert_channels.show.cooldown") %></dt>
+        <dd class="dl-desc"><%= t("alert_channels.show.cooldown_value", minutes: @channel.cooldown_minutes) %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("alert_channels.show.status") %></dt>
+        <dd class="dl-desc">
+          <% if @channel.enabled? %>
+            <span class="badge badge-ok"><span class="badge-dot"></span><%= t("alert_channels.index.enabled") %></span>
+          <% else %>
+            <span class="badge badge-warn"><span class="badge-dot"></span><%= t("alert_channels.index.disabled") %></span>
+          <% end %>
+        </dd>
+      </div>
+      <% if @channel.last_sent_at %>
+        <div>
+          <dt class="dl-term"><%= t("alert_channels.show.last_sent") %></dt>
+          <dd class="dl-desc"><%= l(@channel.last_sent_at, format: :long) %></dd>
+        </div>
+      <% end %>
+      <% if @channel.last_error.present? %>
+        <div>
+          <dt class="dl-term"><%= t("alert_channels.show.last_error") %></dt>
+          <dd class="dl-desc"><span class="badge badge-err"><span class="badge-dot"></span><%= @channel.last_error %></span></dd>
+        </div>
+      <% end %>
+    </dl>
+  </div>
+</section>

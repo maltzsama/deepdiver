@@ -48,6 +48,8 @@ Rails.application.routes.draw do
     member do
       post :run_maintenance
     end
+
+    resource :freshness_sla, only: %i[edit update], controller: "freshness_slas"
   end
 
   # Global log of operations.
@@ -80,4 +82,10 @@ Rails.application.routes.draw do
   end
 
   resources :teams
+
+  # Alerting (CR-84): channels and the global SMTP/Slack settings.
+  resources :alert_channels, only: %i[index show new create edit update destroy] do
+    member { post :test }
+  end
+  resource :alert_settings, only: %i[show update]
 end
