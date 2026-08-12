@@ -87,6 +87,9 @@ FactoryBot.define do
     partition_lookback { 7 }
     sla_minutes { 120 }
     warning_at_percent { 80 }
+    warning_after_minutes { 180 }
+    severe_after_minutes { 360 }
+    critical_after_minutes { 720 }
   end
 
   factory :freshness_run do
@@ -137,5 +140,36 @@ FactoryBot.define do
     maintenance_plan { nil }
     status { "running" }
     current_step { "start" }
+  end
+
+  factory :alert_setting do
+    smtp_address { "smtp.example.com" }
+    smtp_port { 587 }
+    smtp_user_name { "alerts" }
+    smtp_password { "secret" }
+    smtp_from { "alerts@example.com" }
+    slack_webhook_url { "https://hooks.slack.com/services/T000/B000/XXXX" }
+  end
+
+  factory :alert_channel do
+    sequence(:name) { |n| "Channel #{n}" }
+    slack_channel { "#alerts" }
+    min_severity { "warning" }
+    cooldown_minutes { 60 }
+    enabled { true }
+
+    trait :slack do
+      slack_channel { "#alerts" }
+    end
+
+    trait :email do
+      slack_channel { nil }
+      email_to { "support@example.com" }
+    end
+
+    trait :slack_and_email do
+      slack_channel { "#alerts" }
+      email_to { "support@example.com" }
+    end
   end
 end

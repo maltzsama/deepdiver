@@ -10,7 +10,33 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_11_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_12_110000) do
+  create_table "alert_channels", force: :cascade do |t|
+    t.integer "cooldown_minutes", default: 60, null: false
+    t.datetime "created_at", null: false
+    t.string "email_to"
+    t.boolean "enabled", default: true, null: false
+    t.string "last_error"
+    t.datetime "last_sent_at"
+    t.text "message_template"
+    t.string "min_severity", default: "warning", null: false
+    t.string "name", null: false
+    t.string "slack_channel"
+    t.datetime "updated_at", null: false
+    t.index ["enabled"], name: "index_alert_channels_on_enabled"
+  end
+
+  create_table "alert_settings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "slack_webhook_url"
+    t.string "smtp_address"
+    t.string "smtp_from"
+    t.string "smtp_password"
+    t.integer "smtp_port"
+    t.string "smtp_user_name"
+    t.datetime "updated_at", null: false
+  end
+
   create_table "catalog_credentials", force: :cascade do |t|
     t.string "auth_method", default: "none", null: false
     t.integer "catalog_id", null: false
@@ -234,12 +260,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_200000) do
   create_table "table_freshness_slas", force: :cascade do |t|
     t.datetime "breached_since"
     t.datetime "created_at", null: false
+    t.integer "critical_after_minutes", default: 720, null: false
     t.boolean "enabled", default: false, null: false
     t.integer "iceberg_table_id", null: false
     t.datetime "last_alert_at"
     t.string "last_alert_level"
     t.string "partition_column"
     t.integer "partition_lookback", default: 7, null: false
+    t.integer "severe_after_minutes", default: 360, null: false
+    t.string "severity"
     t.integer "sla_minutes", default: 120, null: false
     t.string "slack_webhook_url"
     t.string "source_timezone", default: "UTC", null: false
@@ -248,6 +277,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_200000) do
     t.string "timestamp_column", null: false
     t.string "timestamp_type", default: "timestamp_tz", null: false
     t.datetime "updated_at", null: false
+    t.integer "warning_after_minutes", default: 180, null: false
     t.integer "warning_at_percent", default: 80, null: false
     t.index ["enabled", "status"], name: "index_table_freshness_slas_on_enabled_and_status"
     t.index ["iceberg_table_id"], name: "index_table_freshness_slas_on_iceberg_table_id", unique: true
