@@ -71,13 +71,13 @@
                               placeholder: t("plans.edit.cadence_placeholder") %>
           </div>
 
-          <% if step_threshold_name(sf.object.operation) %>
+          <% step_config_fields(sf.object.operation).each do |config_key| %>
             <div class="mt-2">
-              <%= label_tag :config, t("plans.edit.threshold"), class: "field-label" %>
-              <%= text_field_tag "maintenance_plan[maintenance_steps_attributes][#{sf.index}][config][#{step_threshold_name(sf.object.operation)}]",
-                                 sf.object.config&.dig(step_threshold_name(sf.object.operation)),
+              <%= label_tag "config_#{sf.index}_#{config_key}", step_config_label(config_key), class: "field-label" %>
+              <%= text_field_tag "maintenance_plan[maintenance_steps_attributes][#{sf.index}][config][#{config_key}]",
+                                 sf.object.config&.dig(config_key),
                                  class: "field-input field-input-mono",
-                                 placeholder: step_threshold_placeholder(sf.object.operation) %>
+                                 placeholder: step_config_placeholder(config_key) %>
             </div>
           <% end %>
         </div>

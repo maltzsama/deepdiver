@@ -24,6 +24,27 @@ RSpec.describe MaintenanceSqlBuilder do
     )
   end
 
+  it "appends the WHERE clause to optimize when the operator set one" do
+    expect(built_sql("optimize", { "where" => "event_hour >= current_timestamp() - INTERVAL 2 HOUR" })).to eq(
+      "ALTER TABLE \"analytics\".\"reporting\".\"dwd_orders\" EXECUTE optimize(file_size_threshold => '128MB') " \
+      "WHERE event_hour >= current_timestamp() - INTERVAL 2 HOUR"
+    )
+  end
+
+  it "keeps the default threshold when only where is set on optimize" do
+    expect(built_sql("optimize", { "where" => "event_date >= date '2024-01-01'" })).to eq(
+      "ALTER TABLE \"analytics\".\"reporting\".\"dwd_orders\" EXECUTE optimize(file_size_threshold => '128MB') " \
+      "WHERE event_date >= date '2024-01-01'"
+    )
+  end
+
+  it "emits snapshot_ids on expire_snapshots when the operator set them" do
+    expect(built_sql("expire_snapshots", { "snapshot_ids" => "123, 456" })).to eq(
+      "ALTER TABLE \"analytics\".\"reporting\".\"dwd_orders\" EXECUTE " \
+      "expire_snapshots(retention_threshold => '7d', snapshot_ids => ARRAY[123, 456])"
+    )
+  end
+
   it "emits a 3-part quoted identifier for expire_snapshots" do
     expect(built_sql("expire_snapshots")).to eq(
       "ALTER TABLE \"analytics\".\"reporting\".\"dwd_orders\" EXECUTE expire_snapshots(retention_threshold => '7d')"

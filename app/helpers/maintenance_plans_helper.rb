@@ -11,22 +11,37 @@ module MaintenancePlansHelper
     l(parsed.next_time(Time.current).to_t, format: :long)
   end
 
-  # Which config key the step's threshold field maps to, or nil when the step
-  # takes no threshold parameter.
+  # Which config keys the step's form renders, per operation.
+  #
   # @param operation [String] the maintenance step operation name.
-  # @return [String, nil] the config key, or nil when the step has no threshold.
-  def step_threshold_name(operation)
+  # @return [Array<String>] the config keys shown in the form.
+  def step_config_fields(operation)
     case operation
-    when "optimize"            then "file_size_threshold"
-    when "expire_snapshots", "remove_orphan_files" then "retention_threshold"
+    when "optimize"            then %w[file_size_threshold where]
+    when "expire_snapshots"    then %w[retention_threshold snapshot_ids]
+    when "remove_orphan_files" then %w[retention_threshold]
+    else []
     end
   end
 
-  # Returns the placeholder text for a step's threshold field based on whether
-  # the threshold is a file size or a retention period.
-  # @param operation [String] the maintenance step operation name.
-  # @return [String] "128MB" for size thresholds, "7d" otherwise.
-  def step_threshold_placeholder(operation)
-    step_threshold_name(operation) == "file_size_threshold" ? "128MB" : "7d"
+  # The label for a step config key.
+  #
+  # @param key [String] the config key.
+  # @return [String] the i18n label.
+  def step_config_label(key)
+    t("plans.edit.config_#{key}")
+  end
+
+  # The placeholder for a step config key.
+  #
+  # @param key [String] the config key.
+  # @return [String] the placeholder text.
+  def step_config_placeholder(key)
+    case key
+    when "file_size_threshold" then "128MB"
+    when "retention_threshold" then "7d"
+    when "snapshot_ids" then "123456789, 987654321"
+    when "where" then "event_hour >= current_timestamp() - INTERVAL 2 HOUR"
+    end
   end
 end
