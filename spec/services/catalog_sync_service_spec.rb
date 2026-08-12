@@ -74,4 +74,60 @@ RSpec.describe CatalogSyncService do
     expect(table.health_status).to eq("healthy")
     expect(table.health_status_changed_at).to be_within(1.second).of(3.days.from_now)
   end
+
+  class DropAwareClient
+    attr_accessor :present, :uuid
+
+    def namespaces            = [ "bronze" ]
+    def tables_in(_namespace) = present ? [ "t" ] : []
+
+    def table_metadata(_namespace, _table)
+      { "metadata" => { "table-uuid" => uuid, "location" => "s3://bucket/logs",
+                        "current-snapshot-id" => 1, "snapshots" => [] } }
+    end
+  end
+
+  it "soft-deletes tables that disappeared from the catalog" do
+    catalog = create(:catalog)
+    client = DropAwareClient.new
+    client.uuid = "uuid-1"
+    client.present = true
+    CatalogSyncService.new(catalog, client: client).sync
+
+    table = catalog.iceberg_tables.find_by!(name: "t")
+    expect(table).to be_active
+
+    client.present = false
+    CatalogSyncService.new(catalog, client: client).sync
+
+    expect(table.reload).not_to be_active
+    expect(table.deactivated_at).to be_present
+    expect(catalog.iceberg_tables).to include(table)
+  end
+
+  it "recreates a table as a NEW row when it reappears with a new uuid" do
+    catalog = create(:catalog)
+    client = DropAwareClient.new
+    client.uuid = "uuid-1"
+    client.present = true
+    CatalogSyncService.new(catalog, client: client).sync
+    old = catalog.iceberg_tables.find_by!(name: "t")
+    expect(old).to be_active
+
+    # Table dropped...
+    client.present = false
+    CatalogSyncService.new(catalog, client: client).sync
+    expect(old.reload).not_to be_active
+
+    # ...then recreated with a NEW uuid: the old row stays recorded and a new
+    # active row appears alongside it.
+    client.uuid = "uuid-2"
+    client.present = true
+    CatalogSyncService.new(catalog, client: client).sync
+
+    expect(old.reload).not_to be_active
+    new_table = catalog.iceberg_tables.active.find_by(name: "t")
+    expect(new_table).to be_present
+    expect(new_table.id).not_to eq(old.id)
+  end
 end
