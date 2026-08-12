@@ -25,4 +25,18 @@ RSpec.describe TableFreshnessSla, type: :model do
                    warning_after_minutes: 60, severe_after_minutes: 120, critical_after_minutes: 240)).to be_valid
     end
   end
+
+  describe "#alert_configured?" do
+    it "is true when a Slack channel is set" do
+      expect(build(:table_freshness_sla, slack_channel: "#support", email_to: nil)).to be_alert_configured
+    end
+
+    it "is true when an email is set" do
+      expect(build(:table_freshness_sla, slack_channel: nil, email_to: "support@example.com")).to be_alert_configured
+    end
+
+    it "is false when neither is set" do
+      expect(build(:table_freshness_sla, slack_channel: nil, email_to: nil)).not_to be_alert_configured
+    end
+  end
 end

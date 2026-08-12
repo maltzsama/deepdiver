@@ -1,8 +1,12 @@
 # The freshness contract for a table: which timestamp column is authoritative,
-# how it is encoded, and how stale the table may get before warning/late.
+# how it is encoded, and how stale the table may get before warning/late. Also
+# carries the progressive severity bands and the alert destination (Slack
+# #channel and/or email recipients) for this table's freshness alerts.
 class TableFreshnessSla < ApplicationRecord
   TIMESTAMP_TYPES = %w[timestamp_tz timestamp_ntz epoch_seconds epoch_millis epoch_micros].freeze
   STATUSES = %w[unknown ok warning late error no_data].freeze
+  SEVERITIES = %w[warning severe critical].freeze
+  SEVERITY_LEVEL = { "warning" => 1, "severe" => 2, "critical" => 3 }.freeze
 
   belongs_to :iceberg_table
   has_many :freshness_checks, dependent: :destroy
@@ -18,6 +22,13 @@ class TableFreshnessSla < ApplicationRecord
   validate :severity_thresholds_ordered
 
   scope :enabled, -> { where(enabled: true) }
+
+  # Whether the SLA has anywhere to send alerts to.
+  #
+  # @return [Boolean]
+  def alert_configured?
+    slack_channel.present? || email_to.present?
+  end
 
   private
 

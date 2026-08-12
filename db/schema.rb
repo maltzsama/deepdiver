@@ -10,22 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_110000) do
-  create_table "alert_channels", force: :cascade do |t|
-    t.integer "cooldown_minutes", default: 60, null: false
-    t.datetime "created_at", null: false
-    t.string "email_to"
-    t.boolean "enabled", default: true, null: false
-    t.string "last_error"
-    t.datetime "last_sent_at"
-    t.text "message_template"
-    t.string "min_severity", default: "warning", null: false
-    t.string "name", null: false
-    t.string "slack_channel"
-    t.datetime "updated_at", null: false
-    t.index ["enabled"], name: "index_alert_channels_on_enabled"
-  end
-
+ActiveRecord::Schema[8.1].define(version: 2026_08_12_130000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"
@@ -261,6 +246,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_110000) do
     t.datetime "breached_since"
     t.datetime "created_at", null: false
     t.integer "critical_after_minutes", default: 720, null: false
+    t.string "email_to"
     t.boolean "enabled", default: false, null: false
     t.integer "iceberg_table_id", null: false
     t.datetime "last_alert_at"
@@ -270,6 +256,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_110000) do
     t.integer "severe_after_minutes", default: 360, null: false
     t.string "severity"
     t.integer "sla_minutes", default: 120, null: false
+    t.string "slack_channel"
     t.string "slack_webhook_url"
     t.string "source_timezone", default: "UTC", null: false
     t.string "status", default: "unknown", null: false

@@ -1,12 +1,12 @@
 require "rails_helper"
 
 RSpec.describe FreshnessAlerter, type: :service do
-  let(:sla) { create(:table_freshness_sla, sla_minutes: 120) }
+  let(:sla) { create(:table_freshness_sla, sla_minutes: 120, slack_channel: "#support", email_to: "support@example.com") }
 
   # The alerter only decides WHEN to alert and with what payload; the actual
-  # transport (cooldown, severity filter) belongs to AlertChannelNotifier, which
-  # has its own spec. Stub it here to keep the tests focused on the alerter.
-  before { allow(AlertChannelNotifier).to receive(:notify) }
+  # transport belongs to AlertNotifier, which has its own spec. Stub it here to
+  # keep the tests focused on the alerter.
+  before { allow(AlertNotifier).to receive(:notify) }
 
   def result_for(delay_seconds, status: "late")
     FreshnessProbe::Result.new(status: status, delay_seconds: delay_seconds, max_timestamp: Time.current)
@@ -17,7 +17,7 @@ RSpec.describe FreshnessAlerter, type: :service do
       described_class.new(sla, result_for(3.5.hours)).call
 
       expect(sla.reload.severity).to eq("warning")
-      expect(AlertChannelNotifier).to have_received(:notify)
+      expect(AlertNotifier).to have_received(:notify)
     end
 
     it "escalates to severe at 6h" do
@@ -52,21 +52,21 @@ RSpec.describe FreshnessAlerter, type: :service do
       described_class.new(sla.reload, result_for(6.5.hours)).call
 
       expect(sla.reload.last_alert_level).to eq("severe")
-      expect(AlertChannelNotifier).to have_received(:notify).twice
+      expect(AlertNotifier).to have_received(:notify).twice
     end
 
     it "does not re-alert at the same severity" do
       described_class.new(sla, result_for(3.5.hours)).call
       described_class.new(sla.reload, result_for(4.hours)).call
 
-      expect(AlertChannelNotifier).to have_received(:notify).once
+      expect(AlertNotifier).to have_received(:notify).once
     end
 
     it "does not alert when a healthy table stays ok" do
       sla.update!(status: "ok")
       described_class.new(sla, result_for(10, status: "ok")).call
 
-      expect(AlertChannelNotifier).not_to have_received(:notify)
+      expect(AlertNotifier).not_to have_received(:notify)
     end
   end
 
@@ -77,7 +77,7 @@ RSpec.describe FreshnessAlerter, type: :service do
 
       expect(sla.reload.status).to eq("ok")
       expect(sla.reload.last_alert_level).to eq("recovered")
-      expect(AlertChannelNotifier).to have_received(:notify) do |args|
+      expect(AlertNotifier).to have_received(:notify) do |args|
         expect(args[:severity]).to eq("warning")
         expect(args[:context][:severity]).to eq("recovered")
       end
@@ -85,13 +85,15 @@ RSpec.describe FreshnessAlerter, type: :service do
   end
 
   describe "alert payload" do
-    it "routes the alert through AlertChannelNotifier with rich context" do
+    it "routes the alert through AlertNotifier with the SLA destination and rich context" do
       described_class.new(sla, result_for(3.5.hours)).call
 
-      expect(AlertChannelNotifier).to have_received(:notify).with(
+      expect(AlertNotifier).to have_received(:notify).with(
         hash_including(
           subject: a_string_including(sla.iceberg_table.fully_qualified_name),
           severity: "warning",
+          slack_channel: "#support",
+          email_to: "support@example.com",
           context: hash_including(
             table: sla.iceberg_table.fully_qualified_name,
             delay: "3.5 h",
@@ -104,7 +106,7 @@ RSpec.describe FreshnessAlerter, type: :service do
     it "escalation carries the severe level" do
       described_class.new(sla, result_for(6.hours)).call
 
-      expect(AlertChannelNotifier).to have_received(:notify).with(
+      expect(AlertNotifier).to have_received(:notify).with(
         hash_including(severity: "severe", subject: a_string_including("severe"))
       )
     end
