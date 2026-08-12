@@ -62,7 +62,7 @@ class FreshnessAlerter
   # @param severity [String, nil] the severity to rank
   # @return [Integer] 0 for unknown, 1..3 for warning..critical
   def severity_level(severity)
-    AlertChannel::SEVERITY_LEVEL.fetch(severity.to_s, 0)
+    TableFreshnessSla::SEVERITY_LEVEL.fetch(severity.to_s, 0)
   end
 
   # Maps an absolute delay to the highest severity it triggers, using the
@@ -83,8 +83,8 @@ class FreshnessAlerter
     nil
   end
 
-  # Sends the alert and stamps last_alert_at/level on the SLA. The alert is
-  # routed through AlertChannelNotifier, so channels filter it by severity.
+  # Sends the alert to the SLA's configured destination and stamps
+  # last_alert_at/level on the SLA.
   #
   # @param current [String] the new SLA status
   # @param severity [String, nil] the progressive severity
@@ -108,10 +108,12 @@ class FreshnessAlerter
       "Freshness: #{table} is late (#{human(delay)} behind, SLA #{@sla.sla_minutes} min)"
     end
 
-    AlertChannelNotifier.notify(
+    error = AlertNotifier.notify(
       subject: "Freshness #{level}: #{table}",
       message: message,
       severity: level == "recovered" ? "warning" : level,
+      slack_channel: @sla.slack_channel,
+      email_to: @sla.email_to,
       context: {
         table: table,
         delay: human(delay),
@@ -119,6 +121,7 @@ class FreshnessAlerter
         severity: level
       }
     )
+    Rails.logger.warn("Freshness alert not delivered: #{error}") if error
 
     @sla.update!(last_alert_at: Time.current, last_alert_level: level)
   end
