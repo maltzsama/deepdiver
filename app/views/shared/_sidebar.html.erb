@@ -28,7 +28,7 @@
       <div class="sidebar-section-title">Data</div>
       <%= nav_link_to iceberg_tables_path, icon: "database" do %>
         <span>Tables</span>
-        <span class="sidebar-badge"><%= compact_number(IcebergTable.count) %></span>
+        <span class="sidebar-badge"><%= compact_number(IcebergTable.active.count) %></span>
       <% end %>
       <%= nav_link_to catalogs_path, icon: "catalog" do %>
         <span>Catalogs</span>

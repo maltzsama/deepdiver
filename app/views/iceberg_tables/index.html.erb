@@ -24,7 +24,8 @@
                options: [ [ t("tables.index.fresh_late_filter"), "late" ],
                           [ t("tables.index.fresh_no_sla_filter"), "no_sla" ],
                           [ t("tables.index.fresh_error_filter"), "error" ] ] }
-           ] %>
+           ],
+           checkbox: { name: :inactive, label: t("tables.index.include_inactive") } %>
 
 <section class="panel">
   <div class="panel-head">
@@ -66,7 +67,12 @@
         <tbody>
           <% @tables.each do |table| %>
             <tr>
-              <td><%= link_to table.fully_qualified_name, table, class: "link-mono" %></td>
+              <td>
+                <%= link_to table.fully_qualified_name, table, class: "link-mono" %>
+                <% unless table.active? %>
+                  <span class="badge badge-mute ml-1"><%= t("tables.index.inactive") %></span>
+                <% end %>
+              </td>
               <td class="cell-muted"><%= table.catalog.name %></td>
               <td title="<%= table_health_tooltip(table) %>">
                 <span class="badge <%= health_badge_class(table.health_status) %>">

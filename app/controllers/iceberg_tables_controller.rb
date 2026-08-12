@@ -11,7 +11,8 @@ class IcebergTablesController < ApplicationController
     @catalogs   = Catalog.order(:name)
     @namespaces = IcebergTable.distinct.order(:namespace).pluck(:namespace)
 
-    @tables = IcebergTable.includes(:catalog, :maintenance_plan, :table_freshness_sla, :latest_freshness_check)
+    @tables = IcebergTable.active
+                          .includes(:catalog, :maintenance_plan, :table_freshness_sla, :latest_freshness_check)
                           .left_joins(:maintenance_schedules)
                           .select("iceberg_tables.*, COUNT(maintenance_schedules.id) AS schedules_count")
                           .group("iceberg_tables.id")
@@ -19,6 +20,13 @@ class IcebergTablesController < ApplicationController
     @tables = @tables.where(catalog_id: params[:catalog_id])       if params[:catalog_id].present?
     @tables = @tables.where(namespace: params[:namespace])         if params[:namespace].present?
     @tables = @tables.where(health_status: params[:health_status]) if params[:health_status].present?
+
+    if params[:inactive].present?
+      @tables = IcebergTable.includes(:catalog, :maintenance_plan, :table_freshness_sla, :latest_freshness_check)
+                            .left_joins(:maintenance_schedules)
+                            .select("iceberg_tables.*, COUNT(maintenance_schedules.id) AS schedules_count")
+                            .group("iceberg_tables.id")
+    end
 
     if params[:no_plan].present?
       @tables = @tables.where.not(id: MaintenancePlan.select(:iceberg_table_id))

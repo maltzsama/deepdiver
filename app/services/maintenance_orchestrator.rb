@@ -56,9 +56,11 @@ module MaintenanceOrchestrator
   private_class_method :skip_reason
 
   # Enqueues a freshness sweep, unless there is nothing enabled - otherwise
-  # the engine would come up 24 times a day to check nothing.
+  # the engine would come up 24 times a day to check nothing. Inactive tables
+  # (dropped from their catalog) are skipped.
   def self.enqueue_freshness_sweep
-    return nil if TableFreshnessSla.where(enabled: true).none?
+    return nil if TableFreshnessSla.enabled.joins(:iceberg_table)
+                                   .where(iceberg_tables: { active: true }).none?
 
     run = FreshnessRun.create!(status: "pending")
     TrinoEngineSupervisor.demand_arrived!(

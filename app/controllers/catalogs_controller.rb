@@ -11,15 +11,17 @@ class CatalogsController < ApplicationController
   end
 
   # Shows a catalog with its open error count and tables, each with a count of
-  # its maintenance schedules.
+  # its maintenance schedules. Active tables by default; the operator can
+  # include inactive ones.
   def show
     authorize @catalog
     @open_error_count = ErrorEvent.open.catalog_events(@catalog).count
-    @tables = @catalog.iceberg_tables
-                  .left_joins(:maintenance_schedules)
-                  .select("iceberg_tables.*, COUNT(maintenance_schedules.id) AS schedules_count")
-                  .group("iceberg_tables.id")
-                  .order(:namespace, :name)
+    tables = @catalog.iceberg_tables
+    tables = tables.active unless params[:inactive].present?
+    @tables = tables.left_joins(:maintenance_schedules)
+                    .select("iceberg_tables.*, COUNT(maintenance_schedules.id) AS schedules_count")
+                    .group("iceberg_tables.id")
+                    .order(:namespace, :name)
   end
 
   # Renders the form for creating a catalog, with a fresh credential object.
