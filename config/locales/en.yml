@@ -273,6 +273,7 @@ en:
       edit_sla: "Edit SLA"
       severity_bands: "Severity bands"
       band_value: "warning %{warning} min · severe %{severe} min · critical %{critical} min"
+      alert_destination: "Alert destination"
       history: "Check history"
       col_when: "Checked at"
       col_status: "Status"
@@ -692,81 +693,14 @@ en:
       updated: "Team updated"
       destroyed: "Team deleted"
 
-  alert_channels:
-    index:
-      eyebrow: "Security"
-      title: "Alerts"
-      subtitle: "Channels decide where alert notifications go — Slack, Email, or both."
-      new: "New channel"
-      settings: "Settings"
-      col_name: "Name"
-      col_destination: "Destination"
-      col_min_severity: "Min severity"
-      col_status: "Status"
-      col_actions: "Actions"
-      enabled: "Enabled"
-      disabled: "Disabled"
-      test: "Test"
-      edit: "Edit"
-      delete: "Delete"
-      delete_confirm: "Delete channel \"%{name}\"? Alerts will stop going there."
-      empty_title: "No channels"
-      empty_hint: "Create a channel to route alerts to a Slack #channel or an email address."
-    new:
-      title: "New channel"
-    edit:
-      title: "Edit %{name}"
-    show:
-      destination: "Destination"
-      no_destination: "No destination configured"
-      min_severity: "Min severity"
-      cooldown: "Cooldown"
-      cooldown_value: "Every %{minutes} min"
-      status: "Status"
-      last_sent: "Last sent"
-      last_error: "Last error"
-    form:
-      errors_one: "%{count} problem prevented the save"
-      errors_other: "%{count} problems prevented the save"
-      name: "Name"
-      name_placeholder: "Data Engineering"
-      destination_title: "Destination"
-      destination_hint: "Fill at least one. Both is allowed — the alert goes to Slack and Email."
-      slack_channel: "Slack #channel"
-      slack_channel_hint: "e.g. #support or @support. Sent to the global webhook."
-      email_to: "Email recipients"
-      email_to_hint: "Comma-separated addresses. Sent through the SMTP server configured below."
-      min_severity: "Min severity"
-      min_severity_hint: "Only alerts at or above this level reach the channel."
-      cooldown_minutes: "Cooldown (minutes)"
-      cooldown_hint: "Minimum gap between alerts to this channel. 0 sends every time."
-      message_template: "Message template"
-      message_template_hint: "Optional. Supports %{subject}, %{message}, %{severity} and origin-specific placeholders."
-      enabled: "Channel enabled"
-      submit_create: "Create channel"
-      submit_update: "Save channel"
-      cancel: "Cancel"
-    severities:
-      warning: "Warning"
-      severe: "Severe"
-      critical: "Critical"
-    test:
-      subject: "Test alert"
-      message: "This is a test alert from LakeDeepDiver."
-    notices:
-      created: "Channel created"
-      updated: "Channel updated"
-      destroyed: "Channel deleted"
-      test_sent: "Test alert sent to %{name}"
-
   alert_settings:
     eyebrow: "Security"
     title: "Alert settings"
-    subtitle: "Global transport configuration used by every alert channel."
+    subtitle: "Global transport configuration: the SMTP server and the Slack webhook used by table alerts."
     form:
       errors: "Please fix the problems below."
       smtp_title: "SMTP (Email)"
-      smtp_hint: "The server Email channels deliver through."
+      smtp_hint: "The server alert emails are delivered through."
       smtp_address: "Server address"
       smtp_port: "Port"
       smtp_user_name: "User name"
@@ -774,10 +708,10 @@ en:
       smtp_from: "Sender address"
       smtp_from_hint: "Shown as the From: of every alert email."
       slack_title: "Slack"
-      slack_hint: "One webhook for the whole application. Channels pick a #channel from it."
+      slack_hint: "One webhook for the whole application. Tables pick a #channel to post alerts to."
       slack_webhook_url: "Webhook URL"
       submit: "Save settings"
-      cancel: "Back to channels"
+      cancel: "Back"
     notices:
       updated: "Alert settings updated"
 
@@ -809,6 +743,12 @@ en:
       severe_after_minutes: "Severe after (minutes)"
       critical_after_minutes: "Critical after (minutes)"
       band_hint: "Must be ordered: warning < severe < critical."
+      destination_title: "Alert destination"
+      destination_hint: "Where this table's freshness alerts go. Both are allowed."
+      slack_channel: "Slack #channel"
+      slack_channel_hint: "e.g. #support. Posted through the global webhook."
+      email_to: "Email recipients"
+      email_to_hint: "Comma-separated addresses, sent through the configured SMTP server."
       submit: "Save SLA"
       cancel: "Cancel"
     notices:
@@ -821,10 +761,6 @@ en:
   activerecord:
     errors:
       models:
-        alert_channel:
-          attributes:
-            base:
-              no_destination: "Set a Slack #channel, an email recipient, or both."
         table_freshness_sla:
           attributes:
             severe_after_minutes:

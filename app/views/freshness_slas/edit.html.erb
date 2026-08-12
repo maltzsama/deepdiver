@@ -105,6 +105,23 @@
         </div>
       </div>
 
+      <div class="field-group">
+        <p class="field-group-title"><%= t("freshness_slas.form.destination_title") %></p>
+        <p class="field-hint mb-4"><%= t("freshness_slas.form.destination_hint") %></p>
+
+        <div class="field">
+          <%= form.label :slack_channel, t("freshness_slas.form.slack_channel"), class: "field-label" %>
+          <p class="field-hint"><%= t("freshness_slas.form.slack_channel_hint") %></p>
+          <%= form.text_field :slack_channel, class: "field-input", placeholder: "#support" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :email_to, t("freshness_slas.form.email_to"), class: "field-label" %>
+          <p class="field-hint"><%= t("freshness_slas.form.email_to_hint") %></p>
+          <%= form.text_field :email_to, class: "field-input", placeholder: "support@example.com" %>
+        </div>
+      </div>
+
       <div class="form-actions">
         <%= form.submit t("freshness_slas.form.submit"), class: "btn btn-primary" %>
         <%= link_to t("freshness_slas.form.cancel"), @table, class: "link text-sm" %>

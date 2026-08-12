@@ -54,8 +54,8 @@ class SuperviseEngineStartJob < ApplicationJob
   end
 
   # Reacts to a failed start: re-enqueues supervision and recreates the cluster
-  # while attempts remain, otherwise marks the engine failed, records an error
-  # event, alerts Slack, and fails every pending execution.
+  # while attempts remain, otherwise marks the engine failed and records an
+  # error event.
   # @param state [TrinoEngineSupervisorState] the current engine state.
   # @param error [Exception] the error that caused the failure.
   def handle_start_failure(state, error)
@@ -67,12 +67,6 @@ class SuperviseEngineStartJob < ApplicationJob
       state.update!(status: "failed", last_error: error.message, status_changed_at: Time.current)
       ErrorEvent.record(catalog: nil, schema: "engine", operation: "engine-start",
                         source_system: "engine", error_class: error.class.name, message: error.message)
-      AlertChannelNotifier.notify(
-        subject: "Trino failed to start",
-        message: "Trino failed to start after #{state.start_attempts} attempts: #{error.message}",
-        severity: "critical",
-        context: { attempts: state.start_attempts, error: error.message }
-      )
       fail_pending_executions!(error.message)
     end
   end
