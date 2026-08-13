@@ -21,8 +21,9 @@ class FakeTrinoRuntime
   # @param sql [String] the SQL to "execute"
   # @param execution_id [Integer] the execution id echoed in the result
   # @param execution [ExecutionHistory, nil] unused
+  # @param step [ExecutionStep, nil] unused
   # @return [Hash] a canned success payload
-  def execute(sql, execution_id:, execution: nil)
+  def execute(sql, execution_id:, execution: nil, step: nil)
     {
       "executed_sql" => sql,
       "execution_history_id" => execution_id,
