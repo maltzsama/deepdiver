@@ -21,5 +21,8 @@ class DashboardController < ApplicationController
 
     # Without a sync there is no fresh data: the UI must say how old it is.
     @last_sync_at = IcebergTable.maximum(:metadata_synced_at)
+
+    # The Trino cluster name, when one is known.
+    @cluster_name = TrinoCluster.current_name
   end
 end

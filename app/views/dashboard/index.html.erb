@@ -20,7 +20,9 @@
     </p>
   </div>
   <div class="flex items-center gap-3">
-    <span class="font-mono text-micro text-cosmos-fg-mute">cosmonaut-dev</span>
+    <% if @cluster_name %>
+      <span class="font-mono text-micro text-cosmos-fg-mute"><%= @cluster_name %></span>
+    <% end %>
     <a href="<%= root_path %>" class="px-3 py-1.5 font-mono text-small font-semibold bg-cosmos-surface border border-cosmos-line text-cosmos-fg-soft hover:bg-cosmos-soft hover:text-cosmos-fg cursor-pointer no-underline">
       ↻ Refresh
     </a>
