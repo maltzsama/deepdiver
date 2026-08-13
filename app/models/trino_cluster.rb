@@ -11,6 +11,14 @@ class TrinoCluster < ApplicationRecord
 
   before_create :assign_id
 
+  # The name of the cluster in use, or nil when no cluster has been registered
+  # and no env override is configured.
+  #
+  # @return [String, nil]
+  def self.current_name
+    pick(:name).presence || ENV["TRINO_CLUSTER_NAME"].presence
+  end
+
   private
 
   # Postgres fills the uuid via gen_random_uuid; SQLite (dev/test) has no
