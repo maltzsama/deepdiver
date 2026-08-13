@@ -26,4 +26,12 @@ class ActivityController < ApplicationController
     TrinoEngineSupervisor.restart!
     redirect_to activity_path, notice: "Engine start re-triggered."
   end
+
+  # Cancels a running or queued Trino query on the coordinator.
+  def cancel_query
+    authorize :activity, :cancel_query?
+    TrinoProvisioner.cancel_query(params[:query_id])
+    ActivityBroadcaster.broadcast!
+    redirect_to activity_path, notice: "Query cancel sent."
+  end
 end

@@ -36,7 +36,7 @@ module ActivityBroadcaster
       "activity",
       target: "activity-queries",
       partial: "activity/queries",
-      locals: { queries: TrinoProvisioner.active_queries }
+      locals: { queries: TrinoProvisioner.active_queries, show_actions: false }
     )
   end
 end

@@ -26,6 +26,7 @@ Rails.application.routes.draw do
   # What is happening right now.
   resource :activity, only: :show, controller: "activity" do
     member { post :restart }
+    post "trino_queries/:query_id/cancel", action: :cancel_query, as: :cancel_trino_query
   end
 
   # Superfície de erro (CR-72): opens the list of recorded failures.

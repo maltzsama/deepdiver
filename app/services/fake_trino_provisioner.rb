@@ -33,6 +33,12 @@ class FakeTrinoProvisioner
   # @return [Array] always empty
   def active_queries = []
 
+  # Cancelling on the fake engine is always a no-op success.
+  #
+  # @param query_id [String] ignored
+  # @return [Boolean] always true
+  def cancel_query(query_id) = true
+
   # Marks the fake engine as existing and healthy.
   def create!
     @exists = true
