@@ -109,7 +109,8 @@ module TrinoEngineSupervisor
     end
   end
 
-  # Persists a state transition and broadcasts the new engine activity.
+  # Persists a state transition, records it as an engine lifecycle event, and
+  # broadcasts the new engine activity.
   #
   # @param record [TrinoEngineState] the state row
   # @param status [String] the target status
@@ -117,6 +118,26 @@ module TrinoEngineSupervisor
   def transition!(record, status, **extra)
     record.update!(status: status, status_changed_at: Time.current,
                    generation: record.generation + 1, **extra)
+    record_lifecycle!(record, status)
     ActivityBroadcaster.broadcast!
   end
+
+  # Records the transition as an info-level engine event so the activity screen
+  # can show when the cluster went up, down, draining, etc. Genuine failures are
+  # recorded separately with severity "error" by the jobs that detect them.
+  #
+  # The generation is part of the message: ErrorEvent dedupes by message, and the
+  # timeline needs every up/down to be its own event rather than one counter.
+  #
+  # @param record [TrinoEngineState] the state row after the transition
+  # @param status [String] the new status
+  def record_lifecycle!(record, status)
+    ErrorEvent.record(
+      catalog: nil, schema: "engine", operation: "engine-lifecycle",
+      source_system: "engine", severity: "info",
+      message: "engine #{status} (generation #{record.generation})",
+      context: { attempts: record.start_attempts }
+    )
+  end
+  private_class_method :record_lifecycle!
 end
