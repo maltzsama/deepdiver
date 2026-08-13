@@ -1,7 +1,8 @@
 # The "what is happening right now" screen: engine state, executions running,
 # awaiting a commit-conflict retry, and queued.
 class ActivityController < ApplicationController
-  # Shows the live engine state, running executions, and queued executions.
+  # Shows the live engine state, running executions, queued executions, active
+  # Trino queries, the Solid Queue backlog, and the recent engine lifecycle.
   def show
     authorize :activity, :show?
     @engine_state = TrinoEngineSupervisor.state
@@ -11,6 +12,11 @@ class ActivityController < ApplicationController
     @queued = ExecutionHistory.includes(:iceberg_table)
                               .where(status: "pending")
                               .order(:created_at)
+    @queries = TrinoProvisioner.active_queries
+    @queue = QueueSummary.new.call
+    @engine_events = ErrorEvent.where(source_system: "engine", operation: "engine-lifecycle")
+                               .order(last_seen_at: :desc)
+                               .limit(20)
   end
 
   # Re-triggers the engine start through the supervisor and redirects back to

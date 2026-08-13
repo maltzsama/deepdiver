@@ -1,0 +1,38 @@
+<%# Solid Queue backlog: what is ready, running, scheduled, failed. %>
+<section id="activity-queue" class="panel mb-6">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("activity.queue.title") %></h2>
+  </div>
+
+  <div class="grid gap-4 p-5 sm:grid-cols-4">
+    <div>
+      <p class="dl-term"><%= t("activity.queue.ready") %></p>
+      <p class="mt-1 font-mono text-2xl tabular-nums text-cosmos-fg"><%= queue[:ready] %></p>
+    </div>
+    <div>
+      <p class="dl-term"><%= t("activity.queue.running") %></p>
+      <p class="mt-1 font-mono text-2xl tabular-nums text-ok-DEFAULT"><%= queue[:running] %></p>
+    </div>
+    <div>
+      <p class="dl-term"><%= t("activity.queue.scheduled") %></p>
+      <p class="mt-1 font-mono text-2xl tabular-nums text-cosmos-fg-soft"><%= queue[:scheduled] %></p>
+    </div>
+    <div>
+      <p class="dl-term"><%= t("activity.queue.failed") %></p>
+      <p class="mt-1 font-mono text-2xl tabular-nums text-red-DEFAULT"><%= queue[:failed] %></p>
+    </div>
+  </div>
+
+  <% if queue[:next_jobs].any? %>
+    <div class="border-t border-cosmos-line">
+      <div class="divide-y divide-cosmos-line">
+        <% queue[:next_jobs].each do |job| %>
+          <div class="flex items-center justify-between gap-3 px-5 py-2.5">
+            <span class="cell-id"><%= job[:class_name] %></span>
+            <span class="badge badge-neutral"><%= job[:queue_name] %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</section>
