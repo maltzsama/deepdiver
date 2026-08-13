@@ -25,10 +25,13 @@ class TrinoRestClient
   # @param sql [String] the query
   # @param execution_id [Integer] the execution id for tracking
   # @param execution [ExecutionHistory, nil] the execution for heartbeats
+  # @param step [ExecutionStep, nil] the step being run, for query id/progress
   # @return [Hash] the metrics payload
-  def execute(sql, execution_id:, execution: nil)
+  def execute(sql, execution_id:, execution: nil, step: nil)
     first = statement(sql, execution_id: execution_id)
-    poll(first, execution_id: execution_id, execution: execution).merge("execution_history_id" => execution_id)
+    capture_query_id(step, first)
+    poll(first, execution_id: execution_id, execution: execution, step: step)
+      .merge("execution_history_id" => execution_id, "query_id" => first["id"])
   end
 
   private
@@ -45,13 +48,15 @@ class TrinoRestClient
     raise Error, "Trino statement rejected: #{e.message}"
   end
 
-  # Follows nextUri until the query finishes, touching heartbeats along the way.
+  # Follows nextUri until the query finishes, touching heartbeats and persisting
+  # progress along the way.
   #
   # @param response [Hash] the initial statement response
   # @param execution_id [Integer] the execution id for tracking
   # @param execution [ExecutionHistory, nil] the execution to heartbeat
+  # @param step [ExecutionStep, nil] the step to record progress on
   # @return [Hash] the final response
-  def poll(response, execution_id:, execution: nil)
+  def poll(response, execution_id:, execution: nil, step: nil)
     deadline = Time.current + MAX_POLL_SECONDS
     current = response
 
@@ -67,9 +72,39 @@ class TrinoRestClient
       # Without this there is no way to tell "long query" from "worker died".
       execution&.touch(:last_heartbeat_at)
 
+      record_progress(step, current)
+
       sleep POLL_INTERVAL
       current = @transport.get(uri(current["nextUri"]), headers: headers(execution_id))
     end
+  end
+
+  # Stamps the step with the Trino query id as soon as the statement is accepted,
+  # so the query is traceable while it is still running.
+  #
+  # @param step [ExecutionStep, nil] the step to stamp
+  # @param response [Hash] the initial statement response
+  def capture_query_id(step, response)
+    step&.update_column(:trino_query_id, response["id"])
+  end
+
+  # Persists live progress (rows, bytes, state) onto the step as the query runs,
+  # so the activity screen can show what the query is doing right now.
+  #
+  # @param step [ExecutionStep, nil] the step to update
+  # @param response [Hash] the current poll response
+  def record_progress(step, response)
+    return if step.nil?
+
+    stats = response["stats"] || {}
+    progress = {
+      "state" => stats["state"],
+      "processed_rows" => stats["processedRows"],
+      "processed_bytes" => stats["processedBytes"]
+    }.compact
+    return if progress.empty?
+
+    step.update_column(:metrics, (step.metrics || {}).merge("progress" => progress))
   end
 
   # Turns a final response into metrics, raising on errors or conflicts.

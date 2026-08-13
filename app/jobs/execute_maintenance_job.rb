@@ -47,9 +47,10 @@ class ExecuteMaintenanceJob < ApplicationJob
     execution.update!(current_step: result_row.operation)
 
     sql = MaintenanceSqlBuilder.build(execution.iceberg_table, maintenance_step)
-    metrics = TrinoRuntime.execute(sql, execution_id: execution.id, execution: execution)
+    metrics = TrinoRuntime.execute(sql, execution_id: execution.id, execution: execution, step: result_row)
 
-    result_row.update!(status: "succeeded", finished_at: Time.current, metrics: metrics)
+    result_row.update!(status: "succeeded", finished_at: Time.current,
+                       metrics: metrics, trino_query_id: metrics["query_id"].presence || result_row.trino_query_id)
     maintenance_step&.update_column(:last_run_at, Time.current)
     ActivityBroadcaster.broadcast!
 

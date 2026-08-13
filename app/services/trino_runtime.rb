@@ -27,9 +27,10 @@ class TrinoRuntime
   # @param sql [String] the query
   # @param execution_id [Integer] the execution id for tracking
   # @param execution [ExecutionHistory, nil] the execution for heartbeats
+  # @param step [ExecutionStep, nil] the step for query id/progress
   # @return [Hash] the result payload
-  def self.execute(sql, execution_id:, execution: nil)
-    adapter.execute(sql, execution_id: execution_id, execution: execution)
+  def self.execute(sql, execution_id:, execution: nil, step: nil)
+    adapter.execute(sql, execution_id: execution_id, execution: execution, step: step)
   end
 
   # The cached runtime adapter, building it on first use.
