@@ -16,6 +16,16 @@ RSpec.describe TrinoEngineSupervisor do
     expect(enqueued_jobs.map { |j| j[:job] }).to include(SuperviseEngineStartJob)
   end
 
+  it "records each lifecycle transition as an engine error event" do
+    execution = enqueue_execution
+
+    expect { described_class.demand_arrived! }
+      .to change { ErrorEvent.where(source_system: "engine", operation: "engine-lifecycle").count }.by(1)
+
+    expect(ErrorEvent.where(source_system: "engine", operation: "engine-lifecycle").last.message)
+      .to match(/engine starting \(generation \d+\)/)
+  end
+
   it "releases an execution immediately when the engine is already up" do
     execution = enqueue_execution
     described_class.state.update!(status: "up", status_changed_at: Time.current)

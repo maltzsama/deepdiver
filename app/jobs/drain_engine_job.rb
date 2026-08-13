@@ -44,12 +44,15 @@ class DrainEngineJob < ApplicationJob
   end
 
   # If the destruction itself fails, do not leave the state in "stopping"
-  # forever: log it and mark the engine failed so the operator can act.
+  # forever: log it, record an error event, and mark the engine failed so the
+  # operator can act.
   def destroy_engine
     TrinoProvisioner.destroy!
     TrinoEngineSupervisor.finish_stopping!
   rescue StandardError => e
     Rails.logger.error("Trino destroy failed: #{e.message}")
+    ErrorEvent.record(catalog: nil, schema: "engine", operation: "engine-drain",
+                      source_system: "engine", error_class: e.class.name, message: e.message)
     TrinoEngineSupervisor.state.with_lock do |current|
       TrinoEngineSupervisor.transition!(current, "failed", last_error: e.message)
     end
