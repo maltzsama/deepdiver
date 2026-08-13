@@ -10,5 +10,8 @@
 
 <%= turbo_stream_from "activity" %>
 
-<%= render "engine_strip", engine_state: @engine_state, active_count: @running.size + @queued.size %>
+<%= render "engine_strip", engine_state: @engine_state, active_count: @running.size + @queued.size,
+           engine_events: @engine_events %>
 <%= render "running", running: @running, queued: @queued %>
+<%= render "queries", queries: @queries %>
+<%= render "queue", queue: @queue %>

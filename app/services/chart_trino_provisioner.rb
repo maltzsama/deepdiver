@@ -38,11 +38,17 @@ class ChartTrinoProvisioner
 
   # No queries running or queued, per GET /v1/query.
   def idle?
+    active_queries.none? { |q| %w[RUNNING QUEUED].include?(q["state"]) }
+  end
+
+  # The queries currently known to the Trino coordinator, most recent first.
+  #
+  # @return [Array<Hash>] the raw /v1/query entries
+  def active_queries
     body = @transport.get("#{@base_url}/v1/query")
-    queries = body.is_a?(Array) ? body : []
-    queries.none? { |q| %w[RUNNING QUEUED].include?(q["state"]) }
+    (body.is_a?(Array) ? body : []).sort_by { |q| q["queryId"].to_s }.reverse
   rescue StandardError
-    false
+    []
   end
 
   # Scales the Deployment up to 1 replica.

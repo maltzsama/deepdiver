@@ -25,4 +25,20 @@
       <span class="badge badge-neutral"><span class="badge-dot"></span><%= t("activity.engine.down") %></span>
     <% end %>
   </div>
+
+  <% events = local_assigns.fetch(:engine_events, []) %>
+  <% if events.any? %>
+    <div class="border-t border-cosmos-line px-5 py-3">
+      <p class="mb-2 font-mono text-small uppercase tracking-widest text-cosmos-fg-mute"><%= t("activity.engine.history") %></p>
+      <ul class="space-y-1">
+        <% events.each do |event| %>
+          <li class="flex items-center gap-2 text-small text-cosmos-fg-soft">
+            <span class="cell-muted"><%= timestamp(event.last_seen_at) %></span>
+            <span class="badge badge-neutral"><%= event.message.sub("engine ", "").split(" (").first %></span>
+            <span class="cell-muted"><%= event.message.split(" (").last.to_s.sub(")", "") %></span>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
 </section>

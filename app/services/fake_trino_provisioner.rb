@@ -28,6 +28,11 @@ class FakeTrinoProvisioner
   # @return [Boolean] always true
   def idle? = true
 
+  # No queries on the fake engine.
+  #
+  # @return [Array] always empty
+  def active_queries = []
+
   # Marks the fake engine as existing and healthy.
   def create!
     @exists = true

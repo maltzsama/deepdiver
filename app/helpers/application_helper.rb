@@ -18,6 +18,19 @@ module ApplicationHelper
     current_user&.admin? || current_user&.operator?
   end
 
+  # Maps a Trino query state to its badge CSS class.
+  # @param state [String, nil] the Trino query state.
+  # @return [String] the badge class for the state.
+  def query_state_badge_class(state)
+    case state.to_s
+    when "RUNNING" then "badge-running"
+    when "QUEUED"  then "badge-warn"
+    when "FINISHED", "FINISHING" then "badge-ok"
+    when "FAILED"  then "badge-err"
+    else "badge-mute"
+    end
+  end
+
   # Maps a user account status to its badge CSS class.
   # @param status [String, Symbol] the user status.
   # @return [String] the badge class for the status.
