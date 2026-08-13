@@ -61,7 +61,7 @@
             <label class="field-check">
               <%= sf.hidden_field :enabled, value: "0" %>
               <%= sf.check_box :enabled, class: "field-checkbox" %>
-              <span class="font-mono text-xs"><%= sf.object.operation %></span>
+              <span class="font-mono text-small"><%= sf.object.operation %></span>
             </label>
           </div>
 
@@ -87,6 +87,6 @@
 
   <div class="form-actions">
     <%= f.submit t("plans.edit.submit"), class: "btn btn-primary" %>
-    <%= link_to t("plans.edit.cancel"), @plan, class: "link text-sm" %>
+    <%= link_to t("plans.edit.cancel"), @plan, class: "link text-body" %>
   </div>
 <% end %>

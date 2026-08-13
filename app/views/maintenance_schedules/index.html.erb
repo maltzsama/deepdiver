@@ -38,7 +38,7 @@
             <tr>
               <td>
                 <%= link_to schedule.iceberg_table.fully_qualified_name, schedule, class: "link-mono" %>
-                <span class="ml-2 text-xs cell-muted"><%= schedule.iceberg_table.catalog.name %></span>
+                <span class="ml-2 text-small cell-muted"><%= schedule.iceberg_table.catalog.name %></span>
               </td>
               <td><span class="badge badge-neutral"><%= schedule.operation %></span></td>
               <td class="cell-id"><%= schedule.cron %></td>

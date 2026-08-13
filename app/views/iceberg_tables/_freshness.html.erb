@@ -26,11 +26,11 @@
         </div>
         <div>
           <dt class="dl-term"><%= t("tables.freshness.watermark") %></dt>
-          <dd class="dl-desc-mono text-xs"><%= @freshness_sla.timestamp_column %> (<%= @freshness_sla.timestamp_type %>)</dd>
+          <dd class="dl-desc-mono text-small"><%= @freshness_sla.timestamp_column %> (<%= @freshness_sla.timestamp_type %>)</dd>
         </div>
         <div>
           <dt class="dl-term"><%= t("tables.freshness.partition") %></dt>
-          <dd class="dl-desc-mono text-xs"><%= @freshness_sla.partition_column || "—" %></dd>
+          <dd class="dl-desc-mono text-small"><%= @freshness_sla.partition_column || "—" %></dd>
         </div>
         <div>
           <dt class="dl-term"><%= t("tables.freshness.sla") %></dt>
@@ -53,7 +53,7 @@
         <% end %>
       </dl>
 
-      <h3 class="mb-2 text-sm font-semibold"><%= t("tables.freshness.history") %></h3>
+      <h3 class="mb-2 text-body font-semibold"><%= t("tables.freshness.history") %></h3>
       <div class="data-table-scroll">
         <table class="data-table">
           <thead>
@@ -74,7 +74,7 @@
                   </span>
                 </td>
                 <td class="cell-num"><%= freshness_delay_label(check.delay_seconds) || "—" %></td>
-                <td class="cell-muted font-mono text-xs"><%= check.max_timestamp ? check.max_timestamp.to_fs(:db) : "—" %></td>
+                <td class="cell-muted font-mono text-small"><%= check.max_timestamp ? check.max_timestamp.to_fs(:db) : "—" %></td>
               </tr>
             <% end %>
             <% if @freshness_checks.empty? %>

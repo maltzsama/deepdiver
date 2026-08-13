@@ -7,21 +7,21 @@
 <%= form_with url: url, method: :get, class: "mb-4 flex flex-wrap items-end gap-3" do %>
   <% fields.each do |field| %>
     <div class="field">
-      <%= label_tag field[:name], field[:label], class: "field-label text-xs" %>
+      <%= label_tag field[:name], field[:label], class: "field-label text-small" %>
       <%= select_tag field[:name],
                      options_for_select(field[:options], params[field[:name]]),
                      include_blank: t("filters.all"),
                      onchange: "this.form.requestSubmit()",
-                     class: "field-input py-1.5 text-sm min-w-40" %>
+                     class: "field-input py-1.5 text-body min-w-40" %>
     </div>
   <% end %>
 
   <% if local_assigns.fetch(:search, false) %>
     <div class="field grow">
-      <%= label_tag :q, t("filters.search"), class: "field-label text-xs" %>
+      <%= label_tag :q, t("filters.search"), class: "field-label text-small" %>
       <%= text_field_tag :q, params[:q],
                          placeholder: t("filters.search_placeholder"),
-                         class: "field-input field-input-mono py-1.5 text-sm" %>
+                         class: "field-input field-input-mono py-1.5 text-body" %>
     </div>
   <% end %>
 
@@ -30,7 +30,7 @@
       <label class="field-check">
         <%= check_box_tag checkbox[:name], "1", params[checkbox[:name]].present?,
                           onchange: "this.form.requestSubmit()", class: "field-checkbox" %>
-        <span class="font-mono text-xs"><%= checkbox[:label] %></span>
+        <span class="font-sans text-small"><%= checkbox[:label] %></span>
       </label>
     </div>
   <% end %>
@@ -39,7 +39,7 @@
     <%= submit_tag t("filters.filter"), class: "btn btn-default",
                    data: { turbo_submits_with: t("filters.filtering") } %>
     <% if request.query_parameters.any? %>
-      <%= link_to t("filters.clear"), url, class: "link text-sm" %>
+      <%= link_to t("filters.clear"), url, class: "link text-body" %>
     <% end %>
   </div>
 <% end %>

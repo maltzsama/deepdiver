@@ -36,7 +36,7 @@
         <div class="field rounded border border-cosmos-line p-3">
           <label class="field-check">
             <%= check_box_tag "team[scoped_all]", "1", team.scoped_to_all_catalogs?, disabled: true, class: "field-checkbox" %>
-            <span class="font-mono text-xs"><%= t("teams.index.all_catalogs") %></span>
+            <span class="font-sans text-small"><%= t("teams.index.all_catalogs") %></span>
           </label>
           <p class="field-hint ml-6"><%= t("teams.form.scoped_all_note") %></p>
         </div>
@@ -47,7 +47,7 @@
               <%= check_box_tag "team[catalog_ids][]", catalog.id,
                                 team.catalog_ids.include?(catalog.id),
                                 class: "field-checkbox" %>
-              <span class="font-mono text-xs"><%= catalog.name %></span>
+              <span class="font-mono text-small"><%= catalog.name %></span>
             </label>
           <% end %>
           <% if Catalog.count.zero? %>
@@ -64,7 +64,7 @@
               <%= check_box_tag "team[user_ids][]", user.id,
                                 team.member_ids.include?(user.id),
                                 class: "field-checkbox" %>
-              <span class="font-mono text-xs"><%= user.email %></span>
+              <span class="font-mono text-small"><%= user.email %></span>
             </label>
           <% end %>
           <% if User.active.count.zero? %>
@@ -76,7 +76,7 @@
       <div class="form-actions">
         <%= form.submit team.persisted? ? t("teams.form.submit_update") : t("teams.form.submit_create"),
                         class: "btn btn-primary" %>
-        <%= link_to t("teams.form.cancel"), team.persisted? ? team : teams_path, class: "link text-sm" %>
+        <%= link_to t("teams.form.cancel"), team.persisted? ? team : teams_path, class: "link text-body" %>
       </div>
     <% end %>
   </div>

@@ -37,12 +37,12 @@
           <tr>
             <td>
               <p class="cell-id"><%= user.email %></p>
-              <p class="cell-muted text-xs"><%= user.sso? ? t("users.index.sso") : t("users.index.local") %></p>
+              <p class="cell-muted text-small"><%= user.sso? ? t("users.index.sso") : t("users.index.local") %></p>
             </td>
             <td>
               <%= form_with model: user, method: :patch, class: "inline-flex items-center gap-2" do |form| %>
                 <%= form.select :role, User::ROLES.map { |role| [ t("users.roles.#{role}"), role ] }, {},
-                                class: "field-input field-input-mono py-1 text-xs cursor-pointer",
+                                class: "field-input field-input-mono py-1 text-small cursor-pointer",
                                 onchange: "this.form.requestSubmit()",
                                 disabled: user == current_user %>
               <% end %>
@@ -52,10 +52,10 @@
                 <span class="badge-dot"></span><%= t("users.statuses.#{user.status}") %>
               </span>
             </td>
-            <td class="cell-muted text-sm"><%= user.invited_by&.email || "—" %></td>
+            <td class="cell-muted text-body"><%= user.invited_by&.email || "—" %></td>
             <td class="text-right whitespace-nowrap">
               <% if user == current_user %>
-                <span class="cell-muted text-xs"><%= t("users.index.you") %></span>
+                <span class="cell-muted text-small"><%= t("users.index.you") %></span>
               <% elsif user.suspended? %>
                 <%= button_to t("users.index.reactivate"), reactivate_user_path(user), method: :post,
                               class: "btn btn-default btn-sm" %>

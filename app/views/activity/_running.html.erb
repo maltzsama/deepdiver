@@ -22,7 +22,7 @@
             <% end %>
           </div>
           <%= render "shared/step_chain", execution: execution %>
-          <p class="mt-1 text-xs cell-muted">
+          <p class="mt-1 text-small cell-muted">
             <%= t("activity.running.elapsed", time: duration_label(Time.current - execution.current_step_started_at)) if execution.current_step_started_at %>
             <% if (typical = execution.maintenance_plan&.typical_duration) %>
               · <%= t("activity.running.typical", time: duration_label(typical)) %>

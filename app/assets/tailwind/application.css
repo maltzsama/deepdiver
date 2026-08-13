@@ -43,7 +43,11 @@
   --line-2:    rgba(255, 255, 255, 0.12);
   --line-bold: rgba(255, 255, 255, 0.20);
 
-  --red:       #FF3355; 
+  --accent:      #60A5FA; /* Steel blue */
+  --accent-deep: #3B82F6;
+  --accent-soft: rgba(96, 165, 250, 0.12);
+
+  --red:       #FF3355;
   --red-deep:  #D81E45;
   --red-soft:  rgba(255, 51, 85, 0.1);
 
@@ -58,6 +62,7 @@
 
   --shadow-panel: 0 1px 0 0 rgba(255,255,255,0.04) inset, 0 0 0 1px rgba(255,255,255,0.04), 0 20px 40px -20px rgba(0,0,0,0.8);
   --shadow-hover: 0 1px 0 0 rgba(255,255,255,0.1) inset, 0 0 0 1px var(--line-bold), 0 30px 60px -30px rgba(0,0,0,0.9);
+  --glow-accent:  0 0 20px rgba(96, 165, 250, 0.35);
   --glow-red:     0 0 20px rgba(255, 51, 85, 0.35);
   --glow-ok:      0 0 15px rgba(34, 211, 238, 0.3);
 }
@@ -75,6 +80,10 @@
   --line-2:    rgba(0, 0, 0, 0.12);
   --line-bold: rgba(0, 0, 0, 0.18);
 
+  --accent:      #2563EB; /* Steel blue */
+  --accent-deep: #1D4ED8;
+  --accent-soft: rgba(37, 99, 235, 0.1);
+
   --red:       #DC2626;
   --red-deep:  #B91C1C;
   --red-soft:  rgba(220, 38, 38, 0.06);
@@ -90,6 +99,7 @@
 
   --shadow-panel: 0 1px 0 0 rgba(255,255,255,0.8) inset, 0 0 0 1px rgba(0,0,0,0.03), 0 10px 30px -10px rgba(0,0,0,0.08);
   --shadow-hover: 0 1px 0 0 rgba(255,255,255,0.9) inset, 0 0 0 1px rgba(0,0,0,0.1), 0 20px 40px -15px rgba(0,0,0,0.12);
+  --glow-accent:  0 0 12px rgba(37, 99, 235, 0.2);
   --glow-red:     0 0 12px rgba(220, 38, 38, 0.15);
   --glow-ok:      0 0 10px rgba(8, 145, 178, 0.15);
 }
@@ -105,6 +115,10 @@
   --color-cosmos-line:       var(--line);
   --color-cosmos-line-2:     var(--line-2);
   --color-cosmos-line-bold:  var(--line-bold);
+
+  --color-accent-DEFAULT: var(--accent);
+  --color-accent-deep:    var(--accent-deep);
+  --color-accent-soft:    var(--accent-soft);
 
   --color-red-DEFAULT: var(--red);
   --color-red-deep:    var(--red-deep);
@@ -138,7 +152,7 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--line-bold); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--fg-mute); }
-::selection { background: var(--red-soft); color: var(--red); }
+::selection { background: var(--accent-soft); color: var(--accent); }
 
 /* ===================================================================
    Components
@@ -150,7 +164,7 @@
     @apply min-h-screen text-cosmos-fg font-sans antialiased; 
     background-color: var(--bg);
     background-image: 
-      radial-gradient(circle at 0% 0%, rgba(255, 51, 85, 0.08) 0%, transparent 35%),
+      radial-gradient(circle at 0% 0%, rgba(96, 165, 250, 0.08) 0%, transparent 35%),
       radial-gradient(circle at 100% 100%, rgba(129, 140, 248, 0.06) 0%, transparent 35%),
       radial-gradient(circle at 50% 50%, rgba(34, 211, 238, 0.03) 0%, transparent 50%);
     background-attachment: fixed;
@@ -203,22 +217,22 @@
   }
   .app-headbar { @apply mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-3; }
   .app-brand { @apply font-mono text-body font-bold tracking-tight text-cosmos-fg flex items-center gap-2; }
-  .app-brand-mark { @apply text-red-DEFAULT drop-shadow-[0_0_10px_var(--red-soft)]; }
+  .app-brand-mark { @apply text-accent-DEFAULT drop-shadow-[0_0_10px_var(--accent-soft)]; }
 
   .app-nav { @apply flex flex-col gap-1 p-2; }
   
   .app-nav-link { 
     @apply rounded-md flex items-center gap-3 transition-all duration-200
            hover:bg-cosmos-sunk hover:text-cosmos-fg
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-DEFAULT focus-visible:ring-offset-2 focus-visible:ring-offset-cosmos-bg; 
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-DEFAULT focus-visible:ring-offset-2 focus-visible:ring-offset-cosmos-bg; 
     padding: 0.625rem 0.75rem;
     font-size: var(--text-nav);
     font-weight: 500;
     color: var(--fg-soft);
   }
   .app-nav-link-active { 
-    @apply bg-red-soft; 
-    color: var(--red);
+    @apply bg-accent-soft; 
+    color: var(--accent);
     font-weight: 600;
     box-shadow: inset 0 0 0 1px var(--line-bold);
   }
@@ -230,8 +244,8 @@
 
   /* ---------- page header ---------- */
   .page-head { @apply mb-8 flex flex-wrap items-end justify-between gap-4; }
-  .page-eyebrow { @apply font-mono text-micro font-bold uppercase tracking-[0.3em] text-red-DEFAULT flex items-center gap-2; }
-  .page-eyebrow::before { content: ''; width: 8px; height: 8px; background: var(--red); border-radius: 50%; box-shadow: 0 0 8px var(--red); }
+  .page-eyebrow { @apply font-mono text-micro font-bold uppercase tracking-[0.3em] text-accent-DEFAULT flex items-center gap-2; }
+  .page-eyebrow::before { content: ''; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px var(--accent); }
   .page-title { @apply mt-2 font-display text-4xl font-extrabold tracking-tighter text-cosmos-fg; }
   .page-title-mono { @apply mt-2 font-mono text-4xl font-bold tracking-tight text-cosmos-fg break-all; }
   .page-sub { @apply mt-2 text-body text-cosmos-fg-mute max-w-2xl; }
@@ -254,7 +268,7 @@
   .stat-value { @apply font-display text-4xl font-extrabold tracking-tighter leading-none text-cosmos-fg tabular-nums mt-1; }
   .stat-sub { @apply font-mono text-small text-cosmos-fg-mute mt-auto pt-2; }
   .stat-track { @apply h-1 w-full bg-cosmos-sunk mt-3 overflow-hidden rounded-full border border-cosmos-line; }
-  .stat-fill { @apply h-full bg-gradient-to-r from-red-deep to-red-DEFAULT transition-all duration-500 rounded-full shadow-[var(--glow-red)]; }
+  .stat-fill { @apply h-full bg-gradient-to-r from-accent-deep to-accent-DEFAULT transition-all duration-500 rounded-full shadow-[var(--glow-accent)]; }
 
   /* ---------- panels ---------- */
   .panel { 
@@ -280,8 +294,8 @@
     @apply transition-all duration-200 cursor-pointer relative; 
   }
   .data-table tbody tr:hover { 
-    background: var(--red-soft); 
-    box-shadow: inset 2px 0 0 var(--red);
+    background: var(--accent-soft); 
+    box-shadow: inset 2px 0 0 var(--accent);
   }
   .data-table tbody tr:hover td { color: var(--fg); }
   .data-table-scroll { @apply -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0; }
@@ -299,24 +313,24 @@
   .cell-meta { @apply text-small text-cosmos-fg-mute; }
 
   /* ---------- links ---------- */
-  .link { @apply text-red-DEFAULT underline-offset-4 hover:underline transition-colors; }
-  .link-mono { @apply font-mono text-num text-red-DEFAULT underline-offset-4 hover:underline transition-colors; }
+  .link { @apply text-accent-DEFAULT underline-offset-4 hover:underline transition-colors; }
+  .link-mono { @apply font-mono text-num text-accent-DEFAULT underline-offset-4 hover:underline transition-colors; }
 
   /* ---------- buttons ---------- */
   .btn { 
     @apply inline-flex items-center justify-center gap-1.5 rounded-md border px-3.5 py-2
            text-body font-medium transition-all duration-200 active:scale-[0.97]
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-cosmos-bg focus-visible:ring-red-DEFAULT
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-cosmos-bg focus-visible:ring-accent-DEFAULT
            disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100; 
   }
   .btn-primary { 
-    background-image: linear-gradient(to bottom, var(--red), var(--red-deep));
-    @apply border border-red-DEFAULT/60 text-white;
-    box-shadow: var(--glow-red), inset 0 1px 0 rgba(255,255,255,0.2);
+    background-image: linear-gradient(to bottom, var(--accent), var(--accent-deep));
+    @apply border border-accent-DEFAULT/60 text-white;
+    box-shadow: var(--glow-accent), inset 0 1px 0 rgba(255,255,255,0.2);
   }
   .btn-primary:hover { 
     filter: brightness(1.15); 
-    box-shadow: 0 0 30px rgba(255, 51, 85, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+    box-shadow: 0 0 30px rgba(96, 165, 250, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
   }
   .btn-default { 
     @apply border border-cosmos-line-2 text-cosmos-fg; 
@@ -392,13 +406,13 @@
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
   }
   .field-input:focus { 
-    border-color: var(--red); 
-    box-shadow: 0 0 0 3px var(--red-soft), inset 0 2px 4px rgba(0,0,0,0.1);
+    border-color: var(--accent); 
+    box-shadow: 0 0 0 3px var(--accent-soft), inset 0 2px 4px rgba(0,0,0,0.1);
     background: rgba(0,0,0,0.4);
   }
   .field-input-mono { @apply font-mono; }
   .field-check { @apply flex items-center gap-2 text-body text-cosmos-fg; }
-  .field-checkbox { @apply size-4 rounded border-cosmos-line-2 accent-red-DEFAULT text-red-DEFAULT; }
+  .field-checkbox { @apply size-4 rounded border-cosmos-line-2 accent-accent-DEFAULT text-accent-DEFAULT; }
 
   select.field-input,
   select.field-input-mono {
@@ -448,8 +462,8 @@
     content: "";
     position: absolute; inset: 0;
     background-image:
-      linear-gradient(rgba(255, 51, 85, 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 51, 85, 0.04) 1px, transparent 1px);
+      linear-gradient(rgba(96, 165, 250, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(96, 165, 250, 0.04) 1px, transparent 1px);
     background-size: 40px 40px;
     mask-image: radial-gradient(circle at center, black 0%, transparent 80%);
   }
@@ -457,13 +471,13 @@
     content: "";
     position: absolute; top: 50%; left: 50%;
     width: 600px; height: 600px; transform: translate(-50%, -50%);
-    background: radial-gradient(circle, rgba(255, 51, 85, 0.18) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(96, 165, 250, 0.18) 0%, transparent 70%);
     pointer-events: none;
   }
   .auth-brand-inner { @apply relative z-10 my-auto flex max-w-xl flex-col items-center gap-6; }
   .auth-logo-box {
     @apply flex h-[72px] w-[72px] items-center justify-center rounded-[20px]
-           border border-red-DEFAULT/30 bg-red-DEFAULT/10 shadow-[var(--glow-red)];
+           border border-accent-DEFAULT/30 bg-accent-DEFAULT/10 shadow-[var(--glow-accent)];
   }
   .auth-logo-box svg { @apply h-9 w-9; }
   .auth-title { @apply text-4xl font-bold tracking-tight text-[#F8F9FA]; }
@@ -473,7 +487,7 @@
            bg-white/[0.04] px-3 py-1;
   }
   .auth-facts { @apply mt-8 grid w-full max-w-md grid-cols-3 gap-6 border-t border-cosmos-line pt-8; }
-  .auth-fact-value { @apply font-mono text-3xl tabular-nums text-red-DEFAULT; }
+  .auth-fact-value { @apply font-mono text-3xl tabular-nums text-accent-DEFAULT; }
   .auth-fact-label { @apply mt-1 font-mono text-micro uppercase tracking-widest text-cosmos-fg-mute; }
   .auth-foot { @apply relative z-10 font-mono text-small text-cosmos-fg-mute; }
 
@@ -487,7 +501,7 @@
   .auth-divider::before,
   .auth-divider::after { @apply h-px flex-1 bg-cosmos-line; content: ""; }
 
-  .btn-sso { @apply w-full border-cosmos-line-2 bg-cosmos-soft text-cosmos-fg hover:bg-cosmos-sunk hover:border-red-DEFAULT transition-all duration-200; }
+  .btn-sso { @apply w-full border-cosmos-line-2 bg-cosmos-soft text-cosmos-fg hover:bg-cosmos-sunk hover:border-accent-DEFAULT transition-all duration-200; }
   .btn-block { @apply w-full; }
 
     /* ---------- Sidebar Specifics ---------- */
@@ -529,11 +543,11 @@
     color: var(--fg) !important; 
   }
   
-  /* ATIVO (SELECIONADO): O !important garante que a cor vermelha assuma o controle */
+  /* ATIVO (SELECIONADO): O !important garante que a cor azul assuma o controle */
   .sidebar-link.active {
-    background: var(--red-soft) !important;
-    color: var(--red) !important; /* COR QUANDO SELECIONADO */
-    border-left-color: var(--red) !important;
+    background: var(--accent-soft) !important;
+    color: var(--accent) !important; /* COR QUANDO SELECIONADO */
+    border-left-color: var(--accent) !important;
     font-weight: 600;
   }
   .sidebar-link .icon { flex-shrink: 0; opacity: 1; display: flex; }
@@ -560,9 +574,9 @@
     flex-shrink: 0;
   }
   
-  /* Badge do link ativo fica vermelho */
+  /* Badge do link ativo fica azul */
   .sidebar-link.active .sidebar-badge {
-    background: var(--red) !important;
+    background: var(--accent) !important;
     color: var(--fg) !important;
   }
 

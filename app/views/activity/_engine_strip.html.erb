@@ -15,7 +15,7 @@
     <% when "failed" %>
       <span class="badge badge-critical"><span class="badge-dot"></span><%= t("activity.engine.failed") %></span>
       <% if engine_state.last_error.present? %>
-        <span class="cell-muted font-mono text-xs"><%= engine_state.last_error %></span>
+        <span class="cell-muted font-mono text-small"><%= engine_state.last_error %></span>
       <% end %>
       <% if defined?(current_user) && current_user&.admin? %>
         <%= button_to t("activity.engine.retry"), restart_activity_path, method: :post,

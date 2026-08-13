@@ -45,7 +45,7 @@
               <%= check_box_tag "maintenance_policy[steps_config][#{operation}][enabled]", "1",
                                 policy.steps_config.dig(operation, "enabled") != false,
                                 class: "field-checkbox" %>
-              <span class="font-mono text-xs"><%= operation %></span>
+              <span class="font-mono text-small"><%= operation %></span>
             </label>
 
             <% if operation == "optimize" %>
@@ -65,7 +65,7 @@
 
       <div class="form-actions">
         <%= f.submit t("policies.form.submit"), class: "btn btn-primary" %>
-        <%= link_to t("policies.form.cancel"), maintenance_policies_path, class: "link text-sm" %>
+        <%= link_to t("policies.form.cancel"), maintenance_policies_path, class: "link text-body" %>
       </div>
     <% end %>
   </div>
