@@ -70,6 +70,20 @@ en:
       failed: "Failed"
       retry: "Retry start"
       down: "Down"
+      history: "Lifecycle"
+    queries:
+      title: "Active queries"
+      count: "%{count} query(s)"
+      empty: "No queries on the cluster."
+      col_id: "Query id"
+      col_state: "State"
+      col_query: "Query"
+    queue:
+      title: "Solid Queue"
+      ready: "Ready"
+      running: "Running"
+      scheduled: "Scheduled"
+      failed: "Failed"
     running:
       title: "Running now"
       empty: "Nothing running."
@@ -492,6 +506,7 @@ en:
       col_when: "When"
       col_chain: "Chain"
       col_duration: "Duration"
+      col_query_id: "Trino query id"
       filter_stopped_at: "Stopped at step"
       retries: "%{count} retries"
     filter_operation: "Operation"
