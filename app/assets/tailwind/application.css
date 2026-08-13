@@ -605,6 +605,24 @@
   .sidebar.collapsed .sidebar-collapse { transform: rotate(180deg); }
 }
 
+/* ---------- paper theme: forms ---------- */
+/* In light mode the sunk (near-black) input/group backgrounds turn into grey
+   blobs on the white panels. Inputs become white with a subtle border, and
+   field groups flatten to a neutral tone, matching the rest of the app. */
+[data-theme="light"] .field-input {
+  background-color: #FFFFFF;
+  border-color: var(--line-2);
+  box-shadow: none;
+}
+[data-theme="light"] .field-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  background-color: #FFFFFF;
+}
+[data-theme="light"] .field-group {
+  background: var(--soft);
+}
+
 @keyframes chain-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50%      { opacity: 0.6; transform: scale(1.2); }
