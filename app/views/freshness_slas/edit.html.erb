@@ -27,7 +27,7 @@
       <div class="field">
         <label class="field-check">
           <%= form.check_box :enabled, class: "field-checkbox" %>
-          <span class="font-mono text-xs"><%= t("freshness_slas.form.enabled") %></span>
+          <span class="font-sans text-small"><%= t("freshness_slas.form.enabled") %></span>
         </label>
       </div>
 
@@ -124,7 +124,7 @@
 
       <div class="form-actions">
         <%= form.submit t("freshness_slas.form.submit"), class: "btn btn-primary" %>
-        <%= link_to t("freshness_slas.form.cancel"), @table, class: "link text-sm" %>
+        <%= link_to t("freshness_slas.form.cancel"), @table, class: "link text-body" %>
       </div>
     <% end %>
   </div>

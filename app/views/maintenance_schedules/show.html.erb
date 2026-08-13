@@ -43,7 +43,7 @@
       </div>
       <div>
         <dt class="dl-term"><%= t("schedules.show.params") %></dt>
-        <dd class="dl-desc-mono text-xs">
+        <dd class="dl-desc-mono text-small">
           <%= @schedule.config.presence&.to_json || t("schedules.show.params_default") %>
         </dd>
       </div>

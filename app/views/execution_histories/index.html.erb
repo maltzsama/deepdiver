@@ -62,13 +62,13 @@
                   <span class="badge badge-mute"><span class="badge-dot"></span><%= t("operations.kind_freshness") %></span>
                   <span class="ml-2">
                     <%= link_to event[:table].fully_qualified_name, event[:table], class: "link-mono" %>
-                    <span class="ml-2 text-xs cell-muted"><%= event[:table].catalog.name %></span>
+                    <span class="ml-2 text-small cell-muted"><%= event[:table].catalog.name %></span>
                   </span>
                 </td>
                 <td>
-                  <span class="text-xs cell-muted"><%= t("operations.freshness_sla", sla: check.sla_minutes) %></span>
+                  <span class="text-small cell-muted"><%= t("operations.freshness_sla", sla: check.sla_minutes) %></span>
                   <% if check.error_message.present? %>
-                    <span class="ml-2 font-mono text-xs text-red-DEFAULT break-all" title="<%= check.error_message %>"><%= check.error_message %></span>
+                    <span class="ml-2 font-sans text-small text-red-DEFAULT break-all" title="<%= check.error_message %>"><%= check.error_message %></span>
                   <% end %>
                 </td>
                 <td>
@@ -86,7 +86,7 @@
                   <span class="badge badge-mute"><span class="badge-dot"></span><%= t("operations.kind_maintenance") %></span>
                   <span class="ml-2">
                     <%= link_to event[:table].fully_qualified_name, event[:table], class: "link-mono" %>
-                    <span class="ml-2 text-xs cell-muted"><%= event[:table].catalog.name %></span>
+                    <span class="ml-2 text-small cell-muted"><%= event[:table].catalog.name %></span>
                   </span>
                 </td>
                 <td><%= render "shared/step_chain", execution: execution %></td>
@@ -104,30 +104,30 @@
                     <% execution.execution_steps.each do |step| %>
                       <div class="grid grid-cols-[28%_22%_16%_14%_20%] items-center gap-x-3 py-1.5">
                         <div></div>
-                        <div class="font-mono text-xs text-cosmos-fg-soft"><%= step.operation %></div>
+                        <div class="font-mono text-small text-cosmos-fg-soft"><%= step.operation %></div>
                         <div class="flex flex-wrap items-center gap-2">
                           <span class="badge <%= execution_step_badge_class(step.status) %>"><%= step.status %></span>
                           <% if step.retry_count.positive? %>
                             <span class="badge badge-warning"><%= t("operations.index.retries", count: step.retry_count) %></span>
                           <% end %>
                         </div>
-                        <div class="text-xs">
+                        <div class="text-small">
                           <% if step.started_at %>
                             <span class="cell-muted"><%= duration_label(step.duration) || "—" %></span>
                           <% end %>
                         </div>
-                        <div class="text-xs">
+                        <div class="text-small">
                           <% if step.started_at %>
                             <span class="cell-muted"><%= timestamp(step.started_at) %></span>
                           <% end %>
                         </div>
                       </div>
                       <% if step.error_message.present? %>
-                        <p class="py-1 font-mono text-xs text-red-DEFAULT break-all"><%= step.error_message %></p>
+                        <p class="py-1 font-sans text-small text-red-DEFAULT break-all"><%= step.error_message %></p>
                       <% end %>
                     <% end %>
                     <% if execution.error_message.present? %>
-                      <p class="mt-2 font-mono text-xs text-red-DEFAULT break-all"><%= execution.error_message %></p>
+                      <p class="mt-2 font-sans text-small text-red-DEFAULT break-all"><%= execution.error_message %></p>
                     <% end %>
                   </div>
                 </td>

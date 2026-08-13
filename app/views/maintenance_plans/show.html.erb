@@ -78,7 +78,7 @@
                 <span class="badge badge-neutral"><%= t("plans.show.disabled") %></span>
               <% end %>
             </td>
-            <td class="cell-muted font-mono text-xs"><%= step.config.presence&.to_json || "—" %></td>
+            <td class="cell-muted font-mono text-small"><%= step.config.presence&.to_json || "—" %></td>
           </tr>
         <% end %>
       </tbody>

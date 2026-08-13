@@ -15,27 +15,27 @@
     <input type="radio" name="metadata-tab" id="tab-metrics" class="peer/metrics sr-only">
 
     <div class="mb-4 flex gap-1 border-b border-cosmos-line">
-      <label for="tab-info" class="cursor-pointer border-b-2 border-transparent px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-cosmos-fg-mute hover:text-cosmos-fg peer-checked/info:border-red-DEFAULT peer-checked/info:text-red-DEFAULT"><%= t("tables.metadata.info_tab") %></label>
-      <label for="tab-snapshots" class="cursor-pointer border-b-2 border-transparent px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-cosmos-fg-mute hover:text-cosmos-fg peer-checked/snapshots:border-red-DEFAULT peer-checked/snapshots:text-red-DEFAULT"><%= t("tables.metadata.snapshots_tab") %></label>
-      <label for="tab-metrics" class="cursor-pointer border-b-2 border-transparent px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-cosmos-fg-mute hover:text-cosmos-fg peer-checked/metrics:border-red-DEFAULT peer-checked/metrics:text-red-DEFAULT"><%= t("tables.metadata.metrics_tab") %></label>
+      <label for="tab-info" class="cursor-pointer border-b-2 border-transparent px-3 py-1.5 font-mono text-small font-bold uppercase tracking-[0.12em] text-cosmos-fg-mute hover:text-cosmos-fg peer-checked/info:border-accent-DEFAULT peer-checked/info:text-accent-DEFAULT"><%= t("tables.metadata.info_tab") %></label>
+      <label for="tab-snapshots" class="cursor-pointer border-b-2 border-transparent px-3 py-1.5 font-mono text-small font-bold uppercase tracking-[0.12em] text-cosmos-fg-mute hover:text-cosmos-fg peer-checked/snapshots:border-accent-DEFAULT peer-checked/snapshots:text-accent-DEFAULT"><%= t("tables.metadata.snapshots_tab") %></label>
+      <label for="tab-metrics" class="cursor-pointer border-b-2 border-transparent px-3 py-1.5 font-mono text-small font-bold uppercase tracking-[0.12em] text-cosmos-fg-mute hover:text-cosmos-fg peer-checked/metrics:border-accent-DEFAULT peer-checked/metrics:text-accent-DEFAULT"><%= t("tables.metadata.metrics_tab") %></label>
     </div>
 
     <div class="peer-checked/info:block hidden">
       <dl class="dl mb-4">
         <div>
           <dt class="dl-term"><%= t("tables.metadata.uuid") %></dt>
-          <dd class="dl-desc-mono text-xs"><%= @table.table_uuid || "—" %></dd>
+          <dd class="dl-desc-mono text-small"><%= @table.table_uuid || "—" %></dd>
         </div>
         <div>
           <dt class="dl-term"><%= t("tables.metadata.location") %></dt>
-          <dd class="dl-desc-mono text-xs break-all"><%= @table.storage_location || "—" %></dd>
+          <dd class="dl-desc-mono text-small break-all"><%= @table.storage_location || "—" %></dd>
         </div>
       </dl>
 
-      <h3 class="mb-2 text-sm font-semibold"><%= t("tables.metadata.schema") %></h3>
+      <h3 class="mb-2 text-body font-semibold"><%= t("tables.metadata.schema") %></h3>
       <% fields = @table.schema_json&.last&.dig("fields") || [] %>
       <% if fields.empty? %>
-        <p class="cell-muted text-sm"><%= t("tables.metadata.no_data", field: "schema") %></p>
+        <p class="cell-muted text-body"><%= t("tables.metadata.no_data", field: "schema") %></p>
       <% else %>
         <div class="data-table-scroll mb-4">
           <table class="data-table">
@@ -50,7 +50,7 @@
               <% fields.each do |field| %>
                 <tr>
                   <td class="cell-id"><%= field["name"] %></td>
-                  <td class="cell-muted font-mono text-xs"><%= field["type"] %></td>
+                  <td class="cell-muted font-mono text-small"><%= field["type"] %></td>
                   <td><%= field["required"] ? "yes" : "no" %></td>
                 </tr>
               <% end %>
@@ -59,12 +59,12 @@
         </div>
       <% end %>
 
-      <h3 class="mb-2 text-sm font-semibold"><%= t("tables.metadata.partitioning") %></h3>
+      <h3 class="mb-2 text-body font-semibold"><%= t("tables.metadata.partitioning") %></h3>
       <% if @table.partition_json.blank? %>
-        <p class="cell-muted text-sm"><%= t("tables.metadata.no_data", field: "partitioning") %></p>
+        <p class="cell-muted text-body"><%= t("tables.metadata.no_data", field: "partitioning") %></p>
       <% else %>
         <% @table.partition_json.each do |spec| %>
-          <p class="mb-1 text-xs font-mono text-cosmos-fg-soft">
+          <p class="mb-1 text-small font-mono text-cosmos-fg-soft">
             spec <%= spec["spec-id"] %>: <%= (spec["fields"] || []).map { |f| "#{f["transform"]}(#{f["name"]})" }.join(", ") %>
           </p>
         <% end %>
@@ -72,9 +72,9 @@
     </div>
 
     <div class="peer-checked/snapshots:block hidden">
-      <h3 class="mb-2 text-sm font-semibold"><%= t("tables.metadata.refs") %></h3>
+      <h3 class="mb-2 text-body font-semibold"><%= t("tables.metadata.refs") %></h3>
       <% if @table.refs_json.blank? %>
-        <p class="cell-muted text-sm"><%= t("tables.metadata.no_data", field: "refs") %></p>
+        <p class="cell-muted text-body"><%= t("tables.metadata.no_data", field: "refs") %></p>
       <% else %>
         <div class="mb-4 flex flex-wrap gap-2">
           <% @table.refs_json.each do |name, ref| %>
@@ -83,9 +83,9 @@
         </div>
       <% end %>
 
-      <h3 class="mb-2 text-sm font-semibold"><%= t("tables.metadata.snapshot_history") %></h3>
+      <h3 class="mb-2 text-body font-semibold"><%= t("tables.metadata.snapshot_history") %></h3>
       <% if @table.snapshots_json.blank? %>
-        <p class="cell-muted text-sm"><%= t("tables.metadata.no_data", field: "snapshots") %></p>
+        <p class="cell-muted text-body"><%= t("tables.metadata.no_data", field: "snapshots") %></p>
       <% else %>
         <div class="data-table-scroll">
           <table class="data-table">
@@ -137,7 +137,7 @@
           <dd class="dl-desc-mono"><%= @table.equality_deletes || "—" %></dd>
         </div>
       </dl>
-      <p class="mt-3 text-xs cell-muted"><%= t("tables.metrics.missing_note") %></p>
+      <p class="mt-3 text-small cell-muted"><%= t("tables.metrics.missing_note") %></p>
     </div>
   </div>
 </section>

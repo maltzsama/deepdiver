@@ -13,7 +13,7 @@
     <h1 class="page-title-mono"><%= @catalog.name %></h1>
     <p class="page-sub">
       <span class="badge badge-neutral"><%= @catalog.catalog_type %></span>
-      <span class="ml-2 font-mono text-xs"><%= @catalog.endpoint %></span>
+      <span class="ml-2 font-mono text-small"><%= @catalog.endpoint %></span>
     </p>
   </div>
 
@@ -37,7 +37,7 @@
     <span class="panel-note"><%= t("catalogs.show.subtitle_span", count: @tables.size) %></span>
     <%= link_to t("catalogs.show.include_inactive"),
                 catalog_path(@catalog, inactive: params[:inactive].present? ? nil : "1"),
-                class: "link text-xs ml-auto" %>
+                class: "link text-small ml-auto" %>
   </div>
 
   <% if @tables.empty? %>

@@ -9,9 +9,9 @@
 
 <div class="flex items-center justify-between mb-5 pb-3 border-b border-cosmos-line">
   <div>
-    <p class="font-mono text-[10px] font-bold tracking-[0.2em] uppercase text-red-DEFAULT">Control Plane</p>
+    <p class="font-mono text-micro font-bold tracking-[0.2em] uppercase text-accent-DEFAULT">Control Plane</p>
     <h1 class="font-display text-2xl font-extrabold tracking-tight text-cosmos-fg">Overview</h1>
-    <p class="text-sm text-cosmos-fg-mute">
+    <p class="text-body text-cosmos-fg-mute">
       <% if @last_sync_at %>
         Synced <%= time_ago_in_words(@last_sync_at) %> ago
       <% else %>
@@ -20,8 +20,8 @@
     </p>
   </div>
   <div class="flex items-center gap-3">
-    <span class="font-mono text-[10px] text-cosmos-fg-mute">cosmonaut-dev</span>
-    <a href="<%= root_path %>" class="px-3 py-1.5 font-mono text-[11px] font-semibold bg-cosmos-surface border border-cosmos-line text-cosmos-fg-soft hover:bg-cosmos-soft hover:text-cosmos-fg cursor-pointer no-underline">
+    <span class="font-mono text-micro text-cosmos-fg-mute">cosmonaut-dev</span>
+    <a href="<%= root_path %>" class="px-3 py-1.5 font-mono text-small font-semibold bg-cosmos-surface border border-cosmos-line text-cosmos-fg-soft hover:bg-cosmos-soft hover:text-cosmos-fg cursor-pointer no-underline">
       ↻ Refresh
     </a>
   </div>
@@ -72,8 +72,8 @@
 
   <% if @triage.empty? %>
     <div class="panel-body text-center py-10">
-      <p class="text-sm text-cosmos-fg-soft"><%= t("dashboard.index.triage_empty_title") %></p>
-      <p class="text-xs text-cosmos-fg-mute mt-1"><%= t("dashboard.index.triage_empty_hint") %></p>
+      <p class="text-body text-cosmos-fg-soft"><%= t("dashboard.index.triage_empty_title") %></p>
+      <p class="text-small text-cosmos-fg-mute mt-1"><%= t("dashboard.index.triage_empty_hint") %></p>
     </div>
   <% else %>
     <div class="panel-body p-0 data-table-scroll">
@@ -92,7 +92,7 @@
             <tr>
               <td class="cell-id">
                 <%= link_to row.table.fully_qualified_name, row.table, class: "hover:underline" %>
-                <span class="text-xs text-cosmos-fg-mute ml-2"><%= row.table.catalog.name %></span>
+                <span class="text-small text-cosmos-fg-mute ml-2"><%= row.table.catalog.name %></span>
               </td>
 
               <%# Coluna de manutenção — vermelha só se for esse o problema %>
@@ -102,9 +102,9 @@
                     <span class="badge-dot"></span><%= row.table.health_score %>
                   </span>
                 <% elsif row.table.health_score %>
-                  <span class="text-xs text-cosmos-fg-mute"><%= row.table.health_score %></span>
+                  <span class="text-small text-cosmos-fg-mute"><%= row.table.health_score %></span>
                 <% else %>
-                  <span class="text-xs text-cosmos-fg-mute">—</span>
+                  <span class="text-small text-cosmos-fg-mute">—</span>
                 <% end %>
               </td>
 
@@ -120,9 +120,9 @@
                     <% end %>
                   </span>
                 <% elsif row.sla&.enabled? %>
-                  <span class="text-xs text-cosmos-fg-mute">on track</span>
+                  <span class="text-small text-cosmos-fg-mute">on track</span>
                 <% else %>
-                  <span class="text-xs text-cosmos-fg-mute">no SLA</span>
+                  <span class="text-small text-cosmos-fg-mute">no SLA</span>
                 <% end %>
               </td>
 
@@ -138,7 +138,7 @@
                 <% if row.reasons.include?(:health) && row.table.maintenance_plan && can_run_maintenance? %>
                   <%= button_to t("dashboard.index.run_now"),
                         run_maintenance_plan_path(row.table.maintenance_plan),
-                        method: :post, class: "link text-xs" %>
+                        method: :post, class: "link text-small" %>
                 <% end %>
               </td>
             </tr>

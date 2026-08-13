@@ -78,7 +78,7 @@
                 <span class="badge <%= health_badge_class(table.health_status) %>">
                   <span class="badge-dot"></span><%= table.health_status %>
                 </span>
-                <span class="ml-1 font-mono text-xs text-cosmos-fg-soft"><%= table.health_score %></span>
+                <span class="ml-1 font-mono text-small text-cosmos-fg-soft"><%= table.health_score %></span>
               </td>
               <td class="cell-num"><%= table.total_data_files || "—" %></td>
               <td class="cell-num"><%= table.average_file_size ? number_to_human_size(table.average_file_size) : "—" %></td>

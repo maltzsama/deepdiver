@@ -38,7 +38,7 @@
       </div>
       <div>
         <dt class="dl-term"><%= t("policies.show.params") %></dt>
-        <dd class="dl-desc-mono text-xs"><%= @policy.steps_config.presence&.to_json || t("policies.show.params_default") %></dd>
+        <dd class="dl-desc-mono text-small"><%= @policy.steps_config.presence&.to_json || t("policies.show.params_default") %></dd>
       </div>
       <div>
         <dt class="dl-term"><%= t("policies.show.covered") %></dt>
@@ -55,18 +55,18 @@
       <span class="panel-note"><%= t("policies.show.apply_note") %></span>
     </div>
     <div class="panel-body">
-      <div class="mb-4 grid gap-3 text-sm sm:grid-cols-2">
-        <p class="flex items-start gap-2"><span class="mt-0.5 text-red-DEFAULT">•</span><%= t("policies.show.explain_apply") %></p>
-        <p class="flex items-start gap-2"><span class="mt-0.5 text-red-DEFAULT">•</span><%= t("policies.show.explain_skip") %></p>
-        <p class="flex items-start gap-2"><span class="mt-0.5 text-red-DEFAULT">•</span><%= t("policies.show.explain_propagate") %></p>
-        <p class="flex items-start gap-2"><span class="mt-0.5 text-red-DEFAULT">•</span><%= t("policies.show.explain_pause") %></p>
+      <div class="mb-4 grid gap-3 text-body sm:grid-cols-2">
+        <p class="flex items-start gap-2"><span class="mt-0.5 text-accent-DEFAULT">•</span><%= t("policies.show.explain_apply") %></p>
+        <p class="flex items-start gap-2"><span class="mt-0.5 text-accent-DEFAULT">•</span><%= t("policies.show.explain_skip") %></p>
+        <p class="flex items-start gap-2"><span class="mt-0.5 text-accent-DEFAULT">•</span><%= t("policies.show.explain_propagate") %></p>
+        <p class="flex items-start gap-2"><span class="mt-0.5 text-accent-DEFAULT">•</span><%= t("policies.show.explain_pause") %></p>
       </div>
 
       <div class="mb-4 field-group">
-        <p class="text-sm font-medium text-cosmos-fg">
+        <p class="text-body font-medium text-cosmos-fg">
           <%= t("policies.show.preview_title", name: @policy.name, count: @candidates.size) %>
         </p>
-        <ul class="mt-2 space-y-1 text-sm text-cosmos-fg-soft">
+        <ul class="mt-2 space-y-1 text-body text-cosmos-fg-soft">
           <li><%= t("policies.show.preview_created", count: @apply_preview[:created]) %></li>
           <li><%= t("policies.show.preview_updated", count: @apply_preview[:updated]) %></li>
           <% if @apply_preview[:skipped].any? %>
@@ -80,7 +80,7 @@
             </li>
           <% end %>
         </ul>
-        <p class="mt-2 text-xs text-cosmos-fg-mute"><%= t("policies.show.preview_note") %></p>
+        <p class="mt-2 text-small text-cosmos-fg-mute"><%= t("policies.show.preview_note") %></p>
       </div>
 
       <%= form_with url: apply_maintenance_policy_path(@policy), method: :post do %>
@@ -97,7 +97,7 @@
                   <td>
                     <%= label_tag "table_#{table.id}", table.fully_qualified_name,
                                   class: "cell-id cursor-pointer" %>
-                    <span class="ml-2 text-xs cell-muted"><%= table.catalog.name %></span>
+                    <span class="ml-2 text-small cell-muted"><%= table.catalog.name %></span>
                   </td>
                   <td class="text-right">
                     <span class="badge <%= health_badge_class(table.health_status) %>">

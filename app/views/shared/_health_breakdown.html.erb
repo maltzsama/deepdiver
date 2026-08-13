@@ -21,7 +21,7 @@
 
     <div class="space-y-2.5">
       <% health_component_rows(evaluation, extractor).each do |row| %>
-        <div class="grid grid-cols-[8rem_minmax(0,1fr)_auto] items-center gap-3 text-sm">
+        <div class="grid grid-cols-[8rem_minmax(0,1fr)_auto] items-center gap-3 text-body">
           <span class="text-cosmos-fg-soft" title="<%= row[:explains] %>"><%= row[:label] %></span>
 
           <% if row[:has_data] %>
@@ -30,15 +30,15 @@
                 <div class="h-full rounded-full <%= severity_fill_class(row[:severity]) %>"
                      style="width: <%= row[:pct] %>%"></div>
               </div>
-              <span class="w-9 text-right font-mono text-xs tabular-nums text-cosmos-fg-soft"><%= row[:pct] %>%</span>
+              <span class="w-9 text-right font-mono text-small tabular-nums text-cosmos-fg-soft"><%= row[:pct] %>%</span>
             </div>
-            <span class="max-w-56 justify-self-end text-right text-xs text-cosmos-fg-mute">
+            <span class="max-w-56 justify-self-end text-right text-small text-cosmos-fg-mute">
               <%= row[:detail] %>
-              <span class="text-red-DEFAULT">→ <%= row[:operation] %></span>
+              <span class="text-accent-DEFAULT">→ <%= row[:operation] %></span>
             </span>
           <% else %>
-            <span class="text-xs italic text-cosmos-fg-mute"><%= t("health.component_no_data") %></span>
-            <span class="justify-self-end text-right text-xs text-cosmos-fg-mute">
+            <span class="text-small italic text-cosmos-fg-mute"><%= t("health.component_no_data") %></span>
+            <span class="justify-self-end text-right text-small text-cosmos-fg-mute">
               <%= t("health.component_missing", component: row[:label]) %>
             </span>
           <% end %>
@@ -46,7 +46,7 @@
       <% end %>
     </div>
 
-    <p class="mt-4 border-t border-cosmos-line pt-3 text-xs text-cosmos-fg-mute">
+    <p class="mt-4 border-t border-cosmos-line pt-3 text-small text-cosmos-fg-mute">
       <%= t("health.footer") %>
     </p>
   </div>
