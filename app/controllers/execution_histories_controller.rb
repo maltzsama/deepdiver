@@ -19,11 +19,13 @@ class ExecutionHistoriesController < ApplicationController
               .first(200)
   end
 
-  # Operator cancellation of a running execution: mark it failed, free the
-  # table lock and let the supervisor decide about the engine.
+  # Operator cancellation of an execution: mark it failed (running) or skipped
+  # (pending, never ran), free the table lock and let the supervisor decide
+  # about the engine.
   def cancel
     authorize @execution, :cancel?
-    @execution.update!(status: :failed, error_message: "cancelled by operator", finished_at: Time.current)
+    status = @execution.status == "pending" ? :skipped : :failed
+    @execution.update!(status: status, error_message: "cancelled by operator", finished_at: Time.current)
     TableLock.release(@execution)
     TrinoEngineSupervisor.demand_finished!
     redirect_to activity_path, notice: "Execution cancelled."

@@ -77,6 +77,11 @@
                 <%= index + 1 %> · <%= execution.waiting_reason %>
               </p>
             </div>
+            <% if local_assigns.fetch(:show_actions, true) && can_cancel_query? %>
+              <%= button_to t("activity.queued.cancel"), cancel_execution_history_path(execution),
+                            method: :post, class: "btn btn-danger btn-sm",
+                            data: { turbo_confirm: t("activity.queued.cancel_confirm") } %>
+            <% end %>
           </div>
         <% end %>
         <% if queued.empty? %>
