@@ -18,6 +18,12 @@ module ApplicationHelper
     current_user&.admin? || current_user&.operator?
   end
 
+  # Whether the current user may cancel queries and queued executions.
+  # @return [Boolean] true for admins and operators.
+  def can_cancel_query?
+    current_user&.admin? || current_user&.operator?
+  end
+
   # Maps a Trino query state to its badge CSS class.
   # @param state [String, nil] the Trino query state.
   # @return [String] the badge class for the state.

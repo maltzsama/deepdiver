@@ -7,7 +7,7 @@ class TrinoProvisioner
 
   class << self
     delegate :exists?, :healthy?, :rollout_complete?, :idle?, :active_queries,
-             :create!, :destroy!, :wait_gone!, to: :adapter
+             :cancel_query, :create!, :destroy!, :wait_gone!, to: :adapter
 
     # Returns the provisioner adapter selected by the TRINO_PROVISIONER env var.
     #

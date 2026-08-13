@@ -51,6 +51,18 @@ class ChartTrinoProvisioner
     []
   end
 
+  # Cancels a running or queued query on the coordinator. Tolerates a query that
+  # already finished (returns false) without raising.
+  #
+  # @param query_id [String] the Trino query id to cancel
+  # @return [Boolean] true when the DELETE was accepted
+  def cancel_query(query_id)
+    @transport.delete("#{@base_url}/v1/query/#{query_id}")
+    true
+  rescue StandardError
+    false
+  end
+
   # Scales the Deployment up to 1 replica.
   def create!
     @k8s.scale(1)

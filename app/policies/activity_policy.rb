@@ -4,4 +4,6 @@ class ActivityPolicy < ApplicationPolicy
   def show?    = true
   # Who is allowed: admins.
   def restart? = user&.admin?
+  # Who is allowed: admins and operators.
+  def cancel_query? = user&.admin? || user&.operator?
 end

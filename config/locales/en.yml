@@ -78,6 +78,9 @@ en:
       col_id: "Query id"
       col_state: "State"
       col_query: "Query"
+      col_actions: "Actions"
+      cancel: "Cancel"
+      cancel_confirm: "Cancel this query on the cluster?"
     queue:
       title: "Solid Queue"
       ready: "Ready"
@@ -100,6 +103,8 @@ en:
       empty: "The queue is empty."
       waiting_lock: "waiting for its table's lock"
       waiting_engine: "waiting for the engine"
+      cancel: "Cancel"
+      cancel_confirm: "Cancel this queued execution?"
     auto_refresh_on: "Auto-refreshing when visible"
     next_in: "next in"
     refreshing: "refreshing…"

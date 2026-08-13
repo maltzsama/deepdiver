@@ -42,4 +42,46 @@ RSpec.describe "GET /activity", type: :request do
     expect(execution.error_message).to include("cancelled by operator")
     expect(TrinoEngineSupervisor.state.reload.status).to eq("draining")
   end
+
+  it "marks a cancelled queued execution as skipped" do
+    sign_in create(:user, :admin)
+    plan = create(:maintenance_plan, :with_all_steps)
+    execution = create(:execution_history, maintenance_plan: plan, iceberg_table: plan.iceberg_table,
+                                           status: :pending)
+
+    post cancel_execution_history_path(execution)
+
+    expect(execution.reload.status).to eq("skipped")
+    expect(execution.error_message).to include("cancelled by operator")
+  end
+
+  it "lets an operator cancel a queued execution" do
+    sign_in create(:user, :operator)
+    plan = create(:maintenance_plan, :with_all_steps)
+    execution = create(:execution_history, maintenance_plan: plan, iceberg_table: plan.iceberg_table,
+                                           status: :pending)
+
+    post cancel_execution_history_path(execution)
+
+    expect(execution.reload.status).to eq("skipped")
+  end
+
+  it "lets an operator cancel a trino query" do
+    sign_in create(:user, :operator)
+    TrinoProvisioner.adapter = FakeTrinoProvisioner.new
+    allow(TrinoProvisioner).to receive(:cancel_query).and_return(true)
+
+    post cancel_trino_query_activity_path(query_id: "20260813_000000_00000_abcde")
+
+    expect(response).to redirect_to(activity_path)
+    expect(TrinoProvisioner).to have_received(:cancel_query).with("20260813_000000_00000_abcde")
+  end
+
+  it "does not let a viewer cancel a trino query" do
+    sign_in create(:user, role: "viewer")
+
+    post cancel_trino_query_activity_path(query_id: "qid")
+
+    expect(response).to redirect_to(root_path)
+  end
 end
