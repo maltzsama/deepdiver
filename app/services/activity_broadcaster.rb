@@ -5,8 +5,8 @@ module ActivityBroadcaster
   module_function
 
   # Re-renders the /activity Turbo Stream channel: the engine strip, the
-  # running/queued lists, and the active queries, so the page updates without a
-  # full reload.
+  # running/queued lists, the active queries, and the Solid Queue backlog, so
+  # the page updates without a full reload.
   def broadcast!
     state = TrinoEngineSupervisor.state
     running = ExecutionHistory.includes(:iceberg_table, :execution_steps, maintenance_plan: :maintenance_steps)
@@ -37,6 +37,12 @@ module ActivityBroadcaster
       target: "activity-queries",
       partial: "activity/queries",
       locals: { queries: TrinoProvisioner.active_queries, show_actions: false }
+    )
+    Turbo::StreamsChannel.broadcast_replace_to(
+      "activity",
+      target: "activity-queue",
+      partial: "activity/queue",
+      locals: { queue: QueueSummary.new.call }
     )
   end
 end
