@@ -122,6 +122,25 @@
                           <% end %>
                         </div>
                       </div>
+                      <% if step.trino_query_id.present? || step.metrics.present? %>
+                        <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-micro text-cosmos-fg-mute">
+                          <% if step.trino_query_id.present? %>
+                            <span title="<%= t("operations.index.col_query_id") %>"><%= step.trino_query_id %></span>
+                          <% end %>
+                          <% stats = step.metrics&.dig("stats") %>
+                          <% if stats.present? %>
+                            <% if stats["elapsedTimeMillis"] %>
+                              <span><%= number_with_delimiter(stats["elapsedTimeMillis"]) %> ms</span>
+                            <% end %>
+                            <% if stats["processedBytes"] %>
+                              <span><%= number_to_human_size(stats["processedBytes"]) %> processed</span>
+                            <% end %>
+                            <% if stats["physicalWrittenBytes"] %>
+                              <span><%= number_to_human_size(stats["physicalWrittenBytes"]) %> written</span>
+                            <% end %>
+                          <% end %>
+                        </div>
+                      <% end %>
                       <% if step.error_message.present? %>
                         <p class="py-1 font-sans text-small text-red-DEFAULT break-all"><%= step.error_message %></p>
                       <% end %>
