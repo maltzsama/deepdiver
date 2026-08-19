@@ -71,6 +71,8 @@ class TrinoCatalogProjection
     props = {
       "iceberg.catalog.type" => "rest",
       "iceberg.rest-catalog.uri" => catalog.endpoint,
+      # Polaris requires the warehouse (its catalog name) in the REST path.
+      "iceberg.rest-catalog.warehouse" => catalog.name,
       # Nested namespace: the application configures it instead of relying on
       # someone having enabled it on the cluster. See CR-02.
       "iceberg.rest-catalog.nested-namespace-enabled" => "true",

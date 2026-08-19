@@ -38,11 +38,15 @@ class TrinoRestClient
 
   # Submits a statement and returns the initial response, raising on rejection.
   #
+  # Trino's /v1/statement expects the RAW SQL body (with X-Trino-User headers),
+  # not a {"query": "..."} JSON envelope. Sending the envelope makes Trino try
+  # to parse the leading '{' as SQL.
+  #
   # @param sql [String] the query
   # @param execution_id [Integer] the execution id for headers
   # @return [Hash] the Trino response
   def statement(sql, execution_id:)
-    @transport.post(uri("/v1/statement"), body: { "query" => sql }.to_json,
+    @transport.post(uri("/v1/statement"), body: sql,
                     headers: headers(execution_id))
   rescue HttpTransport::ApiError => e
     raise Error, "Trino statement rejected: #{e.message}"

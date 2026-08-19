@@ -21,11 +21,11 @@ class K8sClient
   #
   # @param replicas [Integer] the desired replica count
   def scale(replicas)
-    @kubeclient.patch_deployment(deployment, namespace, [ {
-                                                          op: :replace,
-                                                          path: "/spec/replicas",
-                                                          value: replicas
-                                                        } ])
+    @kubeclient.json_patch_deployment(
+      deployment,
+      [ { op: :replace, path: "/spec/replicas", value: replicas } ],
+      namespace
+    )
   end
 
   # Whether the Deployment has at least one ready replica.
