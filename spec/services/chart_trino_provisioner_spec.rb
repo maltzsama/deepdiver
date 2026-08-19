@@ -32,4 +32,11 @@ RSpec.describe ChartTrinoProvisioner do
     expect(provisioner.wait_gone!(timeout: 5.seconds)).to be_nil
     expect(k8s).to have_received(:replicas)
   end
+
+  it "reports the desired replica count from the k8s client" do
+    k8s = double("TrinoK8sClient", replicas: 2)
+    provisioner = described_class.new(k8s: k8s, transport: transport, base_url: "http://trino")
+
+    expect(provisioner.replicas).to eq(2)
+  end
 end

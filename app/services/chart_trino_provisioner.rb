@@ -36,6 +36,13 @@ class ChartTrinoProvisioner
     @k8s.ready?
   end
 
+  # The Deployment's desired replica count.
+  #
+  # @return [Integer] the spec.replicas count
+  def replicas
+    @k8s.replicas
+  end
+
   # No queries running or queued, per GET /v1/query.
   def idle?
     active_queries.none? { |q| %w[RUNNING QUEUED].include?(q["state"]) }
