@@ -70,6 +70,14 @@ RSpec.describe "Cadence per step" do
       .to change { TableLock.count }.from(1).to(0)
   end
 
+  it "does not enqueue a duplicate while a run is pending" do
+    existing = create(:execution_history, iceberg_table: table, maintenance_plan: plan, status: :pending)
+
+    expect { MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 03:00")) }
+      .not_to change { ExecutionHistory.count }
+    expect(MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 03:00"))).to eq(existing)
+  end
+
   it "drains the engine when a dispatch is skipped and nothing else needs it" do
     TrinoEngineSupervisor.state.update!(status: "up", status_changed_at: Time.current)
     holder = create(:execution_history, iceberg_table: table, status: :success)

@@ -176,6 +176,17 @@ RSpec.describe "POST /iceberg_tables/:id/run_maintenance", type: :request do
     expect(table.execution_histories.last.status).to eq("pending")
   end
 
+  it "does not enqueue a duplicate when a run is already pending" do
+    plan = create(:maintenance_plan, :with_all_steps, iceberg_table: table)
+    create(:execution_history, iceberg_table: table, maintenance_plan: plan, status: :pending)
+
+    post run_maintenance_iceberg_table_path(table)
+
+    expect(response).to redirect_to(iceberg_table_path(table))
+    expect(table.execution_histories.where(status: "pending").count).to eq(1)
+    expect(flash[:alert]).to include("already running")
+  end
+
   it "rejects viewers" do
     sign_in create(:user)
 

@@ -67,7 +67,8 @@ class IcebergTablesController < ApplicationController
   # Fallback for the table-level "run now": ensures a dispatchable plan exists
   # (creating a default one when the table has none, resuming it when paused)
   # and enqueues it. The operator clicked Run - that is intent to run, so a
-  # paused plan is resumed rather than bounced back with an error.
+  # paused plan is resumed rather than bounced back with an error. A table that
+  # already has work queued or running is not enqueued again.
   def run_maintenance
     authorize @table, :run_maintenance?
     plan = @table.maintenance_plan
@@ -76,6 +77,11 @@ class IcebergTablesController < ApplicationController
       plan = MaintenancePlan.create_default_for!(@table)
     elsif plan.paused?
       plan.update!(is_paused: false, consecutive_failures: 0, needs_review: false)
+    end
+
+    if plan.execution_histories.where(status: %w[pending running]).exists?
+      redirect_to @table, alert: "Maintenance is already running or queued for this table."
+      return
     end
 
     MaintenanceOrchestrator.run_plan(plan.id)

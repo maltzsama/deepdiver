@@ -15,6 +15,12 @@ module MaintenanceOrchestrator
   def self.run_plan(plan_id, at: Time.current)
     plan = MaintenancePlan.find(plan_id)
 
+    # Idempotent: a table already queued or running does not queue again.
+    # Without this, rapid "run now" clicks pile up N pending executions that
+    # all resolve to "skipped" once the engine comes up.
+    existing = plan.execution_histories.find_by(status: %w[pending running])
+    return existing if existing
+
     # A leftover lock from a finished execution must never block a new run.
     TableLock.reap_stale!
 
