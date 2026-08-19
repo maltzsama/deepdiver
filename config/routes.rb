@@ -25,7 +25,10 @@ Rails.application.routes.draw do
 
   # What is happening right now.
   resource :activity, only: :show, controller: "activity" do
-    member { post :restart }
+    member do
+      post :restart
+      post :hard_reset
+    end
     post "trino_queries/:query_id/cancel", action: :cancel_query, as: :cancel_trino_query
   end
 
@@ -46,6 +49,10 @@ Rails.application.routes.draw do
 
   # Global tables view with filters.
   resources :iceberg_tables, only: %i[index show] do
+    collection do
+      post :sync_all
+    end
+
     member do
       post :run_maintenance
     end

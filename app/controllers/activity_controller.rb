@@ -27,6 +27,14 @@ class ActivityController < ApplicationController
     redirect_to activity_path, notice: "Engine start re-triggered."
   end
 
+  # Forcibly tears down a frozen engine: fails in-flight work, clears the queue,
+  # and scales the Trino cluster down. Redirects back to the activity screen.
+  def hard_reset
+    authorize :activity, :hard_reset?
+    TrinoEngineSupervisor.hard_reset!
+    redirect_to activity_path, notice: "Engine hard reset - everything in flight was failed and the cluster was torn down."
+  end
+
   # Cancels a running or queued Trino query on the coordinator.
   def cancel_query
     authorize :activity, :cancel_query?

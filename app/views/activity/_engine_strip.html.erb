@@ -5,62 +5,20 @@
     <span class="panel-note"><%= t("activity.engine.active_count", count: local_assigns[:active_count]) %></span>
   </div>
   <div class="panel-body flex flex-wrap items-center gap-4">
-    <% case engine_state.status %>
-    <% when "up" %>
-      <span class="badge badge-healthy"><span class="badge-dot"></span><%= t("activity.engine.up", time: time_ago_in_words(engine_state.status_changed_at)) %></span>
-    <% when "starting" %>
-      <span class="badge badge-warning"><span class="badge-dot"></span><%= t("activity.engine.starting", attempt: engine_state.start_attempts + 1, max: TrinoEngineSupervisor::MAX_START_ATTEMPTS) %></span>
-    <% when "draining" %>
-      <span class="badge badge-running"><span class="badge-dot"></span><%= t("activity.engine.draining", time: distance_of_time_in_words_to_now(engine_state.drain_started_at + TrinoEngineSupervisor::DRAIN_GRACE)) %></span>
-    <% when "failed" %>
-      <span class="badge badge-critical"><span class="badge-dot"></span><%= t("activity.engine.failed") %></span>
-      <% if engine_state.last_error.present? %>
-        <span class="cell-muted font-mono text-small"><%= engine_state.last_error %></span>
-      <% end %>
-      <% if defined?(current_user) && current_user&.admin? %>
+    <span class="badge <%= engine_status_badge_class(engine_state.status) %>">
+      <span class="badge-dot"></span><%= engine_status_label(engine_state) %>
+    </span>
+    <% if engine_state.last_error.present? %>
+      <span class="cell-muted font-mono text-small"><%= engine_state.last_error %></span>
+    <% end %>
+    <% if local_assigns.fetch(:render_actions, false) && current_user&.admin? %>
+      <span class="ml-auto flex items-center gap-2">
         <%= button_to t("activity.engine.retry"), restart_activity_path, method: :post,
                       class: "btn btn-default btn-sm" %>
-      <% end %>
-    <% else %>
-      <span class="badge badge-neutral"><span class="badge-dot"></span><%= t("activity.engine.down") %></span>
+        <%= button_to t("activity.engine.hard_reset"), hard_reset_activity_path, method: :post,
+                      class: "btn btn-danger btn-sm",
+                      data: { turbo_confirm: t("activity.engine.hard_reset_confirm") } %>
+      </span>
     <% end %>
   </div>
-
-  <% events = local_assigns.fetch(:engine_events, []) %>
-  <% if events.any? %>
-    <div class="border-t border-cosmos-line">
-      <div class="data-table-scroll">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th class="w-[34%]"><%= t("activity.engine.col_when") %></th>
-              <th class="w-[44%]"><%= t("activity.engine.col_event") %></th>
-              <th class="w-[22%]"><%= t("activity.engine.col_gen") %></th>
-            </tr>
-          </thead>
-          <tbody>
-            <% events.each do |event| %>
-              <tr>
-                <td>
-                  <span class="cell-muted"><%= timestamp(event.last_seen_at) %></span>
-                </td>
-                <td>
-                  <span class="badge badge-neutral"><%= engine_event_label(event) %></span>
-                </td>
-                <td class="cell-num">
-                  <% if event.context["generation"] %>
-                    <%= t("activity.engine.gen", gen: event.context["generation"]) %>
-                  <% elsif (g = engine_event_generation(event)) %>
-                    <%= t("activity.engine.gen", gen: g) %>
-                  <% else %>
-                    <span class="cell-muted">—</span>
-                  <% end %>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  <% end %>
 </section>

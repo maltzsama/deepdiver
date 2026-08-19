@@ -4,8 +4,16 @@
   <div>
     <p class="page-eyebrow"><%= t("tables.index.eyebrow") %></p>
     <h1 class="page-title"><%= t("tables.index.title") %></h1>
-    <p class="page-sub"><%= t("tables.index.subtitle") %></p>
+    <p class="page-sub">
+      <%= @last_sync_at ? t("tables.index.synced_ago", time: time_ago_in_words(@last_sync_at)) : t("tables.index.not_synced") %>
+    </p>
   </div>
+  <% if current_user.admin? %>
+    <div class="page-actions">
+      <%= button_to t("tables.index.sync_now"), sync_all_iceberg_tables_path, method: :post,
+                    class: "btn btn-primary" %>
+    </div>
+  <% end %>
 </div>
 
 <%= render "shared/filters",
