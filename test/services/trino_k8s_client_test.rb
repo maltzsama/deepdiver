@@ -9,7 +9,7 @@ class TrinoK8sClientTest < ActiveSupport::TestCase
       @patches = []
     end
 
-    def patch_deployment(name, namespace, patch)
+    def json_patch_deployment(name, patch, namespace)
       @patches << { name: name, namespace: namespace, patch: patch }
     end
 

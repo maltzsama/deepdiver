@@ -38,7 +38,9 @@ class HttpTransport
   # @return [Hash] the parsed JSON response
   # @raise [ApiError] on non-success responses
   def post(uri, body:, headers: {})
-    perform(Net::HTTP::Post.new(URI.parse(uri.to_s)), headers: headers, body: body)
+    request = Net::HTTP::Post.new(URI.parse(uri.to_s))
+    request["Content-Type"] = "application/json"
+    perform(request, headers: headers, body: body)
   end
 
   # Performs a DELETE request and parses the JSON response.

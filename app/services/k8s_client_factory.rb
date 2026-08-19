@@ -7,14 +7,24 @@ class K8sClientFactory
   # @return [K8sClient] the configured client
   def self.build
     kubeclient = Kubeclient::Client.new(
-      api_endpoint,
-      "apps/v1",
+      apps_endpoint,
+      "v1",
       auth_options: { bearer_token: bearer_token },
       ssl_options: { ca_file: ca_file }.compact
     )
     K8sClient.new(kubeclient,
                   namespace: ENV.fetch("TRINO_NAMESPACE"),
                   deployment: ENV.fetch("TRINO_DEPLOYMENT"))
+  end
+
+  # The base endpoint for the apps/v1 group. kubeclient builds the discovery
+  # URL by appending the version, so the endpoint must already carry /apis/apps
+  # (passing "apps/v1" as the version would produce /api/apps/v1, which is the
+  # wrong path and fails discovery with a Forbidden on the core group).
+  #
+  # @return [String] the apps/v1 endpoint URL
+  def self.apps_endpoint
+    "#{api_endpoint.chomp('/')}/apis/apps"
   end
 
   # The Kubernetes API endpoint, from env vars or the in-cluster service.
@@ -34,9 +44,21 @@ class K8sClientFactory
 
   # The CA certificate file used to verify the API TLS connection.
   #
+  # kubeclient expects a file PATH here (it calls SSL_CTX_load_verify_file),
+  # not the certificate contents.
+  #
   # @return [String, nil] the CA file path
   def self.ca_file
-    ENV["KUBE_CA_FILE"] || service_account_file("ca.crt")
+    ENV["KUBE_CA_FILE"] || service_account_file_path("ca.crt")
+  end
+
+  # The path of a service-account secret file, if present.
+  #
+  # @param name [String] the secret file name
+  # @return [String, nil] the file path
+  def self.service_account_file_path(name)
+    path = "/var/run/secrets/kubernetes.io/serviceaccount/#{name}"
+    path if File.exist?(path)
   end
 
   # Reads a service-account secret file, if present.
