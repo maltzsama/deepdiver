@@ -64,17 +64,22 @@ class IcebergTablesController < ApplicationController
     @evaluation = HealthEvaluator.evaluate(@extractor, plan: @table.maintenance_plan)
   end
 
-  # Fallback for the table-level "run now": runs the table's plan.
+  # Fallback for the table-level "run now": ensures a dispatchable plan exists
+  # (creating a default one when the table has none, resuming it when paused)
+  # and enqueues it. The operator clicked Run - that is intent to run, so a
+  # paused plan is resumed rather than bounced back with an error.
   def run_maintenance
     authorize @table, :run_maintenance?
     plan = @table.maintenance_plan
 
-    if plan && !plan.is_paused
-      MaintenanceOrchestrator.run_plan(plan.id)
-      redirect_to @table, notice: "Maintenance enqueued."
-    else
-      redirect_to @table, alert: "This table has no active plan to run."
+    if plan.nil?
+      plan = MaintenancePlan.create_default_for!(@table)
+    elsif plan.paused?
+      plan.update!(is_paused: false, consecutive_failures: 0, needs_review: false)
     end
+
+    MaintenanceOrchestrator.run_plan(plan.id)
+    redirect_to @table, notice: "Maintenance enqueued."
   end
 
   private
