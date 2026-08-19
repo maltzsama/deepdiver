@@ -28,17 +28,39 @@
 
   <% events = local_assigns.fetch(:engine_events, []) %>
   <% if events.any? %>
-    <div class="border-t border-cosmos-line px-5 py-3">
-      <p class="mb-2 font-mono text-small uppercase tracking-widest text-cosmos-fg-mute"><%= t("activity.engine.history") %></p>
-      <ul class="space-y-1">
-        <% events.each do |event| %>
-          <li class="flex items-center gap-2 text-small text-cosmos-fg-soft">
-            <span class="cell-muted"><%= timestamp(event.last_seen_at) %></span>
-            <span class="badge badge-neutral"><%= event.context["state"].presence || event.context["generation"] %></span>
-            <span class="cell-muted"><%= t("activity.engine.gen", gen: event.context["generation"]) if event.context["generation"] %></span>
-          </li>
-        <% end %>
-      </ul>
+    <div class="border-t border-cosmos-line">
+      <div class="data-table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-[34%]"><%= t("activity.engine.col_when") %></th>
+              <th class="w-[44%]"><%= t("activity.engine.col_event") %></th>
+              <th class="w-[22%]"><%= t("activity.engine.col_gen") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% events.each do |event| %>
+              <tr>
+                <td>
+                  <span class="cell-muted"><%= timestamp(event.last_seen_at) %></span>
+                </td>
+                <td>
+                  <span class="badge badge-neutral"><%= engine_event_label(event) %></span>
+                </td>
+                <td class="cell-num">
+                  <% if event.context["generation"] %>
+                    <%= t("activity.engine.gen", gen: event.context["generation"]) %>
+                  <% elsif (g = engine_event_generation(event)) %>
+                    <%= t("activity.engine.gen", gen: g) %>
+                  <% else %>
+                    <span class="cell-muted">—</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
     </div>
   <% end %>
 </section>
