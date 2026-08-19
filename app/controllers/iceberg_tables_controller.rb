@@ -10,6 +10,7 @@ class IcebergTablesController < ApplicationController
     authorize IcebergTable
     @catalogs   = Catalog.order(:name)
     @namespaces = IcebergTable.distinct.order(:namespace).pluck(:namespace)
+    @last_sync_at = IcebergTable.maximum(:metadata_synced_at)
 
     @tables = IcebergTable.active
                           .includes(:catalog, :maintenance_plan, :table_freshness_sla, :latest_freshness_check)
@@ -86,6 +87,14 @@ class IcebergTablesController < ApplicationController
 
     MaintenanceOrchestrator.run_plan(plan.id)
     redirect_to @table, notice: t("tables.run_maintenance.enqueued")
+  end
+
+  # Enqueues a metadata re-sync for every catalog so the table list reflects
+  # the current state of the lake. Admin-only (touches every catalog).
+  def sync_all
+    authorize :catalog, :sync?
+    Catalog.find_each { |catalog| MaintenanceOrchestrator.sync_catalog(catalog.id) }
+    redirect_to iceberg_tables_path, notice: t("tables.index.sync_enqueued")
   end
 
   private

@@ -99,6 +99,39 @@ module TrinoEngineSupervisor
     end
   end
 
+  # Hard reset for a frozen engine: fails everything in flight, clears the
+  # whole job queue, tears the Trino cluster down, and returns the engine to
+  # "down". Used from the activity screen when the engine stops making progress
+  # and a plain restart is not enough.
+  def hard_reset!
+    state.with_lock do
+      fail_in_flight!
+      begin
+        SolidQueue::Job.where(finished_at: nil).delete_all
+      rescue StandardError
+        nil # queue DB may not be provisioned in dev/test
+      end
+      transition!(state, "down", start_attempts: 0, last_error: nil, drain_started_at: nil) unless state.status == "down"
+    end
+
+    TrinoProvisioner.destroy! rescue nil
+    TrinoProvisioner.wait_gone!(timeout: 2.minutes) rescue nil
+    ActivityBroadcaster.broadcast!
+  end
+
+  # Frees every execution currently in flight, releasing their table locks so
+  # nothing is left dangling after a hard reset. Freshness runs are failed too.
+  def fail_in_flight!
+    ExecutionHistory.where(status: %w[pending running]).find_each do |execution|
+      TableLock.release(execution)
+      execution.update!(status: :failed, current_step: "start",
+                        finished_at: Time.current, error_message: "engine hard reset")
+    end
+    FreshnessRun.where(status: %w[pending running]).find_each do |run|
+      run.update!(status: "failed", finished_at: Time.current, error_message: "engine hard reset")
+    end
+  end
+
   # Releases everything that was waiting for the engine, from both sources.
   def release_pending!
     ExecutionHistory.where(status: "pending").find_each do |execution|

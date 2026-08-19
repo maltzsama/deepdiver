@@ -278,6 +278,34 @@ def execution_visual_state(execution)
     event.message.to_s[/generation (\d+)/, 1]
   end
 
+  # Badge class for a given engine status, so each lifecycle state gets its own
+  # colour in the engine strip and history table.
+  # @param status [String, nil] the engine status.
+  # @return [String] a badge-* CSS class.
+  def engine_status_badge_class(status)
+    case status
+    when "up"       then "badge-healthy"
+    when "starting" then "badge-warning"
+    when "draining" then "badge-running"
+    when "stopping" then "badge-warn"
+    when "failed"   then "badge-critical"
+    else                 "badge-neutral"
+    end
+  end
+
+  # Human label for the current engine status, with its time/re-attempt context.
+  # @param state [TrinoEngineState] the current engine state.
+  # @return [String] the translated label.
+  def engine_status_label(state)
+    case state.status
+    when "up"       then t("activity.engine.up", time: time_ago_in_words(state.status_changed_at))
+    when "starting" then t("activity.engine.starting", attempt: state.start_attempts + 1, max: TrinoEngineSupervisor::MAX_START_ATTEMPTS)
+    when "draining" then t("activity.engine.draining", time: distance_of_time_in_words_to_now(state.drain_started_at + TrinoEngineSupervisor::DRAIN_GRACE))
+    when "failed"   then t("activity.engine.failed")
+    else                 t("activity.engine.down")
+    end
+  end
+
   # Concise composition summary for the health tooltip in the tables list.
   # @param table [IcebergTable] the table whose composition is summarised.
   # @return [String] the tooltip text, or a "no data" translation when empty.

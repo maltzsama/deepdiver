@@ -84,4 +84,31 @@ RSpec.describe "GET /activity", type: :request do
 
     expect(response).to redirect_to(root_path)
   end
+
+  it "lets an admin hard-reset the engine, failing in-flight work" do
+    sign_in create(:user, :admin)
+    plan = create(:maintenance_plan, :with_all_steps)
+    running = create(:execution_history, maintenance_plan: plan, iceberg_table: plan.iceberg_table, status: :running)
+    pending = create(:execution_history, maintenance_plan: plan, iceberg_table: plan.iceberg_table, status: :pending)
+    TableLock.acquire(running)
+    TrinoEngineSupervisor.state.update!(status: "up", status_changed_at: Time.current)
+    allow(TrinoProvisioner).to receive(:destroy!)
+    allow(TrinoProvisioner).to receive(:wait_gone!)
+
+    post hard_reset_activity_path
+
+    expect(response).to redirect_to(activity_path)
+    expect(running.reload.status).to eq("failed")
+    expect(pending.reload.status).to eq("failed")
+    expect(TableLock.exists?(execution_history_id: running.id)).to be(false)
+    expect(TrinoEngineSupervisor.state.reload.status).to eq("down")
+  end
+
+  it "does not let an operator hard-reset the engine" do
+    sign_in create(:user, :operator)
+
+    post hard_reset_activity_path
+
+    expect(response).to redirect_to(root_path)
+  end
 end
