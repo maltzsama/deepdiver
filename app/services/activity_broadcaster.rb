@@ -42,7 +42,7 @@ module ActivityBroadcaster
       "activity",
       target: "activity-queue",
       partial: "activity/queue",
-      locals: { queue: QueueSummary.new.call }
+      locals: { queue: QueueSummary.new.call, running: running, queued: queued }
     )
   end
 end

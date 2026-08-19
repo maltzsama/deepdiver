@@ -23,6 +23,11 @@ class FakeTrinoProvisioner
   # @return [Boolean] true once the engine exists
   def rollout_complete? = @exists
 
+  # Desired replicas of the fake engine.
+  #
+  # @return [Integer] 1 after create!, 0 after destroy!
+  def replicas = @exists ? 1 : 0
+
   # The fake engine is always idle.
   #
   # @return [Boolean] always true

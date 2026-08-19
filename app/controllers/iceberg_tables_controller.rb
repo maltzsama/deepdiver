@@ -80,12 +80,12 @@ class IcebergTablesController < ApplicationController
     end
 
     if plan.execution_histories.where(status: %w[pending running]).exists?
-      redirect_to @table, alert: "Maintenance is already running or queued for this table."
+      redirect_to @table, notice: t("tables.run_maintenance.already_queued")
       return
     end
 
     MaintenanceOrchestrator.run_plan(plan.id)
-    redirect_to @table, notice: "Maintenance enqueued."
+    redirect_to @table, notice: t("tables.run_maintenance.enqueued")
   end
 
   private

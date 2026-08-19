@@ -36,6 +36,13 @@ class K8sClient
     status["readyReplicas"].to_i >= 1
   end
 
+  # The Deployment's desired replica count.
+  #
+  # @return [Integer] the spec.replicas count
+  def replicas
+    @kubeclient.get_deployment(deployment, namespace).spec["replicas"].to_i
+  end
+
   # Whether the Deployment currently exists.
   #
   # @return [Boolean] true when the Deployment is found

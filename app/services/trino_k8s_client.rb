@@ -14,6 +14,13 @@ class TrinoK8sClient
     @client.ready?
   end
 
+  # The Trino Deployment's desired replica count.
+  #
+  # @return [Integer] the spec.replicas count
+  def replicas
+    @client.replicas
+  end
+
   # Whether the Trino Deployment exists.
   #
   # @return [Boolean] true when present

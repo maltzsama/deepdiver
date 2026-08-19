@@ -4,8 +4,9 @@ class TrinoK8sClientTest < ActiveSupport::TestCase
   class FakeKubeClient
     attr_reader :patches
 
-    def initialize(ready_replicas: 1)
+    def initialize(ready_replicas: 1, replicas: 1)
       @ready_replicas = ready_replicas
+      @replicas = replicas
       @patches = []
     end
 
@@ -14,7 +15,8 @@ class TrinoK8sClientTest < ActiveSupport::TestCase
     end
 
     def get_deployment(name, namespace)
-      OpenStruct.new(status: { "readyReplicas" => @ready_replicas })
+      OpenStruct.new(status: { "readyReplicas" => @ready_replicas },
+                     spec: { "replicas" => @replicas })
     end
   end
 
@@ -36,5 +38,12 @@ class TrinoK8sClientTest < ActiveSupport::TestCase
 
     assert ready.ready?
     assert_not not_ready.ready?
+  end
+
+  test "reports the desired replica count" do
+    client = TrinoK8sClient.new(client: K8sClient.new(FakeKubeClient.new(replicas: 2),
+                                                      namespace: "trino", deployment: "trino"))
+
+    assert_equal 2, client.replicas
   end
 end
