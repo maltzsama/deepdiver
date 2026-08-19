@@ -61,4 +61,24 @@ RSpec.describe "Cadence per step" do
     expect(execution.reload.status).to eq("skipped")
     expect(execution.error_message).to include("still running")
   end
+
+  it "reaps a stale lock left by a finished execution before running" do
+    stale = create(:execution_history, iceberg_table: table, status: :success)
+    TableLock.acquire(stale)
+
+    expect { MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 03:00")) }
+      .to change { TableLock.count }.from(1).to(0)
+  end
+
+  it "drains the engine when a dispatch is skipped and nothing else needs it" do
+    TrinoEngineSupervisor.state.update!(status: "up", status_changed_at: Time.current)
+    holder = create(:execution_history, iceberg_table: table, status: :success)
+    TableLock.acquire(holder)
+    execution = create(:execution_history, iceberg_table: table, status: :pending)
+
+    MaintenanceOrchestrator.start_execution_on_engine(execution.id)
+
+    expect(execution.reload.status).to eq("skipped")
+    expect(TrinoEngineSupervisor.state.reload.status).to eq("draining")
+  end
 end

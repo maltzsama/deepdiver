@@ -69,4 +69,14 @@ RSpec.describe ExecuteMaintenanceJob, type: :job do
     expect(execution.reload.status).to eq("failed")
     expect(TrinoEngineSupervisor.state.reload.status).to eq("draining")
   end
+
+  it "releases the table lock when the chain finishes successfully" do
+    execution = released_execution
+    TableLock.acquire(execution)
+
+    5.times { described_class.perform_now(execution.id) }
+
+    expect(execution.reload.status).to eq("success")
+    expect(TableLock.exists?(execution_history_id: execution.id)).to be(false)
+  end
 end

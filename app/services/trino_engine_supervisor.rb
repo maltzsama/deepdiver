@@ -126,6 +126,10 @@ module TrinoEngineSupervisor
   # can show when the cluster went up, down, draining, etc. Genuine failures are
   # recorded separately with severity "error" by the jobs that detect them.
   #
+  # These are informational markers, not actionable errors, so they are recorded
+  # already resolved - otherwise every start/stop would pile up as an "open
+  # error" on the error surface.
+  #
   # The generation is part of the message: ErrorEvent dedupes by message, and the
   # timeline needs every up/down to be its own event rather than one counter.
   #
@@ -134,7 +138,7 @@ module TrinoEngineSupervisor
   def record_lifecycle!(record, status)
     ErrorEvent.record(
       catalog: nil, schema: "engine", operation: "engine-lifecycle",
-      source_system: "engine", severity: "info",
+      source_system: "engine", severity: "info", status: "resolved",
       message: "engine #{status} (generation #{record.generation})",
       context: { attempts: record.start_attempts }
     )

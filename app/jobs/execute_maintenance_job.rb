@@ -84,12 +84,13 @@ class ExecuteMaintenanceJob < ApplicationJob
     end
   end
 
-  # Marks the execution successful, resets the plan's failure counter, and
-  # notifies the supervisor that demand has finished.
+  # Marks the execution successful, resets the plan's failure counter, frees
+  # the per-table lock, and notifies the supervisor that demand has finished.
   # @param execution [ExecutionHistory] the execution that just completed.
   def finish_chain(execution)
     execution.update!(status: :success, current_step: "done", finished_at: Time.current)
     execution.maintenance_plan.update!(consecutive_failures: 0)
+    TableLock.release(execution)
     TrinoEngineSupervisor.demand_finished!
   end
 end

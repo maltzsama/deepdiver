@@ -15,6 +15,9 @@ module MaintenanceOrchestrator
   def self.run_plan(plan_id, at: Time.current)
     plan = MaintenancePlan.find(plan_id)
 
+    # A leftover lock from a finished execution must never block a new run.
+    TableLock.reap_stale!
+
     execution = plan.execution_histories.create!(status: :pending, current_step: :start,
                                                  iceberg_table_id: plan.iceberg_table_id,
                                                  started_at: at)
@@ -91,7 +94,9 @@ module MaintenanceOrchestrator
     end
   end
 
-  # Marks an execution skipped because its table lock is contended.
+  # Marks an execution skipped because its table lock is contended, and tells
+  # the supervisor demand dropped - otherwise the engine would stay up forever
+  # with nothing left to run.
   #
   # @param execution [ExecutionHistory] the execution to skip
   def self.skip_for_overlap(execution)
@@ -101,6 +106,7 @@ module MaintenanceOrchestrator
       finished_at: Time.current,
       error_message: "previous execution still running on this table"
     )
+    TrinoEngineSupervisor.demand_finished!
   end
   private_class_method :skip_for_overlap
 
