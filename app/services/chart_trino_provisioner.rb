@@ -73,11 +73,14 @@ class ChartTrinoProvisioner
     @k8s.scale(0)
   end
 
-  # Blocks until the Deployment disappears or the timeout elapses.
+  # Blocks until the Deployment is scaled down or the timeout elapses.
+  #
+  # destroy! only scales to 0 (the Deployment is not deleted), so "gone" here
+  # means no replicas remain.
   #
   # @param timeout [ActiveSupport::Duration] how long to wait
   def wait_gone!(timeout:)
     deadline = Time.current + timeout
-    sleep 1 until !exists? || Time.current > deadline
+    sleep 1 until @k8s.replicas.zero? || Time.current > deadline
   end
 end

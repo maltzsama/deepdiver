@@ -6,7 +6,7 @@ class TrinoProvisioner
   class Error < StandardError; end
 
   class << self
-    delegate :exists?, :healthy?, :rollout_complete?, :idle?, :active_queries,
+    delegate :exists?, :healthy?, :rollout_complete?, :idle?, :replicas, :active_queries,
              :cancel_query, :create!, :destroy!, :wait_gone!, to: :adapter
 
     # Returns the provisioner adapter selected by the TRINO_PROVISIONER env var.

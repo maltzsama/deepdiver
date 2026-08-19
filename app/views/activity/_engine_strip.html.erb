@@ -34,8 +34,8 @@
         <% events.each do |event| %>
           <li class="flex items-center gap-2 text-small text-cosmos-fg-soft">
             <span class="cell-muted"><%= timestamp(event.last_seen_at) %></span>
-            <span class="badge badge-neutral"><%= event.message.sub("engine ", "").split(" (").first %></span>
-            <span class="cell-muted"><%= event.message.split(" (").last.to_s.sub(")", "") %></span>
+            <span class="badge badge-neutral"><%= event.context["state"].presence || event.context["generation"] %></span>
+            <span class="cell-muted"><%= t("activity.engine.gen", gen: event.context["generation"]) if event.context["generation"] %></span>
           </li>
         <% end %>
       </ul>

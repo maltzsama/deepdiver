@@ -184,7 +184,7 @@ RSpec.describe "POST /iceberg_tables/:id/run_maintenance", type: :request do
 
     expect(response).to redirect_to(iceberg_table_path(table))
     expect(table.execution_histories.where(status: "pending").count).to eq(1)
-    expect(flash[:alert]).to include("already running")
+    expect(flash[:notice]).to include("already queued")
   end
 
   it "rejects viewers" do

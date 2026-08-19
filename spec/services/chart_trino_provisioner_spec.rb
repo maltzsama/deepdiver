@@ -24,4 +24,12 @@ RSpec.describe ChartTrinoProvisioner do
 
     expect(provisioner.active_queries.size).to eq(1)
   end
+
+  it "wait_gone! returns once the deployment is scaled to zero" do
+    k8s = double("TrinoK8sClient", replicas: 0)
+    provisioner = described_class.new(k8s: k8s, transport: transport, base_url: "http://trino")
+
+    expect(provisioner.wait_gone!(timeout: 5.seconds)).to be_nil
+    expect(k8s).to have_received(:replicas)
+  end
 end

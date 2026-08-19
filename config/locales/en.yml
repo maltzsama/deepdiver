@@ -71,6 +71,7 @@ en:
       retry: "Retry start"
       down: "Down"
       history: "Lifecycle"
+      gen: "generation %{gen}"
     queries:
       title: "Active queries"
       count: "%{count} query(s)"
@@ -87,6 +88,16 @@ en:
       running: "Running"
       scheduled: "Scheduled"
       failed: "Failed"
+    pipeline:
+      title: "Pipeline"
+      in_flight:
+        one: "%{count} execution in flight"
+        other: "%{count} executions in flight"
+      queued: "Queued"
+      running: "Running"
+      ready: "Work ready"
+      waiting_lock: "waiting for its table's lock"
+      waiting_engine: "waiting for the engine"
     running:
       title: "Running now"
       empty: "Nothing running."
@@ -234,6 +245,9 @@ en:
       title: "Edit catalog"
 
   tables:
+    run_maintenance:
+      enqueued: "Maintenance enqueued - it will start when the engine comes up."
+      already_queued: "Maintenance for this table is already queued or running."
     show:
       eyebrow_prefix: "Table ·"
       new_schedule: "New schedule"

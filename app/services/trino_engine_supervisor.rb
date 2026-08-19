@@ -140,7 +140,7 @@ module TrinoEngineSupervisor
       catalog: nil, schema: "engine", operation: "engine-lifecycle",
       source_system: "engine", severity: "info", status: "resolved",
       message: "engine #{status} (generation #{record.generation})",
-      context: { attempts: record.start_attempts }
+      context: { attempts: record.start_attempts, generation: record.generation, state: status }
     )
   end
   private_class_method :record_lifecycle!

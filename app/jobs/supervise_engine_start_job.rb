@@ -6,9 +6,9 @@ class SuperviseEngineStartJob < ApplicationJob
 
   POLL_INTERVAL = ENV.fetch("TRINO_START_POLL_SECONDS", "5").to_i.seconds
 
-  # Ensures the Trino cluster exists, waits until it is ready, then marks the
-  # engine up and releases pending executions. On failure it retries or marks
-  # the engine failed, failing every pending execution.
+  # Ensures the Trino cluster exists, waits until it is ready, marks the engine
+  # up (recording the transition and broadcasting it), then releases pending
+  # executions.
   def perform
     state = TrinoEngineSupervisor.state
     return unless state.status == "starting"
@@ -18,7 +18,7 @@ class SuperviseEngineStartJob < ApplicationJob
     ensure_cluster_present
     wait_until_ready!
 
-    state.update!(status: "up", last_error: nil, status_changed_at: Time.current)
+    TrinoEngineSupervisor.transition!(state, "up", last_error: nil)
     TrinoEngineSupervisor.release_pending!
   rescue TrinoProvisioner::Error, Timeout::Error => e
     handle_start_failure(state, e)
@@ -26,12 +26,10 @@ class SuperviseEngineStartJob < ApplicationJob
 
   private
 
-  # A cluster that exists and is sick is worse than one that is absent:
-  # destroy and recreate.
+  # A cluster that is up but sick is worse than one that is absent: destroy and
+  # recreate. A cluster scaled to 0 (just drained) is simply off - bring it up.
   def ensure_cluster_present
-    if TrinoProvisioner.exists?
-      return if TrinoProvisioner.healthy?
-
+    if TrinoProvisioner.exists? && TrinoProvisioner.replicas.positive? && !TrinoProvisioner.healthy?
       Rails.logger.warn("Existing Trino in bad state; destroying before recreating")
       TrinoProvisioner.destroy!
       TrinoProvisioner.wait_gone!(timeout: 2.minutes)
