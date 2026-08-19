@@ -255,6 +255,29 @@ def execution_visual_state(execution)
     content_tag(:span, value.to_fs(:db), class: "cell-num", title: value.iso8601)
   end
 
+  # The engine state of a lifecycle event, from its structured context when
+  # present, otherwise parsed from the legacy "engine <state> (generation N)"
+  # message.
+  # @param event [ErrorEvent] the lifecycle event.
+  # @return [String] the state label.
+  def engine_event_label(event)
+    state = event.context["state"]
+    return state if state.presence
+
+    event.message.to_s.sub(/\Aengine /, "").split(" (", 2).first.presence || event.context["generation"] || "—"
+  end
+
+  # The generation of a lifecycle event, from context or parsed from the legacy
+  # message.
+  # @param event [ErrorEvent] the lifecycle event.
+  # @return [String, nil] the generation, or nil when unknown.
+  def engine_event_generation(event)
+    gen = event.context["generation"]
+    return gen if gen.presence
+
+    event.message.to_s[/generation (\d+)/, 1]
+  end
+
   # Concise composition summary for the health tooltip in the tables list.
   # @param table [IcebergTable] the table whose composition is summarised.
   # @return [String] the tooltip text, or a "no data" translation when empty.

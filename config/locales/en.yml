@@ -72,6 +72,9 @@ en:
       down: "Down"
       history: "Lifecycle"
       gen: "generation %{gen}"
+      col_when: "When"
+      col_event: "Event"
+      col_gen: "Generation"
     queries:
       title: "Active queries"
       count: "%{count} query(s)"
