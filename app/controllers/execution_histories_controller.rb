@@ -46,11 +46,13 @@ class ExecutionHistoriesController < ApplicationController
     scope = ExecutionHistory.includes(iceberg_table: :catalog, execution_steps: :maintenance_step)
     scope = scope.joins(:iceberg_table).where(iceberg_tables: { catalog_id: params[:catalog_id] }) if params[:catalog_id].present?
     scope = scope.where(status: params[:status]) if params[:status].present?
-    scope = scope.joins(:execution_steps).where(execution_steps: { operation: params[:operation] }).distinct if params[:operation].present?
+    if params[:operation].present?
+      scope = scope.where(id: ExecutionHistory.joins(:execution_steps)
+                        .where(execution_steps: { operation: params[:operation] }).select(:id))
+    end
     if params[:stopped_at_step].present?
-      scope = scope.joins(:execution_steps)
-                   .where(execution_steps: { operation: params[:stopped_at_step], status: "failed" })
-                   .distinct
+      scope = scope.where(id: ExecutionHistory.joins(:execution_steps)
+                        .where(execution_steps: { operation: params[:stopped_at_step], status: "failed" }).select(:id))
     end
 
     scope.latest.limit(200).map do |execution|

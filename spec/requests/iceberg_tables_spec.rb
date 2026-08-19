@@ -130,3 +130,59 @@ RSpec.describe "GET /iceberg_tables/:id", type: :request do
     expect(response.body).to include("not enough data to score")
   end
 end
+
+RSpec.describe "POST /iceberg_tables/:id/run_maintenance", type: :request do
+  let(:user)     { create(:user, :operator) }
+  let(:catalog)  { create(:catalog) }
+  let(:table)    { create(:iceberg_table, catalog:) }
+
+  before { sign_in user }
+
+  it "creates a default plan and runs it when the table has none" do
+    expect(table.maintenance_plan).to be_nil
+
+    post run_maintenance_iceberg_table_path(table)
+
+    expect(response).to redirect_to(iceberg_table_path(table))
+    expect(table.reload.maintenance_plan).to be_present
+    expect(table.maintenance_plan.maintenance_steps.map(&:operation))
+      .to contain_exactly(*MaintenancePlan::CANONICAL_ORDER)
+    expect(table.maintenance_plan.enabled_steps.map(&:operation))
+      .to contain_exactly("optimize", "expire_snapshots")
+    expect(table.execution_histories.last.status).to eq("pending")
+  end
+
+  it "resumes and runs a paused plan" do
+    plan = create(:maintenance_plan, :with_all_steps, iceberg_table: table,
+                  is_paused: true, consecutive_failures: 3, needs_review: true)
+
+    post run_maintenance_iceberg_table_path(table)
+
+    expect(response).to redirect_to(iceberg_table_path(table))
+    plan.reload
+    expect(plan.is_paused).to be(false)
+    expect(plan.consecutive_failures).to eq(0)
+    expect(plan.needs_review).to be(false)
+    expect(table.execution_histories.last.status).to eq("pending")
+  end
+
+  it "runs an active plan without creating another" do
+    plan = create(:maintenance_plan, :with_all_steps, iceberg_table: table)
+
+    post run_maintenance_iceberg_table_path(table)
+
+    expect(response).to redirect_to(iceberg_table_path(table))
+    expect(table.reload.maintenance_plan).to eq(plan)
+    expect(table.execution_histories.last.status).to eq("pending")
+  end
+
+  it "rejects viewers" do
+    sign_in create(:user)
+
+    post run_maintenance_iceberg_table_path(table)
+
+    expect(response).to redirect_to(root_path)
+    expect(table.reload.maintenance_plan).to be_nil
+    expect(table.execution_histories).to be_empty
+  end
+end

@@ -25,8 +25,12 @@ class TriageQuery
 
   private
 
-  # Selects the distinct tables whose health or enabled freshness SLA is in a
-  # bad state, eager-loading their catalog, SLA, and maintenance plan.
+  # Selects the tables whose health or enabled freshness SLA is in a bad
+  # state, eager-loading their catalog, SLA, and maintenance plan.
+  #
+  # table_freshness_sla is has_one, so the left join never produces duplicate
+  # rows and no DISTINCT is needed. DISTINCT on iceberg_tables.* would break on
+  # Postgres anyway: the json columns have no equality operator.
   # @return [ActiveRecord::Relation<IcebergTable>] the degraded tables.
   def candidates
     IcebergTable
@@ -38,7 +42,6 @@ class TriageQuery
           .or(TableFreshnessSla.arel_table[:status].in(BAD_FRESHNESS)
               .and(TableFreshnessSla.arel_table[:enabled].eq(true)))
       )
-      .distinct
   end
 
   # Assembles a Row for a table, collecting the reasons it is degraded and the

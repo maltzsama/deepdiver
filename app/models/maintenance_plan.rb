@@ -13,6 +13,11 @@ class MaintenancePlan < ApplicationRecord
   #   remove_orphan_files sweeps last what is left unreferenced
   CANONICAL_ORDER = %w[optimize expire_snapshots optimize_manifests remove_orphan_files].freeze
 
+  # The steps a freshly-created plan runs by default: the safe, non-destructive
+  # chain the operator gets when hitting "run now" on a table without a plan.
+  DEFAULT_ENABLED_STEPS = %w[optimize expire_snapshots].freeze
+  DEFAULT_CRON = "0 2 * * *"
+
   belongs_to :iceberg_table
   belongs_to :maintenance_policy, optional: true
   has_many :maintenance_steps, -> { order(:position) }, dependent: :destroy
@@ -24,6 +29,24 @@ class MaintenancePlan < ApplicationRecord
   validate  :cron_is_parseable
 
   scope :dispatchable, -> { where(is_paused: false) }
+
+  # Builds a plan for a table with the full canonical step chain, enabling only
+  # the default steps. Used by the operator "run now" path when a table has no
+  # plan yet.
+  # @param table [IcebergTable] the table to own the plan
+  # @return [MaintenancePlan] the persisted plan with its steps
+  def self.create_default_for!(table)
+    plan = create!(iceberg_table: table, cron: DEFAULT_CRON)
+    CANONICAL_ORDER.each_with_index do |operation, position|
+      plan.maintenance_steps.create!(
+        operation: operation,
+        position: position,
+        enabled: DEFAULT_ENABLED_STEPS.include?(operation),
+        config: {}
+      )
+    end
+    plan
+  end
 
   # Whether dispatch of this plan is paused.
   # @return [Boolean]
