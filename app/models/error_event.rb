@@ -38,7 +38,7 @@ class ErrorEvent < ApplicationRecord
     # @return [ErrorEvent] the created or updated event
     def record(catalog:, schema:, table: nil, operation:, source_system:,
                error_class: "StandardError", message:, severity: "error",
-               context: {}, source_column: nil)
+               context: {}, source_column: nil, status: "open")
       event = find_or_initialize_by(
         catalog_id: catalog&.id,
         schema: schema,
@@ -58,7 +58,7 @@ class ErrorEvent < ApplicationRecord
         event.assign_attributes(
           error_class: error_class,
           severity: severity,
-          status: "open",
+          status: status,
           context: context.compact.transform_keys(&:to_s),
           source_column: source_column,
           first_seen_at: Time.current,
