@@ -81,12 +81,12 @@ class IcebergTablesController < ApplicationController
     end
 
     if plan.execution_histories.where(status: %w[pending running]).exists?
-      redirect_to @table, notice: t("tables.run_maintenance.already_queued")
+      redirect_back fallback_location: iceberg_tables_path, notice: t("tables.run_maintenance.already_queued")
       return
     end
 
     MaintenanceOrchestrator.run_plan(plan.id)
-    redirect_to @table, notice: t("tables.run_maintenance.enqueued")
+    redirect_back fallback_location: iceberg_tables_path, notice: t("tables.run_maintenance.enqueued")
   end
 
   # Enqueues a metadata re-sync for every catalog so the table list reflects
