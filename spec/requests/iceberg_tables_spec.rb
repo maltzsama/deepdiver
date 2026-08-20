@@ -143,7 +143,7 @@ RSpec.describe "POST /iceberg_tables/:id/run_maintenance", type: :request do
 
     post run_maintenance_iceberg_table_path(table)
 
-    expect(response).to redirect_to(iceberg_table_path(table))
+    expect(response).to redirect_to(iceberg_tables_path)
     expect(table.reload.maintenance_plan).to be_present
     expect(table.maintenance_plan.maintenance_steps.map(&:operation))
       .to contain_exactly(*MaintenancePlan::CANONICAL_ORDER)
@@ -158,7 +158,7 @@ RSpec.describe "POST /iceberg_tables/:id/run_maintenance", type: :request do
 
     post run_maintenance_iceberg_table_path(table)
 
-    expect(response).to redirect_to(iceberg_table_path(table))
+    expect(response).to redirect_to(iceberg_tables_path)
     plan.reload
     expect(plan.is_paused).to be(false)
     expect(plan.consecutive_failures).to eq(0)
@@ -171,7 +171,7 @@ RSpec.describe "POST /iceberg_tables/:id/run_maintenance", type: :request do
 
     post run_maintenance_iceberg_table_path(table)
 
-    expect(response).to redirect_to(iceberg_table_path(table))
+    expect(response).to redirect_to(iceberg_tables_path)
     expect(table.reload.maintenance_plan).to eq(plan)
     expect(table.execution_histories.last.status).to eq("pending")
   end
@@ -182,7 +182,7 @@ RSpec.describe "POST /iceberg_tables/:id/run_maintenance", type: :request do
 
     post run_maintenance_iceberg_table_path(table)
 
-    expect(response).to redirect_to(iceberg_table_path(table))
+    expect(response).to redirect_to(iceberg_tables_path)
     expect(table.execution_histories.where(status: "pending").count).to eq(1)
     expect(flash[:notice]).to include("already queued")
   end
