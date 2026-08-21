@@ -26,7 +26,7 @@ RSpec.describe "Profile", type: :request do
     before { sign_in user }
 
     it "updates display name, locale and theme" do
-      patch profile_path, params: { profile: { display_name: "D. Albuquerque", locale: "en", theme: "dark" } }
+      patch profile_path, params: { user: { display_name: "D. Albuquerque", locale: "en", theme: "dark" } }
 
       expect(response).to redirect_to(profile_path)
       user.reload
@@ -37,7 +37,7 @@ RSpec.describe "Profile", type: :request do
     end
 
     it "never lets the caller promote themselves" do
-      patch profile_path, params: { profile: { display_name: "Hacker", role: "admin" } }
+      patch profile_path, params: { user: { display_name: "Hacker", role: "admin" } }
 
       expect(user.reload.role).to eq("viewer")
     end
@@ -48,7 +48,7 @@ RSpec.describe "Profile", type: :request do
 
     it "changes the password with the current password" do
       patch password_profile_path, params: {
-        profile: { current_password: user.password, password: "new-secret-123", password_confirmation: "new-secret-123" }
+        user: { current_password: user.password, password: "new-secret-123", password_confirmation: "new-secret-123" }
       }
 
       expect(response).to redirect_to(profile_path)
@@ -57,10 +57,10 @@ RSpec.describe "Profile", type: :request do
 
     it "rejects a wrong current password" do
       patch password_profile_path, params: {
-        profile: { current_password: "nope", password: "new-secret-123", password_confirmation: "new-secret-123" }
+        user: { current_password: "nope", password: "new-secret-123", password_confirmation: "new-secret-123" }
       }
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(user.reload.valid_password?("new-secret-123")).to be false
     end
 
@@ -69,7 +69,7 @@ RSpec.describe "Profile", type: :request do
       sign_in sso_user
 
       patch password_profile_path, params: {
-        profile: { current_password: sso_user.password, password: "new-secret-123", password_confirmation: "new-secret-123" }
+        user: { current_password: sso_user.password, password: "new-secret-123", password_confirmation: "new-secret-123" }
       }
 
       expect(response).to have_http_status(:not_found)

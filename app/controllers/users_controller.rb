@@ -28,7 +28,7 @@ class UsersController < ApplicationController
     if error
       @user ||= User.new(email: params[:user][:email])
       @user.errors.add(:base, error)
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     else
       redirect_to users_path, notice: t("users.notices.invited", email: @user.email)
     end

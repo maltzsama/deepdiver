@@ -11,7 +11,7 @@ class ProfilesController < ApplicationController
   def update
     return redirect_to(profile_path, notice: "Account updated.") if current_user.update(profile_params)
 
-    render :show, status: :unprocessable_entity
+    render :show, status: :unprocessable_content
   end
 
   # Password change is only exposed to local (non-SSO) accounts.
@@ -22,7 +22,7 @@ class ProfilesController < ApplicationController
       bypass_sign_in(current_user)
       redirect_to profile_path, notice: "Password updated."
     else
-      render :show, status: :unprocessable_entity
+      render :show, status: :unprocessable_content
     end
   end
 

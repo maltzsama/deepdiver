@@ -53,7 +53,7 @@ RSpec.describe "Teams", type: :request do
         post teams_path, params: { team: { name: "" } }
       }.not_to change(Team, :count)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 

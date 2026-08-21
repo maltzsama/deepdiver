@@ -875,5 +875,5 @@ pt-BR:
         catalog:
           attributes:
             trino_catalog_name_override:
-              invalid_format: "precisa comecar com letra minuscula e conter so letras, numeros e _ (max. %{max}). Derivado: %{derived}"
+              invalid_format: "precisa comecar com letra minúscula e conter so letras, numeros e _ (max. %{max}). Derivado: %{derived}"
               reserved: "%{name} e reservado pelo Trino (%{reserved})"

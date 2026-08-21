@@ -34,7 +34,7 @@ class MaintenancePoliciesController < ApplicationController
     if @policy.save
       redirect_to @policy, notice: "Policy created."
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -52,7 +52,7 @@ class MaintenancePoliciesController < ApplicationController
       count = @policy.propagate!
       redirect_to @policy, notice: "Policy updated. #{count} plan(s) synced."
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
