@@ -62,6 +62,8 @@ en:
     col_since: "First seen"
     col_count: "Times"
     col_status: "Status"
+    acknowledge: "Acknowledge"
+    resolve: "Resolve"
     overview_banner: "%{count} open error(s) — inspect the error surface."
     catalog_banner: "%{catalog} has %{count} open error(s)."
     table_banner: "This table has %{count} open error(s)."
