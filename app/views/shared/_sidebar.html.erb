@@ -58,6 +58,7 @@
       <div class="sidebar-section">
         <div class="sidebar-section-title"><%= t("layout.nav.security") %></div>
         <%= nav_link_to users_path, icon: "user" do %><span><%= t("layout.nav.users") %></span><% end %>
+        <%= nav_link_to teams_path, icon: "team" do %><span><%= t("layout.nav.teams") %></span><% end %>
         <%= nav_link_to alert_settings_path, icon: "bell" do %><span><%= t("layout.nav.alerts") %></span><% end %>
         <%= nav_link_to trino_engine_config_path, icon: "settings" do %><span><%= t("layout.nav.engine") %></span><% end %>
       </div>

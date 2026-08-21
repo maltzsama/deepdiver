@@ -49,6 +49,16 @@ FactoryBot.define do
     auth_method { "none" }
   end
 
+  factory :team do
+    sequence(:name) { |n| "Team #{n}" }
+    description { "On-call squad" }
+  end
+
+  factory :team_membership do
+    team
+    user
+  end
+
   factory :iceberg_table do
     catalog
     sequence(:name) { |n| "table-#{n}" }

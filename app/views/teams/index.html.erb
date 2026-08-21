@@ -1,0 +1,60 @@
+<% content_for :title, "#{t("teams.index.title")} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("teams.index.eyebrow") %></p>
+    <h1 class="page-title"><%= t("teams.index.title") %></h1>
+    <p class="page-sub"><%= t("teams.index.subtitle") %></p>
+  </div>
+  <div class="page-actions">
+    <% if policy(Team).new? %>
+      <%= link_to t("teams.index.new"), new_team_path, class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>
+
+<% if @teams.empty? %>
+  <section class="panel">
+    <div class="empty">
+      <p class="empty-title"><%= t("teams.index.empty_title") %></p>
+      <p class="empty-hint"><%= t("teams.index.empty_hint") %></p>
+    </div>
+  </section>
+<% else %>
+  <section class="panel">
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><%= t("teams.index.col_name") %></th>
+            <th><%= t("teams.index.col_members") %></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @teams.each do |team| %>
+            <tr>
+              <td class="cell-id">
+                <%= link_to team.name, team_path(team) %>
+                <% if team.description.present? %>
+                  <span class="cell-meta block"><%= team.description %></span>
+                <% end %>
+              </td>
+              <td class="cell-num"><%= team.members.count %></td>
+              <td class="text-right whitespace-nowrap">
+                <% if policy(team).edit? %>
+                  <%= link_to t("teams.index.edit"), edit_team_path(team), class: "btn btn-default btn-sm" %>
+                <% end %>
+                <% if policy(team).destroy? %>
+                  <%= button_to t("teams.index.delete"), team_path(team), method: :delete,
+                                form: { data: { turbo_confirm: t("teams.index.delete_confirm") } },
+                                class: "btn btn-danger btn-sm" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% end %>

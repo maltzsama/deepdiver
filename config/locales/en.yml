@@ -15,6 +15,7 @@ en:
       errors: "Errors"
       security: "Security"
       users: "Users"
+      teams: "Teams"
       alerts: "Alerts"
       engine: "Engine"
       collapse: "Collapse sidebar"
@@ -68,9 +69,74 @@ en:
     status_open: "Open"
     status_acknowledged: "Acknowledged"
     status_resolved: "Resolved"
+    actions:
+      acknowledge: "Acknowledge"
+      resolve: "Mark as resolved"
+      assign: "Assign and notify"
+    show:
+      title: "Error detail"
+      message_title: "What happened"
+      where: "Where"
+      operation: "Operation"
+      source_system: "Source"
+      error_class: "Error class"
+      first_seen: "First seen"
+      last_seen: "Last seen"
+      occurrences: "Occurrences"
+      source_column: "Column"
+      acknowledged_at: "Acknowledged at"
+      resolved_at: "Resolved at"
+      context_title: "Context"
+      assign_title: "Assignment"
+      assign_hint: "Hand this problem to a person or a whole team. Assignees get an email; the event stays open until they acknowledge it."
+      target_type: "Assign to"
+      user: "User"
+      team: "Team"
+      assigned_to: "Assigned to"
+      assigned_team: "Assigned team"
+    notices:
+      acknowledged_one: "Error acknowledged."
+      resolved_one: "Error marked as resolved."
+      assigned: "%{count} assignee(s) notified by email."
+      invalid_target: "Pick a valid user or team to assign."
     overview_banner: "%{count} open error(s) — inspect the error surface."
     catalog_banner: "%{catalog} has %{count} open error(s)."
     table_banner: "This table has %{count} open error(s)."
+
+  teams:
+    index:
+      eyebrow: "Administration"
+      title: "Teams"
+      subtitle: "Groups of people that errors can be assigned to."
+      new: "New team"
+      col_name: "Name"
+      col_members: "Members"
+      edit: "Edit"
+      delete: "Delete"
+      delete_confirm: "Delete this team? Members stay in the app."
+      empty_title: "No teams yet"
+      empty_hint: "Create a team to hand whole squads a set of errors at once."
+    new:
+      title: "New team"
+    edit:
+      title: "Edit team"
+    form:
+      name: "Name"
+      description: "Description"
+      members_title: "Members (admin / operator)"
+      submit_create: "Create team"
+      submit_update: "Save changes"
+      cancel: "Cancel"
+    show:
+      edit: "Edit"
+      members_title: "Members"
+      col_email: "Email"
+      col_role: "Role"
+      empty_members: "No members yet. Edit the team to add some."
+    notices:
+      created: "Team created."
+      updated: "Team updated."
+      destroyed: "Team deleted."
 
   activity:
     eyebrow: "Activity"
@@ -846,6 +912,17 @@ en:
   devise:
     failure:
       suspended: "Your account has been suspended. Contact an administrator."
+
+  error_event_mailer:
+    assignment:
+      subject: "[LakeDeepDiver] Error assigned to you: %{operation} on %{where}"
+      greeting: "Hello,"
+      intro: "%{assigned_by} assigned an error event to you."
+      operation: "Operation"
+      where: "Where"
+      message: "Message"
+      error_class: "Error class"
+      occurrences: "Occurrences"
 
   activerecord:
     errors:

@@ -32,8 +32,17 @@ Rails.application.routes.draw do
     post "trino_queries/:query_id/cancel", action: :cancel_query, as: :cancel_trino_query
   end
 
-  # Superfície de erro (CR-72): opens the list of recorded failures.
-  resources :error_events, only: %i[index]
+  # Error surface (CR-72): list, detail, assign/acknowledge/resolve workflow.
+  resources :error_events, only: %i[index show] do
+    member do
+      patch :acknowledge
+      patch :assign
+      patch :resolve
+    end
+  end
+
+  # Teams group users so error events can be assigned to a whole squad.
+  resources :teams
 
   resources :catalogs, only: %i[index show new create edit update destroy] do
     member do

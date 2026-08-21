@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_21_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_21_150001) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"
@@ -51,6 +51,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_140000) do
   end
 
   create_table "error_events", force: :cascade do |t|
+    t.datetime "acknowledged_at"
+    t.integer "assigned_by_id"
+    t.integer "assigned_to_id"
     t.integer "catalog_id"
     t.json "context", default: {}
     t.datetime "created_at", null: false
@@ -60,6 +63,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_140000) do
     t.string "message", default: "", null: false
     t.integer "occurrence_count", default: 1, null: false
     t.string "operation", default: "catalog-sync", null: false
+    t.datetime "resolved_at"
     t.string "schema", default: "", null: false
     t.string "severity", default: "error", null: false
     t.string "source_column"
@@ -67,6 +71,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_140000) do
     t.string "status", default: "open", null: false
     t.string "table", default: "", null: false
     t.datetime "updated_at", null: false
+    t.index ["assigned_by_id"], name: "index_error_events_on_assigned_by_id"
+    t.index ["assigned_to_id"], name: "index_error_events_on_assigned_to_id"
     t.index ["catalog_id", "status"], name: "index_error_events_on_catalog_id_and_status"
     t.index ["catalog_id"], name: "index_error_events_on_catalog_id"
     t.index ["operation", "status"], name: "index_error_events_on_operation_and_status"
@@ -287,6 +293,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_140000) do
     t.index ["iceberg_table_id"], name: "index_table_locks_on_iceberg_table_id", unique: true
   end
 
+  create_table "team_memberships", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["team_id", "user_id"], name: "index_team_memberships_on_team_id_and_user_id", unique: true
+    t.index ["team_id"], name: "index_team_memberships_on_team_id"
+    t.index ["user_id"], name: "index_team_memberships_on_user_id"
+  end
+
+  create_table "teams", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_teams_on_name", unique: true
+  end
+
   create_table "trino_catalog_registry", primary_key: ["cluster_id", "catalog_name"], force: :cascade do |t|
     t.string "catalog_name", null: false
     t.string "catalog_version"
@@ -362,6 +386,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_140000) do
 
   add_foreign_key "catalog_credentials", "catalogs"
   add_foreign_key "error_events", "catalogs"
+  add_foreign_key "error_events", "users", column: "assigned_by_id"
+  add_foreign_key "error_events", "users", column: "assigned_to_id"
   add_foreign_key "execution_histories", "iceberg_tables"
   add_foreign_key "execution_histories", "maintenance_plans"
   add_foreign_key "execution_histories", "maintenance_schedules"
@@ -379,6 +405,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_140000) do
   add_foreign_key "table_freshness_slas", "iceberg_tables"
   add_foreign_key "table_locks", "execution_histories"
   add_foreign_key "table_locks", "iceberg_tables"
+  add_foreign_key "team_memberships", "teams"
+  add_foreign_key "team_memberships", "users"
   add_foreign_key "trino_catalog_registry", "trino_clusters", column: "cluster_id"
   add_foreign_key "users", "users", column: "invited_by_id"
   add_foreign_key "users", "users", column: "suspended_by_id"

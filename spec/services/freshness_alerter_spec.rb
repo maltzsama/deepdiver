@@ -84,6 +84,33 @@ RSpec.describe FreshnessAlerter, type: :service do
     end
   end
 
+  describe "error surface integration" do
+    it "records one freshness event when a table enters late" do
+      expect { described_class.new(sla, result_for(3.hours)).call }
+        .to change(ErrorEvent, :count).by(1)
+
+      event = ErrorEvent.last
+      expect(event.operation).to eq("freshness-check")
+      expect(event.status).to eq("open")
+    end
+
+    it "does not duplicate the event while the table stays late" do
+      described_class.new(sla, result_for(3.hours)).call
+      described_class.new(sla.reload, result_for(4.hours)).call
+
+      expect(ErrorEvent.where(operation: "freshness-check").count).to eq(1)
+    end
+
+    it "auto-resolves the freshness event on recovery" do
+      described_class.new(sla, result_for(3.hours)).call
+      described_class.new(sla.reload, result_for(10, status: "ok")).call
+
+      event = ErrorEvent.find_by!(operation: "freshness-check")
+      expect(event.status).to eq("resolved")
+      expect(event.resolved_at).to be_present
+    end
+  end
+
   describe "alert payload" do
     it "routes the alert through AlertNotifier with the SLA destination and rich context" do
       described_class.new(sla, result_for(3.5.hours)).call
