@@ -44,6 +44,10 @@ module TrinoEngineSupervisor
         MaintenanceOrchestrator.supervise_engine_start
       end
     end
+  rescue ConcurrentTransitionError
+    nil
+  ensure
+    broadcast_deferred!
   end
 
   # Marks the engine draining when demand ends while it is up.
@@ -56,6 +60,10 @@ module TrinoEngineSupervisor
       transition!(current, "draining", drain_started_at: Time.current)
       MaintenanceOrchestrator.drain_engine
     end
+  rescue ConcurrentTransitionError
+    nil
+  ensure
+    broadcast_deferred!
   end
 
   # Called by DrainEngineJob immediately before destroying. Returns false if
@@ -74,12 +82,18 @@ module TrinoEngineSupervisor
       transition!(current, "stopping")
       true
     end
+  rescue ConcurrentTransitionError
+    false
+  ensure
+    broadcast_deferred!
   end
 
   # Called after the destruction finished.
   def finish_stopping!
     current = state
     current.with_lock do
+      raise ConcurrentTransitionError, "finish_stopping! called in status #{current.status}" unless current.status == "stopping"
+
       transition!(current, "down", drain_started_at: nil)
 
       # Demand that arrived during stopping: start again now.
@@ -88,15 +102,27 @@ module TrinoEngineSupervisor
         MaintenanceOrchestrator.supervise_engine_start
       end
     end
+  rescue ConcurrentTransitionError
+    nil
+  ensure
+    broadcast_deferred!
   end
 
   # Operator-forced restart from the activity screen.
   def restart!
     current = state
     current.with_lock do
+      if current.status == "starting" || current.status == "stopping"
+        return
+      end
+
       transition!(current, "starting", start_attempts: 0, last_error: nil)
       MaintenanceOrchestrator.supervise_engine_start
     end
+  rescue ConcurrentTransitionError
+    nil
+  ensure
+    broadcast_deferred!
   end
 
   # Hard reset for a frozen engine: fails everything in flight, clears the
@@ -111,11 +137,19 @@ module TrinoEngineSupervisor
       rescue StandardError
         nil # queue DB may not be provisioned in dev/test
       end
-      transition!(state, "down", start_attempts: 0, last_error: nil, drain_started_at: nil) unless state.status == "down"
+      unless state.status == "down"
+        transition!(state, "down", start_attempts: 0, last_error: nil, drain_started_at: nil)
+      end
     end
-
+  rescue ConcurrentTransitionError
+    nil
+  ensure
     TrinoProvisioner.destroy! rescue nil
     TrinoProvisioner.wait_gone!(timeout: 2.minutes) rescue nil
+    broadcast_deferred!
+  end
+
+  def broadcast_deferred!
     ActivityBroadcaster.broadcast!
   end
 
@@ -149,11 +183,19 @@ module TrinoEngineSupervisor
   # @param status [String] the target status
   # @param extra [Hash] additional attributes to write
   def transition!(record, status, **extra)
-    record.update!(status: status, status_changed_at: Time.current,
-                   generation: record.generation + 1, **extra)
+    new_gen = record.generation + 1
+    updated = TrinoEngineState.where(id: record.id)
+                                .update_all(status: status, status_changed_at: Time.current,
+                                           generation: new_gen, **extra)
+    unless updated == 1
+      raise ConcurrentTransitionError, "CAS lost: expected generation #{record.generation}, status #{record.status}, target #{status}"
+    end
+
+    record.reload
     record_lifecycle!(record, status)
-    ActivityBroadcaster.broadcast!
   end
+
+  class ConcurrentTransitionError < StandardError; end
 
   # Records the transition as an info-level engine event so the activity screen
   # can show when the cluster went up, down, draining, etc. Genuine failures are
