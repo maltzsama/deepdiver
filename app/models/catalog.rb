@@ -17,7 +17,7 @@ class Catalog < ApplicationRecord
 
   validates :name, presence: true, uniqueness: true
   validates :catalog_type, presence: true, inclusion: { in: CATALOG_TYPES }
-  validates :endpoint, presence: true, format: { with: /\Ahttps?:\/\//i, message: :must_be_http }
+  validates :endpoint, presence: true, format: { with: /\Ahttps?:\/\/\S+\z/i, message: :must_be_http }
   validate :trino_catalog_name_is_valid
   validate :endpoint_not_internal
 
