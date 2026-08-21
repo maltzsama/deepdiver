@@ -53,8 +53,13 @@ class DrainEngineJob < ApplicationJob
     Rails.logger.error("Trino destroy failed: #{e.message}")
     ErrorEvent.record(catalog: nil, schema: "engine", operation: "engine-drain",
                       source_system: "engine", error_class: e.class.name, message: e.message)
-    TrinoEngineSupervisor.state.with_lock do |current|
+    current = TrinoEngineSupervisor.state
+    current.with_lock do
       TrinoEngineSupervisor.transition!(current, "failed", last_error: e.message)
     end
+  rescue TrinoEngineSupervisor::ConcurrentTransitionError
+    nil
+  ensure
+    TrinoEngineSupervisor.broadcast_deferred!
   end
 end

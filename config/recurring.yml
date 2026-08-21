@@ -11,3 +11,7 @@ production:
     class: EnqueueCatalogSyncJob
     queue: sync
     schedule: every 6 hours at minute 10
+  engine_watchdog:
+    class: EngineWatchdogJob
+    queue: default
+    schedule: every 2 minutes
