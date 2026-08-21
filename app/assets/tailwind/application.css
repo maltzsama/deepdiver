@@ -366,6 +366,7 @@
   .badge-critical { @apply border-transparent text-red-DEFAULT bg-red-soft animate-pulse; }
   .badge-unknown  { @apply border-transparent text-cosmos-fg-mute bg-cosmos-soft; }
   .badge-neutral  { @apply border-transparent text-cosmos-fg-mute bg-cosmos-soft; }
+  .badge-pending  { @apply border-transparent text-info-DEFAULT bg-info-soft; }
 
   /* ---------- strata bar ---------- */
   .strata { @apply flex items-center gap-2; }

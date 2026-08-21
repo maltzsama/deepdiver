@@ -93,4 +93,7 @@ Rails.application.routes.draw do
 
   # Global alert transport (CR-84): the SMTP server and the single Slack webhook.
   resource :alert_settings, only: %i[show update]
+
+  # Ephemeral Trino engine topology and sizing (single-node vs coordinator+workers).
+  resource :trino_engine_config, only: %i[show update]
 end

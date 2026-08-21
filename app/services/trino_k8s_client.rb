@@ -34,4 +34,12 @@ class TrinoK8sClient
   def scale(replicas)
     @client.scale(replicas)
   end
+
+  # Applies the engine node spec (replicas, resources, env) via a strategic-merge
+  # patch.
+  #
+  # @param args [Hash] forwarded to K8sClient#apply_spec
+  def apply_spec(**args)
+    @client.apply_spec(**args)
+  end
 end

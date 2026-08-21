@@ -25,7 +25,7 @@
       </div>
     <% end %>
 
-    <%= form_with model: current_user, url: profile_path, method: :patch, class: "form-grid" do |f| %>
+    <%= form_with model: current_user, as: :profile, url: profile_path, method: :patch, class: "form-grid" do |f| %>
       <div class="field">
         <%= f.label :display_name, t("profiles.show.display_name"), class: "field-label" %>
         <p class="field-hint"><%= t("profiles.show.display_name_hint") %></p>
@@ -62,7 +62,7 @@
     <% if current_user.sso? %>
       <p class="field-hint"><%= t("profiles.show.sso_managed") %></p>
     <% else %>
-      <%= form_with model: current_user, url: password_profile_path, method: :patch,
+      <%= form_with model: current_user, as: :profile, url: password_profile_path, method: :patch,
                     class: "form-grid", id: "password-form" do |f| %>
         <div class="field">
           <%= f.label :current_password, t("profiles.show.current_password"), class: "field-label" %>

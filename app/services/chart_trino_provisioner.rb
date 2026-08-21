@@ -1,17 +1,31 @@
 # Provisions Trino through the Helm chart in Kubernetes (the production
 # default). Health and idleness come from the coordinator itself: the engine is
-# ephemeral, so create!/destroy! scale the Deployment 1<->0 and health is read
+# ephemeral, so create!/destroy! scale the Deployments 1<->0 and health is read
 # from GET /v1/info.
+#
+# The engine is either a single-node pod (coordinator also runs tasks) or a
+# coordinator with separate workers, driven by TrinoEngineConfig. Resources and
+# topology are applied from that config on every create!.
 class ChartTrinoProvisioner
-  # Creates the provisioner with injectable k8s client, transport and base URL.
+  # Creates the provisioner with injectable k8s clients, transport and base URL.
   #
-  # @param k8s [TrinoK8sClient] the Kubernetes client
+  # @param k8s [TrinoK8sClient] the coordinator Kubernetes client
+  # @param worker_k8s [TrinoK8sClient] the worker Kubernetes client
   # @param transport [HttpTransport] the HTTP transport
   # @param base_url [String] the Trino coordinator base URL
-  def initialize(k8s: TrinoK8sClient.new, transport: HttpTransport.new, base_url: ENV.fetch("TRINO_URL"))
+  def initialize(k8s: TrinoK8sClient.new, worker_k8s: nil,
+                 transport: HttpTransport.new, base_url: ENV.fetch("TRINO_URL"))
     @k8s = k8s
+    @worker_k8s = worker_k8s || TrinoK8sClient.new(client: K8sClientFactory.build_worker)
     @transport = transport
     @base_url = base_url
+  end
+
+  # The active engine config (singleton).
+  #
+  # @return [TrinoEngineConfig]
+  def config
+    TrinoEngineConfig.instance
   end
 
   # Whether the Trino Deployment currently exists.
@@ -29,14 +43,17 @@ class ChartTrinoProvisioner
     false
   end
 
-  # Whether the Deployment is fully rolled out and ready.
+  # Whether the Deployments are fully rolled out and ready: the coordinator and,
+  # in cluster topology, the workers.
   #
-  # @return [Boolean] true when at least one replica is ready
+  # @return [Boolean] true when every required node is ready
   def rollout_complete?
-    @k8s.ready?
+    return false unless @k8s.ready?
+
+    config.cluster? ? @worker_k8s.ready? : true
   end
 
-  # The Deployment's desired replica count.
+  # The coordinator's desired replica count (the authority for the engine).
   #
   # @return [Integer] the spec.replicas count
   def replicas
@@ -70,17 +87,20 @@ class ChartTrinoProvisioner
     false
   end
 
-  # Scales the Deployment up to 1 replica.
+  # Applies the engine config and scales the coordinator up (and workers, in
+  # cluster topology).
   def create!
-    @k8s.scale(1)
+    apply_coordinator_spec
+    apply_worker_spec if config.cluster?
   end
 
-  # Scales the Deployment down to 0 replicas.
+  # Scales both the coordinator and workers down to 0 replicas.
   def destroy!
     @k8s.scale(0)
+    @worker_k8s.scale(0)
   end
 
-  # Blocks until the Deployment is scaled down or the timeout elapses.
+  # Blocks until the coordinator is scaled down or the timeout elapses.
   #
   # destroy! only scales to 0 (the Deployment is not deleted), so "gone" here
   # means no replicas remain.
@@ -89,5 +109,32 @@ class ChartTrinoProvisioner
   def wait_gone!(timeout:)
     deadline = Time.current + timeout
     sleep 1 until @k8s.replicas.zero? || Time.current > deadline
+  end
+
+  private
+
+  # The env the coordinator's config.properties resolves via ${ENV:...}:
+  # whether it also runs tasks (single topology) or is a pure coordinator.
+  #
+  # @return [Hash<String,String>]
+  def coordinator_env
+    { "TRINO_INCLUDE_COORDINATOR" => config.cluster? ? "false" : "true" }
+  end
+
+  def apply_coordinator_spec
+    @k8s.apply_spec(
+      replicas: 1,
+      cpu: config.coordinator_cpu,
+      memory: config.coordinator_memory,
+      env: coordinator_env
+    )
+  end
+
+  def apply_worker_spec
+    @worker_k8s.apply_spec(
+      replicas: config.worker_replicas,
+      cpu: config.worker_cpu,
+      memory: config.worker_memory
+    )
   end
 end

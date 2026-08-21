@@ -60,7 +60,9 @@ class ExecuteMaintenanceJob < ApplicationJob
     handle_commit_conflict(execution, result_row, e)
   rescue StandardError => e
     result_row&.update!(status: "failed", finished_at: Time.current, error_message: e.message)
-    ExecutionFailureHandler.handle(execution, "#{result_row.operation}: #{e.message}")
+    table = execution.iceberg_table
+    context = "#{result_row.operation} on #{table.fully_qualified_name} (#{table.catalog&.name})"
+    ExecutionFailureHandler.handle(execution, "#{context}: #{e.message}")
     # The handler marked the execution failed, so demand may have dropped to
     # zero - let the supervisor evaluate whether the engine can drain.
     TrinoEngineSupervisor.demand_finished!

@@ -2,16 +2,21 @@ require "test_helper"
 
 class TrinoK8sClientTest < ActiveSupport::TestCase
   class FakeKubeClient
-    attr_reader :patches
+    attr_reader :patches, :merge_patches
 
     def initialize(ready_replicas: 1, replicas: 1)
       @ready_replicas = ready_replicas
       @replicas = replicas
       @patches = []
+      @merge_patches = []
     end
 
     def json_patch_deployment(name, patch, namespace)
       @patches << { name: name, namespace: namespace, patch: patch }
+    end
+
+    def patch_deployment(name, patch, namespace)
+      @merge_patches << { name: name, namespace: namespace, patch: patch }
     end
 
     def get_deployment(name, namespace)
@@ -45,5 +50,23 @@ class TrinoK8sClientTest < ActiveSupport::TestCase
                                                       namespace: "trino", deployment: "trino"))
 
     assert_equal 2, client.replicas
+  end
+
+  test "apply_spec patches replicas, resources and env via strategic merge" do
+    kube = FakeKubeClient.new
+    client = K8sClient.new(kube, namespace: "trino", deployment: "trino-coordinator")
+
+    client.apply_spec(replicas: 3, cpu: "2", memory: "4Gi", env: { "TRINO_COORDINATOR" => "true" })
+
+    patch = kube.merge_patches.first[:patch]
+    assert_equal "trino-coordinator", kube.merge_patches.first[:name]
+    assert_equal "trino", kube.merge_patches.first[:namespace]
+
+    assert_equal 3, patch["spec"]["replicas"]
+    container = patch["spec"]["template"]["spec"]["containers"].first
+    assert_equal "trino", container["name"]
+    assert_equal "2", container["resources"]["requests"]["cpu"]
+    assert_equal "4Gi", container["resources"]["limits"]["memory"]
+    assert_equal [ { "name" => "TRINO_COORDINATOR", "value" => "true" } ], container["env"]
   end
 end

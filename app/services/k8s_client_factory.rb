@@ -2,10 +2,27 @@
 # Pod's ServiceAccount token and CA; in dev/admin runs KUBE_API_URL + KUBE_TOKEN
 # are used instead.
 class K8sClientFactory
-  # Builds a K8sClient from the in-cluster or explicit credentials.
+  # Builds a K8sClient for the coordinator Deployment.
   #
   # @return [K8sClient] the configured client
   def self.build
+    build_for(ENV.fetch("TRINO_DEPLOYMENT"))
+  end
+
+  # Builds a K8sClient for the worker Deployment.
+  #
+  # @return [K8sClient] the configured client
+  def self.build_worker
+    build_for(ENV.fetch("TRINO_WORKER_DEPLOYMENT", "trino-worker"))
+  end
+
+  # Builds a K8sClient from explicit credentials, targeting a specific
+  # Deployment. In the cluster we rely on the Pod's ServiceAccount token and CA;
+  # in dev/admin runs KUBE_API_URL + KUBE_TOKEN are used instead.
+  #
+  # @param deployment [String] the Deployment name to manage
+  # @return [K8sClient] the configured client
+  def self.build_for(deployment)
     kubeclient = Kubeclient::Client.new(
       apps_endpoint,
       "v1",
@@ -14,7 +31,7 @@ class K8sClientFactory
     )
     K8sClient.new(kubeclient,
                   namespace: ENV.fetch("TRINO_NAMESPACE"),
-                  deployment: ENV.fetch("TRINO_DEPLOYMENT"))
+                  deployment: deployment)
   end
 
   # The base endpoint for the apps/v1 group. kubeclient builds the discovery
