@@ -180,7 +180,9 @@ en:
       subtitle: "Edit the schedule and the chain of maintenance steps."
       paused_hint: "This plan is paused. Changes will not run until it resumes."
       review_hint: "This plan took %{failures} consecutive failures and needs review before it resumes working."
-      errors_other: "%{count} problems to fix"
+      errors:
+        one: "1 problem to fix"
+        other: "%{count} problems to fix"
       schedule_title: "Schedule"
       cron: "Cron"
       cron_hint: "Standard five-field cron, server timezone."
