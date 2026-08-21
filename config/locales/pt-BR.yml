@@ -62,6 +62,8 @@ pt-BR:
     col_since: "Primeira vez"
     col_count: "Vezes"
     col_status: "Status"
+    acknowledge: "Reconhecer"
+    resolve: "Resolver"
     overview_banner: "%{count} erro(s) aberto(s) - inspecione a superficie de erros."
     catalog_banner: "%{catalog} tem %{count} erro(s) aberto(s)."
     table_banner: "Esta tabela tem %{count} erro(s) aberto(s)."

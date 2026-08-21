@@ -17,21 +17,17 @@ class ErrorEventsController < ApplicationController
   # redirects back.
   def acknowledge
     authorize ErrorEvent
-    params.fetch(:ids, []).each_slice(100) do |ids|
-      ErrorEvent.where(id: ids, status: "open").update_all(status: "acknowledged", updated_at: Time.current)
-    end
+    ids = Array(params[:ids])
+    count = ErrorEvent.where(id: ids, status: "open").update_all(status: "acknowledged", updated_at: Time.current)
     redirect_back fallback_location: error_events_path,
-                  notice: "#{Array(params[:ids]).size} error(s) acknowledged."
+                  notice: "#{count} error(s) acknowledged."
   end
 
-  # Marks the selected open or acknowledged error events as resolved in
-  # batches and redirects back.
   def resolve
     authorize ErrorEvent
-    params.fetch(:ids, []).each_slice(100) do |ids|
-      ErrorEvent.where(id: ids, status: %w[open acknowledged]).update_all(status: "resolved", updated_at: Time.current)
-    end
+    ids = Array(params[:ids])
+    count = ErrorEvent.where(id: ids, status: %w[open acknowledged]).update_all(status: "resolved", updated_at: Time.current)
     redirect_back fallback_location: error_events_path,
-                  notice: "#{Array(params[:ids]).size} error(s) resolved."
+                  notice: "#{count} error(s) resolved."
   end
 end
