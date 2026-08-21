@@ -111,12 +111,12 @@ lists every environment variable the application reads.
 | `TRINO_MAX_START_ATTEMPTS` | No | `2` | Start retries before marking engine failed. |
 | `TRINO_START_POLL_SECONDS` | No | `5` | Polling interval during startup. |
 | `TRINO_DRAIN_GRACE_MINUTES` | No | `5` | Grace period before draining idle engine. |
-| `TRINO_DRAIN_POLL_SECONDS` | No | `5` | Polling interval during drain. |
-| `TRINO_MAINT_MAX_SECONDS` | No | `300` | Max seconds per maintenance step. |
-| `TRINO_MAINT_POLL_SECONDS` | No | `5` | Polling interval for step completion. |
-| `TRINO_QUERY_MAX_SECONDS` | No | `300` | Max seconds per Trino query. |
-| `TRINO_QUERY_POLL_SECONDS` | No | `5` | Polling interval for query completion. |
-| `TRINO_HEARTBEAT_STALE_MINUTES` | No | `10` | Minutes before a running query is considered stale. |
+| `TRINO_DRAIN_POLL_SECONDS` | No | `10` | Polling interval during drain. |
+| `TRINO_MAINT_MAX_SECONDS` | No | `21600` | Max seconds per maintenance step (6 h). |
+| `TRINO_MAINT_POLL_SECONDS` | No | `1` | Polling interval for step completion. |
+| `TRINO_QUERY_MAX_SECONDS` | No | `3600` | Max seconds per Trino query (1 h). |
+| `TRINO_QUERY_POLL_SECONDS` | No | `1` | Polling interval for query completion. |
+| `TRINO_HEARTBEAT_STALE_MINUTES` | No | `15` | Minutes before a running query is considered stale. |
 
 ### Kubernetes
 
