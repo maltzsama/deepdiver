@@ -18,7 +18,8 @@
                         class: "btn btn-default" %>
         <% else %>
           <%= button_to t("plans.show.pause"), pause_maintenance_plan_path(@plan), method: :post,
-                        class: "btn btn-default" %>
+                        class: "btn btn-default",
+                        data: { turbo_confirm: t("plans.show.pause_confirm") } %>
         <% end %>
       <% end %>
     </div>

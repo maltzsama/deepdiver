@@ -161,6 +161,7 @@ pt-BR:
       subtitle: "roda no cron %{cron}"
       run_now: "Executar agora"
       pause: "Pausar plano"
+      pause_confirm: "Pausar este plano? Execucoes agendadas nao serao disparadas ate ser retomado."
       resume: "Retomar plano"
       edit: "Editar"
       state: "Estado"
