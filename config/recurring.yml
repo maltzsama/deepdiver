@@ -1,4 +1,8 @@
 production:
+  schedule_dispatch:
+    class: ScheduleDispatchJob
+    queue: maintenance
+    schedule: every minute
   freshness_sweep:
     class: EnqueueFreshnessSweepJob
     queue: freshness
