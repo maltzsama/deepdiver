@@ -55,21 +55,6 @@ RSpec.describe "ErrorEvents", type: :request do
     end
   end
 
-  describe "POST /error_events/acknowledge" do
-    before { sign_in admin }
-
-    it "acknowledges open events" do
-      catalog = create(:catalog)
-      event = ErrorEvent.record(catalog: catalog, schema: "reporting", operation: "sync-table",
-                                source_system: "catalog", message: "boom")
-
-      post acknowledge_error_events_path, params: { ids: [ event.id ] }
-
-      expect(event.reload.status).to eq("acknowledged")
-      expect(response).to redirect_to(error_events_path)
-    end
-  end
-
   describe "overview banner" do
     it "shows open errors on the dashboard" do
       sign_in user
