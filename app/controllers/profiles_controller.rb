@@ -31,11 +31,11 @@ class ProfilesController < ApplicationController
   # Role and status are never editable from the profile: promotions happen on
   # the users screen only.
   def profile_params
-    params.require(:profile).permit(:display_name, :locale, :theme)
+    params.require(:user).permit(:display_name, :locale, :theme)
   end
 
   # Strong parameters for a password change.
   def password_params
-    params.require(:profile).permit(:current_password, :password, :password_confirmation)
+    params.require(:user).permit(:current_password, :password, :password_confirmation)
   end
 end
