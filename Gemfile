@@ -87,3 +87,5 @@ gem "bullet", "~> 8.1", groups: [ :development, :test ]
 gem "solid_cable", "~> 4.0"
 
 gem "pundit", "~> 2.5", require: "pundit"
+
+gem "pagy", "~> 9.0"
