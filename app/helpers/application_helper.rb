@@ -163,6 +163,49 @@ def execution_visual_state(execution)
     end
   end
 
+  # Pager for list screens. Builds page URLs from the current query string so
+  # filters survive paging, and renders pages as badges: active = badge-ok,
+  # links = badge-mute, gaps as an ellipsis, disabled prev/next dimmed.
+  # @param pagy [Pagy] the pagination object.
+  # @return [ActiveSupport::SafeBuffer, nil] the rendered nav, nil when a
+  #   single page.
+  def pager_nav(pagy)
+    return if pagy.pages <= 1
+
+    content_tag(:nav, class: "pager flex items-center justify-center gap-1 my-4",
+                     aria: { label: t("filters.pager") }) do
+      safe_join([
+        pager_arrow(pagy_page_path(pagy.prev), "&lsaquo;", enabled: pagy.prev.present?),
+        safe_join(pagy.series.map do |item|
+          case item
+          when Integer
+            if item == pagy.label.to_i
+              content_tag(:span, item, class: "badge badge-ok pager-page", "aria-current": "page")
+            else
+              link_to(item.to_s, pagy_page_path(item), class: "badge badge-mute pager-page")
+            end
+          when :gap then content_tag(:span, "…", class: "pager-gap")
+          end
+        end),
+        pager_arrow(pagy_page_path(pagy.next), "&rsaquo;", enabled: pagy.next.present?)
+      ])
+    end
+  end
+
+  # Path to one pager page preserving every current query param.
+  def pagy_page_path(page)
+    url_for(request.query_parameters.merge(page: page))
+  end
+
+  # Prev/next arrow; renders an inert dimmed span when disabled.
+  def pager_arrow(path, glyph, enabled:)
+    if enabled
+      link_to(glyph.html_safe, path, class: "badge badge-mute pager-page", rel: "prev-next")
+    else
+      content_tag(:span, glyph.html_safe, class: "badge badge-mute pager-page pager-disabled")
+    end
+  end
+
   # Renders a sidebar navigation link with an optional inline SVG icon,
   # marking the link active when it matches the current page.
   # @param path [String] the destination of the link.

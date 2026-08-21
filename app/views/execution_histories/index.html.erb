@@ -89,7 +89,7 @@
                     <span class="ml-2 text-small cell-muted"><%= event[:table].catalog.name %></span>
                   </span>
                 </td>
-                <td><%= render "shared/step_chain", execution: execution %></td>
+                <td><%= render "shared/step_chain", execution: execution, label: false %></td>
                 <td>
                   <span class="badge <%= execution_status_badge_class(execution.status) %>">
                     <span class="badge-dot"></span><%= execution.status %>
@@ -100,53 +100,50 @@
               </tr>
               <tr class="table-subrow">
                 <td colspan="5">
-                  <div class="flex flex-col">
-                    <% execution.execution_steps.each do |step| %>
-                      <div class="grid grid-cols-[28%_22%_16%_14%_20%] items-center gap-x-3 py-1.5">
-                        <div></div>
-                        <div class="font-mono text-small text-cosmos-fg-soft"><%= step.operation %></div>
-                        <div class="flex flex-wrap items-center gap-2">
-                          <span class="badge <%= execution_step_badge_class(step.status) %>"><%= step.status %></span>
-                          <% if step.retry_count.positive? %>
-                            <span class="badge badge-warning"><%= t("operations.index.retries", count: step.retry_count) %></span>
-                          <% end %>
-                        </div>
-                        <div class="text-small">
-                          <% if step.started_at %>
-                            <span class="cell-muted"><%= duration_label(step.duration) || "—" %></span>
-                          <% end %>
-                        </div>
-                        <div class="text-small">
-                          <% if step.started_at %>
-                            <span class="cell-muted"><%= timestamp(step.started_at) %></span>
-                          <% end %>
-                        </div>
+                  <div class="step-grid">
+                    <% execution.execution_steps.each_with_index do |step, i| %>
+                      <% skipped = step.status == "skipped" %>
+                      <% row_class = skipped ? "step-row-skipped" : nil %>
+                      <div class="step-index-cell <%= row_class %>"><span class="step-index"><%= i + 1 %></span></div>
+                      <div class="step-name <%= row_class %>"><%= step.operation %></div>
+                      <div class="step-status <%= row_class %>">
+                        <span class="badge <%= execution_step_badge_class(step.status) %>"><%= step.status %></span>
+                        <% if step.retry_count.positive? %>
+                          <span class="badge badge-warning"><%= t("operations.index.retries", count: step.retry_count) %></span>
+                        <% end %>
                       </div>
-                      <% if step.trino_query_id.present? || step.metrics.present? %>
-                        <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-micro text-cosmos-fg-mute">
-                          <% if step.trino_query_id.present? %>
-                            <span title="<%= t("operations.index.col_query_id") %>"><%= step.trino_query_id %></span>
-                          <% end %>
-                          <% stats = step.metrics&.dig("stats") %>
-                          <% if stats.present? %>
-                            <% if stats["elapsedTimeMillis"] %>
-                              <span><%= number_with_delimiter(stats["elapsedTimeMillis"]) %> <%= t("operations.metrics_ms") %></span>
-                            <% end %>
-                            <% if stats["processedBytes"] %>
-                              <span><%= number_to_human_size(stats["processedBytes"]) %> <%= t("operations.metrics_processed") %></span>
-                            <% end %>
-                            <% if stats["physicalWrittenBytes"] %>
-                              <span><%= number_to_human_size(stats["physicalWrittenBytes"]) %> <%= t("operations.metrics_written") %></span>
-                            <% end %>
-                          <% end %>
-                        </div>
+                      <div class="cell-num text-small <%= row_class %>">
+                        <% if step.started_at %><%= duration_label(step.duration) || "—" %><% end %>
+                      </div>
+                      <div class="text-small <%= row_class %>">
+                        <% if step.started_at %><%= timestamp(step.started_at) %><% end %>
+                      </div>
+
+                      <% meta_parts = [] %>
+                      <% if step.trino_query_id.present? %>
+                        <% meta_parts << content_tag(:span, step.trino_query_id, title: t("operations.index.col_query_id")) %>
+                      <% end %>
+                      <% stats = step.metrics&.dig("stats") %>
+                      <% if stats.present? %>
+                        <% meta_parts << "#{number_with_delimiter(stats["elapsedTimeMillis"])} #{t("operations.metrics_ms")}" if stats["elapsedTimeMillis"] %>
+                        <% meta_parts << "#{number_to_human_size(stats["processedBytes"])} #{t("operations.metrics_processed")}" if stats["processedBytes"] %>
+                        <% meta_parts << "#{number_to_human_size(stats["physicalWrittenBytes"])} #{t("operations.metrics_written")}" if stats["physicalWrittenBytes"] %>
                       <% end %>
                       <% if step.error_message.present? %>
-                        <p class="py-1 font-sans text-small <%= step.status == "failed" ? "text-red-DEFAULT" : "text-warn-DEFAULT" %> break-all"><%= step.error_message %></p>
+                        <% if step.status == "failed" %>
+                          <% meta_parts << content_tag(:span, step.error_message, class: "text-red-DEFAULT") %>
+                        <% else %>
+                          <% meta_parts << step.error_message %>
+                        <% end %>
+                      <% end %>
+                      <% if meta_parts.any? %>
+                        <div class="step-meta <%= "text-red-DEFAULT" if step.status == "failed" %> <%= row_class %>">
+                          <%= safe_join(meta_parts, content_tag(:span, " · ", class: "opacity-50")) %>
+                        </div>
                       <% end %>
                     <% end %>
                     <% if execution.error_message.present? %>
-                      <p class="mt-2 font-sans text-small text-red-DEFAULT break-all"><%= execution.error_message %></p>
+                      <div class="step-meta text-red-DEFAULT"><%= execution.error_message %></div>
                     <% end %>
                   </div>
                 </td>

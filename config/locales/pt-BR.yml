@@ -60,6 +60,8 @@ pt-BR:
     subtitle: "%{open} erro(s) aberto(s) - o que falhou e quando comecou."
     empty_title: "Nenhum evento de erro"
     empty_hint: "Falhas de sincronizacao de catalogo, execucoes e login aparecem aqui."
+    empty_filters_hint: "Nenhum erro corresponde aos filtros atuais."
+    result_title: "Resultados"
     col_table: "Onde"
     col_operation: "Operacao"
     col_message: "Mensagem"
@@ -624,6 +626,7 @@ pt-BR:
     filter: "Filtrar"
     filtering: "Filtrando..."
     clear: "Limpar"
+    pager: "Paginação"
 
   operations:
     index:
@@ -641,7 +644,7 @@ pt-BR:
       col_step: "Etapa"
       col_attempts: "Tentativas"
       col_when: "Quando"
-      col_chain: "Cadeia"
+      col_chain: "Detalhe"
       col_duration: "Duracao"
       col_query_id: "ID da consulta Trino"
       filter_stopped_at: "Parou na etapa"
