@@ -40,7 +40,11 @@ class ExecutionFailureHandler
   private
 
   # Marks the execution failed and records an error event.
+  TERMINAL_STATUSES = %w[failed success skipped].freeze
+
   def fail_execution
+    return if TERMINAL_STATUSES.include?(@execution.status)
+
     @execution.update!(status: :failed, error_message: @error_message)
 
     ErrorEvent.record(catalog: @table&.catalog, schema: @table&.namespace,

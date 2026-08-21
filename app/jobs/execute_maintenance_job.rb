@@ -13,6 +13,12 @@ class ExecuteMaintenanceJob < ApplicationJob
   # @param execution_history_id [Integer] the id of the execution being worked through.
   def perform(execution_history_id)
     execution = ExecutionHistory.find(execution_history_id)
+
+    unless execution.status == "running"
+      Rails.logger.warn("ExecuteMaintenanceJob: execution #{execution.id} is #{execution.status}, skipping")
+      return
+    end
+
     execution.update!(started_at: Time.current) if execution.started_at.nil?
 
     step = next_step_for(execution)
@@ -90,6 +96,11 @@ class ExecuteMaintenanceJob < ApplicationJob
   # the per-table lock, and notifies the supervisor that demand has finished.
   # @param execution [ExecutionHistory] the execution that just completed.
   def finish_chain(execution)
+    unless execution.status == "running"
+      Rails.logger.warn("finish_chain: execution #{execution.id} is #{execution.status}, not running")
+      return
+    end
+
     execution.update!(status: :success, current_step: "done", finished_at: Time.current)
     execution.maintenance_plan.update!(consecutive_failures: 0)
     TableLock.release(execution)

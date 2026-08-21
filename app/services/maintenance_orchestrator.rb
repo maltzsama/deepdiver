@@ -91,6 +91,12 @@ module MaintenanceOrchestrator
   # forever on overlapping dispatches).
   def self.start_execution_on_engine(execution_history_id)
     execution = ExecutionHistory.find(execution_history_id)
+
+    unless execution.status == "pending"
+      Rails.logger.warn("start_execution_on_engine: execution #{execution.id} is #{execution.status}, not pending; skipping")
+      return
+    end
+
     execution.update!(status: :running, current_step: :start)
 
     if TableLock.acquire(execution)
