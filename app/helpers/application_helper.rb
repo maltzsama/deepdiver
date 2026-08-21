@@ -299,7 +299,7 @@ def execution_visual_state(execution)
   def engine_status_label(state)
     case state.status
     when "up"       then t("activity.engine.up", time: time_ago_in_words(state.status_changed_at))
-    when "starting" then t("activity.engine.starting", attempt: state.start_attempts + 1, max: TrinoEngineSupervisor::MAX_START_ATTEMPTS)
+    when "starting" then t("activity.engine.starting", attempt: [ state.start_attempts, 1 ].max, max: TrinoEngineSupervisor::MAX_START_ATTEMPTS)
     when "draining" then t("activity.engine.draining", time: distance_of_time_in_words_to_now(state.drain_started_at + TrinoEngineSupervisor::DRAIN_GRACE))
     when "failed"   then t("activity.engine.failed")
     else                 t("activity.engine.down")
