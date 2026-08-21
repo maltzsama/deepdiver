@@ -49,6 +49,9 @@ pt-BR:
       password_hint: "Deixe em branco se nao quiser mudar."
       password_confirmation: "Confirmar nova senha"
       change_password: "Alterar senha"
+    notices:
+      updated: "Conta atualizada."
+      password_updated: "Senha alterada."
 
   error_events:
     eyebrow: "Erros"
@@ -64,6 +67,9 @@ pt-BR:
     col_status: "Status"
     acknowledge: "Reconhecer"
     resolve: "Resolver"
+    notices:
+      acknowledged: "%{count} erro(s) reconhecido(s)."
+      resolved: "%{count} erro(s) resolvido(s)."
     overview_banner: "%{count} erro(s) aberto(s) - inspecione a superficie de erros."
     catalog_banner: "%{catalog} tem %{count} erro(s) aberto(s)."
     table_banner: "Esta tabela tem %{count} erro(s) aberto(s)."
@@ -140,6 +146,11 @@ pt-BR:
     pause: "Pausar"
     resume: "Retomar"
     paused: "Pausado"
+    notices:
+      cancelled: "Execucao cancelada."
+      restart: "Reinicializacao do motor acionada."
+      hard_reset: "Hard reset do motor - tudo em andamento foi falhado e o cluster foi desligado."
+      query_cancelled: "Cancelamento de query enviado."
 
   plans:
     index:
@@ -199,6 +210,11 @@ pt-BR:
       config_snapshot_ids: "IDs de snapshot"
       submit: "Salvar alteracoes"
       cancel: "Cancelar"
+    notices:
+      updated: "Plano atualizado."
+      enqueued: "Manutencao enfileirada."
+      paused: "Plano pausado."
+      resumed: "Plano retomado."
 
   catalogs:
     index:
@@ -263,6 +279,11 @@ pt-BR:
       failed: "Conexao falhou: %{error}"
     edit:
       title: "Editar catalogo"
+    notices:
+      created: "Catalogo criado."
+      updated: "Catalogo atualizado."
+      destroyed: "Catalogo excluido."
+      sync_enqueued: "Sincronizacao do catalogo enfileirada."
 
   tables:
     run_maintenance:
@@ -438,6 +459,10 @@ pt-BR:
       retention_hint: "Nao pode ser menor que o minimo configurado no catalogo (padrao 7d)."
       submit: "Salvar agendamento"
       cancel: "Cancelar"
+    notices:
+      created: "Agendamento criado."
+      updated: "Agendamento atualizado."
+      destroyed: "Agendamento excluido."
 
   executions:
     section_title: "Execucoes recentes"
@@ -677,6 +702,12 @@ pt-BR:
       retention: "Retencao (expire / orphan)"
       submit: "Salvar politica"
       cancel: "Cancelar"
+    notices:
+      created: "Politica criada."
+      updated: "Politica atualizada. %{count} plano(s) sincronizados."
+      destroyed: "Politica excluida."
+      applied: "%{created} plano(s) criado(s), %{updated} atualizado(s)."
+      skipped: "ignorado(s) (ja gerenciado por outra politica)."
 
   users:
     index:

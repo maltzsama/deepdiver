@@ -26,7 +26,7 @@ class MaintenancePlansController < ApplicationController
   def update
     authorize @plan
     if @plan.update(resourced_params)
-      redirect_to @plan, notice: "Plan updated."
+      redirect_to @plan, notice: t("plans.notices.updated")
     else
       ensure_all_steps_present
       render :edit, status: :unprocessable_content
@@ -37,21 +37,21 @@ class MaintenancePlansController < ApplicationController
   def run
     authorize @plan, :run?
     MaintenanceOrchestrator.run_plan(@plan.id)
-    redirect_to @plan, notice: "Maintenance enqueued."
+    redirect_to @plan, notice: t("plans.notices.enqueued")
   end
 
   # Pauses the plan and redirects back to it.
   def pause
     authorize @plan, :pause?
     @plan.update!(is_paused: true)
-    redirect_to @plan, notice: "Plan paused."
+    redirect_to @plan, notice: t("plans.notices.paused")
   end
 
   # Resumes a paused plan, clearing failure and review state, then redirects.
   def resume
     authorize @plan, :resume?
     @plan.update!(is_paused: false, consecutive_failures: 0, needs_review: false)
-    redirect_to @plan, notice: "Plan resumed."
+    redirect_to @plan, notice: t("plans.notices.resumed")
   end
 
   private

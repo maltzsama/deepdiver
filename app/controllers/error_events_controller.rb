@@ -20,7 +20,7 @@ class ErrorEventsController < ApplicationController
     ids = Array(params[:ids])
     count = ErrorEvent.where(id: ids, status: "open").update_all(status: "acknowledged", updated_at: Time.current)
     redirect_back fallback_location: error_events_path,
-                  notice: "#{count} error(s) acknowledged."
+                  notice: t("error_events.notices.acknowledged", count: count)
   end
 
   def resolve
@@ -28,6 +28,6 @@ class ErrorEventsController < ApplicationController
     ids = Array(params[:ids])
     count = ErrorEvent.where(id: ids, status: %w[open acknowledged]).update_all(status: "resolved", updated_at: Time.current)
     redirect_back fallback_location: error_events_path,
-                  notice: "#{count} error(s) resolved."
+                  notice: t("error_events.notices.resolved", count: count)
   end
 end

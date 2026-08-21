@@ -37,7 +37,7 @@ class CatalogsController < ApplicationController
     @catalog = Catalog.new(catalog_params)
 
     if @catalog.save
-      redirect_to @catalog, notice: "Catalog created."
+      redirect_to @catalog, notice: t("catalogs.notices.created")
     else
       @catalog.build_catalog_credential if @catalog.catalog_credential.nil?
       render :new, status: :unprocessable_content
@@ -53,7 +53,7 @@ class CatalogsController < ApplicationController
   def update
     authorize @catalog
     if @catalog.update(catalog_params)
-      redirect_to @catalog, notice: "Catalog updated."
+      redirect_to @catalog, notice: t("catalogs.notices.updated")
     else
       render :edit, status: :unprocessable_content
     end
@@ -63,14 +63,14 @@ class CatalogsController < ApplicationController
   def destroy
     authorize @catalog
     @catalog.destroy
-    redirect_to catalogs_path, notice: "Catalog deleted."
+    redirect_to catalogs_path, notice: t("catalogs.notices.destroyed")
   end
 
   # Enqueues a metadata re-sync for the catalog and redirects to it.
   def sync
     authorize @catalog
     MaintenanceOrchestrator.sync_catalog(@catalog.id)
-    redirect_to @catalog, notice: "Catalog sync enqueued."
+    redirect_to @catalog, notice: t("catalogs.notices.sync_enqueued")
   end
 
   # Verifies the catalog connection and redirects with the outcome as notice

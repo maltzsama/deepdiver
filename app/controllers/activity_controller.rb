@@ -24,7 +24,7 @@ class ActivityController < ApplicationController
   def restart
     authorize :activity, :restart?
     TrinoEngineSupervisor.restart!
-    redirect_to activity_path, notice: "Engine start re-triggered."
+    redirect_to activity_path, notice: t("activity.notices.restart")
   end
 
   # Forcibly tears down a frozen engine: fails in-flight work, clears the queue,
@@ -32,7 +32,7 @@ class ActivityController < ApplicationController
   def hard_reset
     authorize :activity, :hard_reset?
     TrinoEngineSupervisor.hard_reset!
-    redirect_to activity_path, notice: "Engine hard reset - everything in flight was failed and the cluster was torn down."
+    redirect_to activity_path, notice: t("activity.notices.hard_reset")
   end
 
   # Cancels a running or queued Trino query on the coordinator.
@@ -40,6 +40,6 @@ class ActivityController < ApplicationController
     authorize :activity, :cancel_query?
     TrinoProvisioner.cancel_query(params[:query_id])
     ActivityBroadcaster.broadcast!
-    redirect_to activity_path, notice: "Query cancel sent."
+    redirect_to activity_path, notice: t("activity.notices.query_cancelled")
   end
 end

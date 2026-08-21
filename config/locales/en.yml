@@ -49,6 +49,9 @@ en:
       password_hint: "Leave blank if you don't want to change it."
       password_confirmation: "Confirm new password"
       change_password: "Change password"
+    notices:
+      updated: "Account updated."
+      password_updated: "Password updated."
 
   error_events:
     eyebrow: "Errors"
@@ -64,6 +67,9 @@ en:
     col_status: "Status"
     acknowledge: "Acknowledge"
     resolve: "Resolve"
+    notices:
+      acknowledged: "%{count} error(s) acknowledged."
+      resolved: "%{count} error(s) resolved."
     overview_banner: "%{count} open error(s) — inspect the error surface."
     catalog_banner: "%{catalog} has %{count} open error(s)."
     table_banner: "This table has %{count} open error(s)."
@@ -140,6 +146,11 @@ en:
     pause: "Pause"
     resume: "Resume"
     paused: "Paused"
+    notices:
+      cancelled: "Execution cancelled."
+      restart: "Engine start re-triggered."
+      hard_reset: "Engine hard reset - everything in flight was failed and the cluster was torn down."
+      query_cancelled: "Query cancel sent."
 
   plans:
     index:
@@ -199,6 +210,11 @@ en:
       config_snapshot_ids: "Snapshot IDs"
       submit: "Save changes"
       cancel: "Cancel"
+    notices:
+      updated: "Plan updated."
+      enqueued: "Maintenance enqueued."
+      paused: "Plan paused."
+      resumed: "Plan resumed."
 
   catalogs:
     index:
@@ -263,6 +279,11 @@ en:
       failed: "Connection failed: %{error}"
     edit:
       title: "Edit catalog"
+    notices:
+      created: "Catalog created."
+      updated: "Catalog updated."
+      destroyed: "Catalog deleted."
+      sync_enqueued: "Catalog sync enqueued."
 
   tables:
     run_maintenance:
@@ -604,6 +625,10 @@ en:
       no_sla: "no SLA"
       refresh: "Refresh"
       run_now: "Run now"
+    notices:
+      created: "Schedule created."
+      updated: "Schedule updated."
+      destroyed: "Schedule deleted."
 
   health_summary:
     tables: "Tables"
@@ -678,6 +703,12 @@ en:
       retention: "Retention (expire / orphan)"
       submit: "Save policy"
       cancel: "Cancel"
+    notices:
+      created: "Policy created."
+      updated: "Policy updated. %{count} plan(s) synced."
+      destroyed: "Policy deleted."
+      applied: "%{created} plan(s) created, %{updated} updated."
+      skipped: "skipped (already managed by another policy)."
 
   users:
     index:
