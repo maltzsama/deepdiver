@@ -49,7 +49,7 @@ class TrinoClient
   # @param sql [String] the query
   # @return [Hash] the Trino statement response
   def statement(sql)
-    @transport.post(uri("/v1/statement"), body: { "query" => sql }.to_json, headers: headers)
+    @transport.post(uri("/v1/statement"), body: sql, headers: headers)
   rescue HttpTransport::ApiError => e
     raise Error, "Trino statement rejected: #{e.message}"
   end
