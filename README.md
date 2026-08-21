@@ -20,7 +20,7 @@ with an ephemeral Trino engine on Kubernetes.
 - Configurable Trino engine topology: single-node or coordinator + separate workers,
   managed from the admin UI (Engine config screen).
 - Freshness monitoring with SLA probes and Slack/email alerting.
-- Multi-tenant team scoping with Pundit policies.
+- Pundit policies for admin/viewer/operator RBAC.
 
 ## Stack
 

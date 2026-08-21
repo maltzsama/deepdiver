@@ -26,20 +26,6 @@ FactoryBot.define do
     end
   end
 
-  factory :team do
-    sequence(:name) { |n| "Team #{n}" }
-  end
-
-  factory :team_membership do
-    team
-    user
-  end
-
-  factory :team_catalog_scope do
-    team
-    catalog
-  end
-
   factory :role_change_log do
     user
     association :changed_by, factory: :user
