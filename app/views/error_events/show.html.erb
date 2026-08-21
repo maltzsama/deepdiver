@@ -16,10 +16,34 @@
       <% end %>
     </div>
   </div>
-  <div class="page-actions flex flex-col items-end gap-2">
+
+  <div class="page-actions items-center gap-3 flex-wrap">
+    <% if policy(@event).assign? && !@event.resolved? %>
+      <%= form_with url: assign_error_event_path(@event), method: :patch,
+                    class: "flex items-center gap-2",
+                    data: { controller: "assignment-target" } do |f| %>
+        <%= select_tag :target_type,
+              options_for_select([[t("error_events.show.user"), "user"], [t("error_events.show.team"), "team"]], "user"),
+              class: "field-input w-auto",
+              aria_label: t("error_events.show.target_type"),
+              data: { action: "assignment-target#change" } %>
+        <%= select_tag :target_id,
+              options_from_collection_for_select(@assignable_users, :id, :email),
+              class: "field-input w-auto",
+              aria_label: t("error_events.show.user"),
+              data: { assignment_target_target: "select", target: "user" } %>
+        <%= select_tag :target_id,
+              options_from_collection_for_select(@teams, :id, :name),
+              class: "field-input w-auto hidden", disabled: true,
+              aria_label: t("error_events.show.team"),
+              data: { assignment_target_target: "select", target: "team" } %>
+        <%= f.submit t("error_events.actions.assign"), class: "btn btn-default btn-sm" %>
+      <% end %>
+    <% end %>
+
     <% if policy(@event).acknowledge? && @event.status == "open" %>
       <%= button_to t("error_events.actions.acknowledge"), acknowledge_error_event_path(@event),
-                    method: :patch, class: "btn btn-default btn-sm" %>
+                    method: :patch, class: "btn btn-primary btn-sm" %>
     <% end %>
     <% if policy(@event).resolve? && @event.status == "acknowledged" %>
       <%= button_to t("error_events.actions.resolve"), resolve_error_event_path(@event),
@@ -63,29 +87,3 @@
     <% end %>
   </div>
 </section>
-
-<% if policy(@event).assign? && !@event.resolved? %>
-  <section class="panel">
-    <div class="panel-head"><h2 class="panel-title"><%= t("error_events.show.assign_title") %></h2></div>
-    <div class="panel-body">
-      <p class="page-sub mb-3"><%= t("error_events.show.assign_hint") %></p>
-      <%= form_with url: assign_error_event_path(@event), method: :patch, class: "flex flex-wrap items-end gap-2", data: { controller: "assignment-target" } do |f| %>
-        <div class="field">
-          <%= label_tag :target_type, t("error_events.show.target_type") %>
-          <%= select_tag :target_type,
-                options_for_select([[t("error_events.show.user"), "user"], [t("error_events.show.team"), "team"]], "user"),
-                data: { action: "assignment-target#change" } %>
-        </div>
-        <div class="field" data-assignment-target-target="select" data-target="user">
-          <%= label_tag :target_id, t("error_events.show.user") %>
-          <%= select_tag :target_id, options_from_collection_for_select(@assignable_users, :id, :email) %>
-        </div>
-        <div class="field hidden" data-assignment-target-target="select" data-target="team">
-          <%= label_tag :target_id, t("error_events.show.team") %>
-          <%= select_tag :target_id, options_from_collection_for_select(@teams, :id, :name), disabled: true %>
-        </div>
-        <%= f.submit t("error_events.actions.assign"), class: "btn btn-primary" %>
-      <% end %>
-    </div>
-  </section>
-<% end %>
