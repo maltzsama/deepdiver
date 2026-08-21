@@ -81,15 +81,13 @@ Rails.application.routes.draw do
 
   resources :maintenance_schedules
 
-  # User & team administration (CR-64).
+  # User administration (CR-64).
   resources :users, only: %i[index new create update] do
     member do
       post :suspend
       post :reactivate
     end
   end
-
-  resources :teams
 
   # Global alert transport (CR-84): the SMTP server and the single Slack webhook.
   resource :alert_settings, only: %i[show update]
