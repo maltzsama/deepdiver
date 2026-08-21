@@ -176,15 +176,14 @@ def execution_visual_state(execution)
                      aria: { label: t("filters.pager") }) do
       safe_join([
         pager_arrow(pagy_page_path(pagy.prev), "&lsaquo;", enabled: pagy.prev.present?),
-        safe_join(pagy.series.map do |item|
-          case item
-          when Integer
-            if item == pagy.label.to_i
-              content_tag(:span, item, class: "badge badge-ok pager-page", "aria-current": "page")
-            else
-              link_to(item.to_s, pagy_page_path(item), class: "badge badge-mute pager-page")
-            end
-          when :gap then content_tag(:span, "…", class: "pager-gap")
+        safe_join(pagy.series.filter_map do |item|
+          # Pagy 9 marks the current page as a String in the series.
+          if item == :gap
+            content_tag(:span, "…", class: "pager-gap")
+          elsif item.to_i == pagy.label.to_i
+            content_tag(:span, item.to_s, class: "badge badge-ok pager-page", "aria-current": "page")
+          else
+            link_to(item.to_s, pagy_page_path(item), class: "badge badge-mute pager-page")
           end
         end),
         pager_arrow(pagy_page_path(pagy.next), "&rsaquo;", enabled: pagy.next.present?)
@@ -194,7 +193,8 @@ def execution_visual_state(execution)
 
   # Path to one pager page preserving every current query param.
   def pagy_page_path(page)
-    url_for(request.query_parameters.merge(page: page))
+    params = request.query_parameters.merge("page" => page)
+    "#{request.path}?#{params.to_query}"
   end
 
   # Prev/next arrow; renders an inert dimmed span when disabled.
