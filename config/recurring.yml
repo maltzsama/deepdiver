@@ -15,3 +15,7 @@ production:
     class: EngineWatchdogJob
     queue: default
     schedule: every 2 minutes
+  data_retention:
+    class: DataRetentionJob
+    queue: default
+    schedule: every day at 3:00
