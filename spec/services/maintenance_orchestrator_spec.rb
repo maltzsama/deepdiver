@@ -89,4 +89,19 @@ RSpec.describe "Cadence per step" do
     expect(execution.reload.status).to eq("skipped")
     expect(TrinoEngineSupervisor.state.reload.status).to eq("draining")
   end
+
+  it "materializes skipped steps with skip_reason, never error_message" do
+    execution = MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 02:00"))
+
+    skipped = execution.execution_steps.where(status: "skipped")
+    expect(skipped.where(error_message: nil).count).to eq(skipped.count)
+    expect(skipped.where.not(skip_reason: nil).pluck(:skip_reason))
+      .to all(match(/step disabled|outside cadence/))
+  end
+
+  it "keeps the default association order equal to the plan position order" do
+    execution = MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 03:00"))
+
+    expect(execution.execution_steps.pluck(:operation)).to eq(MaintenancePlan::CANONICAL_ORDER)
+  end
 end

@@ -160,6 +160,9 @@ module TrinoEngineSupervisor
       TableLock.release(execution)
       execution.update!(status: :failed, current_step: "start",
                         finished_at: Time.current, error_message: "engine hard reset")
+      execution.execution_steps.where(status: "pending").update_all(
+        status: "blocked", skip_reason: "engine hard reset", updated_at: Time.current
+      )
     end
     FreshnessRun.where(status: %w[pending running]).find_each do |run|
       run.update!(status: "failed", finished_at: Time.current, error_message: "engine hard reset")

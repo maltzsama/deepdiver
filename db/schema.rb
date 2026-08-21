@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_21_150001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_21_160000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"
@@ -112,6 +112,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_150001) do
     t.json "metrics", default: {}
     t.string "operation", null: false
     t.integer "retry_count", default: 0, null: false
+    t.string "skip_reason"
     t.datetime "started_at"
     t.string "status", default: "pending", null: false
     t.string "trino_query_id"
