@@ -161,6 +161,7 @@ en:
       subtitle: "runs on cron %{cron}"
       run_now: "Run now"
       pause: "Pause plan"
+      pause_confirm: "Pause this plan? Scheduled runs will not trigger until resumed."
       resume: "Resume plan"
       edit: "Edit"
       state: "State"
