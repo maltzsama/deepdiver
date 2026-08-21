@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_21_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_21_140000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"
@@ -71,6 +71,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_000000) do
     t.index ["catalog_id"], name: "index_error_events_on_catalog_id"
     t.index ["operation", "status"], name: "index_error_events_on_operation_and_status"
     t.index ["schema", "table"], name: "index_error_events_on_schema_and_table"
+    t.index ["status", "last_seen_at"], name: "index_error_events_on_status_and_last_seen_at"
   end
 
   create_table "execution_histories", force: :cascade do |t|
@@ -87,6 +88,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_000000) do
     t.datetime "started_at"
     t.string "status", default: "pending", null: false
     t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_execution_histories_on_created_at"
     t.index ["iceberg_table_id"], name: "index_execution_histories_on_iceberg_table_id"
     t.index ["maintenance_plan_id"], name: "index_execution_histories_on_maintenance_plan_id"
     t.index ["maintenance_schedule_id", "created_at"], name: "idx_on_maintenance_schedule_id_created_at_ba9b5c28dc"
@@ -111,6 +113,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_000000) do
     t.index ["execution_history_id", "operation"], name: "index_execution_steps_on_execution_history_id_and_operation", unique: true
     t.index ["execution_history_id"], name: "index_execution_steps_on_execution_history_id"
     t.index ["maintenance_step_id"], name: "index_execution_steps_on_maintenance_step_id"
+    t.index ["trino_query_id"], name: "index_execution_steps_on_trino_query_id"
   end
 
   create_table "freshness_checks", force: :cascade do |t|
@@ -125,6 +128,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_000000) do
     t.string "status", null: false
     t.string "trino_query_id"
     t.datetime "updated_at", null: false
+    t.index ["checked_at"], name: "index_freshness_checks_on_checked_at"
     t.index ["iceberg_table_id", "checked_at"], name: "index_freshness_checks_on_iceberg_table_id_and_checked_at"
     t.index ["iceberg_table_id"], name: "index_freshness_checks_on_iceberg_table_id"
     t.index ["status", "checked_at"], name: "index_freshness_checks_on_status_and_checked_at"
@@ -283,34 +287,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_000000) do
     t.index ["iceberg_table_id"], name: "index_table_locks_on_iceberg_table_id", unique: true
   end
 
-  create_table "team_catalog_scopes", force: :cascade do |t|
-    t.integer "catalog_id", null: false
-    t.datetime "created_at", null: false
-    t.integer "team_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["catalog_id"], name: "index_team_catalog_scopes_on_catalog_id"
-    t.index ["team_id", "catalog_id"], name: "index_team_catalog_scopes_on_team_id_and_catalog_id", unique: true
-    t.index ["team_id"], name: "index_team_catalog_scopes_on_team_id"
-  end
-
-  create_table "team_memberships", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.integer "team_id", null: false
-    t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
-    t.index ["team_id", "user_id"], name: "index_team_memberships_on_team_id_and_user_id", unique: true
-    t.index ["team_id"], name: "index_team_memberships_on_team_id"
-    t.index ["user_id"], name: "index_team_memberships_on_user_id"
-  end
-
-  create_table "teams", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.text "description"
-    t.string "name", null: false
-    t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_teams_on_name", unique: true
-  end
-
   create_table "trino_catalog_registry", primary_key: ["cluster_id", "catalog_name"], force: :cascade do |t|
     t.string "catalog_name", null: false
     t.string "catalog_version"
@@ -361,10 +337,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_000000) do
     t.string "display_name"
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: ""
+    t.integer "failed_attempts", default: 0, null: false
     t.datetime "invited_at"
     t.bigint "invited_by_id"
     t.datetime "last_seen_at"
     t.string "locale", default: "en", null: false
+    t.datetime "locked_at"
     t.string "provider"
     t.datetime "remember_created_at"
     t.datetime "reset_password_sent_at"
@@ -401,10 +379,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_000000) do
   add_foreign_key "table_freshness_slas", "iceberg_tables"
   add_foreign_key "table_locks", "execution_histories"
   add_foreign_key "table_locks", "iceberg_tables"
-  add_foreign_key "team_catalog_scopes", "catalogs"
-  add_foreign_key "team_catalog_scopes", "teams"
-  add_foreign_key "team_memberships", "teams"
-  add_foreign_key "team_memberships", "users"
   add_foreign_key "trino_catalog_registry", "trino_clusters", column: "cluster_id"
   add_foreign_key "users", "users", column: "invited_by_id"
   add_foreign_key "users", "users", column: "suspended_by_id"

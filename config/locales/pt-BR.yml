@@ -191,10 +191,10 @@ pt-BR:
       title: "Editar plano"
       subtitle: "Edite o agendamento e a cadeia de etapas de manutencao."
       paused_hint: "Este plano esta pausado. Alteracoes nao serao executadas ate ser retomado."
-       review_hint: "Este plano teve %{failures} falhas consecutivas e precisa de revisao antes de voltar a funcionar."
-       errors:
-         one: "1 problema para corrigir"
-         other: "%{count} problemas para corrigir"
+      review_hint: "Este plano teve %{failures} falhas consecutivas e precisa de revisao antes de voltar a funcionar."
+      errors:
+        one: "1 problema para corrigir"
+        other: "%{count} problemas para corrigir"
       schedule_title: "Agendamento"
       cron: "Cron"
       cron_hint: "Cron de cinco campos padrao, fuso horario do servidor."
