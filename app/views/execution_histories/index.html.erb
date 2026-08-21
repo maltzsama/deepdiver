@@ -120,14 +120,14 @@
                       </div>
 
                       <% meta_parts = [] %>
-                      <% if step.trino_query_id.present? %>
-                        <% meta_parts << content_tag(:span, step.trino_query_id, title: t("operations.index.col_query_id")) %>
-                      <% end %>
                       <% stats = step.metrics&.dig("stats") %>
                       <% if stats.present? %>
                         <% meta_parts << "#{number_with_delimiter(stats["elapsedTimeMillis"])} #{t("operations.metrics_ms")}" if stats["elapsedTimeMillis"] %>
                         <% meta_parts << "#{number_to_human_size(stats["processedBytes"])} #{t("operations.metrics_processed")}" if stats["processedBytes"] %>
                         <% meta_parts << "#{number_to_human_size(stats["physicalWrittenBytes"])} #{t("operations.metrics_written")}" if stats["physicalWrittenBytes"] %>
+                      <% end %>
+                      <% if step.trino_query_id.present? %>
+                        <% meta_parts << content_tag(:span, step.trino_query_id, title: t("operations.index.col_query_id")) %>
                       <% end %>
                       <% if step.error_message.present? %>
                         <% if step.status == "failed" %>

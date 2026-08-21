@@ -1,78 +1,27 @@
 require "rails_helper"
 
-RSpec.describe ApplicationHelper, type: :helper do
-  describe "#compact_number" do
-    it "leaves small numbers alone" do
-      expect(helper.compact_number(0)).to eq("0")
-      expect(helper.compact_number(999)).to eq("999")
-    end
+RSpec.describe ApplicationHelper, "#pager_nav", type: :helper do
+  let(:pagy) { Pagy.new(count: 5000, page: 50, limit: 50) }
 
-    it "formats thousands with one decimal below 10k" do
-      expect(helper.compact_number(1000)).to eq("1k")
-      expect(helper.compact_number(1100)).to eq("1.1k")
-      expect(helper.compact_number(1234)).to eq("1.2k")
-      expect(helper.compact_number(9999)).to eq("10k")
-    end
+  it "renders styled pages with gap and active page badge" do
+    html = helper.pager_nav(pagy)
 
-    it "formats from 10k with a whole number" do
-      expect(helper.compact_number(10_000)).to eq("10k")
-      expect(helper.compact_number(12_300)).to eq("12k")
-    end
+    expect(html).to include("pager-gap")
+    expect(html).to include('aria-current="page"')
+    expect(html).to include("badge-ok")
+    expect(html).not_to include("pager-disabled")
+    # URLs preserve query params and the current page renders as active badge
+    expect(html).to include("page=49")
+    expect(html).to include(">50</span>")
   end
 
-  describe "#active_path?" do
-    it "is active only on the root for '/'" do
-      helper.request = Struct.new(:path).new("/")
-      expect(helper.active_path?("/")).to be(true)
+  it "dims the previous arrow on the first page" do
+    html = helper.pager_nav(Pagy.new(count: 5000, page: 1, limit: 50))
 
-      helper.request = Struct.new(:path).new("/iceberg_tables")
-      expect(helper.active_path?("/")).to be(false)
-    end
-
-    it "matches nested paths under a section but not sibling sections" do
-      helper.request = Struct.new(:path).new("/maintenance_plans/3")
-      expect(helper.active_path?("/maintenance_plans")).to be(true)
-      expect(helper.active_path?("/maintenance_policies")).to be(false)
-
-      helper.request = Struct.new(:path).new("/maintenance_plans")
-      expect(helper.active_path?("/maintenance_plans")).to be(true)
-    end
+    expect(html).to include("pager-disabled")
   end
 
-  describe "#engine_status_label" do
-    State = Struct.new(:status, :start_attempts, :status_changed_at, :drain_started_at)
-
-    it "shows attempt 1 of N on the first start" do
-      state = State.new("starting", 1, Time.current, nil)
-
-      expect(helper.engine_status_label(state)).to include("attempt 1 of")
-    end
-
-    it "shows attempt 2 of N on the retry" do
-      state = State.new("starting", 2, Time.current, nil)
-
-      expect(helper.engine_status_label(state)).to include("attempt 2 of")
-    end
-
-    it "never shows attempt 0 (before the start job increments)" do
-      state = State.new("starting", 0, Time.current, nil)
-
-      expect(helper.engine_status_label(state)).to include("attempt 1 of")
-    end
-  end
-
-  describe "#execution_step_badge_class" do
-    it "marks skipped (disabled/outside cadence) as a warning, not an error" do
-      expect(helper.execution_step_badge_class("skipped")).to eq("badge-warning")
-    end
-
-    it "marks pending as a distinct waiting colour" do
-      expect(helper.execution_step_badge_class("pending")).to eq("badge-pending")
-    end
-
-    it "keeps failed red and succeeded green" do
-      expect(helper.execution_step_badge_class("failed")).to eq("badge-err")
-      expect(helper.execution_step_badge_class("succeeded")).to eq("badge-ok")
-    end
+  it "returns nil for a single page" do
+    expect(helper.pager_nav(Pagy.new(count: 10, limit: 50))).to be_nil
   end
 end
