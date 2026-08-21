@@ -31,7 +31,7 @@ class ApplicationController < ActionController::Base
 
   # Pundit: after a failed authorization, redirect with an alert.
   def user_not_authorized(exception)
-    flash[:alert] = "You do not have permission to perform that action"
+    flash[:alert] = t("shared.unauthorized")
     redirect_back(fallback_location: root_path)
   end
 end

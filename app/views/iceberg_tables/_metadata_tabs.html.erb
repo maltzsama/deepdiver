@@ -51,7 +51,7 @@
                 <tr>
                   <td class="cell-id"><%= field["name"] %></td>
                   <td class="cell-muted font-mono text-small"><%= field["type"] %></td>
-                  <td><%= field["required"] ? "yes" : "no" %></td>
+                  <td><%= field["required"] ? t("tables.metadata.val_yes") : t("tables.metadata.val_no") %></td>
                 </tr>
               <% end %>
             </tbody>
@@ -65,7 +65,7 @@
       <% else %>
         <% @table.partition_json.each do |spec| %>
           <p class="mb-1 text-small font-mono text-cosmos-fg-soft">
-            spec <%= spec["spec-id"] %>: <%= (spec["fields"] || []).map { |f| "#{f["transform"]}(#{f["name"]})" }.join(", ") %>
+            <%= t("tables.metadata.spec_prefix") %> <%= spec["spec-id"] %>: <%= (spec["fields"] || []).map { |f| "#{f["transform"]}(#{f["name"]})" }.join(", ") %>
           </p>
         <% end %>
       <% end %>

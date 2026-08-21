@@ -11,43 +11,43 @@
       <circle cx="6"  cy="26" r="1.8" fill="#B8862A"/>
       <circle cx="14" cy="6"  r="1.4" fill="#B8862A"/>
     </svg>
-    <span class="font-display font-extrabold text-base tracking-[0.04em] uppercase text-[#F4F1E8] whitespace-nowrap">Lake Deep Diver</span>
+    <span class="font-display font-extrabold text-base tracking-[0.04em] uppercase text-[#F4F1E8] whitespace-nowrap"><%= t("layout.app_name") %></span>
   </div>
 
   <!-- Navegação -->
   <nav class="flex-1 overflow-y-auto overflow-x-hidden pb-2">
     <% # Seção 1 %>
     <div class="sidebar-section">
-      <div class="sidebar-section-title">Monitor</div>
-      <%= nav_link_to root_path, icon: "grid" do %><span>Overview</span><% end %>
-      <%= nav_link_to activity_path, icon: "activity" do %><span>In Progress</span><% end %>
+      <div class="sidebar-section-title"><%= t("layout.nav.monitor") %></div>
+      <%= nav_link_to root_path, icon: "grid" do %><span><%= t("layout.nav.overview") %></span><% end %>
+      <%= nav_link_to activity_path, icon: "activity" do %><span><%= t("layout.nav.in_progress") %></span><% end %>
     </div>
 
     <% # Seção 2 %>
     <div class="sidebar-section">
-      <div class="sidebar-section-title">Data</div>
+      <div class="sidebar-section-title"><%= t("layout.nav.data") %></div>
       <%= nav_link_to iceberg_tables_path, icon: "database" do %>
-        <span>Tables</span>
+        <span><%= t("layout.nav.tables") %></span>
         <span class="sidebar-badge"><%= compact_number(IcebergTable.active.count) %></span>
       <% end %>
       <%= nav_link_to catalogs_path, icon: "catalog" do %>
-        <span>Catalogs</span>
+        <span><%= t("layout.nav.catalogs") %></span>
         <span class="sidebar-badge"><%= compact_number(Catalog.count) %></span>
       <% end %>
     </div>
 
     <% # Seção 3 %>
     <div class="sidebar-section">
-      <div class="sidebar-section-title">Operations</div>
+      <div class="sidebar-section-title"><%= t("layout.nav.operations") %></div>
       <%= nav_link_to maintenance_plans_path, icon: "clock" do %>
-        <span>Plans</span>
+        <span><%= t("layout.nav.plans") %></span>
         <span class="sidebar-badge"><%= compact_number(MaintenancePlan.count) %></span>
       <% end %>
-      <%= nav_link_to maintenance_policies_path, icon: "preset" do %><span>Policies</span><% end %>
-      <%= nav_link_to execution_histories_path, icon: "list" do %><span>History</span><% end %>
+      <%= nav_link_to maintenance_policies_path, icon: "preset" do %><span><%= t("layout.nav.policies") %></span><% end %>
+      <%= nav_link_to execution_histories_path, icon: "list" do %><span><%= t("layout.nav.history") %></span><% end %>
       <% open_errors = ErrorEvent.open.count %>
       <%= nav_link_to error_events_path, icon: "activity" do %>
-        <span>Errors</span>
+        <span><%= t("layout.nav.errors") %></span>
         <% if open_errors.positive? %>
           <span class="sidebar-badge"><%= compact_number(open_errors) %></span>
         <% end %>
@@ -56,18 +56,18 @@
 
     <% if current_user.admin? %>
       <div class="sidebar-section">
-        <div class="sidebar-section-title">Security</div>
-        <%= nav_link_to users_path, icon: "user" do %><span>Users</span><% end %>
-        <%= nav_link_to teams_path, icon: "team" do %><span>Teams</span><% end %>
-        <%= nav_link_to alert_settings_path, icon: "bell" do %><span>Alerts</span><% end %>
-        <%= nav_link_to trino_engine_config_path, icon: "settings" do %><span>Engine</span><% end %>
+        <div class="sidebar-section-title"><%= t("layout.nav.security") %></div>
+        <%= nav_link_to users_path, icon: "user" do %><span><%= t("layout.nav.users") %></span><% end %>
+        <%= nav_link_to teams_path, icon: "team" do %><span><%= t("layout.nav.teams") %></span><% end %>
+        <%= nav_link_to alert_settings_path, icon: "bell" do %><span><%= t("layout.nav.alerts") %></span><% end %>
+        <%= nav_link_to trino_engine_config_path, icon: "settings" do %><span><%= t("layout.nav.engine") %></span><% end %>
       </div>
     <% end %>
   </nav>
 
   <!-- Rodapé da Sidebar -->
   <div class="border-t border-cosmos-line p-3 flex items-center justify-center flex-shrink-0 min-h-11">
-    <button class="sidebar-collapse" title="Collapse sidebar" data-sidebar-target="collapse"
+    <button class="sidebar-collapse" title="<%= t("layout.nav.collapse") %>" data-sidebar-target="collapse"
             data-action="click->sidebar#toggle">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
         <path d="M10 3l-5 5 5 5" stroke="currentColor" stroke-width="1.5"/>

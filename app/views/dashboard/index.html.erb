@@ -1,4 +1,4 @@
-<% content_for :title, "Overview — LakeDeepDiver" %>
+<% content_for :title, "#{t("dashboard.index.title")} — #{t("layout.app_name")}" %>
 
 <% if @open_error_count && @open_error_count.positive? %>
   <a href="<%= error_events_path %>"
@@ -9,13 +9,13 @@
 
 <div class="flex items-center justify-between mb-5 pb-3 border-b border-cosmos-line">
   <div>
-    <p class="font-mono text-micro font-bold tracking-[0.2em] uppercase text-accent-DEFAULT">Control Plane</p>
-    <h1 class="font-display text-2xl font-extrabold tracking-tight text-cosmos-fg">Overview</h1>
+    <p class="font-mono text-micro font-bold tracking-[0.2em] uppercase text-accent-DEFAULT"><%= t("dashboard.index.eyebrow") %></p>
+    <h1 class="font-display text-2xl font-extrabold tracking-tight text-cosmos-fg"><%= t("dashboard.index.title") %></h1>
     <p class="text-body text-cosmos-fg-mute">
       <% if @last_sync_at %>
-        Synced <%= time_ago_in_words(@last_sync_at) %> ago
+        <%= t("dashboard.index.sync_ago", ago: time_ago_in_words(@last_sync_at)) %>
       <% else %>
-        No sync yet
+        <%= t("dashboard.index.sync_none") %>
       <% end %>
     </p>
   </div>
@@ -24,7 +24,7 @@
       <span class="font-mono text-micro text-cosmos-fg-mute"><%= @cluster_name %></span>
     <% end %>
     <a href="<%= root_path %>" class="px-3 py-1.5 font-mono text-small font-semibold bg-cosmos-surface border border-cosmos-line text-cosmos-fg-soft hover:bg-cosmos-soft hover:text-cosmos-fg cursor-pointer no-underline">
-      ↻ Refresh
+      ↻ <%= t("dashboard.index.refresh") %>
     </a>
   </div>
 </div>
@@ -35,18 +35,18 @@
 <% critical = (@health_counts || {})["critical"] || 0 %>
 <% warning = (@health_counts || {})["warning"] || 0 %>
 <div class="grid grid-cols-2 gap-px bg-cosmos-line border border-cosmos-line mb-5 md:grid-cols-3 lg:grid-cols-5">
-  <%= render "shared/stat_card", label: "Tables", value: total, unit: "across all catalogs",
+  <%= render "shared/stat_card", label: t("dashboard.index.stat_tables"), value: total, unit: t("dashboard.index.stat_tables_unit"),
              track_pct: 100 %>
-  <%= render "shared/stat_card", label: "Healthy", value: healthy,
+  <%= render "shared/stat_card", label: t("dashboard.index.stat_healthy"), value: healthy,
              value_class: "text-ok-DEFAULT", fill_class: "bg-ok-DEFAULT",
-             unit: "#{total.positive? ? (healthy.to_f / total * 100).round(1) : 0}% availability",
+             unit: t("dashboard.index.stat_healthy_unit", pct: total.positive? ? (healthy.to_f / total * 100).round(1) : 0),
              track_pct: total.positive? ? (healthy.to_f / total * 100) : 0 %>
-  <%= render "shared/stat_card", label: "Critical", value: critical,
+  <%= render "shared/stat_card", label: t("dashboard.index.stat_critical"), value: critical,
              value_class: "text-red-DEFAULT", fill_class: "bg-red-DEFAULT",
-             unit: "#{warning} warning",
+             unit: t("dashboard.index.stat_critical_unit", warning: warning),
              track_pct: total.positive? ? (critical.to_f / total * 100) : 0 %>
-  <%= render "shared/stat_card", label: "Active Plans", value: MaintenancePlan.dispatchable.count,
-             unit: "#{MaintenancePlan.where(is_paused: true).count} paused",
+  <%= render "shared/stat_card", label: t("dashboard.index.stat_active_plans"), value: MaintenancePlan.dispatchable.count,
+             unit: t("dashboard.index.stat_active_plans_unit", count: MaintenancePlan.where(is_paused: true).count),
              track_pct: 100 %>
   <% late = @freshness_counts.fetch("late", 0) %>
   <% sla_total = @freshness_counts.values.sum %>
@@ -122,9 +122,9 @@
                     <% end %>
                   </span>
                 <% elsif row.sla&.enabled? %>
-                  <span class="text-small text-cosmos-fg-mute">on track</span>
+                  <span class="text-small text-cosmos-fg-mute"><%= t("dashboard.index.on_track") %></span>
                 <% else %>
-                  <span class="text-small text-cosmos-fg-mute">no SLA</span>
+                  <span class="text-small text-cosmos-fg-mute"><%= t("dashboard.index.no_sla") %></span>
                 <% end %>
               </td>
 

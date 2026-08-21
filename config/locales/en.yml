@@ -2,13 +2,23 @@ en:
   layout:
     app_name: "LakeDeepDiver"
     nav:
+      monitor: "Monitor"
       overview: "Overview"
-      in_progress: "In progress"
+      in_progress: "In Progress"
+      data: "Data"
       tables: "Tables"
       catalogs: "Catalogs"
-      plans: "Maintenance plans"
-      history: "History"
+      operations: "Operations"
+      plans: "Plans"
       policies: "Policies"
+      history: "History"
+      errors: "Errors"
+      security: "Security"
+      users: "Users"
+      teams: "Teams"
+      alerts: "Alerts"
+      engine: "Engine"
+      collapse: "Collapse sidebar"
     session:
       sign_out: "Sign out"
       admin: "admin"
@@ -297,6 +307,9 @@ en:
       col_id: "Snapshot id"
       col_time: "Time"
       col_operation: "Operation"
+      val_yes: "yes"
+      val_no: "no"
+      spec_prefix: "spec"
     metrics:
       records: "Records"
       files: "Active files"
@@ -437,6 +450,7 @@ en:
 
   health:
     no_data: "no data"
+    aria_score: "Health score %{score} of 100"
     title: "Maintenance health"
     coverage: "%{coverage}% of criteria covered"
     no_score: "not enough data to score"
@@ -468,6 +482,7 @@ en:
       aria_failed: " (failed)"
       aria_retrying: " (waiting for a new attempt, %{current} of %{max})"
       retry_title: "Commit conflict. Trino stays up and the lock is held until the next attempt."
+    unauthorized: "You do not have permission to perform that action"
 
   auth:
     brand: "LakeDeepDiver"
@@ -544,6 +559,9 @@ en:
     kind_maintenance: "maintenance"
     kind_freshness: "freshness"
     freshness_sla: "SLA %{sla}min"
+    metrics_ms: "ms"
+    metrics_processed: "processed"
+    metrics_written: "written"
 
   freshness:
     status:
@@ -556,10 +574,18 @@ en:
 
   dashboard:
     index:
-      eyebrow: "Overview"
-      title: "Lake health"
-      sync_ago: "Metadata synced %{ago} ago (%{at}). Not real-time."
-      sync_none: "No sync yet."
+      eyebrow: "Control Plane"
+      title: "Overview"
+      sync_ago: "Synced %{ago} ago"
+      sync_none: "No sync yet"
+      stat_tables: "Tables"
+      stat_tables_unit: "across all catalogs"
+      stat_healthy: "Healthy"
+      stat_healthy_unit: "%{pct}% availability"
+      stat_critical: "Critical"
+      stat_critical_unit: "%{warning} warning"
+      stat_active_plans: "Active Plans"
+      stat_active_plans_unit: "%{count} paused"
       sla_card_label: "Out of SLA"
       sla_card_unit: "tables"
       triage_title: "Needs action"
@@ -570,6 +596,9 @@ en:
       col_maintenance: "Maintenance"
       col_freshness: "Freshness"
       col_since: "Since"
+      on_track: "on track"
+      no_sla: "no SLA"
+      refresh: "Refresh"
       run_now: "Run now"
 
   health_summary:
