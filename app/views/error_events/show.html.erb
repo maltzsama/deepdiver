@@ -1,0 +1,91 @@
+<% content_for :title, "#{t("error_events.show.title")} ##{@event.id} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= link_to t("error_events.title"), error_events_path %></p>
+    <h1 class="page-title-mono"><%= @event.operation %></h1>
+    <div class="flex items-center gap-2 mt-2">
+      <span class="badge <%= {"open" => "badge-err", "acknowledged" => "badge-warn", "resolved" => "badge-ok"}[@event.status] %>">
+        <%= t("error_events.status_#{@event.status}") %>
+      </span>
+      <span class="badge badge-mute"><%= @event.severity %></span>
+      <% if @event.assigned_to %>
+        <span class="cell-meta"><%= t("error_events.show.assigned_to") %> <%= @event.assigned_to.email %></span>
+      <% elsif @event.context["assigned_team"].present? %>
+        <span class="cell-meta"><%= t("error_events.show.assigned_team") %> <%= @event.context["assigned_team"] %></span>
+      <% end %>
+    </div>
+  </div>
+  <div class="page-actions flex flex-col items-end gap-2">
+    <% if policy(@event).acknowledge? && @event.status == "open" %>
+      <%= button_to t("error_events.actions.acknowledge"), acknowledge_error_event_path(@event),
+                    method: :patch, class: "btn btn-default btn-sm" %>
+    <% end %>
+    <% if policy(@event).resolve? && @event.status == "acknowledged" %>
+      <%= button_to t("error_events.actions.resolve"), resolve_error_event_path(@event),
+                    method: :patch, class: "btn btn-primary btn-sm" %>
+    <% end %>
+  </div>
+</div>
+
+<section class="panel mb-4">
+  <div class="panel-head"><h2 class="panel-title"><%= t("error_events.show.message_title") %></h2></div>
+  <div class="panel-body space-y-3">
+    <p class="font-mono text-body whitespace-pre-wrap break-words"><%= @event.message %></p>
+    <dl class="dl grid grid-cols-1 sm:grid-cols-2 gap-x-8">
+      <div><dt><%= t("error_events.show.where") %></dt>
+        <dd class="whitespace-nowrap">
+          <%= @event.catalog&.name || @event.source_system %>
+          <% location = [ @event.schema, @event.table ].reject(&:blank?).join(".") %>
+          <% if location.present? %><span class="cell-meta ml-1"><%= location %></span><% end %>
+        </dd></div>
+      <div><dt><%= t("error_events.show.operation") %></dt><dd><%= @event.operation %></dd></div>
+      <div><dt><%= t("error_events.show.source_system") %></dt><dd><%= @event.source_system %></dd></div>
+      <div><dt><%= t("error_events.show.error_class") %></dt><dd class="font-mono"><%= @event.error_class %></dd></div>
+      <div><dt><%= t("error_events.show.first_seen") %></dt><dd title="<%= @event.first_seen_at&.iso8601 %>"><%= @event.first_seen_at&.to_fs(:long) %></dd></div>
+      <div><dt><%= t("error_events.show.last_seen") %></dt><dd title="<%= @event.last_seen_at&.iso8601 %>"><%= @event.last_seen_at&.to_fs(:long) %></dd></div>
+      <div><dt><%= t("error_events.show.occurrences") %></dt><dd class="cell-num"><%= @event.occurrence_count %></dd></div>
+      <% if @event.source_column.present? %>
+        <div><dt><%= t("error_events.show.source_column") %></dt><dd><%= @event.source_column %></dd></div>
+      <% end %>
+      <% if @event.acknowledged_at.present? %>
+        <div><dt><%= t("error_events.show.acknowledged_at") %></dt><dd><%= @event.acknowledged_at.to_fs(:long) %></dd></div>
+      <% end %>
+      <% if @event.resolved_at.present? %>
+        <div><dt><%= t("error_events.show.resolved_at") %></dt><dd><%= @event.resolved_at.to_fs(:long) %></dd></div>
+      <% end %>
+    </dl>
+    <% if @event.context.present? %>
+      <div>
+        <h3 class="text-small font-semibold mb-1"><%= t("error_events.show.context_title") %></h3>
+        <pre class="font-mono text-small text-cosmos-fg-mute whitespace-pre-wrap break-words"><%= JSON.pretty_generate(@event.context) rescue @event.context.inspect %></pre>
+      </div>
+    <% end %>
+  </div>
+</section>
+
+<% if policy(@event).assign? && !@event.resolved? %>
+  <section class="panel">
+    <div class="panel-head"><h2 class="panel-title"><%= t("error_events.show.assign_title") %></h2></div>
+    <div class="panel-body">
+      <p class="page-sub mb-3"><%= t("error_events.show.assign_hint") %></p>
+      <%= form_with url: assign_error_event_path(@event), method: :patch, class: "flex flex-wrap items-end gap-2", data: { controller: "assignment-target" } do |f| %>
+        <div class="field">
+          <%= label_tag :target_type, t("error_events.show.target_type") %>
+          <%= select_tag :target_type,
+                options_for_select([[t("error_events.show.user"), "user"], [t("error_events.show.team"), "team"]], "user"),
+                data: { action: "assignment-target#change" } %>
+        </div>
+        <div class="field" data-assignment-target-target="select" data-target="user">
+          <%= label_tag :target_id, t("error_events.show.user") %>
+          <%= select_tag :target_id, options_from_collection_for_select(@assignable_users, :id, :email) %>
+        </div>
+        <div class="field hidden" data-assignment-target-target="select" data-target="team">
+          <%= label_tag :target_id, t("error_events.show.team") %>
+          <%= select_tag :target_id, options_from_collection_for_select(@teams, :id, :name), disabled: true %>
+        </div>
+        <%= f.submit t("error_events.actions.assign"), class: "btn btn-primary" %>
+      <% end %>
+    </div>
+  </section>
+<% end %>

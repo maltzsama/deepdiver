@@ -28,6 +28,17 @@ class FreshnessAlerter
       breached_since: current == "late" ? (@sla.breached_since || Time.current) : nil
     )
 
+    # Error surface integration: one event per late episode, auto-resolved on
+    # recovery. Assignment/acknowledge flow applies to it like any other error.
+    if changed && current == "late"
+      ErrorEvent.record_freshness_late!(
+        table: @sla.iceberg_table,
+        context: { delay: human(@result.delay_seconds), sla_minutes: @sla.sla_minutes, severity: severity }
+      )
+    elsif current == "ok" && previous_status == "late"
+      ErrorEvent.resolve_freshness!(table: @sla.iceberg_table)
+    end
+
     notify!(current, severity, previous_status) if should_notify?(current, severity, previous_status, previous_severity)
   end
 

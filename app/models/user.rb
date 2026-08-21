@@ -18,6 +18,8 @@ class User < ApplicationRecord
   attribute :status, :string, default: "active"
 
   has_many :role_change_logs, dependent: :destroy
+  has_many :memberships, class_name: "TeamMembership", dependent: :destroy
+  has_many :teams, through: :memberships
   has_many :invited_users, class_name: "User", foreign_key: "invited_by_id", inverse_of: :invited_by
   belongs_to :invited_by, class_name: "User", optional: true
   belongs_to :suspended_by, class_name: "User", optional: true

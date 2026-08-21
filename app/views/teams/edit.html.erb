@@ -1,0 +1,14 @@
+<% content_for :title, "#{t("teams.edit.title")} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= link_to t("teams.index.title"), teams_path %></p>
+    <h1 class="page-title"><%= t("teams.edit.title") %> — <%= @team.name %></h1>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-body">
+    <%= render "form", team: @team %>
+  </div>
+</section>

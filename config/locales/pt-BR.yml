@@ -15,6 +15,7 @@ pt-BR:
       errors: "Erros"
       security: "Seguranca"
       users: "Usuarios"
+      teams: "Times"
       alerts: "Alertas"
       engine: "Motor"
       collapse: "Recolher barra lateral"
@@ -68,9 +69,74 @@ pt-BR:
     status_open: "Aberto"
     status_acknowledged: "Reconhecido"
     status_resolved: "Resolvido"
+    actions:
+      acknowledge: "Assumir o problema"
+      resolve: "Marcar como resolvido"
+      assign: "Atribuir e notificar"
+    show:
+      title: "Detalhe do erro"
+      message_title: "O que aconteceu"
+      where: "Onde"
+      operation: "Operacao"
+      source_system: "Origem"
+      error_class: "Classe do erro"
+      first_seen: "Primeira vez"
+      last_seen: "Ultima vez"
+      occurrences: "Ocorrencias"
+      source_column: "Coluna"
+      acknowledged_at: "Assumido em"
+      resolved_at: "Resolvido em"
+      context_title: "Contexto"
+      assign_title: "Atribuicao"
+      assign_hint: "Passe o problema para uma pessoa ou para um time inteiro. Os atribuidos recebem um email; o evento fica aberto ate ser assumido."
+      target_type: "Atribuir a"
+      user: "Usuario"
+      team: "Time"
+      assigned_to: "Atribuido a"
+      assigned_team: "Time atribuido"
+    notices:
+      acknowledged_one: "Erro assumido."
+      resolved_one: "Erro marcado como resolvido."
+      assigned: "%{count} pessoa(s) notificada(s) por email."
+      invalid_target: "Escolha um usuario ou time valido para atribuir."
     overview_banner: "%{count} erro(s) aberto(s) - inspecione a superficie de erros."
     catalog_banner: "%{catalog} tem %{count} erro(s) aberto(s)."
     table_banner: "Esta tabela tem %{count} erro(s) aberto(s)."
+
+  teams:
+    index:
+      eyebrow: "Administracao"
+      title: "Times"
+      subtitle: "Grupos de pessoas para quem erros podem ser atribuidos."
+      new: "Novo time"
+      col_name: "Nome"
+      col_members: "Membros"
+      edit: "Editar"
+      delete: "Excluir"
+      delete_confirm: "Excluir este time? Os membros continuam no app."
+      empty_title: "Nenhum time ainda"
+      empty_hint: "Crie um time para entregar um conjunto de erros a uma squad inteira."
+    new:
+      title: "Novo time"
+    edit:
+      title: "Editar time"
+    form:
+      name: "Nome"
+      description: "Descricao"
+      members_title: "Membros (admin / operator)"
+      submit_create: "Criar time"
+      submit_update: "Salvar alteracoes"
+      cancel: "Cancelar"
+    show:
+      edit: "Editar"
+      members_title: "Membros"
+      col_email: "Email"
+      col_role: "Papel"
+      empty_members: "Nenhum membro ainda. Edite o time para adicionar."
+    notices:
+      created: "Time criado."
+      updated: "Time atualizado."
+      destroyed: "Time excluido."
 
   activity:
     eyebrow: "Atividade"
@@ -845,6 +911,17 @@ pt-BR:
   devise:
     failure:
       suspended: "Sua conta foi suspensa. Fale com um administrador."
+
+  error_event_mailer:
+    assignment:
+      subject: "[LakeDeepDiver] Erro atribuido a voce: %{operation} em %{where}"
+      greeting: "Ola,"
+      intro: "%{assigned_by} atribuiu um evento de erro a voce."
+      operation: "Operacao"
+      where: "Onde"
+      message: "Mensagem"
+      error_class: "Classe do erro"
+      occurrences: "Ocorrencias"
 
   activerecord:
     errors:
