@@ -67,6 +67,9 @@ lists every environment variable the application reads.
 | `RAILS_ENV` | No | `development` | Runtime environment. |
 | `RAILS_LOG_LEVEL` | No | `info` | Log verbosity (`debug`, `info`, `warn`, `error`). |
 | `RAILS_MAX_THREADS` | No | `5` | Puma max threads per worker. |
+| `RAILS_ASSUME_SSL` | No | `false` | Set `true` behind an SSL-terminating proxy. |
+| `RAILS_FORCE_SSL` | No | `false` | Set `true` to redirect HTTP to HTTPS. |
+| `RAILS_ALLOWED_HOSTS` | No | — | Comma-separated allowed Host headers (DNS rebinding guard). |
 | `WEB_CONCURRENCY` | No | `0` | Puma worker processes (0 = single-threaded). |
 | `SOLID_QUEUE_IN_PUMA` | No | `false` | Run Solid Queue inline inside Puma (no separate worker). |
 | `PORT` | No | `3000` | HTTP listen port. |
