@@ -40,7 +40,9 @@
               <p class="cell-muted text-small"><%= user.sso? ? t("users.index.sso") : t("users.index.local") %></p>
             </td>
             <td>
-              <%= form_with model: user, method: :patch, class: "inline-flex items-center gap-2" do |form| %>
+              <%= form_with model: user, method: :patch,
+                              data: { turbo_confirm: t("users.index.role_confirm", email: user.email) },
+                              class: "inline-flex items-center gap-2" do |form| %>
                 <%= form.select :role, User::ROLES.map { |role| [ t("users.roles.#{role}"), role ] }, {},
                                 class: "field-input field-input-mono py-1 text-small cursor-pointer",
                                 onchange: "this.form.requestSubmit()",

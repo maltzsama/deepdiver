@@ -730,6 +730,7 @@ en:
       suspend: "Suspend"
       reactivate: "Reactivate"
       suspend_confirm: "Suspend %{email}? They can no longer sign in until reactivated."
+      role_confirm: "Change role for %{email}?"
     new:
       eyebrow: "Security"
       title: "Invite user"
