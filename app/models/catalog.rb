@@ -17,8 +17,9 @@ class Catalog < ApplicationRecord
 
   validates :name, presence: true, uniqueness: true
   validates :catalog_type, presence: true, inclusion: { in: CATALOG_TYPES }
-  validates :endpoint, presence: true
+  validates :endpoint, presence: true, format: { with: /\Ahttps?:\/\//i, message: :must_be_http }
   validate :trino_catalog_name_is_valid
+  validate :endpoint_not_internal
 
   # Name of the catalog inside Trino. Derived from the record name, because
   # the application provisions Trino itself. The override exists for
@@ -80,6 +81,25 @@ class Catalog < ApplicationRecord
 
     errors.add(:trino_catalog_name_override,
                I18n.t("activerecord.errors.models.catalog.attributes.trino_catalog_name_override.reserved",
-                      name: effective, reserved: TRINO_RESERVED.join(", ")))
+                       name: effective, reserved: TRINO_RESERVED.join(", ")))
+  end
+
+  BLOCKED_HOSTS = %w[localhost 127.0.0.1 0.0.0.0 169.254.169.254 ::1 metadata.google.internal kubernetes.default.svc].freeze
+  BLOCKED_PREFIXES = %w[10. 172.16. 172.17. 172.18. 172.19. 172.20. 172.21. 172.22. 172.23. 172.24. 172.25. 172.26. 172.27. 172.28. 172.29. 172.30. 172.31. 192.168. fd00: fe80:].freeze
+
+  def endpoint_not_internal
+    return if endpoint.blank?
+
+    begin
+      uri = URI.parse(endpoint)
+      host = uri.host.to_s.downcase
+    rescue URI::InvalidURIError
+      errors.add(:endpoint, :invalid_url)
+      return
+    end
+
+    return unless BLOCKED_HOSTS.include?(host) || BLOCKED_PREFIXES.any? { |p| host.start_with?(p) }
+
+    errors.add(:endpoint, :blocked_internal)
   end
 end
