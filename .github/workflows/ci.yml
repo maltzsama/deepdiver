@@ -86,3 +86,30 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+  docs:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    permissions:
+      contents: write
+    env:
+      SSO_ENABLED: "false"
+      SECRET_KEY_BASE_DUMMY: "1"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Generate RDoc + inject counter.dev tracking
+        run: bundle exec rake docs:build
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./doc
+          force_orphan: true
+
