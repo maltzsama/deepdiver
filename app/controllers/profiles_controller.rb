@@ -9,7 +9,7 @@ class ProfilesController < ApplicationController
   # Account preferences: display name, locale and theme. Password changes go
   # through #password so they can require the current password.
   def update
-    return redirect_to(profile_path, notice: "Account updated.") if current_user.update(profile_params)
+    return redirect_to(profile_path, notice: t("profiles.notices.updated")) if current_user.update(profile_params)
 
     render :show, status: :unprocessable_content
   end
@@ -20,7 +20,7 @@ class ProfilesController < ApplicationController
 
     if current_user.update_with_password(password_params)
       bypass_sign_in(current_user)
-      redirect_to profile_path, notice: "Password updated."
+      redirect_to profile_path, notice: t("profiles.notices.password_updated")
     else
       render :show, status: :unprocessable_content
     end

@@ -32,7 +32,7 @@ class MaintenancePoliciesController < ApplicationController
     @policy = MaintenancePolicy.new(policy_params)
 
     if @policy.save
-      redirect_to @policy, notice: "Policy created."
+      redirect_to @policy, notice: t("policies.notices.created")
     else
       render :new, status: :unprocessable_content
     end
@@ -50,7 +50,7 @@ class MaintenancePoliciesController < ApplicationController
     if @policy.update(policy_params)
       # Propagate to the plans derived from this policy.
       count = @policy.propagate!
-      redirect_to @policy, notice: "Policy updated. #{count} plan(s) synced."
+      redirect_to @policy, notice: t("policies.notices.updated", count: count)
     else
       render :edit, status: :unprocessable_content
     end
@@ -60,7 +60,7 @@ class MaintenancePoliciesController < ApplicationController
   def destroy
     authorize @policy
     @policy.destroy
-    redirect_to maintenance_policies_path, notice: "Policy deleted."
+    redirect_to maintenance_policies_path, notice: t("policies.notices.destroyed")
   end
 
   # Applies the policy to a set of tables at once, creating/updating their plans.
@@ -69,8 +69,8 @@ class MaintenancePoliciesController < ApplicationController
     ids = Array(params[:iceberg_table_ids]).reject(&:blank?)
     result = @policy.apply_to!(IcebergTable.where(id: ids))
 
-    notice = "#{result[:created]} plan(s) created, #{result[:updated]} updated."
-    notice += " #{result[:skipped]} skipped (already managed by another policy)." if result[:skipped].positive?
+    notice = t("policies.notices.applied", created: result[:created], updated: result[:updated])
+    notice += " #{result[:skipped]} #{t('policies.notices.skipped')}" if result[:skipped].positive?
 
     redirect_to @policy, notice: notice
   end

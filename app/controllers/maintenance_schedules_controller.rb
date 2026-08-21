@@ -30,7 +30,7 @@ class MaintenanceSchedulesController < ApplicationController
     @schedule = MaintenanceSchedule.new(schedule_params)
 
     if @schedule.save
-      redirect_to @schedule.iceberg_table, notice: "Schedule created."
+      redirect_to @schedule.iceberg_table, notice: t("schedules.notices.created")
     else
       render :new, status: :unprocessable_content
     end
@@ -45,7 +45,7 @@ class MaintenanceSchedulesController < ApplicationController
   def update
     authorize @schedule
     if @schedule.update(schedule_params)
-      redirect_to @schedule, notice: "Schedule updated."
+      redirect_to @schedule, notice: t("schedules.notices.updated")
     else
       render :edit, status: :unprocessable_content
     end
@@ -56,7 +56,7 @@ class MaintenanceSchedulesController < ApplicationController
     authorize @schedule
     @table = @schedule.iceberg_table
     @schedule.destroy
-    redirect_to @table, notice: "Schedule deleted."
+    redirect_to @table, notice: t("schedules.notices.destroyed")
   end
 
   private

@@ -28,7 +28,7 @@ class ExecutionHistoriesController < ApplicationController
     @execution.update!(status: status, error_message: "cancelled by operator", finished_at: Time.current)
     TableLock.release(@execution)
     TrinoEngineSupervisor.demand_finished!
-    redirect_to activity_path, notice: "Execution cancelled."
+    redirect_to activity_path, notice: t("activity.notices.cancelled")
   end
 
   private
