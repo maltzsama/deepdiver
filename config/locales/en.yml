@@ -786,10 +786,11 @@ en:
       worker_title: "Worker resources"
       worker_cpu: "Worker CPU"
       worker_memory: "Worker memory"
-      applies_next_start: "Changes apply on the next engine start (the next maintenance run)."
+      applies_next_start: "If the engine is idle, changes apply on the next start. If it is running, they take effect immediately."
       submit: "Save engine config"
     notices:
       updated: "Engine config updated"
+      updated_and_applied: "Engine config updated and applied to the running cluster"
 
   freshness_slas:
     edit:
