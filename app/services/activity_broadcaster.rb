@@ -24,7 +24,7 @@ module ActivityBroadcaster
       "activity",
       target: "activity-engine-strip",
       partial: "activity/engine_strip",
-      locals: { engine_state: state, active_count: active_count }
+      locals: { engine_state: state, active_count: active_count, render_actions: true }
     )
     Turbo::StreamsChannel.broadcast_replace_to(
       "activity",

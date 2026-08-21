@@ -20,6 +20,11 @@ class SuperviseEngineStartJob < ApplicationJob
 
     TrinoEngineSupervisor.transition!(state, "up", last_error: nil)
     TrinoEngineSupervisor.release_pending!
+
+    # All demand may have been cancelled while we were booting. Re-evaluate.
+    TrinoEngineSupervisor.demand_finished!
+  rescue TrinoEngineSupervisor::ConcurrentTransitionError
+    nil
   rescue TrinoProvisioner::Error, Timeout::Error => e
     handle_start_failure(state, e)
   end
