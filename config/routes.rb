@@ -33,12 +33,7 @@ Rails.application.routes.draw do
   end
 
   # Superfície de erro (CR-72): opens the list of recorded failures.
-  resources :error_events, only: %i[index] do
-    collection do
-      post :acknowledge
-      post :resolve
-    end
-  end
+  resources :error_events, only: %i[index]
 
   resources :catalogs, only: %i[index show new create edit update destroy] do
     member do
