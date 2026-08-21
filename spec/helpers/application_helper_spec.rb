@@ -38,4 +38,26 @@ RSpec.describe ApplicationHelper, type: :helper do
       expect(helper.active_path?("/maintenance_plans")).to be(true)
     end
   end
+
+  describe "#engine_status_label" do
+    State = Struct.new(:status, :start_attempts, :status_changed_at, :drain_started_at)
+
+    it "shows attempt 1 of N on the first start" do
+      state = State.new("starting", 1, Time.current, nil)
+
+      expect(helper.engine_status_label(state)).to include("attempt 1 of")
+    end
+
+    it "shows attempt 2 of N on the retry" do
+      state = State.new("starting", 2, Time.current, nil)
+
+      expect(helper.engine_status_label(state)).to include("attempt 2 of")
+    end
+
+    it "never shows attempt 0 (before the start job increments)" do
+      state = State.new("starting", 0, Time.current, nil)
+
+      expect(helper.engine_status_label(state)).to include("attempt 1 of")
+    end
+  end
 end
