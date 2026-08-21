@@ -13,7 +13,7 @@
             <%= turbo_frame_tag "cancel_#{execution.id}" do %>
               <span class="flex items-center gap-2">
                 <span class="badge badge-running"><%= execution.current_step %></span>
-                <% if can_cancel_query? %>
+                <% if defined?(current_user) && can_cancel_query? %>
                   <%= turbo_frame_tag "cancel_#{execution.id}" do %>
                     <%= button_to t("activity.running.cancel"), cancel_execution_history_path(execution),
                                   method: :post, class: "btn btn-danger btn-sm",

@@ -24,7 +24,7 @@ module ActivityBroadcaster
       "activity",
       target: "activity-engine-strip",
       partial: "activity/engine_strip",
-      locals: { engine_state: state, active_count: active_count, render_actions: true }
+      locals: { engine_state: state, active_count: active_count }
     )
     Turbo::StreamsChannel.broadcast_replace_to(
       "activity",
@@ -50,5 +50,7 @@ module ActivityBroadcaster
       partial: "activity/queue",
       locals: { queue: QueueSummary.new.call, running: running, queued: queued }
     )
+  rescue StandardError => e
+    Rails.logger.warn("ActivityBroadcaster failed: #{e.class}: #{e.message}")
   end
 end
