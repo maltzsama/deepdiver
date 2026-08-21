@@ -142,4 +142,32 @@ RSpec.describe TrinoEngineSupervisor do
       expect(described_class.state.reload.status).to eq("draining")
     end
   end
+
+  describe "hard reset step bookkeeping" do
+    let(:table) { create(:iceberg_table) }
+    let(:execution) { create(:execution_history, iceberg_table: table, status: :running) }
+
+    it "blocks pending steps when the hard reset fails executions in flight" do
+      create(:execution_step, execution_history: execution, operation: "optimize", status: :succeeded)
+      create(:execution_step, execution_history: execution, operation: "expire_snapshots", status: :pending)
+
+      described_class.hard_reset!
+
+      execution.reload
+      expect(execution.status).to eq("failed")
+      blocked = execution.execution_steps.find_by(operation: "expire_snapshots")
+      expect(blocked.status).to eq("blocked")
+      expect(blocked.skip_reason).to eq("engine hard reset")
+      expect(blocked.error_message).to be_nil
+    end
+
+    it "blocks pending steps of queued executions too" do
+      queued = create(:execution_history, iceberg_table: table, status: :pending)
+      create(:execution_step, execution_history: queued, operation: "optimize", status: :pending)
+
+      described_class.hard_reset!
+
+      expect(queued.execution_steps.where(status: "blocked").count).to eq(1)
+    end
+  end
 end

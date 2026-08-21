@@ -46,11 +46,23 @@ class ExecutionFailureHandler
     return if TERMINAL_STATUSES.include?(@execution.status)
 
     @execution.update!(status: :failed, error_message: @error_message)
+    block_pending_steps!
 
     ErrorEvent.record(catalog: @table&.catalog, schema: @table&.namespace,
                       table: @table&.name, operation: "execution",
                       source_system: "engine", error_class: "ExecutionFailure",
                       message: @error_message)
+  end
+
+  # Steps still pending when the chain aborts will never run. "pending" means
+  # "will run" - leaving them pending would count dead work as queued demand.
+  # Blocked is neutral for health scoring: it is the same failure counted once,
+  # not an independent one.
+  def block_pending_steps!
+    reason = "chain aborted by #{@execution.current_step.presence || 'previous step'} failure"
+    @execution.execution_steps.where(status: "pending").update_all(
+      status: "blocked", skip_reason: reason, updated_at: Time.current
+    )
   end
 
   # Increments the plan's consecutive-failure counter, pausing it past the threshold.

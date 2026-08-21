@@ -30,12 +30,13 @@ module MaintenanceOrchestrator
 
     plan.maintenance_steps.each do |step|
       running = step.enabled && step.due_at?(at)
+      reason = running ? nil : skip_reason(step, at)
 
       execution.execution_steps.create!(
         maintenance_step: step,
         operation: step.operation,
         status: running ? "pending" : "skipped",
-        error_message: skip_reason(step, at)
+        skip_reason: reason
       )
     end
 
