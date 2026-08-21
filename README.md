@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/maltzsama/lakedeepdiver/actions/workflows/ci.yml/badge.svg)](https://github.com/maltzsama/lakedeepdiver/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Ruby](https://img.shields.io/badge/ruby-4.0.6-red.svg)](https://www.ruby-lang.org/)
+[![Rails](https://img.shields.io/badge/rails-8.1-brightgreen.svg)](https://rubyonrails.org/)
 
 Rails 8 control plane for Iceberg table maintenance (optimize, expire snapshots, orphan/rewrite)
 with an ephemeral Trino engine on Kubernetes.
@@ -15,6 +17,10 @@ with an ephemeral Trino engine on Kubernetes.
   recurring tasks.
 - Ports/adapters Trino runtime: `FakeTrinoRuntime` in dev/test, `RealTrinoRuntime`
   (kubeclient scale up/down + Trino REST) with `TRINO_RUNTIME=real` in production.
+- Configurable Trino engine topology: single-node or coordinator + separate workers,
+  managed from the admin UI (Engine config screen).
+- Freshness monitoring with SLA probes and Slack/email alerting.
+- Multi-tenant team scoping with Pundit policies.
 
 ## Stack
 
@@ -22,6 +28,7 @@ with an ephemeral Trino engine on Kubernetes.
 - Solid Queue (no Redis) on PostgreSQL; production uses CloudNativePG with `DATABASE_URL`
   (app) and `DB_QUEUE_URL` (queue schema).
 - `fugit` for cron parsing, `kubeclient` for the in-cluster Trino control.
+- Trino 482 with baleia catalog-store plugin (ephemeral, app-managed).
 
 ## Setup
 
@@ -41,13 +48,96 @@ Default seeded user: `admin@example.com` / `changeme!` (admin).
 
 ## Configuration
 
-All production secrets come from the environment (Helm chart secrets):
+All production secrets come from the environment (Helm chart secrets). The table below
+lists every environment variable the application reads.
 
-- `DATABASE_URL`, `DB_QUEUE_URL` — PostgreSQL endpoints.
-- `RAILS_MASTER_KEY` — Rails credentials.
-- `TRINO_RUNTIME=real`, `TRINO_URL`, `TRINO_NAMESPACE`, `TRINO_DEPLOYMENT` — the
-  ephemeral Trino engine to scale.
-- `JOB_CONCURRENCY` — Solid Queue worker processes.
+### Database
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `DATABASE_URL` | Yes | — | PostgreSQL connection string for the app schema. |
+| `DB_QUEUE_URL` | Yes | — | PostgreSQL connection string for the Solid Queue schema. |
+
+### Rails core
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `RAILS_MASTER_KEY` | Yes | — | Decrypts `credentials.yml.enc`. |
+| `SECRET_KEY_BASE` | Yes | — | Session/cookie/signing secret. |
+| `RAILS_ENV` | No | `development` | Runtime environment. |
+| `RAILS_LOG_LEVEL` | No | `info` | Log verbosity (`debug`, `info`, `warn`, `error`). |
+| `RAILS_MAX_THREADS` | No | `5` | Puma max threads per worker. |
+| `WEB_CONCURRENCY` | No | `0` | Puma worker processes (0 = single-threaded). |
+| `SOLID_QUEUE_IN_PUMA` | No | `false` | Run Solid Queue inline inside Puma (no separate worker). |
+| `PORT` | No | `3000` | HTTP listen port. |
+
+### Encryption (Active Record)
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY` | Yes | — | Deterministic encryption key. |
+| `ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT` | Yes | — | Key derivation salt. |
+| `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` | Yes | — | Primary encryption key. |
+
+### SSO / OIDC
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `SSO_ENABLED` | No | `false` | Enable OpenID Connect SSO login. |
+| `OIDC_CLIENT_ID` | If SSO | — | OIDC client ID. |
+| `OIDC_CLIENT_SECRET` | If SSO | — | OIDC client secret. |
+| `OIDC_ISSUER` | If SSO | — | OIDC issuer URL (e.g. `https://keycloak.example.com/realms/app`). |
+| `OIDC_REDIRECT_URI` | No | — | Callback URL override. |
+| `OIDC_PROVIDER_LABEL` | No | `SSO` | Label shown on the login button. |
+| `LOCAL_LOGIN_ENABLED` | No | `true` | Show the email/password login form (disable when SSO-only). |
+
+### Trino engine — provisioning
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `TRINO_URL` | Yes | — | Coordinator base URL (e.g. `http://trino-coordinator:8080`). |
+| `TRINO_NAMESPACE` | No | Release ns | Kubernetes namespace of the Trino Deployments. |
+| `TRINO_DEPLOYMENT` | No | `trino-coordinator` | Coordinator Deployment name. |
+| `TRINO_WORKER_DEPLOYMENT` | No | `trino-worker` | Worker Deployment name. |
+| `TRINO_RUNTIME` | No | `real` | `real` (kubeclient) or `fake` (dev/test). |
+| `TRINO_PROVISIONER` | No | `chart` | `baleia` (catalog-store plugin), `chart` (Helm-style), or `fake`. |
+| `TRINO_CLUSTER_NAME` | No | `default` | Baleia catalog-store cluster name. |
+
+### Trino engine — tuning
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `TRINO_READY_TIMEOUT_MINUTES` | No | `8` | Max wait for cluster readiness on start. |
+| `TRINO_MAX_START_ATTEMPTS` | No | `2` | Start retries before marking engine failed. |
+| `TRINO_START_POLL_SECONDS` | No | `5` | Polling interval during startup. |
+| `TRINO_DRAIN_GRACE_MINUTES` | No | `5` | Grace period before draining idle engine. |
+| `TRINO_DRAIN_POLL_SECONDS` | No | `5` | Polling interval during drain. |
+| `TRINO_MAINT_MAX_SECONDS` | No | `300` | Max seconds per maintenance step. |
+| `TRINO_MAINT_POLL_SECONDS` | No | `5` | Polling interval for step completion. |
+| `TRINO_QUERY_MAX_SECONDS` | No | `300` | Max seconds per Trino query. |
+| `TRINO_QUERY_POLL_SECONDS` | No | `5` | Polling interval for query completion. |
+| `TRINO_HEARTBEAT_STALE_MINUTES` | No | `10` | Minutes before a running query is considered stale. |
+
+### Kubernetes
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `KUBE_API_URL` | No | In-cluster | Override the Kubernetes API endpoint. |
+| `KUBE_TOKEN` | No | ServiceAccount | Bearer token for the Kubernetes API. |
+| `KUBE_CA_FILE` | No | ServiceAccount | CA certificate file path. |
+
+### Alerts
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `SLACK_WEBHOOK_URL` | No | — | Default Slack webhook for alert delivery. |
+
+### Other
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `INTERNAL_CA_FILE` | No | — | Path to the internal root CA certificate. |
+| `CEPH_ENDPOINT` | No | — | Ceph/S3 object-store endpoint. |
 
 ## Deployment (Helm)
 
@@ -67,15 +157,15 @@ Deployment is not wired into CI; publish the image yourself and install the char
 - A PostgreSQL database (two logical databases: the app + `..._queue` for Solid Queue).
 - An object store / Iceberg catalog (Polaris/Nessie) reachable from the cluster.
 - An ephemeral Trino engine: a Deployment (default name `trino-coordinator`) that the app
-  scales 0↔1 through `apps/deployments` and `apps/deployments/scale` RBAC.
+  scales 0<->1 through `apps/deployments` and `apps/deployments/scale` RBAC.
 - The on-prem PKI root CA in a Secret (for HTTPS to catalog/Trino) if issued by a private CA.
 
 ### Build, render and install
 
 ```bash
 # 1. Build and push the image once per release (tag is pinned, never "latest").
-docker build -t registry.example.com/lakedeepdiver:0.1.0 . <!-- x-release-please-version -->
-docker push registry.example.com/lakedeepdiver:0.1.0 <!-- x-release-please-version -->
+docker build -t registry.example.com/lakedeepdiver:0.1.0 .
+docker push registry.example.com/lakedeepdiver:0.1.0
 
 # 2. Render and validate without a cluster.
 helm lint infra/helm/lakedeepdiver
@@ -86,7 +176,7 @@ helm template lakedeepdiver infra/helm/lakedeepdiver \
 helm upgrade --install lakedeepdiver infra/helm/lakedeepdiver \
   --namespace lakedeepdiver --create-namespace \
   --values infra/helm/values/prod.yaml \
-  --set image.tag=0.1.0 <!-- x-release-please-version -->
+  --set image.tag=0.1.0
 ```
 
 ### Required values
@@ -124,6 +214,13 @@ and a **Hard reset** button to tear a frozen engine down.
 
 Full parameter reference, RBAC details and the internal-CA trust model are in
 `infra/helm/lakedeepdiver/README.md`.
+
+## Generating docs
+
+```bash
+bundle exec rake docs:build     # generate RDoc + inject counter.dev tracking
+bundle exec rake docs:inject_counter  # re-inject tracking after manual rdoc regen
+```
 
 ## License
 
