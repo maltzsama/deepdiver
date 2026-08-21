@@ -5,7 +5,11 @@ class User < ApplicationRecord
   # With SSO on, public self-registration is an open door.
   devise :database_authenticatable,
          :recoverable, :rememberable, :validatable,
+         :timeoutable, :lockable,
          :omniauthable, omniauth_providers: %i[openid_connect]
+
+  LOCK_THRESHOLD = 5
+  LOCK_DURATION = 30.minutes
 
   ROLES = %w[viewer operator admin].freeze
   STATUSES = %w[active invited suspended].freeze
