@@ -17,27 +17,27 @@
     </div>
   </div>
 
-  <div class="page-actions items-center gap-3 flex-wrap">
+  <div class="page-actions flex flex-wrap items-center gap-2">
     <% if policy(@event).assign? && !@event.resolved? %>
       <%= form_with url: assign_error_event_path(@event), method: :patch,
-                    class: "flex items-center gap-2",
+                    class: "flex items-center gap-1.5",
                     data: { controller: "assignment-target" } do |f| %>
         <%= select_tag :target_type,
               options_for_select([[t("error_events.show.user"), "user"], [t("error_events.show.team"), "team"]], "user"),
-              class: "field-input w-auto",
+              class: "field-input field-input-sm",
               aria_label: t("error_events.show.target_type"),
               data: { action: "assignment-target#change" } %>
         <%= select_tag :target_id,
               options_from_collection_for_select(@assignable_users, :id, :email),
-              class: "field-input w-auto",
+              class: "field-input field-input-sm",
               aria_label: t("error_events.show.user"),
               data: { assignment_target_target: "select", target: "user" } %>
         <%= select_tag :target_id,
               options_from_collection_for_select(@teams, :id, :name),
-              class: "field-input w-auto hidden", disabled: true,
+              class: "field-input field-input-sm hidden", disabled: true,
               aria_label: t("error_events.show.team"),
               data: { assignment_target_target: "select", target: "team" } %>
-        <%= f.submit t("error_events.actions.assign"), class: "btn btn-default btn-sm" %>
+        <button type="submit" class="btn btn-default btn-sm"><%= t("error_events.actions.assign") %></button>
       <% end %>
     <% end %>
 
@@ -54,36 +54,62 @@
 
 <section class="panel mb-4">
   <div class="panel-head"><h2 class="panel-title"><%= t("error_events.show.message_title") %></h2></div>
-  <div class="panel-body space-y-3">
+  <div class="panel-body">
     <p class="font-mono text-body whitespace-pre-wrap break-words"><%= @event.message %></p>
-    <dl class="dl grid grid-cols-1 sm:grid-cols-2 gap-x-8">
-      <div><dt><%= t("error_events.show.where") %></dt>
-        <dd class="whitespace-nowrap">
+  </div>
+</section>
+
+<section class="panel mb-4">
+  <div class="panel-head"><h2 class="panel-title"><%= t("error_events.show.details_title") %></h2></div>
+  <div class="panel-body">
+    <dl class="dl">
+      <div>
+        <dt class="dl-term"><%= t("error_events.show.where") %></dt>
+        <dd class="dl-desc whitespace-nowrap">
           <%= @event.catalog&.name || @event.source_system %>
           <% location = [ @event.schema, @event.table ].reject(&:blank?).join(".") %>
           <% if location.present? %><span class="cell-meta ml-1"><%= location %></span><% end %>
-        </dd></div>
-      <div><dt><%= t("error_events.show.operation") %></dt><dd><%= @event.operation %></dd></div>
-      <div><dt><%= t("error_events.show.source_system") %></dt><dd><%= @event.source_system %></dd></div>
-      <div><dt><%= t("error_events.show.error_class") %></dt><dd class="font-mono"><%= @event.error_class %></dd></div>
-      <div><dt><%= t("error_events.show.first_seen") %></dt><dd title="<%= @event.first_seen_at&.iso8601 %>"><%= @event.first_seen_at&.to_fs(:long) %></dd></div>
-      <div><dt><%= t("error_events.show.last_seen") %></dt><dd title="<%= @event.last_seen_at&.iso8601 %>"><%= @event.last_seen_at&.to_fs(:long) %></dd></div>
-      <div><dt><%= t("error_events.show.occurrences") %></dt><dd class="cell-num"><%= @event.occurrence_count %></dd></div>
-      <% if @event.source_column.present? %>
-        <div><dt><%= t("error_events.show.source_column") %></dt><dd><%= @event.source_column %></dd></div>
-      <% end %>
+        </dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("error_events.show.error_class") %></dt>
+        <dd class="dl-desc-mono"><%= @event.error_class %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("error_events.show.source_system") %></dt>
+        <dd class="dl-desc"><%= @event.source_system %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("error_events.show.occurrences") %></dt>
+        <dd class="dl-desc-mono"><%= @event.occurrence_count %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("error_events.show.first_seen") %></dt>
+        <dd class="dl-desc-mono text-small"><%= timestamp(@event.first_seen_at) %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("error_events.show.last_seen") %></dt>
+        <dd class="dl-desc-mono text-small"><%= timestamp(@event.last_seen_at) %></dd>
+      </div>
       <% if @event.acknowledged_at.present? %>
-        <div><dt><%= t("error_events.show.acknowledged_at") %></dt><dd><%= @event.acknowledged_at.to_fs(:long) %></dd></div>
+        <div>
+          <dt class="dl-term"><%= t("error_events.show.acknowledged_at") %></dt>
+          <dd class="dl-desc-mono text-small"><%= timestamp(@event.acknowledged_at) %></dd>
+        </div>
       <% end %>
       <% if @event.resolved_at.present? %>
-        <div><dt><%= t("error_events.show.resolved_at") %></dt><dd><%= @event.resolved_at.to_fs(:long) %></dd></div>
+        <div>
+          <dt class="dl-term"><%= t("error_events.show.resolved_at") %></dt>
+          <dd class="dl-desc-mono text-small"><%= timestamp(@event.resolved_at) %></dd>
+        </div>
       <% end %>
     </dl>
+
     <% if @event.context.present? %>
-      <div>
-        <h3 class="text-small font-semibold mb-1"><%= t("error_events.show.context_title") %></h3>
-        <pre class="font-mono text-small text-cosmos-fg-mute whitespace-pre-wrap break-words"><%= JSON.pretty_generate(@event.context) rescue @event.context.inspect %></pre>
-      </div>
+      <details class="field-group mt-5">
+        <summary class="field-group-title cursor-pointer"><%= t("error_events.show.context_title") %></summary>
+        <pre class="font-mono text-small text-cosmos-fg-mute whitespace-pre-wrap break-words mt-3"><%= JSON.pretty_generate(@event.context) rescue @event.context.inspect %></pre>
+      </details>
     <% end %>
   </div>
 </section>

@@ -426,6 +426,14 @@
     padding-right: 2.5rem;
   }
 
+  /* Compact variant sized to match btn-sm rows (toolbars, page-actions). */
+  .field-input-sm { @apply w-auto rounded px-2.5 py-1 text-small; }
+  select.field-input-sm {
+    background-position: right 0.625rem center;
+    background-size: 0.85rem;
+    padding-right: 2rem;
+  }
+
   .field-group { @apply rounded-[var(--radius-panel)] p-5 border border-cosmos-line; background: var(--sunk); }
   .field-group-title { @apply mb-4 font-mono text-small uppercase tracking-widest text-cosmos-fg-mute; }
   .form-actions { @apply flex items-center gap-3 pt-4; }
