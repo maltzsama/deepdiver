@@ -1,38 +1,40 @@
-<%= form_with model: team, class: "space-y-4" do |f| %>
+<%= form_with model: team, class: "form-grid" do |f| %>
   <% if team.errors.any? %>
-    <div class="alert alert-error">
-      <ul>
-        <% team.errors.full_messages.each do |msg| %>
-          <li><%= msg %></li>
+    <div class="errors">
+      <ul class="errors-list">
+        <% team.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
 
   <div class="field">
-    <%= f.label :name, t("teams.form.name") %>
-    <%= f.text_field :name, required: true, autofocus: true %>
+    <%= f.label :name, t("teams.form.name"), class: "field-label" %>
+    <%= f.text_field :name, required: true, autofocus: team.new_record?, class: "field-input field-input-mono" %>
   </div>
 
   <div class="field">
-    <%= f.label :description, t("teams.form.description") %>
-    <%= f.text_area :description, rows: 2 %>
+    <%= f.label :description, t("teams.form.description"), class: "field-label" %>
+    <%= f.text_area :description, rows: 2, class: "field-input" %>
   </div>
 
-  <fieldset class="panel">
-    <div class="panel-head"><h2 class="panel-title"><%= t("teams.form.members_title") %></h2></div>
-    <div class="panel-body grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+  <div class="field-group">
+    <p class="field-group-title"><%= t("teams.form.members_title") %></p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
       <% User.active.where(role: %i[admin operator]).order(:email).each do |user| %>
-        <label class="flex items-center gap-2">
-          <%= check_box_tag "team[member_ids][]", user.id, team.member_ids.include?(user.id), id: "team_member_#{user.id}" %>
+        <label class="field-check">
+          <%= check_box_tag "team[member_ids][]", user.id, team.member_ids.include?(user.id),
+                            id: "team_member_#{user.id}", class: "field-checkbox" %>
           <span><%= user.email %> <span class="cell-meta">(<%= user.role %>)</span></span>
         </label>
       <% end %>
     </div>
-  </fieldset>
+  </div>
 
-  <div class="flex gap-2">
+  <div class="form-actions">
     <%= f.submit team.new_record? ? t("teams.form.submit_create") : t("teams.form.submit_update"), class: "btn btn-primary" %>
-    <%= link_to t("teams.form.cancel"), teams_path, class: "btn btn-default" %>
+    <%= link_to t("teams.form.cancel"), teams_path, class: "link text-body" %>
   </div>
 <% end %>
