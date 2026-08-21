@@ -69,7 +69,7 @@ RSpec.describe "FreshnessSlas", type: :request do
       patch iceberg_table_freshness_sla_path(table),
             params: { table_freshness_sla: { timestamp_column: "load_ts", severe_after_minutes: "30", critical_after_minutes: "20" } }
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 end

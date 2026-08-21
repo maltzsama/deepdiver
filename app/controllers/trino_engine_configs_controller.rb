@@ -20,7 +20,7 @@ class TrinoEngineConfigsController < ApplicationController
       key = was_up ? "trino_engine_config.notices.updated_and_applied" : "trino_engine_config.notices.updated"
       redirect_to trino_engine_config_path, notice: t(key)
     else
-      render :show, status: :unprocessable_entity
+      render :show, status: :unprocessable_content
     end
   end
 

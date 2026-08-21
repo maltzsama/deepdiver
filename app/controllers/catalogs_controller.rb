@@ -40,7 +40,7 @@ class CatalogsController < ApplicationController
       redirect_to @catalog, notice: "Catalog created."
     else
       @catalog.build_catalog_credential if @catalog.catalog_credential.nil?
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -55,7 +55,7 @@ class CatalogsController < ApplicationController
     if @catalog.update(catalog_params)
       redirect_to @catalog, notice: "Catalog updated."
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

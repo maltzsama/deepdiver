@@ -32,7 +32,7 @@ class MaintenanceSchedulesController < ApplicationController
     if @schedule.save
       redirect_to @schedule.iceberg_table, notice: "Schedule created."
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -47,7 +47,7 @@ class MaintenanceSchedulesController < ApplicationController
     if @schedule.update(schedule_params)
       redirect_to @schedule, notice: "Schedule updated."
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

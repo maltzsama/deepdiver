@@ -14,7 +14,7 @@ class AlertSettingsController < ApplicationController
     if @setting.update(setting_params)
       redirect_to alert_settings_path, notice: t("alert_settings.notices.updated")
     else
-      render :show, status: :unprocessable_entity
+      render :show, status: :unprocessable_content
     end
   end
 

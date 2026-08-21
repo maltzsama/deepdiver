@@ -16,7 +16,7 @@ class FreshnessSlasController < ApplicationController
     if @sla.update(sla_params)
       redirect_to @table, notice: t("freshness_slas.notices.updated")
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

@@ -27,7 +27,7 @@ class TeamsController < ApplicationController
     if @team.save
       redirect_to teams_path, notice: t("teams.notices.created")
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -42,7 +42,7 @@ class TeamsController < ApplicationController
     if @team.update(team_params)
       redirect_to @team, notice: t("teams.notices.updated")
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
