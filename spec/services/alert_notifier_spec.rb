@@ -3,6 +3,10 @@ require "rails_helper"
 RSpec.describe AlertNotifier, type: :service do
   let!(:alert_setting) { create(:alert_setting) }
 
+  before do
+    allow(AlertSetting).to receive(:instance).and_return(alert_setting)
+  end
+
   describe ".notify" do
     it "sends to the given Slack channel and email recipients" do
       allow(SlackAlert).to receive(:notify)
