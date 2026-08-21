@@ -17,10 +17,14 @@ default: &default
       threads: 1
       polling_interval: 1
 
-    # Everything else: catalog sync, Slack alerts, ad-hoc jobs.
-    # WITHOUT this, sync and alerts stop running the moment named queues exist.
-    - queues: "*"
-      threads: 3
+    # Sync: catalog list refresh, idempotent and fast.
+    - queues: sync
+      threads: 1
+      polling_interval: 2
+
+    # Default: Slack alerts, ad-hoc jobs, anything without a named queue.
+    - queues: default
+      threads: 2
       polling_interval: 2
 
 development:
