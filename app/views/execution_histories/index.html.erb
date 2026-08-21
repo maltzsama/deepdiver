@@ -130,13 +130,13 @@
                           <% stats = step.metrics&.dig("stats") %>
                           <% if stats.present? %>
                             <% if stats["elapsedTimeMillis"] %>
-                              <span><%= number_with_delimiter(stats["elapsedTimeMillis"]) %> ms</span>
+                              <span><%= number_with_delimiter(stats["elapsedTimeMillis"]) %> <%= t("operations.metrics_ms") %></span>
                             <% end %>
                             <% if stats["processedBytes"] %>
-                              <span><%= number_to_human_size(stats["processedBytes"]) %> processed</span>
+                              <span><%= number_to_human_size(stats["processedBytes"]) %> <%= t("operations.metrics_processed") %></span>
                             <% end %>
                             <% if stats["physicalWrittenBytes"] %>
-                              <span><%= number_to_human_size(stats["physicalWrittenBytes"]) %> written</span>
+                              <span><%= number_to_human_size(stats["physicalWrittenBytes"]) %> <%= t("operations.metrics_written") %></span>
                             <% end %>
                           <% end %>
                         </div>

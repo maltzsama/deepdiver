@@ -2,7 +2,7 @@
 <div class="strata">
   <% if table.health_score.present? %>
     <div class="strata-rail" role="img"
-         aria-label="Health score <%= table.health_score %> of 100">
+         aria-label="<%= t("health.aria_score", score: table.health_score) %>">
       <div class="strata-fill <%= strata_fill_class(table.health_status) %>"
            style="width: <%= table.health_score.clamp(0, 100) %>%"></div>
     </div>

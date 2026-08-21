@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="<%= html_theme %>">
+<html lang="<%= I18n.locale %>" data-theme="<%= html_theme %>">
   <head>
-    <title><%= content_for(:title) || "LakeDeepDiver" %></title>
+    <title><%= content_for(:title) || t("layout.app_name") %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
