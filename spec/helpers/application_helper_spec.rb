@@ -60,4 +60,19 @@ RSpec.describe ApplicationHelper, type: :helper do
       expect(helper.engine_status_label(state)).to include("attempt 1 of")
     end
   end
+
+  describe "#execution_step_badge_class" do
+    it "marks skipped (disabled/outside cadence) as a warning, not an error" do
+      expect(helper.execution_step_badge_class("skipped")).to eq("badge-warning")
+    end
+
+    it "marks pending as a distinct waiting colour" do
+      expect(helper.execution_step_badge_class("pending")).to eq("badge-pending")
+    end
+
+    it "keeps failed red and succeeded green" do
+      expect(helper.execution_step_badge_class("failed")).to eq("badge-err")
+      expect(helper.execution_step_badge_class("succeeded")).to eq("badge-ok")
+    end
+  end
 end

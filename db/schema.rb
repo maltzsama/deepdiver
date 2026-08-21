@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_21_000000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"
@@ -332,6 +332,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_150000) do
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_trino_clusters_on_name", unique: true
+  end
+
+  create_table "trino_engine_configs", force: :cascade do |t|
+    t.string "coordinator_cpu", default: "2", null: false
+    t.string "coordinator_memory", default: "2Gi", null: false
+    t.datetime "created_at", null: false
+    t.string "topology", default: "cluster", null: false
+    t.datetime "updated_at", null: false
+    t.string "worker_cpu", default: "1", null: false
+    t.string "worker_memory", default: "2Gi", null: false
+    t.integer "worker_replicas", default: 2, null: false
   end
 
   create_table "trino_engine_states", force: :cascade do |t|

@@ -58,4 +58,22 @@ RSpec.describe TrinoRestClient do
       :metrics, hash_including("progress" => hash_including("processed_rows" => 99))
     ).at_least(:once)
   end
+
+  it "surfaces the nested failure cause, not just the generic top message" do
+    allow(transport).to receive(:post).and_return(
+      {
+        "error" => {
+          "message" => "Cannot obtain metadata",
+          "errorName" => "CATALOG_ERROR",
+          "failureInfo" => {
+            "message" => "Failed to resolve table",
+            "cause" => { "message" => "HTTP 404 from catalog" }
+          }
+        }
+      }
+    )
+
+    expect { client.execute("ALTER TABLE t EXECUTE optimize", execution_id: 1) }
+      .to raise_error(TrinoRestClient::Error, /Cannot obtain metadata → Failed to resolve table → HTTP 404 from catalog/)
+  end
 end

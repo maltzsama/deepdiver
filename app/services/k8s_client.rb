@@ -28,6 +28,38 @@ class K8sClient
     )
   end
 
+  # Applies the engine node spec (replica count, container resources and env)
+  # via a strategic-merge patch, so only the addressed fields change - existing
+  # env vars and the rest of the pod template are preserved.
+  #
+  # @param replicas [Integer] the desired replica count
+  # @param cpu [String] the CPU request/limit for the Trino container
+  # @param memory [String] the memory request/limit for the Trino container
+  # @param env [Hash<String,String>] environment variables to upsert
+  # @param container [String] the container name (default "trino")
+  def apply_spec(replicas:, cpu:, memory:, env: {}, container: "trino")
+    patch = {
+      spec: {
+        replicas: replicas,
+        template: {
+          spec: {
+            containers: [
+              {
+                name: container,
+                resources: {
+                  requests: { cpu: cpu, memory: memory },
+                  limits:   { cpu: cpu, memory: memory }
+                },
+                env: env.map { |name, value| { name: name, value: value } }
+              }
+            ]
+          }
+        }
+      }
+    }
+    @kubeclient.patch_deployment(deployment, deep_stringify(patch), namespace)
+  end
+
   # Whether the Deployment has at least one ready replica.
   #
   # @return [Boolean] true when ready
@@ -51,5 +83,20 @@ class K8sClient
     true
   rescue Kubeclient::ResourceNotFoundError
     false
+  end
+
+  private
+
+  # kubeclient JSON-encodes the patch, but a Hash with symbol keys would become
+  # JSON with string keys anyway; normalise to strings for clarity and to avoid
+  # surprises with nested strategic-merge keys.
+  # @param value [Object] the value to stringify
+  # @return [Object] the stringified value
+  def deep_stringify(value)
+    case value
+    when Hash  then value.transform_keys(&:to_s).transform_values { |v| deep_stringify(v) }
+    when Array then value.map { |v| deep_stringify(v) }
+    else value
+    end
   end
 end

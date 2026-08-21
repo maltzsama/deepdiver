@@ -147,13 +147,32 @@ class TrinoRestClient
     TrinoRuntime::CommitConflict.new(error_message(response))
   end
 
-  # Extracts a human-readable error message from a Trino response.
+  # Extracts a human-readable error message from a Trino response, including
+  # the nested failureInfo cause chain so the top-level message (often just
+  # "Cannot obtain metadata") is followed by the actual root cause.
   #
   # @param response [Hash] the Trino response
   # @return [String] the message
   def error_message(response)
     error = response["error"] || {}
-    error["message"] || error["errorName"] || "Trino query failed"
+    top = error["message"] || error["errorName"] || "Trino query failed"
+
+    causes = failure_messages(error["failureInfo"])
+    causes = causes.reject { |m| m.blank? || m == top }
+
+    ([ top ] + causes).join(" → ")
+  end
+
+  # Recursively collects the message of a failureInfo and its nested causes.
+  #
+  # @param failure_info [Hash, nil] the failureInfo node
+  # @param acc [Array<String>] the accumulated messages
+  # @return [Array<String>] the collected messages
+  def failure_messages(failure_info, acc = [])
+    return acc if failure_info.nil?
+
+    acc << failure_info["message"] if failure_info["message"].present?
+    failure_messages(failure_info["cause"], acc)
   end
 
   # Extracts the column names from a Trino response.

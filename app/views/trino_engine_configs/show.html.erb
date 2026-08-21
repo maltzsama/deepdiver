@@ -1,0 +1,78 @@
+<% content_for :title, t("trino_engine_config.title") %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("trino_engine_config.eyebrow") %></p>
+    <h1 class="page-title"><%= t("trino_engine_config.title") %></h1>
+    <p class="page-sub"><%= t("trino_engine_config.subtitle") %></p>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-body">
+    <%= form_with model: @config, url: trino_engine_config_path, class: "form-grid" do |form| %>
+      <% if @config.errors.any? %>
+        <div class="errors">
+          <p class="errors-title"><%= t("trino_engine_config.form.errors") %></p>
+          <ul class="errors-list">
+            <% @config.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="field-group">
+        <p class="field-group-title"><%= t("trino_engine_config.form.topology_title") %></p>
+        <p class="field-hint mb-4"><%= t("trino_engine_config.form.topology_hint") %></p>
+
+        <div class="field">
+          <%= form.label :topology, t("trino_engine_config.form.topology"), class: "field-label" %>
+          <%= form.select :topology,
+                TrinoEngineConfig::TOPOLOGIES.map { |t| [ t("trino_engine_config.topologies.#{t}"), t ] },
+                {}, class: "field-input" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :worker_replicas, t("trino_engine_config.form.worker_replicas"), class: "field-label" %>
+          <%= form.number_field :worker_replicas, min: 0, max: 16, class: "field-input" %>
+          <p class="field-hint"><%= t("trino_engine_config.form.worker_replicas_hint") %></p>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <p class="field-group-title"><%= t("trino_engine_config.form.coordinator_title") %></p>
+
+        <div class="field">
+          <%= form.label :coordinator_cpu, t("trino_engine_config.form.coordinator_cpu"), class: "field-label" %>
+          <%= form.text_field :coordinator_cpu, class: "field-input", placeholder: "2" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :coordinator_memory, t("trino_engine_config.form.coordinator_memory"), class: "field-label" %>
+          <%= form.text_field :coordinator_memory, class: "field-input", placeholder: "2Gi" %>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <p class="field-group-title"><%= t("trino_engine_config.form.worker_title") %></p>
+
+        <div class="field">
+          <%= form.label :worker_cpu, t("trino_engine_config.form.worker_cpu"), class: "field-label" %>
+          <%= form.text_field :worker_cpu, class: "field-input", placeholder: "1" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :worker_memory, t("trino_engine_config.form.worker_memory"), class: "field-label" %>
+          <%= form.text_field :worker_memory, class: "field-input", placeholder: "2Gi" %>
+        </div>
+      </div>
+
+      <p class="field-hint"><%= t("trino_engine_config.form.applies_next_start") %></p>
+
+      <div class="form-actions">
+        <%= form.submit t("trino_engine_config.form.submit"), class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</section>

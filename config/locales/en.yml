@@ -766,6 +766,31 @@ en:
     notices:
       updated: "Alert settings updated"
 
+  trino_engine_config:
+    eyebrow: "Infrastructure"
+    title: "Trino engine"
+    subtitle: "How the ephemeral Trino engine is materialised when maintenance runs."
+    topologies:
+      single: "Single node (coordinator also runs tasks)"
+      cluster: "Coordinator + separate workers"
+    form:
+      errors: "Please fix the problems below."
+      topology_title: "Topology"
+      topology_hint: "The engine is created on demand and torn down after each run."
+      topology: "Topology"
+      worker_replicas: "Workers"
+      worker_replicas_hint: "Ignored in single-node topology."
+      coordinator_title: "Coordinator resources"
+      coordinator_cpu: "Coordinator CPU"
+      coordinator_memory: "Coordinator memory"
+      worker_title: "Worker resources"
+      worker_cpu: "Worker CPU"
+      worker_memory: "Worker memory"
+      applies_next_start: "Changes apply on the next engine start (the next maintenance run)."
+      submit: "Save engine config"
+    notices:
+      updated: "Engine config updated"
+
   freshness_slas:
     edit:
       title: "Freshness SLA · %{table}"

@@ -142,7 +142,7 @@
                         </div>
                       <% end %>
                       <% if step.error_message.present? %>
-                        <p class="py-1 font-sans text-small text-red-DEFAULT break-all"><%= step.error_message %></p>
+                        <p class="py-1 font-sans text-small <%= step.status == "failed" ? "text-red-DEFAULT" : "text-warn-DEFAULT" %> break-all"><%= step.error_message %></p>
                       <% end %>
                     <% end %>
                     <% if execution.error_message.present? %>
