@@ -1,6 +1,6 @@
 namespace :docs do
   COUNTER_SCRIPT = -> {
-    data_id = ENV.fetch("DATA_TRACKING", "2a2c5d2b-5c34-4212-be47-a2e658d11dbf")
+    data_id = ENV.fetch("DATA_TRACKING")
     %(    <script src="https://cdn.counter.dev/script.js" data-id="#{data_id}" data-utcoffset="2"></script>)
   }
 
