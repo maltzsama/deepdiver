@@ -729,6 +729,7 @@ pt-BR:
       suspend: "Suspender"
       reactivate: "Reativar"
       suspend_confirm: "Suspender %{email}? Ele(a) nao podera mais entrar ate ser reativado(a)."
+      role_confirm: "Alterar papel de %{email}?"
     new:
       eyebrow: "Seguranca"
       title: "Convidar usuario"
