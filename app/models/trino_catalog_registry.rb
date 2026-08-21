@@ -3,6 +3,11 @@
 # SELECT catalog_name, connector_name, properties::text, JOINed onto
 # trino_clusters.name, filtered by enabled).
 #
+# SECURITY NOTE: The 'properties' JSON column contains Polaris credentials
+# in plaintext because the Trino plugin reads it directly from the database.
+# This table MUST NOT be exposed via any API, backup copy, or ad-hoc query
+# outside the cluster. Restrict DB grants accordingly.
+#
 # The application writes rows directly here - no catalog_version hash, no
 # CREATE CATALOG. 'baleia' is the only allowed writer from the app side; the
 # 'trino' value is reserved for the coordinator writing back.
@@ -18,4 +23,8 @@ class TrinoCatalogRegistry < ApplicationRecord
   validates :connector_name, presence: true
   validates :sync_status, inclusion: { in: SYNC_STATUSES }
   validates :updated_by, inclusion: { in: [ WRITER, "trino" ] }
+
+  def inspect
+    super.gsub(/"properties"=>.*?(?=,|>)/, '"properties"=>[FILTERED]')
+  end
 end
