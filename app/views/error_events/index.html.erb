@@ -4,7 +4,7 @@
   <div>
     <p class="page-eyebrow"><%= t("error_events.eyebrow") %></p>
     <h1 class="page-title"><%= t("error_events.title") %></h1>
-    <p class="page-sub"><%= t("error_events.subtitle", open: @open_count) %></p>
+    <p class="page-sub"><%= t("error_events.subtitle", open: ErrorEvent.open.count) %></p>
   </div>
 </div>
 
@@ -64,4 +64,8 @@
       </table>
     </div>
   </section>
+
+  <% if @pagy.pages > 1 %>
+    <div class="flex justify-center gap-1 my-4"><%== pagy_nav(@pagy) %></div>
+  <% end %>
 <% end %>

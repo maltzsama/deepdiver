@@ -1,6 +1,7 @@
 # View helpers shared across the application, covering theme selection,
 # permission checks, badge classes, navigation, and formatting.
 module ApplicationHelper
+  include Pagy::Frontend
   # Selected theme for the <html data-theme> attribute. Dark is the default;
   # the theme toggle (CR-69) persists it on the account. The cookie is kept as
   # a fallback for the anonymous/auth screens, where there is no signed-in user.
