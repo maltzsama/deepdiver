@@ -76,6 +76,7 @@ en:
     show:
       title: "Error detail"
       message_title: "What happened"
+      details_title: "Details"
       where: "Where"
       operation: "Operation"
       source_system: "Source"

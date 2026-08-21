@@ -76,6 +76,7 @@ pt-BR:
     show:
       title: "Detalhe do erro"
       message_title: "O que aconteceu"
+      details_title: "Detalhes"
       where: "Onde"
       operation: "Operacao"
       source_system: "Origem"
