@@ -290,11 +290,13 @@
   }
   .data-table tbody td { @apply px-4 py-3.5 border-b border-cosmos-line text-cosmos-fg-soft align-middle transition-colors duration-150 text-body; }
   .data-table tbody tr:last-child td { border-bottom: 0; }
-  .data-table tbody tr { 
-    @apply transition-all duration-200 cursor-pointer relative; 
+  .data-table tbody tr {
+    @apply transition-all duration-200 relative;
   }
-  .data-table tbody tr:hover { 
-    background: var(--accent-soft); 
+  /* Click affordance only where a row is actually clickable (JS navigates). */
+  .data-table tbody tr[data-href] { @apply cursor-pointer; }
+  .data-table tbody tr:hover {
+    background: var(--accent-soft);
     box-shadow: inset 2px 0 0 var(--accent);
   }
   .data-table tbody tr:hover td { color: var(--fg); }
@@ -302,10 +304,40 @@
 
   .data-table tr.table-subrow td {
     background: var(--sunk);
-    padding: 0.75rem 1rem 1rem;
+    padding: 0.5rem 0 0.75rem;
     border-bottom: 1px solid var(--line-2);
   }
   .data-table tr.table-subrow:hover td { background: var(--sunk); box-shadow: none; }
+
+  /* Step chain subrows (History). One grid for every step of the execution so
+     the columns line up with the <thead>: same percentages, no column gap,
+     the 1rem side padding sits OUTSIDE the percentage math like th px-4 does
+     on the table box. */
+  .step-grid {
+    display: grid;
+    grid-template-columns: 28% 22% 16% 14% 20%;
+    column-gap: 0;
+    align-items: center;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .step-grid > * { padding-right: 0.75rem; min-width: 0; }
+  .step-index { @apply font-mono text-micro text-cosmos-fg-mute tabular-nums text-right; }
+  .step-index-cell { @apply pr-4; }
+  .step-name { @apply font-mono text-small text-cosmos-fg-soft truncate; }
+  .step-status { @apply flex flex-wrap items-center gap-2; }
+  .step-meta {
+    grid-column: 2 / -1;
+    @apply font-mono text-micro text-cosmos-fg-mute break-all;
+    margin-top: -0.125rem;
+    padding-bottom: 0.375rem;
+  }
+  .step-row-skipped { opacity: .55; }
+
+  /* ---------- pager ---------- */
+  .pager-page { @apply justify-center min-w-8 px-2 py-0.5 cursor-pointer; }
+  .pager-gap { @apply font-mono text-small text-cosmos-fg-mute px-1 select-none; }
+  .pager-disabled { @apply opacity-40 pointer-events-none; }
 
   .cell-id { @apply font-mono text-body font-medium text-cosmos-fg break-all; }
   .cell-muted { @apply text-small text-cosmos-fg-mute; }

@@ -10,7 +10,9 @@ class ExecutionHistory < ApplicationRecord
   belongs_to :maintenance_schedule, optional: true
   belongs_to :maintenance_plan, optional: true
   belongs_to :iceberg_table
-  has_many :execution_steps, dependent: :destroy
+  # Chain steps in creation order - the orchestrator writes them following the
+  # plan's canonical sequence, so id order is the chain order.
+  has_many :execution_steps, -> { order(:id) }, dependent: :destroy
 
   enum :status, STATUSES.to_h { |s| [ s, s ] }
 

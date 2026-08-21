@@ -60,6 +60,8 @@ en:
     subtitle: "%{open} open error(s) - what failed and when it started."
     empty_title: "No error events"
     empty_hint: "Failures from catalog sync, executions and sign-in show up here."
+    empty_filters_hint: "No errors match the current filters."
+    result_title: "Results"
     col_table: "Where"
     col_operation: "Operation"
     col_message: "Message"
@@ -620,6 +622,7 @@ en:
     filter: "Filter"
     filtering: "Filtering…"
     clear: "Clear"
+    pager: "Pagination"
 
 
   operations:
@@ -638,7 +641,7 @@ en:
       col_step: "Step"
       col_attempts: "Attempts"
       col_when: "When"
-      col_chain: "Chain"
+      col_chain: "Detail"
       col_duration: "Duration"
       col_query_id: "Trino query id"
       filter_stopped_at: "Stopped at step"

@@ -12,6 +12,8 @@ class ErrorEventsController < ApplicationController
     scope = scope.where(status: params[:status]) if params[:status].in?(ErrorEvent::STATUSES)
     scope = scope.catalog_events(Catalog.find(params[:catalog_id])) if params[:catalog_id].present?
     @pagy, @events = pagy(scope)
+    @operations = ErrorEvent.distinct.pluck(:operation).sort
+    @status_counts = ErrorEvent.group(:status).count
   end
 
   # Full detail of one failure: message, context, assignment state.
