@@ -600,6 +600,10 @@ en:
       current_password: "Current password (we need it to confirm your changes)"
       update: "Update"
 
+  actions:
+    sending: "Sending…"
+    confirm: "Are you sure?"
+
   filters:
     all: "All"
     search: "Search"

@@ -86,7 +86,8 @@
   </section>
 
   <div class="form-actions">
-    <%= f.submit t("plans.edit.submit"), class: "btn btn-primary" %>
+    <%= f.submit t("plans.edit.submit"), class: "btn btn-primary",
+                data: { turbo_submits_with: t("actions.sending") } %>
     <%= link_to t("plans.edit.cancel"), @plan, class: "link text-body" %>
   </div>
 <% end %>

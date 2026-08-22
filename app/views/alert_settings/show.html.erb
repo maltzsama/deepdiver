@@ -64,7 +64,8 @@
       </div>
 
       <div class="form-actions">
-        <%= form.submit t("alert_settings.form.submit"), class: "btn btn-primary" %>
+        <%= form.submit t("alert_settings.form.submit"), class: "btn btn-primary",
+                        data: { turbo_submits_with: t("actions.sending") } %>
         <%= link_to t("alert_settings.form.cancel"), root_path, class: "link text-body" %>
       </div>
     <% end %>

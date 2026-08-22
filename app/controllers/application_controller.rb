@@ -13,6 +13,7 @@ class ApplicationController < ActionController::Base
 
   before_action :authenticate_user!
   before_action :set_locale_and_theme, if: :user_signed_in?
+  before_action :set_failed_execution_count, if: :user_signed_in?
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
@@ -34,5 +35,11 @@ class ApplicationController < ActionController::Base
   def user_not_authorized(exception)
     flash[:alert] = t("shared.unauthorized")
     redirect_back(fallback_location: root_path)
+  end
+
+  private
+
+  def set_failed_execution_count
+    @failed_execution_count = ExecutionHistory.where(status: "failed").count
   end
 end

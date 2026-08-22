@@ -600,6 +600,10 @@ pt-BR:
       current_password: "Senha atual (precisamos dela para confirmar as mudancas)"
       update: "Atualizar"
 
+  actions:
+    sending: "Enviando…"
+    confirm: "Tem certeza?"
+
   filters:
     all: "Todos"
     search: "Buscar"

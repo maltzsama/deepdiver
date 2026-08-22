@@ -36,7 +36,8 @@
       </label>
     <% end %>
 
-    <%= f.submit t("auth.sign_in.submit"), class: "btn btn-primary btn-block" %>
+    <%= f.submit t("auth.sign_in.submit"), class: "btn btn-primary btn-block",
+                data: { turbo_submits_with: t("actions.sending") } %>
 
     <% if devise_mapping.recoverable? %>
       <p class="text-center">

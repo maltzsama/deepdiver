@@ -33,7 +33,8 @@
         </div>
 
         <div class="form-actions">
-          <%= f.submit t("auth.passwords.edit_title"), class: "btn btn-primary" %>
+          <%= f.submit t("auth.passwords.edit_title"), class: "btn btn-primary",
+                      data: { turbo_submits_with: t("actions.sending") } %>
         </div>
       <% end %>
     </div>

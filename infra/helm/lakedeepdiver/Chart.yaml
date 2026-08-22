@@ -4,7 +4,7 @@ description: LakeDeepDiver - Iceberg maintenance control plane (Rails 8 + Solid 
 type: application
 version: 0.1.0 # x-release-please-version
 appVersion: "0.1.0" # x-release-please-version
-home: https://github.com/anomalyco/lakedeepdiver
+home: https://github.com/maltzsama/lakedeepdiver
 keywords:
   - iceberg
   - trino

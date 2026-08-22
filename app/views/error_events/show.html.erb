@@ -47,7 +47,8 @@
     <% end %>
     <% if policy(@event).resolve? && @event.status == "acknowledged" %>
       <%= button_to t("error_events.actions.resolve"), resolve_error_event_path(@event),
-                    method: :patch, class: "btn btn-primary btn-sm" %>
+                    method: :patch, class: "btn btn-primary btn-sm",
+                    data: { turbo_confirm: t("actions.confirm") } %>
     <% end %>
   </div>
 </div>

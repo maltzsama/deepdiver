@@ -140,7 +140,8 @@
       </div>
 
       <div class="form-actions">
-        <%= form.submit t("freshness_slas.form.submit"), class: "btn btn-primary" %>
+        <%= form.submit t("freshness_slas.form.submit"), class: "btn btn-primary",
+                        data: { turbo_submits_with: t("actions.sending") } %>
         <%= link_to t("freshness_slas.form.cancel"), @table, class: "link text-body" %>
       </div>
     <% end %>
