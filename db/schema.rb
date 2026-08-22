@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_22_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_22_240000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"
@@ -321,7 +321,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_230000) do
     t.datetime "updated_at", default: -> { "now()" }, null: false
     t.string "updated_by", default: "baleia", null: false
     t.index ["cluster_id"], name: "trino_catalog_registry_cluster_enabled_idx", where: "enabled"
-    t.check_constraint "catalog_name GLOB '[a-z][a-z0-9_]*' AND length(catalog_name) <= 63\n     AND catalog_name NOT IN ('system', 'jmx', 'tpch', 'tpcds', 'memory')\n     AND connector_name GLOB '[a-z][a-z0-9_]*' AND length(connector_name) <= 63", name: "trino_catalog_registry_name_format"
     t.check_constraint "sync_status IN ('pending', 'synced', 'error')", name: "trino_catalog_registry_sync_status_format"
   end
 

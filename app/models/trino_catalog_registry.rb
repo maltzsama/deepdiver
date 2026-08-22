@@ -19,12 +19,23 @@ class TrinoCatalogRegistry < ApplicationRecord
 
   belongs_to :trino_cluster, foreign_key: :cluster_id
 
-  validates :catalog_name, presence: true
-  validates :connector_name, presence: true
+  validates :catalog_name, presence: true,
+            format: { with: Catalog::TRINO_NAME_PATTERN }
+  validates :connector_name, presence: true,
+            format: { with: Catalog::TRINO_NAME_PATTERN }
   validates :sync_status, inclusion: { in: SYNC_STATUSES }
   validates :updated_by, inclusion: { in: [ WRITER, "trino" ] }
+  validate  :catalog_name_not_reserved
 
   def inspect
     super.gsub(/"properties"=>.*?(?=,|>)/, '"properties"=>[FILTERED]')
+  end
+
+  private
+
+  def catalog_name_not_reserved
+    return unless catalog_name.in?(Catalog::TRINO_RESERVED)
+
+    errors.add(:catalog_name, :reserved)
   end
 end

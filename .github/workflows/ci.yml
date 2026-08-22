@@ -103,5 +103,28 @@ jobs:
       - uses: helm/chart-testing-action@v2
       - run: ct lint --charts infra/helm/lakedeepdiver --validate-maintainers=false
 
+  schema-portability:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: [ "5432:5432" ]
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with: { bundler-cache: true }
+      - name: schema.rb carrega em Postgres
+        env:
+          DATABASE_URL: postgresql://postgres@localhost:5432/ldd_schema_check
+          RAILS_ENV: production
+          SECRET_KEY_BASE: dummy
+        run: bin/rails db:create db:schema:load
+
 
 

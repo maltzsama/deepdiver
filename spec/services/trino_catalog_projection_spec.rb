@@ -55,13 +55,14 @@ RSpec.describe TrinoCatalogProjection do
     expect(TrinoCatalogRegistry.count).to eq(1)
   end
 
-  it "lets the database CHECK block a reserved name" do
+  it "validates reserved catalog names" do
     cluster = TrinoCluster.create!(name: "default")
 
-    expect {
-      TrinoCatalogRegistry.create!(cluster_id: cluster.id, catalog_name: "system",
-                                   connector_name: "iceberg", properties: {})
-    }.to raise_error(ActiveRecord::StatementInvalid, /name_format/)
+    record = TrinoCatalogRegistry.new(cluster_id: cluster.id, catalog_name: "system",
+                                       connector_name: "iceberg", properties: {})
+
+    expect(record).not_to be_valid
+    expect(record.errors[:catalog_name]).to be_present
   end
 
   describe "S3 storage properties" do
