@@ -51,15 +51,27 @@ RSpec.describe "Cadence per step" do
     expect(execution.execution_steps.where(status: "pending")).to be_empty
   end
 
-  it "records a dispatch skipped for overlap instead of losing it" do
+  it "returns the existing running execution instead of creating a duplicate" do
     previous = create(:execution_history, iceberg_table: table, status: :running)
     TableLock.acquire(previous)
 
     execution = MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 03:00"))
+
+    expect(execution.id).to eq(previous.id)
+  end
+
+  it "skips for overlap when the lock is held by a different execution" do
+    execution = MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 03:00"))
+
+    # Acquire the lock from outside — simulates another execution grabbing it
+    # between run_plan and start_execution_on_engine.
+    holder = create(:execution_history, iceberg_table: table, status: :running)
+    TableLock.acquire(holder)
+
     MaintenanceOrchestrator.start_execution_on_engine(execution.id)
 
     expect(execution.reload.status).to eq("skipped")
-    expect(execution.error_message).to include("still running")
+    expect(execution.skip_reason).to include("still running")
   end
 
   it "reaps a stale lock left by a finished execution before running" do
