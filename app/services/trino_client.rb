@@ -12,10 +12,11 @@ class TrinoClient
   #
   # @param endpoint [String] the Trino coordinator URL
   # @param catalog_name [String, nil] the default catalog header value
-  def initialize(endpoint: ENV.fetch("TRINO_URL"), catalog_name: nil)
+  # @param transport [HttpTransport] injectable transport (tests)
+  def initialize(endpoint: ENV.fetch("TRINO_URL"), catalog_name: nil, transport: HttpTransport.new)
     @endpoint = endpoint
     @catalog_name = catalog_name
-    @transport = HttpTransport.new
+    @transport = transport
   end
 
   # Runs arbitrary SQL and returns the rows as hashes keyed by column name.
@@ -56,18 +57,26 @@ class TrinoClient
 
   # Follows nextUri until the query finishes, raising on error or timeout.
   #
+  # Trino streams rows page by page: the data for a small query usually lands
+  # on an INTERMEDIATE page and the final page carries only columns. Rows are
+  # therefore accumulated across every page - reading just the last one loses
+  # the result entirely (FreshnessProbe read "no data" against healthy tables).
+  #
   # @param response [Hash] the initial statement response
-  # @return [Hash] the final response with column names
+  # @return [Array<Hash>] rows from ALL pages, keyed by column name
   def poll(response)
     deadline = Time.current + MAX_POLL_SECONDS
     current = response
+    rows = []
 
     loop do
       if current["error"]
         raise Error, (current["error"]["message"] || "Trino query failed")
       end
 
-      return rows_with_names(current) unless current["nextUri"]
+      rows.concat(rows_with_names(current))
+
+      return rows unless current["nextUri"]
 
       raise Error, "Trino query exceeded #{MAX_POLL_SECONDS}s without finishing" if Time.current > deadline
 
