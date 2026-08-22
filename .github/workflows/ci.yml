@@ -122,6 +122,7 @@ jobs:
       - name: schema.rb carrega em Postgres
         env:
           DATABASE_URL: postgresql://postgres@localhost:5432/ldd_schema_check
+          DB_QUEUE_URL: postgresql://postgres@localhost:5432/ldd_schema_check_queue
           RAILS_ENV: production
           SECRET_KEY_BASE: dummy
         run: bin/rails db:create db:schema:load

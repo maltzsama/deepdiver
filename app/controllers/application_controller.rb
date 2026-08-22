@@ -40,7 +40,7 @@ class ApplicationController < ActionController::Base
   private
 
   def set_failed_execution_count
-    return unless request.get?
+    return unless request.get? || request.head?
 
     @failed_execution_count = Rails.cache.fetch("failed_execution_count", expires_in: 30.seconds) do
       ExecutionHistory.where(status: "failed").count

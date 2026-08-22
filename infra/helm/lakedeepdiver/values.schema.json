@@ -18,7 +18,7 @@
       "type": "object",
       "required": ["existingSecret"],
       "properties": {
-        "existingSecret": { "type": "string", "minLength": 1 },
+        "existingSecret": { "type": "string" },
         "urlKey": { "type": "string", "default": "url" }
       }
     },
@@ -26,7 +26,7 @@
       "type": "object",
       "required": ["existingSecret"],
       "properties": {
-        "existingSecret": { "type": "string", "minLength": 1 }
+        "existingSecret": { "type": "string" }
       }
     },
     "trino": {
