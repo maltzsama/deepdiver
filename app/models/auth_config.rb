@@ -12,7 +12,7 @@ module AuthConfig
   # Whether SSO (OIDC) sign-in is enabled, read from SSO_ENABLED.
   # @return [Boolean] true when SSO is enabled
   def sso_enabled?
-    ENV.fetch("SSO_ENABLED", "true") == "true"
+    ENV.fetch("SSO_ENABLED", "false") == "true"
   end
 
   # Whether the local email/password login is available. Always enabled when
