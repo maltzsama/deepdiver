@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_22_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_22_200000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"
@@ -156,12 +156,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_100000) do
     t.datetime "created_at", null: false
     t.text "error_message"
     t.datetime "finished_at"
+    t.datetime "last_heartbeat_at"
     t.datetime "started_at"
     t.string "status", default: "pending", null: false
     t.integer "tables_checked", default: 0, null: false
     t.integer "tables_errored", default: 0, null: false
     t.integer "tables_late", default: 0, null: false
     t.datetime "updated_at", null: false
+    t.index ["status", "last_heartbeat_at"], name: "index_freshness_runs_on_status_and_heartbeat"
     t.index ["status"], name: "index_freshness_runs_on_status"
   end
 

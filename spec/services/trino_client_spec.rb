@@ -62,6 +62,22 @@ RSpec.describe TrinoClient, "pagination" do
     end
   end
 
+  describe "query_timeout" do
+    it "raises when a query exceeds the per-query timeout" do
+      timed_out_client = TrinoClient.new(endpoint: "http://trino:8080", transport: transport, query_timeout: 0.1)
+      page = { "columns" => columns, "data" => [ row ], "nextUri" => "http://trino:8080/v1/statement/1/2" }
+
+      allow(transport).to receive(:post).and_return(page)
+      # Keep returning pages with nextUri so the loop never exits normally;
+      # the deadline check triggers instead.
+      allow(transport).to receive(:get).and_return(
+        { "columns" => columns, "data" => [], "nextUri" => "http://trino:8080/v1/statement/1/3" }
+      )
+
+      expect { timed_out_client.run_with_names("SQL") }.to raise_error(TrinoClient::Error, /exceeded/)
+    end
+  end
+
   describe "query_column" do
     it "returns column values across all rows" do
       cols = [ { "name" => "p" } ]
