@@ -126,14 +126,19 @@ module TrinoEngineSupervisor
   end
 
   # Hard reset for a frozen engine: fails everything in flight, clears the
-  # whole job queue, tears the Trino cluster down, and returns the engine to
-  # "down". Used from the activity screen when the engine stops making progress
-  # and a plain restart is not enough.
+  # engine + maintenance job queues, tears the Trino cluster down, and
+  # returns the engine to "down". Used from the activity screen when the
+  # engine stops making progress and a plain restart is not enough.
+  #
+  # Only clears engine and maintenance queues — leaving freshness, sync,
+  # and default queues untouched so unrelated work continues.
+  ENGINE_RESET_QUEUES = %w[engine maintenance].freeze
+
   def hard_reset!
     state.with_lock do
       fail_in_flight!
       begin
-        SolidQueue::Job.where(finished_at: nil).delete_all
+        SolidQueue::Job.where(finished_at: nil, queue_name: ENGINE_RESET_QUEUES).delete_all
       rescue StandardError
         nil # queue DB may not be provisioned in dev/test
       end

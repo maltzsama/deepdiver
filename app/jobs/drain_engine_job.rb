@@ -2,7 +2,7 @@
 # demand before acting, so work arriving during the grace period makes any
 # scheduled job cancellation unnecessary.
 class DrainEngineJob < ApplicationJob
-  queue_as :maintenance
+  queue_as :engine
 
   POLL_INTERVAL = ENV.fetch("TRINO_DRAIN_POLL_SECONDS", "10").to_i.seconds
 

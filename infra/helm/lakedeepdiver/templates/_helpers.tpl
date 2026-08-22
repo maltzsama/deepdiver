@@ -52,3 +52,12 @@ app.kubernetes.io/name: {{ include "lakedeepdiver.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/component: worker-freshness
 {{- end }}
+
+{{/*
+Selector labels for the engine worker Deployment.
+*/}}
+{{- define "lakedeepdiver.workerEngineSelector" -}}
+app.kubernetes.io/name: {{ include "lakedeepdiver.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: worker-engine
+{{- end }}

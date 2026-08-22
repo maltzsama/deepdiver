@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "lakedeepdiver.fullname" . }}-worker-freshness
+  name: {{ include "lakedeepdiver.fullname" . }}-worker-engine
   labels:
     {{- include "lakedeepdiver.labels" . | nindent 4 }}
-    app.kubernetes.io/component: worker-freshness
+    app.kubernetes.io/component: worker-engine
 spec:
-  replicas: {{ .Values.workerFreshness.replicaCount }}
+  replicas: {{ .Values.workerEngine.replicaCount }}
   selector:
     matchLabels:
-      {{- include "lakedeepdiver.workerFreshnessSelector" . | nindent 6 }}
+      {{- include "lakedeepdiver.workerEngineSelector" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "lakedeepdiver.workerFreshnessSelector" . | nindent 8 }}
+        {{- include "lakedeepdiver.workerEngineSelector" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "lakedeepdiver.fullname" . }}
       {{- with .Values.podSecurityContext }}
@@ -49,9 +49,9 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["./bin/jobs"]
           env:
-            # Freshness only: isolated from long-running engine work.
+            # Engine lifecycle only — supervise start, drain, watchdog.
             - name: SOLID_QUEUE_QUEUES
-              value: "freshness"
+              value: "engine"
             - name: SOLID_QUEUE_RECURRING
               value: "false"
           envFrom:
@@ -70,9 +70,9 @@ spec:
               mountPath: {{ dir .Values.internalCA.mountFile | quote }}
               readOnly: true
             {{- end }}
-          {{- with .Values.workerFreshness.securityContext }}
+          {{- with .Values.workerEngine.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           resources:
-            {{- toYaml .Values.workerFreshness.resources | nindent 12 }}
+            {{- toYaml .Values.workerEngine.resources | nindent 12 }}

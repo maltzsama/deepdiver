@@ -2,17 +2,20 @@ default: &default
   dispatchers:
     - polling_interval: 1
       batch_size: 500
-      # Recurring tasks only here. See the duplication note below.
       recurring_tasks: true
   workers:
-    # Maintenance: serial by design. A single coordinator runs one heavy query
-    # at a time; more threads would only contend for the same engine.
+    # Engine: engine lifecycle only — supervise start, drain, watchdog.
+    # Serial: only one lifecycle job at a time.
+    - queues: engine
+      threads: 1
+      polling_interval: 1
+
+    # Maintenance: serial. Runs execution, dispatches work.
     - queues: maintenance
       threads: 1
       polling_interval: 1
 
-    # Freshness: one sweep at a time, but in its own process so it never waits
-    # behind an optimize.
+    # Freshness: one sweep at a time, never waits behind engine work.
     - queues: freshness
       threads: 1
       polling_interval: 1
@@ -22,7 +25,7 @@ default: &default
       threads: 1
       polling_interval: 2
 
-    # Default: Slack alerts, ad-hoc jobs, anything without a named queue.
+    # Default: Slack alerts, ad-hoc jobs, data retention, STS refresh.
     - queues: default
       threads: 2
       polling_interval: 2

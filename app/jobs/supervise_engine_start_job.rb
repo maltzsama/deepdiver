@@ -2,7 +2,7 @@
 # dies, Solid Queue re-enqueues it and the job re-evaluates the real cluster
 # state instead of assuming where it left off.
 class SuperviseEngineStartJob < ApplicationJob
-  queue_as :maintenance
+  queue_as :engine
 
   POLL_INTERVAL = ENV.fetch("TRINO_START_POLL_SECONDS", "5").to_i.seconds
 
