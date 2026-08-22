@@ -53,6 +53,23 @@ spec:
               value: "config/queue-worker.yml"
             - name: SOLID_QUEUE_RECURRING_SCHEDULE
               value: "config/recurring.yml"
+            {{- if .Values.activeRecordEncryption.existingSecret }}
+            - name: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.activeRecordEncryption.existingSecret | quote }}
+                  key: primary_key
+            - name: ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.activeRecordEncryption.existingSecret | quote }}
+                  key: deterministic_key
+            - name: ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.activeRecordEncryption.existingSecret | quote }}
+                  key: key_derivation_salt
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "lakedeepdiver.fullname" . }}

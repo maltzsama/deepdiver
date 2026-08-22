@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["image", "postgresql", "activeRecordEncryption"],
+  "properties": {
+    "replicaCount": { "type": "integer", "minimum": 1 },
+    "image": {
+      "type": "object",
+      "required": ["repository", "tag"],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "tag": { "type": "string", "minLength": 1 },
+        "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+      }
+    },
+    "postgresql": {
+      "type": "object",
+      "required": ["existingSecret"],
+      "properties": {
+        "existingSecret": { "type": "string", "minLength": 1 },
+        "urlKey": { "type": "string", "default": "url" }
+      }
+    },
+    "activeRecordEncryption": {
+      "type": "object",
+      "required": ["existingSecret"],
+      "properties": {
+        "existingSecret": { "type": "string", "minLength": 1 }
+      }
+    },
+    "trino": {
+      "type": "object",
+      "properties": {
+        "provisioner": { "type": "string", "enum": ["chart", "baleia", "fake"] }
+      }
+    },
+    "oidc": {
+      "type": "object",
+      "properties": {
+        "issuer": { "type": "string" }
+      }
+    },
+    "appSecrets": {
+      "type": "object",
+      "properties": {
+        "existingSecret": { "type": "string" },
+        "create": { "type": "boolean" }
+      }
+    },
+    "internalCA": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "existingSecret": { "type": "string" },
+        "caKey": { "type": "string" },
+        "mountFile": { "type": "string" }
+      }
+    },
+    "resources": { "type": "object" },
+    "securityContext": { "type": "object" },
+    "migrationJob": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "backoffLimit": { "type": "integer" },
+        "activeDeadlineSeconds": { "type": "integer" },
+        "ttlSecondsAfterFinished": { "type": "integer" }
+      }
+    }
+  }
+}

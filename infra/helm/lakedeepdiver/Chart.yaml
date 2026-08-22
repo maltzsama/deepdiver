@@ -5,9 +5,21 @@ type: application
 version: 0.1.0 # x-release-please-version
 appVersion: "0.1.0" # x-release-please-version
 home: https://github.com/maltzsama/lakedeepdiver
+sources:
+  - https://github.com/maltzsama/lakedeepdiver
 keywords:
   - iceberg
   - trino
   - rails
+  - lakehouse
 maintainers:
-  - name: LakeDeepDiver team
+  - name: Demetrius Albuquerque
+    email: demetrius.albuquerque@yahoo.com.br
+annotations:
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/links: |
+    - name: source
+      url: https://github.com/maltzsama/lakedeepdiver
+  artifacthub.io/images: |
+    - name: lakedeepdiver
+      image: ghcr.io/maltzsama/lakedeepdiver:0.1.0

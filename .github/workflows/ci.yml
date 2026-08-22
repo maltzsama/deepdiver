@@ -86,5 +86,22 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+  chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: azure/setup-helm@v4
+      - name: sem premissas de deployment
+        run: |
+          ! grep -rniE 'etg-ca|ceph|argocd|argoproj|kyverno|cloudnativepg|anomalyco|registry\.example\.com|etraveli|PREENCHER_H1' infra/helm/
+      - run: helm lint infra/helm/lakedeepdiver
+      - name: kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
+          helm template infra/helm/lakedeepdiver | ./kubeconform -strict -summary
+      - uses: helm/chart-testing-action@v2
+      - run: ct lint --charts infra/helm/lakedeepdiver --validate-maintainers=false
+
 
 
