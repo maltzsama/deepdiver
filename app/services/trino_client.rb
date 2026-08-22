@@ -21,26 +21,29 @@ class TrinoClient
 
   # Runs arbitrary SQL and returns the rows as hashes keyed by column name.
   def run_with_names(sql)
-    poll(statement(sql))
+    poll(sql, limit: nil)
   end
 
   # Runs SQL and returns the value of a single column in the first row.
+  # Stops paginating after the first row — no need to drain every page.
   #
   # @param sql [String] the query
   # @param column [String] the column to read
   # @return [Object, nil] the first row's value
   def query_scalar(sql, column)
-    rows = run_with_names(sql)
+    rows = poll(sql, limit: 1)
     rows.first&.fetch(column, nil)
   end
 
   # Runs SQL and returns the values of a column across all rows.
+  # For small result sets (DISTINCT + LIMIT) this drains all pages;
+  # for a single value prefer query_scalar.
   #
   # @param sql [String] the query
   # @param column [String] the column to read
   # @return [Array] the column values
   def query_column(sql, column)
-    run_with_names(sql).filter_map { |row| row[column] }
+    poll(sql, limit: nil).filter_map { |row| row[column] }
   end
 
   private
@@ -59,14 +62,14 @@ class TrinoClient
   #
   # Trino streams rows page by page: the data for a small query usually lands
   # on an INTERMEDIATE page and the final page carries only columns. Rows are
-  # therefore accumulated across every page - reading just the last one loses
-  # the result entirely (FreshnessProbe read "no data" against healthy tables).
+  # accumulated across pages until +limit+ rows are collected (nil = no limit).
   #
-  # @param response [Hash] the initial statement response
-  # @return [Array<Hash>] rows from ALL pages, keyed by column name
-  def poll(response)
+  # @param sql [String] the SQL statement
+  # @param limit [Integer, nil] stop paginating after this many rows (nil = all)
+  # @return [Array<Hash>] rows keyed by column name
+  def poll(sql, limit: nil)
     deadline = Time.current + MAX_POLL_SECONDS
-    current = response
+    current = statement(sql)
     rows = []
 
     loop do
@@ -77,6 +80,7 @@ class TrinoClient
       rows.concat(rows_with_names(current))
 
       return rows unless current["nextUri"]
+      return rows if limit && rows.size >= limit
 
       raise Error, "Trino query exceeded #{MAX_POLL_SECONDS}s without finishing" if Time.current > deadline
 
