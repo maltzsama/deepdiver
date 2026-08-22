@@ -71,13 +71,13 @@ RSpec.describe "GET /execution_histories", type: :request do
   end
 end
 
-RSpec.describe "GET /execution_histories (unified feed)", type: :request do
+RSpec.describe "GET /execution_histories (tabs)", type: :request do
   let(:user)   { create(:user) }
   let(:table)  { create(:iceberg_table) }
 
   before { sign_in user }
 
-  it "interleaves maintenance and freshness by time, most recent first" do
+  it "defaults to the maintenance tab and never interleaves freshness" do
     plan = create(:maintenance_plan, iceberg_table: table)
     create(:execution_history, maintenance_plan: plan, iceberg_table: table,
                                started_at: 2.hours.ago, status: :success)
@@ -85,27 +85,48 @@ RSpec.describe "GET /execution_histories (unified feed)", type: :request do
 
     get execution_histories_path
 
-    events = assigns(:events)
-    expect(events.map { |e| e[:kind] }).to eq(%i[freshness maintenance])
+    expect(assigns(:tab)).to eq("maintenance")
+    expect(assigns(:executions).map(&:status)).to eq([ "success" ])
+    expect(assigns(:checks)).to be_nil
   end
 
-  it "filters to freshness only when asked" do
-    plan = create(:maintenance_plan, iceberg_table: table)
-    create(:execution_history, maintenance_plan: plan, iceberg_table: table, started_at: 1.hour.ago)
+  it "serves freshness from its own tab and its own pagination" do
     create(:freshness_check, iceberg_table: table, checked_at: 30.minutes.ago, status: "ok")
 
-    get execution_histories_path, params: { kind: "freshness" }
+    get execution_histories_path, params: { tab: "freshness" }
 
-    expect(assigns(:events).map { |e| e[:kind] }.uniq).to eq([ :freshness ])
+    expect(assigns(:tab)).to eq("freshness")
+    expect(assigns(:checks).map(&:status)).to eq([ "ok" ])
+    expect(response.body).to include("ok")
   end
 
   it "maps a maintenance status filter onto the closest freshness status" do
     create(:freshness_check, iceberg_table: table, status: "error")
     create(:freshness_check, iceberg_table: table, status: "ok")
 
-    get execution_histories_path, params: { status: "failed" }
+    get execution_histories_path, params: { tab: "freshness", status: "failed" }
 
-    statuses = assigns(:events).select { |e| e[:kind] == :freshness }.map { |e| e[:record].status }
-    expect(statuses).to eq([ "error" ])
+    expect(assigns(:checks).map(&:status)).to eq([ "error" ])
+  end
+
+  it "renders the timeline bar with wait and step legend for a finished run" do
+    started = 37.minutes.ago
+    plan = create(:maintenance_plan, iceberg_table: table)
+    execution = create(:execution_history, maintenance_plan: plan, iceberg_table: table,
+                                           started_at: started, finished_at: 5.minutes.ago,
+                                           status: :failed, error_message: "worker nodes gone",
+                                           current_step: :optimize)
+    create(:execution_step, execution_history: execution, operation: "optimize", status: :failed,
+                            started_at: started + 30.seconds, finished_at: 5.minutes.ago - 10.seconds,
+                            error_message: "Insufficient active worker nodes",
+                            metrics: { "stats" => { "processedBytes" => 2048 } })
+
+    get execution_histories_path
+
+    expect(response.body).to include("op-seg--wait")
+    expect(response.body).to include("op-seg--failed")
+    # Error attribution: owner is named on both levels.
+    expect(response.body).to include("optimize —</span> Insufficient active worker nodes")
+    expect(response.body).to include("execução —</span> worker nodes gone").or include("execution —</span> worker nodes gone")
   end
 end
