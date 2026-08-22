@@ -25,9 +25,11 @@ changing the plugin to handle Active Record Encryption — a different project.
 ### Required mitigations
 
 1. **Separate database role for the plugin.** The application role must NOT
-   be used by the Trino coordinator. Create a read-only role:
+   be used by the Trino coordinator. The plugin needs DML on
+   `trino_catalog_registry` (it writes `sync_status` and `catalog_version`
+   during `CREATE CATALOG` and boot).
 
-   See `db/grants/baleia_reader.sql` for the exact grants.
+   See `db/grants/baleia_trino.sql` for the exact grants.
 
 2. **Restrict backup access.** Backups that include `trino_catalog_registry`
    must be encrypted at rest and access-controlled like any secrets store.
@@ -43,6 +45,6 @@ changing the plugin to handle Active Record Encryption — a different project.
 | Role | Used by | Access |
 |------|---------|--------|
 | Application role | Rails app | Full CRUD on all tables |
-| `baleia_reader` | Trino coordinator plugin | SELECT on `trino_catalog_registry` (limited columns) and `trino_clusters` |
+| `baleia_trino` | Trino coordinator plugin | SELECT on `trino_clusters`; SELECT, INSERT, UPDATE, DELETE on `trino_catalog_registry` |
 
-See `db/grants/baleia_reader.sql` for the grant statements.
+See `db/grants/baleia_trino.sql` for the grant statements.
