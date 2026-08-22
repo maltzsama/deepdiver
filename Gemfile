@@ -89,3 +89,8 @@ gem "pagy", "~> 9.0"
 
 # AWS STS for S3 temporary credentials (AssumeRole) used by Trino.
 gem "aws-sdk-sts", "~> 1.0", require: false
+
+group :test do
+  gem "capybara"
+  gem "selenium-webdriver"
+end
