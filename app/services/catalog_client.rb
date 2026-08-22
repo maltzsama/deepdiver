@@ -54,7 +54,6 @@ class CatalogClient
   end
 
   # Path segment mounted BEFORE /v1 on the server. Subclasses declare it;
-  # properties["path_prefix"] overrides the whole legacy regime instead.
   #
   # @return [String] the mount prefix
 
@@ -89,25 +88,19 @@ class CatalogClient
     ERB::Util.url_encode(namespace.to_s.split(".").join(NAMESPACE_SEPARATOR))
   end
 
-  # Builds the REST base URL for every catalog call.
-  #
-  # Two regimes:
-  #   legacy  - properties["path_prefix"] present: used verbatim after the
-  #             endpoint, exactly as before. Kept so hand-configured catalogs
-  #             keep syncing; deprecated.
-  #   spec    - everything else: GET /v1/config discovers the prefix the
-  #             server wants (Polaris: warehouse name; Nessie: the ref), and
-  #             calls go to {mount}/v1/{prefix}/namespaces...
+  # Builds the REST base URL for every catalog call, per the Iceberg REST
+  # spec: GET /v1/config discovers the prefix the server wants (Polaris: the
+  # warehouse name; Nessie: the ref), and calls go to
+  # {mount}/v1/{prefix}/namespaces...
   #
   # @return [String] the base URL for catalog REST calls
   def base_url
-    if (legacy = catalog.properties&.dig("path_prefix")).present?
-      "#{catalog.endpoint}#{legacy}"
-    else
-      "#{catalog.endpoint}#{mount_prefix}/v1/#{ERB::Util.url_encode(rest_prefix)}"
-    end
+    "#{catalog.endpoint}#{mount_prefix}/v1/#{ERB::Util.url_encode(rest_prefix)}"
   end
 
+  # Path segment mounted BEFORE /v1 on the server. Subclasses declare it.
+  #
+  # @return [String] the mount prefix
   def mount_prefix
     raise NotImplementedError, "#{self.class} must define its mount prefix"
   end
@@ -129,8 +122,7 @@ class CatalogClient
   end
 
   # GET {mount}/v1/config per the Iceberg REST spec - the server's own answer
-  # about which prefix and defaults to use. Memoized; never called when the
-  # legacy path_prefix regime is in effect.
+  # about which prefix and defaults to use. Memoized per client instance.
   #
   # @return [Hash] parsed config payload with "defaults" and "overrides"
   def rest_config

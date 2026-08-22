@@ -32,7 +32,7 @@ class Catalog < ApplicationRecord
   # HTTP 400 on any /v1/{ref}/... call.
   NESSIE_REF_PATTERN = /\A[A-Za-z0-9][A-Za-z0-9._\-]*\z/
 
-  # properties is CONFIGURATION only (path_prefix, warehouse...). Secrets have
+  # properties is CONFIGURATION only (warehouse hints and the like). Secrets have
   # exactly one home: CatalogCredential.secret, encrypted. Rejecting them here
   # keeps the plaintext JSON column from ever becoming a side channel.
   PROPERTIES_SECRET_KEYS = %w[bearerToken token client_secret subject_token password].freeze
