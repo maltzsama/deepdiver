@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_22_240000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_22_250000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"

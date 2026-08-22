@@ -6,6 +6,13 @@
 class TrinoCatalogProjection
   WRITER = "baleia"
 
+  SENSITIVE_KEYS = %w[
+    iceberg.rest-catalog.oauth2.credential
+    s3.access-key
+    s3.secret-key
+    s3.session-token
+  ].freeze
+
   # Creates the projection for a cluster name.
   #
   # @param cluster_name [String] the Trino cluster name
@@ -91,6 +98,13 @@ class TrinoCatalogProjection
     end
 
     props.merge!(catalog.resolve_s3_credentials)
+
+    props.each do |key, value|
+      next unless SENSITIVE_KEYS.include?(key) && value.present?
+
+      props[key] = "@baleia-secret[file:catalog-#{catalog.id}-#{key.gsub('.', '_')}]"
+    end
+
     props.transform_values(&:to_s)
   end
 

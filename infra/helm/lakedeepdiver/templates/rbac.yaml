@@ -13,6 +13,11 @@ rules:
   - apiGroups: [ "apps" ]
     resources: [ "deployments/scale" ]
     verbs: [ "get", "patch" ]
+  # Catalog credentials are materialized as a Secret that the Trino plugin
+  # mounts at /etc/baleia/secrets. The app creates/updates this Secret.
+  - apiGroups: [ "" ]
+    resources: [ "secrets" ]
+    verbs: [ "get", "list", "create", "update", "patch" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
