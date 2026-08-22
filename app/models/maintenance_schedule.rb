@@ -8,7 +8,6 @@ class MaintenanceSchedule < ApplicationRecord
   has_many :execution_histories, dependent: :destroy
 
   enum :operation, OPERATIONS.to_h { |o| [ o, o ] }
-  scope :dispatchable, -> { where(is_paused: false) }
 
   validates :operation, presence: true, inclusion: { in: OPERATIONS }
   validates :operation, uniqueness: { scope: :iceberg_table_id }
@@ -16,14 +15,6 @@ class MaintenanceSchedule < ApplicationRecord
   validate :cron_is_parseable
   validate :configuration_matches_operation
   before_validation :compact_config
-
-  # True when the schedule's cron matches the given instant.
-  def scheduled_at?(time = Time.current)
-    parsed = Fugit::Cron.parse(cron)
-    return false if parsed.nil?
-
-    parsed.match?(time.change(sec: 0, usec: 0))
-  end
 
   # Whether dispatch of this schedule is paused.
   # @return [Boolean]

@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe "shared/_step_chain", type: :view do
-  let(:schedule) { create(:maintenance_schedule) }
+  let(:plan) { create(:maintenance_plan) }
 
   def render_for(execution)
     render partial: "shared/step_chain", locals: { execution: execution }
@@ -9,7 +9,7 @@ RSpec.describe "shared/_step_chain", type: :view do
   end
 
   it "marks the current node as failed when the execution failed" do
-    execution = schedule.execution_histories.create!(
+    execution = plan.execution_histories.create!(
       status: :failed, current_step: :executing_sql, error_message: "boom"
     )
 
@@ -17,7 +17,7 @@ RSpec.describe "shared/_step_chain", type: :view do
   end
 
   it "marks the current node as retry and shows the counter when awaiting a new attempt" do
-    execution = schedule.execution_histories.create!(
+    execution = plan.execution_histories.create!(
       status: :running, current_step: :executing_sql,
       retry_count: 2
     )
@@ -30,7 +30,7 @@ RSpec.describe "shared/_step_chain", type: :view do
   end
 
   it "does not confuse a normally running execution with a retry" do
-    execution = schedule.execution_histories.create!(
+    execution = plan.execution_histories.create!(
       status: :running, current_step: :executing_sql, retry_count: 0
     )
 

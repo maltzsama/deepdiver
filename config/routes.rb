@@ -83,8 +83,6 @@ Rails.application.routes.draw do
     member { post :apply }
   end
 
-  resources :maintenance_schedules
-
   # User administration (CR-64).
   resources :users, only: %i[index new create update] do
     member do

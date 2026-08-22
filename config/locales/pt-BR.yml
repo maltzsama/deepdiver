@@ -512,62 +512,6 @@ pt-BR:
     include_inactive: "Incluir inativas"
     inactive: "inativa"
 
-  schedules:
-    index:
-      eyebrow: "Agendamentos"
-      title: "Manutencao agendada"
-      subtitle: "Uma operacao por linha, com seu cron e estado atual."
-      new: "Novo agendamento"
-      empty_title: "Nenhum agendamento"
-      empty_hint: "Abra uma tabela e crie o primeiro agendamento de manutencao."
-      col_table: "Tabela"
-      col_operation: "Operacao"
-      col_cron: "Cron"
-      col_state: "Estado"
-      col_failures: "Falhas consecutivas"
-      active: "ativo"
-      paused: "pausado"
-    show:
-      eyebrow_prefix: "Agendamento ·"
-      edit: "Editar"
-      delete: "Excluir"
-      delete_confirm: "Excluir este agendamento?"
-      cron: "Cron"
-      state: "Estado"
-      failures: "Falhas consecutivas"
-      params: "Parametros"
-      params_default: "Padroes do Trino"
-      active: "ativo"
-      paused: "pausado"
-    new:
-      title: "Novo agendamento"
-      subtitle: "Uma operacao de manutencao, repetida no horario que voce definir."
-    edit:
-      title: "Editar %{operation}"
-    form:
-      errors_one: "%{count} problema impediu o salvamento"
-      errors_other: "%{count} problemas impediram o salvamento"
-      table: "Tabela"
-      table_placeholder: "Selecione uma tabela"
-      operation: "Operacao"
-      operation_hint: "Cada tabela pode ter um agendamento por operacao."
-      cron: "Cron"
-      cron_hint: "Cinco campos: minuto hora dia-do-mes mes dia-da-semana. Ex.: 0 3 * * * roda diariamente as 3h."
-      cron_placeholder: "0 3 * * *"
-      start_paused: "Iniciar pausado"
-      start_paused_hint: "Agendamentos pausados nao disparam ate serem retomados."
-      params_title: "Parametros da operacao"
-      params_hint: "Deixe em branco para usar o padrao do Trino. Apenas o campo da operacao escolhida e utilizado."
-      file_size: "Tamanho de arquivo (optimize)"
-      retention: "Retencao (expire / orphan)"
-      retention_hint: "Nao pode ser menor que o minimo configurado no catalogo (padrao 7d)."
-      submit: "Salvar agendamento"
-      cancel: "Cancelar"
-    notices:
-      created: "Agendamento criado."
-      updated: "Agendamento atualizado."
-      destroyed: "Agendamento excluido."
-
   executions:
     section_title: "Execucoes recentes"
     note: "%{count} registro(s)"
@@ -750,16 +694,6 @@ pt-BR:
       no_sla: "sem SLA"
       refresh: "Atualizar"
       run_now: "Executar agora"
-    notices:
-      created: "Agendamento criado."
-      updated: "Agendamento atualizado."
-      destroyed: "Agendamento excluido."
-
-  health_summary:
-    tables: "Tabelas"
-    critical: "Criticas"
-    warning: "Atencao"
-    healthy: "Saudaveis"
 
   policies:
     index:

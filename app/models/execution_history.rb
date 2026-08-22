@@ -56,18 +56,6 @@ class ExecutionHistory < ApplicationRecord
     finished_at - started_at
   end
 
-  # Human label of what the execution ran: the chain's enabled steps for a
-  # plan, the legacy schedule operation otherwise.
-  def operation_label
-    if maintenance_plan
-      steps = maintenance_plan.enabled_steps
-      steps = maintenance_plan.maintenance_steps if steps.empty?
-      steps.map(&:operation).join(" + ")
-    else
-      maintenance_schedule&.operation || current_step
-    end
-  end
-
   private
 
   # Backfills iceberg_table_id from the maintenance_schedule or maintenance_plan

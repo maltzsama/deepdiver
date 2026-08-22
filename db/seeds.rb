@@ -15,10 +15,6 @@ if Rails.env.development? || ENV["SEED_DEMO"]
     t.health_status = "warning"
   end
 
-  table.maintenance_schedules.find_or_create_by!(operation: "optimize") do |s|
-    s.cron = "0 3 * * *"
-    s.config = { "file_size_threshold" => "128MB" }
-  end
 end
 
 # Seed the global alert transport from env vars so the app works out of the

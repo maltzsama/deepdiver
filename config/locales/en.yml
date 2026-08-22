@@ -512,58 +512,6 @@ en:
     include_inactive: "Include inactive"
     inactive: "inactive"
 
-  schedules:
-    index:
-      eyebrow: "Schedules"
-      title: "Scheduled maintenance"
-      subtitle: "One operation per row, with its cron and current state."
-      new: "New schedule"
-      empty_title: "No schedules"
-      empty_hint: "Open a table and create the first maintenance schedule."
-      col_table: "Table"
-      col_operation: "Operation"
-      col_cron: "Cron"
-      col_state: "State"
-      col_failures: "Consecutive failures"
-      active: "active"
-      paused: "paused"
-    show:
-      eyebrow_prefix: "Schedule ·"
-      edit: "Edit"
-      delete: "Delete"
-      delete_confirm: "Delete this schedule?"
-      cron: "Cron"
-      state: "State"
-      failures: "Consecutive failures"
-      params: "Parameters"
-      params_default: "Trino defaults"
-      active: "active"
-      paused: "paused"
-    new:
-      title: "New schedule"
-      subtitle: "A maintenance operation, repeated at the time you define."
-    edit:
-      title: "Edit %{operation}"
-    form:
-      errors_one: "%{count} problem prevented the save"
-      errors_other: "%{count} problems prevented the save"
-      table: "Table"
-      table_placeholder: "Select a table"
-      operation: "Operation"
-      operation_hint: "Each table can have one schedule per operation."
-      cron: "Cron"
-      cron_hint: "Five fields: minute hour day-of-month month day-of-week. E.g. 0 3 * * * runs daily at 3am."
-      cron_placeholder: "0 3 * * *"
-      start_paused: "Start paused"
-      start_paused_hint: "Paused schedules do not trigger until resumed."
-      params_title: "Operation parameters"
-      params_hint: "Leave blank to use the Trino default. Only the field for the chosen operation is used."
-      file_size: "File size (optimize)"
-      retention: "Retention (expire / orphan)"
-      retention_hint: "Cannot be lower than the minimum configured on the catalog (default 7d)."
-      submit: "Save schedule"
-      cancel: "Cancel"
-
   executions:
     section_title: "Recent executions"
     note: "%{count} record(s)"
@@ -747,16 +695,6 @@ en:
       no_sla: "no SLA"
       refresh: "Refresh"
       run_now: "Run now"
-    notices:
-      created: "Schedule created."
-      updated: "Schedule updated."
-      destroyed: "Schedule deleted."
-
-  health_summary:
-    tables: "Tables"
-    critical: "Critical"
-    warning: "Attention"
-    healthy: "Healthy"
 
   policies:
     index:

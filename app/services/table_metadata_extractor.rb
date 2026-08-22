@@ -104,17 +104,6 @@ class TableMetadataExtractor
     total_size_bytes / total_data_files
   end
 
-  # Series for the record-distribution chart.
-  def records_series(limit: 30)
-    snapshots.last(limit).filter_map do |snap|
-      timestamp = snapshot_time(snap)
-      next if timestamp.nil?
-
-      { at: timestamp, records: snap.dig("summary", "total-records")&.to_i,
-        operation: snap.dig("summary", "operation") }
-    end
-  end
-
   private
 
   # The snapshot the table currently points at, or the last one.

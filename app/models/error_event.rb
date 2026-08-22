@@ -16,10 +16,6 @@ class ErrorEvent < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
 
   scope :open, -> { where(status: "open") }
-  scope :acknowledged, -> { where(status: "acknowledged") }
-  scope :resolved, -> { where(status: "resolved") }
-  scope :unassigned, -> { where(assigned_to_id: nil) }
-  scope :assigned_to_user, ->(user) { where(assigned_to_id: user.id) }
   scope :catalog_events, ->(catalog) { where(catalog_id: catalog.id) }
   scope :table_events, ->(table) do
     where(schema: table.namespace, table: table.name)
@@ -50,18 +46,6 @@ class ErrorEvent < ApplicationRecord
   def resolve!
     update!(status: "resolved", resolved_at: Time.current)
   end
-
-  # Reopens a resolved event whose failure recurred. Keeps the assignment so
-  # the same owner sees it come back; occurrence bookkeeping is handled by
-  # .record.
-  def reopen!
-    update!(status: "open", acknowledged_at: nil, resolved_at: nil)
-  end
-
-  # Whether this event belongs to the freshness subsystem and can therefore be
-  # auto-resolved when a probe reports healthy again.
-  # @return [Boolean]
-  def freshness? = operation == FRESHNESS_OPERATION
 
   # Rising-edge capture: whoever RAISES records first, whoever RESCUES does not
   # overwrite. Guarantees one event per failure moment, not one per call site.

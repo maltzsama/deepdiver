@@ -75,19 +75,6 @@ module ApplicationHelper
     end
   end
 
-  # Maps an execution step status to its badge CSS class.
-  # @param status [String, Symbol] the step status.
-  # @return [String] the badge class for the status.
-  def execution_step_badge_class(status)
-    case status.to_s
-    when "succeeded" then "badge-ok"
-    when "failed"    then "badge-err"
-    when "running"   then "badge-running"
-    when "skipped"   then "badge-warning"
-    else "badge-pending"
-    end
-  end
-
   # Maps a freshness status to its badge CSS class.
   # @param status [String, Symbol] the freshness status.
   # @return [String] the badge class for the status.
