@@ -162,4 +162,13 @@ FactoryBot.define do
     smtp_from { "alerts@example.com" }
     slack_webhook_url { "https://hooks.slack.com/services/T000/B000/XXXX" }
   end
+
+  factory :error_event do
+    schema { "test" }
+    operation { "test-op" }
+    source_system { "catalog-sync" }
+    message { "something broke" }
+    first_seen_at { Time.current }
+    last_seen_at { Time.current }
+  end
 end

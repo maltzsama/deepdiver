@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_22_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_22_210000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"
@@ -405,7 +405,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_200000) do
   add_foreign_key "execution_histories", "iceberg_tables"
   add_foreign_key "execution_histories", "maintenance_plans"
   add_foreign_key "execution_histories", "maintenance_schedules"
-  add_foreign_key "execution_steps", "execution_histories"
+  add_foreign_key "execution_steps", "execution_histories", on_delete: :cascade
   add_foreign_key "execution_steps", "maintenance_steps"
   add_foreign_key "freshness_checks", "iceberg_tables"
   add_foreign_key "iceberg_tables", "catalogs"
@@ -417,7 +417,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_200000) do
   add_foreign_key "role_change_logs", "users"
   add_foreign_key "role_change_logs", "users", column: "changed_by_id"
   add_foreign_key "table_freshness_slas", "iceberg_tables"
-  add_foreign_key "table_locks", "execution_histories"
+  add_foreign_key "table_locks", "execution_histories", on_delete: :cascade
   add_foreign_key "table_locks", "iceberg_tables"
   add_foreign_key "team_memberships", "teams"
   add_foreign_key "team_memberships", "users"
