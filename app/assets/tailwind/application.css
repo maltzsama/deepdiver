@@ -334,6 +334,41 @@
   }
   .step-row-skipped { opacity: .55; }
 
+  /* ---------- operations blocks (one execution = one block) ---------- */
+  /* No column grid anywhere: header is flex, bar is absolute-offset segments.
+     Teal maps to the existing --ok token; error wash to --red-soft. */
+  .op-run { padding: 12px 1rem; border-bottom: 0.5px solid var(--line); }
+  .op-run:hover { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+  .op-run--failed { box-shadow: inset 2px 0 0 var(--red); }
+  .op-run--failed:hover { box-shadow: inset 2px 0 0 var(--red), inset 4px 0 0 var(--red); }
+
+  .op-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+  .op-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .op-total, .op-at { @apply font-mono tabular-nums text-small text-cosmos-fg-soft; flex: none; }
+  .op-at { width: 76px; text-align: right; }
+
+  .op-bar { position: relative; height: 14px; margin: 8px 0 6px 15px;
+            background: var(--sunk); border-radius: 3px;
+            border: 1px solid var(--line); overflow: hidden; }
+  .op-seg { position: absolute; top: 0; bottom: 0; min-width: 3px; border-radius: 2px; }
+  .op-seg--wait   { background: var(--fg-mute); opacity: .45; }
+  .op-seg--step   { background: var(--ok); }
+  .op-seg--failed { background: var(--red); }
+  .op-seg--open   { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+  .op-tick { position: absolute; top: 0; bottom: 0; width: 0;
+             border-left: 1px dashed var(--line-bold); }
+
+  .op-legend { @apply font-mono text-micro text-cosmos-fg-soft; margin-left: 15px; line-height: 1.7;
+               overflow-wrap: anywhere; }
+  .op-legend--meta { @apply text-cosmos-fg-mute; }
+  .op-legend-failed { color: var(--red); }
+
+  .op-error { margin: 6px 0 0 15px; padding: 8px 10px;
+              background: var(--red-soft); border-left: 2px solid var(--red);
+              border-radius: 0; overflow-wrap: anywhere;
+              @apply font-mono text-small text-cosmos-fg-soft; }
+  .op-error-owner { @apply font-bold; color: var(--red); }
+
   /* ---------- pager ---------- */
   .pager-page { @apply justify-center min-w-8 px-2 py-0.5 cursor-pointer; }
   .pager-gap { @apply font-mono text-small text-cosmos-fg-mute px-1 select-none; }

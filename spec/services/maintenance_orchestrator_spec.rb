@@ -104,4 +104,18 @@ RSpec.describe "Cadence per step" do
 
     expect(execution.execution_steps.pluck(:operation)).to eq(MaintenancePlan::CANONICAL_ORDER)
   end
+
+  it "keeps chain order even when maintenance_steps rows were inserted out of position order" do
+    other_table = create(:iceberg_table)
+    shuffled = create(:maintenance_plan, iceberg_table: other_table, cron: "0 * * * *")
+    # Insert deliberately against position order - the timeline bar depends on
+    # id ASC matching plan position ASC.
+    %w[remove_orphan_files optimize expire_snapshots optimize_manifests].zip([ 3, 0, 1, 2 ]) do |op, pos|
+      create(:maintenance_step, maintenance_plan: shuffled, operation: op, position: pos, cadence_cron: nil)
+    end
+
+    execution = MaintenanceOrchestrator.run_plan(shuffled.id, at: Time.zone.parse("2026-08-10 03:00"))
+
+    expect(execution.execution_steps.pluck(:operation)).to eq(MaintenancePlan::CANONICAL_ORDER)
+  end
 end

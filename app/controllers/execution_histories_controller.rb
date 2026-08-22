@@ -1,22 +1,24 @@
 # Global log of operations. The per-table history stays in iceberg_tables#show;
-# this screen answers "what ran on the lake today", chain-aware: each row is an
-# execution with its nested steps.
+# this screen answers "what ran on the lake today". Maintenance and freshness
+# are separate tabs with separate schemas - never interleaved, each paginated
+# on its own source (the old merge of two limit(200) dropped the tail).
 class ExecutionHistoriesController < ApplicationController
   before_action :set_execution, only: %i[cancel]
 
-  # Lists the latest maintenance and freshness events interleaved into one
-  # timeline, with catalog/status/operation filters.
+  TABS = %w[maintenance freshness].freeze
+
+  # Lists executions as one block per run (timeline bar + legend) for the
+  # maintenance tab, or a simple scan list for the freshness tab.
   def index
     authorize ExecutionHistory
     @catalogs = Catalog.order(:name)
+    @tab = TABS.include?(params[:tab]) ? params[:tab] : "maintenance"
 
-    # One timeline for both kinds of work the tool runs: maintenance
-    # executions and freshness scans. The two sources are queried separately
-    # (they share no columns worth a UNION) and interleaved by time here.
-    @events = (Array(maintenance_events) + Array(freshness_events))
-              .sort_by { |event| event[:at] }
-              .reverse
-              .first(200)
+    if @tab == "freshness"
+      @pagy, @checks = pagy(freshness_scope, limit: 50)
+    else
+      @pagy, @executions = pagy(maintenance_scope, limit: 50)
+    end
   end
 
   # Operator cancellation of an execution: mark it failed (running) or skipped
@@ -38,11 +40,8 @@ class ExecutionHistoriesController < ApplicationController
     @execution = ExecutionHistory.find(params[:id])
   end
 
-  # Builds the maintenance side of the timeline, applying the catalog, status,
-  # operation, and stopped-at-step filters.
-  def maintenance_events
-    return [] if params[:kind] == "freshness"
-
+  # Maintenance executions with catalog/status/operation/stopped-at filters.
+  def maintenance_scope
     scope = ExecutionHistory.includes(iceberg_table: :catalog, execution_steps: :maintenance_step)
     scope = scope.joins(:iceberg_table).where(iceberg_tables: { catalog_id: params[:catalog_id] }) if params[:catalog_id].present?
     scope = scope.where(status: params[:status]) if params[:status].present?
@@ -55,28 +54,20 @@ class ExecutionHistoriesController < ApplicationController
                         .where(execution_steps: { operation: params[:stopped_at_step], status: "failed" }).select(:id))
     end
 
-    scope.latest.limit(200).map do |execution|
-      { kind: :maintenance, at: execution.started_at || execution.created_at,
-        record: execution, table: execution.iceberg_table }
-    end
+    scope.latest
   end
 
-  # Builds the freshness-scan side of the timeline, applying the catalog and
-  # status filters (via freshness_status_filter).
-  def freshness_events
-    return [] if params[:kind] == "maintenance"
-
+  # Freshness scans with catalog filter; the status filter speaks maintenance,
+  # so map it onto the closest freshness meaning.
+  def freshness_scope
     scope = FreshnessCheck.includes(iceberg_table: :catalog)
     scope = scope.joins(:iceberg_table).where(iceberg_tables: { catalog_id: params[:catalog_id] }) if params[:catalog_id].present?
     scope = scope.where(status: freshness_status_filter) if params[:status].present?
 
-    scope.latest.limit(200).map do |check|
-      { kind: :freshness, at: check.checked_at, record: check, table: check.iceberg_table }
-    end
+    scope.latest
   end
 
-  # The status filter speaks maintenance ("failed"/"success"); map it onto the
-  # closest freshness meaning so filtering does not wipe one side of the feed.
+  # Maps maintenance statuses onto freshness ones ("failed"->"error").
   def freshness_status_filter
     { "failed" => "error", "success" => "ok" }.fetch(params[:status], params[:status])
   end
