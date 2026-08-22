@@ -31,6 +31,23 @@ class TrinoCatalogRegistry < ApplicationRecord
     super.gsub(/"properties"=>.*?(?=,|>)/, '"properties"=>[FILTERED]')
   end
 
+  def serializable_hash(options = nil)
+    super((options || {}).merge(except: [ :properties ]))
+  end
+
+  # Warns on the Errors page if the plugin role is not configured.
+  # Fires at most once per deploy (deduped by ErrorEvent rising-edge capture).
+  def self.warn_missing_role!
+    return if ENV["BALEIA_DB_ROLE"].present?
+
+    ErrorEvent.record(
+      catalog: nil, schema: "security", operation: "db-grants",
+      source_system: "app", severity: "warning",
+      error_class: "UnrestrictedRegistryAccess",
+      message: "trino_catalog_registry without dedicated role — see docs/security.md"
+    )
+  end
+
   private
 
   def catalog_name_not_reserved
