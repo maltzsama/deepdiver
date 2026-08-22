@@ -39,7 +39,7 @@ spec:
         - name: migrate
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: [ "./bin/rails", "db:migrate" ]
+          command: [ "./bin/rails", "db:prepare" ]
           envFrom:
             - configMapRef:
                 name: {{ include "lakedeepdiver.fullname" . }}

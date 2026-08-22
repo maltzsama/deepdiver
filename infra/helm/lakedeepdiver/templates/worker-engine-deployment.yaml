@@ -50,10 +50,10 @@ spec:
           command: ["./bin/jobs"]
           env:
             # Engine lifecycle only — supervise start, drain, watchdog.
-            - name: SOLID_QUEUE_QUEUES
-              value: "engine"
-            - name: SOLID_QUEUE_RECURRING
-              value: "false"
+            - name: SOLID_QUEUE_CONFIG
+              value: "config/queue-engine.yml"
+            - name: SOLID_QUEUE_SKIP_RECURRING
+              value: "true"
           envFrom:
             - configMapRef:
                 name: {{ include "lakedeepdiver.fullname" . }}

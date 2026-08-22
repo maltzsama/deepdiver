@@ -49,11 +49,10 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["./bin/jobs"]
           env:
-            - name: SOLID_QUEUE_QUEUES
-              value: "maintenance,default,sync"
-            # Only this process runs recurring tasks.
-            - name: SOLID_QUEUE_RECURRING
-              value: "true"
+            - name: SOLID_QUEUE_CONFIG
+              value: "config/queue-worker.yml"
+            - name: SOLID_QUEUE_RECURRING_SCHEDULE
+              value: "config/recurring.yml"
           envFrom:
             - configMapRef:
                 name: {{ include "lakedeepdiver.fullname" . }}

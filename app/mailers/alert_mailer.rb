@@ -7,7 +7,12 @@ class AlertMailer < ApplicationMailer
   # @param body [String] the plain-text alert body
   def alert(to:, subject:, body:)
     setting = AlertSetting.instance
-    mail(to: to, subject: subject, from: setting.from_address) do |format|
+    mail(
+      to: to,
+      subject: subject,
+      from: setting.from_address,
+      delivery_method_settings: alert_delivery_settings
+    ) do |format|
       format.text { render plain: body }
     end
   end

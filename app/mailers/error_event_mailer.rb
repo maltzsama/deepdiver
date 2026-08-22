@@ -9,7 +9,12 @@ class ErrorEventMailer < ApplicationMailer
     @event = event
     @assigned_by = assigned_by
     setting = AlertSetting.instance
-    mail(to: to, subject: subject, from: setting.from_address) do |format|
+    mail(
+      to: to,
+      subject: subject,
+      from: setting.from_address,
+      delivery_method_settings: alert_delivery_settings
+    ) do |format|
       format.text { render plain: body_text }
     end
   end
