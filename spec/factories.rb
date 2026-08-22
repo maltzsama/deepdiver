@@ -133,7 +133,6 @@ FactoryBot.define do
 
   factory :execution_history do
     iceberg_table
-    maintenance_schedule { nil }
     maintenance_plan { nil }
     status { "running" }
     current_step { "start" }
@@ -151,7 +150,7 @@ FactoryBot.define do
   factory :error_event do
     schema { "test" }
     operation { "test-op" }
-    source_system { "catalog-sync" }
+    source_system { "catalog" }
     message { "something broke" }
     first_seen_at { Time.current }
     last_seen_at { Time.current }

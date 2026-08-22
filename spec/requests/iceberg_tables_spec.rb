@@ -221,3 +221,25 @@ RSpec.describe "POST /iceberg_tables/sync_all", type: :request do
     expect(response).to redirect_to(root_path)
   end
 end
+
+RSpec.describe "Pagination", type: :request do
+  let(:user) { create(:user) }
+
+  before { sign_in user }
+
+  it "paginates without breaking with many tables" do
+    create_list(:iceberg_table, 30)
+
+    get iceberg_tables_path
+
+    expect(response).to have_http_status(:ok)
+  end
+
+  it "paginates with a filter applied" do
+    create_list(:iceberg_table, 30)
+
+    get iceberg_tables_path, params: { q: "a" }
+
+    expect(response).to have_http_status(:ok)
+  end
+end

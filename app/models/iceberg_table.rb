@@ -4,7 +4,7 @@ class IcebergTable < ApplicationRecord
   HEALTH_STATUSES = %w[unknown healthy warning critical].freeze
 
   belongs_to :catalog, counter_cache: true
-  has_many :maintenance_schedules, dependent: :destroy
+
   has_one :maintenance_plan, dependent: :destroy
   has_one :table_freshness_sla, dependent: :destroy
   has_one :latest_freshness_check, -> { order(checked_at: :desc) }, class_name: "FreshnessCheck"

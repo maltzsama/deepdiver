@@ -54,7 +54,6 @@
             <th scope="col"><%= t("catalogs.show.col_health") %></th>
             <th scope="col"><%= t("catalogs.show.col_status") %></th>
             <th scope="col"><%= t("catalogs.show.col_last_write") %></th>
-            <th scope="col"><%= t("catalogs.show.col_schedules") %></th>
           </tr>
         </thead>
         <tbody>
@@ -73,7 +72,6 @@
                 </span>
               </td>
               <td><%= timestamp(table.last_data_update) %></td>
-              <td class="cell-num"><%= table.schedules_count %></td>
             </tr>
           <% end %>
         </tbody>

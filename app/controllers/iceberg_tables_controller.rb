@@ -14,9 +14,6 @@ class IcebergTablesController < ApplicationController
 
     @tables = IcebergTable.active
                           .includes(:catalog, :maintenance_plan, :table_freshness_sla, :latest_freshness_check)
-                          .left_joins(:maintenance_schedules)
-                          .select("iceberg_tables.*, COUNT(maintenance_schedules.id) AS schedules_count")
-                          .group("iceberg_tables.id")
 
     @tables = @tables.where(catalog_id: params[:catalog_id])       if params[:catalog_id].present?
     @tables = @tables.where(namespace: params[:namespace])         if params[:namespace].present?
@@ -24,9 +21,6 @@ class IcebergTablesController < ApplicationController
 
     if params[:inactive].present?
       @tables = IcebergTable.includes(:catalog, :maintenance_plan, :table_freshness_sla, :latest_freshness_check)
-                            .left_joins(:maintenance_schedules)
-                            .select("iceberg_tables.*, COUNT(maintenance_schedules.id) AS schedules_count")
-                            .group("iceberg_tables.id")
     end
 
     if params[:no_plan].present?

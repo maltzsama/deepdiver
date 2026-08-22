@@ -17,7 +17,7 @@ gem "stimulus-rails"
 # Authentication [https://github.com/heartcombo/devise]
 gem "devise"
 
-# Cron parsing for maintenance_schedules dispatch [https://github.com/floraison/fugit]
+# Cron parsing for maintenance plan dispatch [https://github.com/floraison/fugit]
 gem "fugit"
 
 # Kubernetes API client, used by the Trino scale up/down workers [https://github.com/abonas/kubeclient]
