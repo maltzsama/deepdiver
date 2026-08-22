@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_22_220000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_22_230000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"
@@ -99,18 +99,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_220000) do
     t.integer "iceberg_table_id", null: false
     t.datetime "last_heartbeat_at"
     t.integer "maintenance_plan_id"
-    t.integer "maintenance_schedule_id"
     t.json "metrics"
     t.integer "retry_count", default: 0, null: false
     t.string "skip_reason"
     t.datetime "started_at"
     t.string "status", default: "pending", null: false
     t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "idx_on_maintenance_schedule_id_created_at_ba9b5c28dc"
     t.index ["created_at"], name: "index_execution_histories_on_created_at"
     t.index ["iceberg_table_id"], name: "index_execution_histories_on_iceberg_table_id"
     t.index ["maintenance_plan_id"], name: "index_execution_histories_on_maintenance_plan_id"
-    t.index ["maintenance_schedule_id", "created_at"], name: "idx_on_maintenance_schedule_id_created_at_ba9b5c28dc"
-    t.index ["maintenance_schedule_id"], name: "index_execution_histories_on_maintenance_schedule_id"
     t.index ["status", "last_heartbeat_at"], name: "index_execution_histories_on_status_and_last_heartbeat_at"
     t.index ["status"], name: "index_execution_histories_on_status"
   end
@@ -226,21 +224,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_220000) do
     t.json "steps_config", default: {}
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_maintenance_policies_on_name", unique: true
-  end
-
-  create_table "maintenance_schedules", force: :cascade do |t|
-    t.json "config", default: {}
-    t.integer "consecutive_failures", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.string "cron", null: false
-    t.integer "iceberg_table_id", null: false
-    t.boolean "is_paused", default: false, null: false
-    t.integer "maintenance_policy_id"
-    t.string "operation", null: false
-    t.datetime "updated_at", null: false
-    t.index ["iceberg_table_id", "operation"], name: "index_maintenance_schedules_on_iceberg_table_id_and_operation", unique: true
-    t.index ["iceberg_table_id"], name: "index_maintenance_schedules_on_iceberg_table_id"
-    t.index ["maintenance_policy_id"], name: "index_maintenance_schedules_on_maintenance_policy_id"
   end
 
   create_table "maintenance_steps", force: :cascade do |t|
@@ -405,15 +388,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_220000) do
   add_foreign_key "error_events", "users", column: "assigned_to_id"
   add_foreign_key "execution_histories", "iceberg_tables"
   add_foreign_key "execution_histories", "maintenance_plans"
-  add_foreign_key "execution_histories", "maintenance_schedules"
   add_foreign_key "execution_steps", "execution_histories", on_delete: :cascade
   add_foreign_key "execution_steps", "maintenance_steps"
   add_foreign_key "freshness_checks", "iceberg_tables"
   add_foreign_key "iceberg_tables", "catalogs"
   add_foreign_key "maintenance_plans", "iceberg_tables"
   add_foreign_key "maintenance_plans", "maintenance_policies"
-  add_foreign_key "maintenance_schedules", "iceberg_tables"
-  add_foreign_key "maintenance_schedules", "maintenance_policies"
   add_foreign_key "maintenance_steps", "maintenance_plans"
   add_foreign_key "role_change_logs", "users"
   add_foreign_key "role_change_logs", "users", column: "changed_by_id"

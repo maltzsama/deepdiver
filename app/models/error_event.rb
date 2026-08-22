@@ -4,7 +4,7 @@
 class ErrorEvent < ApplicationRecord
   SEVERITIES = %w[error warning info].freeze
   STATUSES = %w[open acknowledged resolved].freeze
-  SYSTEMS = %w[catalog-sync execution sso engine].freeze
+  SYSTEMS = %w[catalog engine execution freshness app sso].freeze
   FRESHNESS_OPERATION = "freshness-check"
 
   belongs_to :catalog, optional: true
@@ -14,6 +14,7 @@ class ErrorEvent < ApplicationRecord
   validates :schema, :operation, :source_system, presence: true
   validates :severity, inclusion: { in: SEVERITIES }
   validates :status, inclusion: { in: STATUSES }
+  validates :source_system, inclusion: { in: SYSTEMS }
 
   scope :open, -> { where(status: "open") }
   scope :catalog_events, ->(catalog) { where(catalog_id: catalog.id) }
