@@ -56,15 +56,14 @@ RSpec.describe CatalogClient, "#/v1/config prefix discovery" do
     expect(pc.config_url).to eq("http://polaris:8181/api/catalog/v1/config?warehouse=lakehouse")
   end
 
-  it "keeps the legacy path_prefix regime working without any config call" do
-    catalog = create(:catalog, endpoint: "http://polaris:8181/api/catalog",
-                               properties: { "path_prefix" => "/v1/lakehouse" })
-    client = CatalogClientFactory.for(catalog)
-    # Factory builds its own transport; swap ours in for the assertion.
+  it "ignores any hand-set path_prefix - discovery is the only regime" do
+    catalog = create(:polaris_catalog, name: "lakehouse",
+                                       properties: { "path_prefix" => "/v1/lakehouse" })
     client = PolarisCatalogClient.new(catalog, transport:)
+    allow(transport).to receive(:get)
+      .with("http://polaris:8181/api/catalog/v1/config?warehouse=lakehouse", headers: anything)
+      .and_return("defaults" => {}, "overrides" => { "prefix" => "lakehouse" })
 
-    expect(transport).not_to receive(:get)
-      .with(/config/, anything)
     expect(transport).to receive(:get)
       .with("http://polaris:8181/api/catalog/v1/lakehouse/namespaces", headers: {})
       .and_return({ "namespaces" => [] })
