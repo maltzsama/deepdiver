@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Validates Conventional Commits format.
+# Usage: placed in .githooks/ and activated via:
+#   git config core.hooksPath .githooks
+#
+# Format: <type>[optional-scope][!]: <description>
+# Types: feat, fix, perf, refactor, docs, test, chore, ci, build, style, revert
+
+COMMIT_MSG_FILE="$1"
+COMMIT_MSG=$(head -1 "$COMMIT_MSG_FILE")
+
+# Allow merge commits and fixup/squash
+if echo "$COMMIT_MSG" | grep -qE '^(Merge |fixup! |squash! |amend! )'; then
+  exit 0
+fi
+
+# Conventional Commits regex
+# Groups:
+#   ^[a-z]+        — type
+#   (\([a-z0-9._/-]+\))? — optional scope
+#   !?             — optional breaking indicator
+#   : .+           — colon + space + description
+PATTERN='^[a-z]+(\([a-z0-9._/-]+\))?!?: .+'
+
+if ! echo "$COMMIT_MSG" | grep -qE "$PATTERN"; then
+  echo ""
+  echo "ERROR: commit message does not follow Conventional Commits"
+  echo ""
+  echo "  Got:      $COMMIT_MSG"
+  echo ""
+  echo "  Expected: <type>[optional-scope]: <description>"
+  echo ""
+  echo "  Types:    feat, fix, perf, refactor, docs, test, chore, ci, build, style, revert"
+  echo "  Breaking: add '!' before ':' or 'BREAKING CHANGE:' footer"
+  echo ""
+  echo "  Examples:"
+  echo "    feat: add user authentication"
+  echo "    fix(catalogs): handle nil prefix"
+  echo "    feat!: redesign API response format"
+  echo ""
+  exit 1
+fi
