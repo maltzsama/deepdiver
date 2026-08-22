@@ -77,9 +77,11 @@ class TrinoCatalogProjection
       # someone having enabled it on the cluster. See CR-02.
       "iceberg.rest-catalog.nested-namespace-enabled" => "true",
       "fs.native-s3.enabled" => "true",
-      "s3.endpoint" => ENV.fetch("CEPH_ENDPOINT", "http://ceph.local"),
+      "s3.endpoint" => catalog.s3_endpoint.presence || ENV.fetch("CEPH_ENDPOINT", "http://ceph.local"),
       "s3.path-style-access" => "true"
     }
+
+    props["s3.region"] = catalog.s3_region if catalog.s3_region.present?
 
     if credential&.oauth2?
       props["iceberg.rest-catalog.security"] = "OAUTH2"
@@ -88,6 +90,7 @@ class TrinoCatalogProjection
       props["iceberg.rest-catalog.oauth2.scope"] = credential.scope
     end
 
+    props.merge!(catalog.resolve_s3_credentials)
     props.transform_values(&:to_s)
   end
 

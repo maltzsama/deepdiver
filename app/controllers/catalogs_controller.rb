@@ -99,6 +99,8 @@ class CatalogsController < ApplicationController
   def catalog_params
     permitted = params.require(:catalog).permit(
       :name, :catalog_type, :endpoint, :trino_catalog_name_override, :nessie_ref,
+      :s3_authentication_type, :s3_endpoint, :s3_access_key, :s3_secret_key,
+      :s3_role_arn, :s3_external_id, :s3_region,
       catalog_credential_attributes: [
         :id, :auth_method, :client_id, :secret, :scope, :token_path,
         :token_endpoint, :oauth_scope, { properties: {} }
@@ -107,6 +109,9 @@ class CatalogsController < ApplicationController
 
     creds = permitted[:catalog_credential_attributes]
     creds&.delete(:secret) if creds && creds[:secret].blank?
+
+    # Blank s3_secret_key means "keep the stored one", same pattern as catalog_credential.
+    permitted.delete(:s3_secret_key) if permitted[:s3_secret_key].blank?
 
     permitted
   end

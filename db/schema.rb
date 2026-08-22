@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_21_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_22_100000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"
@@ -49,6 +49,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_180000) do
     t.string "name", null: false
     t.string "nessie_ref"
     t.json "properties", default: {}
+    t.string "s3_access_key"
+    t.string "s3_authentication_type", default: "none", null: false
+    t.string "s3_endpoint"
+    t.string "s3_external_id"
+    t.string "s3_region", default: "us-east-1"
+    t.string "s3_role_arn"
+    t.string "s3_secret_key"
     t.string "trino_catalog_name_override"
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_catalogs_on_name", unique: true

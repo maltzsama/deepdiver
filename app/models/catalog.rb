@@ -1,8 +1,11 @@
 # A data catalog registered in the application and provisioned into Trino.
 # Holds the catalog type, endpoint, and connection credential, and derives a
 # valid Trino catalog name from the record name.
+require "aws-sdk-sts"
+
 class Catalog < ApplicationRecord
   CATALOG_TYPES = %w[polaris nessie].freeze
+  S3_AUTH_TYPES = %w[none static sts].freeze
 
   # Mirrors CatalogRow.java v0.2.1 and the trino_catalog_registry CHECK. Any
   # drift here makes the INSERT fail with a constraint violation whose message
@@ -15,13 +18,18 @@ class Catalog < ApplicationRecord
   has_one :catalog_credential, dependent: :destroy
   accepts_nested_attributes_for :catalog_credential
 
+  # S3 secret is encrypted at rest, same as CatalogCredential#secret.
+  encrypts :s3_secret_key
+
   validates :name, presence: true, uniqueness: true
   validates :catalog_type, presence: true, inclusion: { in: CATALOG_TYPES }
   validates :endpoint, presence: true, format: { with: /\Ahttps?:\/\/\S+\z/i, message: :must_be_http }
+  validates :s3_authentication_type, presence: true, inclusion: { in: S3_AUTH_TYPES }
   validate :trino_catalog_name_is_valid
   validate :endpoint_not_internal
   validate :properties_carry_no_secrets
   validate :nessie_ref_is_valid
+  validate :s3_config_valid
 
   # Which Nessie ref (branch/tag) this catalog reads. Only meaningful for
   # catalog_type "nessie"; when blank the server default branch answers, and a
@@ -77,6 +85,40 @@ class Catalog < ApplicationRecord
   rescue StandardError => e
     catalog_credential&.update!(verified_at: Time.current, verification_error: e.message)
     { ok: false, error: e.message }
+  end
+
+  # Returns the S3 connector properties for Trino. For "none" returns an empty
+  # hash; for "static" the stored access key and secret; for "sts" calls
+  # AssumeRole and returns the temporary credentials.
+  #
+  # @return [Hash{String => String}] properties to merge into Trino connector config
+  def resolve_s3_credentials
+    case s3_authentication_type
+    when "none"
+      {}
+    when "static"
+      {
+        "s3.access-key" => s3_access_key,
+        "s3.secret-key" => s3_secret_key
+      }
+    when "sts"
+      sts_client = Aws::STS::Client.new(
+        access_key_id: s3_access_key,
+        secret_access_key: s3_secret_key,
+        region: s3_region.presence || "us-east-1",
+        endpoint: s3_endpoint.presence
+      )
+      resp = sts_client.assume_role(
+        role_arn: s3_role_arn,
+        role_session_name: "lakedeepdiver-#{trino_catalog_name}",
+        external_id: s3_external_id.presence
+      )
+      {
+        "s3.access-key" => resp.credentials.access_key_id,
+        "s3.secret-key" => resp.credentials.secret_access_key,
+        "s3.session-token" => resp.credentials.session_token
+      }
+    end
   end
 
   private
@@ -135,5 +177,17 @@ class Catalog < ApplicationRecord
     return unless BLOCKED_HOSTS.include?(host) || BLOCKED_PREFIXES.any? { |p| host.start_with?(p) }
 
     errors.add(:endpoint, :blocked_internal)
+  end
+
+  def s3_config_valid
+    case s3_authentication_type
+    when "static"
+      errors.add(:s3_access_key, :required) if s3_access_key.blank?
+      errors.add(:s3_secret_key, :required) if s3_secret_key.blank?
+    when "sts"
+      errors.add(:s3_access_key, :required) if s3_access_key.blank?
+      errors.add(:s3_secret_key, :required) if s3_secret_key.blank?
+      errors.add(:s3_role_arn, :required) if s3_role_arn.blank?
+    end
   end
 end

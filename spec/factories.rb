@@ -38,6 +38,21 @@ FactoryBot.define do
     catalog_type { "nessie" }
     endpoint { "http://nessie:19120/api/v1" }
 
+    trait :s3_static do
+      s3_authentication_type { "static" }
+      s3_access_key { "AKIAIOSFODNN7EXAMPLE" }
+      s3_secret_key { "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" }
+      s3_region { "us-east-1" }
+    end
+
+    trait :s3_sts do
+      s3_authentication_type { "sts" }
+      s3_access_key { "AKIAIOSFODNN7EXAMPLE" }
+      s3_secret_key { "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" }
+      s3_role_arn { "arn:aws:iam::123456789012:role/lakedeepdiver" }
+      s3_region { "us-west-2" }
+    end
+
     factory :polaris_catalog do
       catalog_type { "polaris" }
       endpoint { "http://polaris:8181" }

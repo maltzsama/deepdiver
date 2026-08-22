@@ -89,3 +89,6 @@ gem "solid_cable", "~> 4.0"
 gem "pundit", "~> 2.5", require: "pundit"
 
 gem "pagy", "~> 9.0"
+
+# AWS STS for S3 temporary credentials (AssumeRole) used by Trino.
+gem "aws-sdk-sts", "~> 1.0", require: false

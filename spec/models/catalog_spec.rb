@@ -106,3 +106,34 @@ RSpec.describe "Catalog nessie_ref", type: :model do
     expect(build(:catalog, catalog_type: "nessie", nessie_ref: nil)).to be_valid
   end
 end
+
+RSpec.describe "Catalog S3 config", type: :model do
+  it "allows none without credentials" do
+    expect(build(:catalog, s3_authentication_type: "none")).to be_valid
+  end
+
+  it "requires access_key and secret_key for static" do
+    catalog = build(:catalog, :s3_static, s3_access_key: nil, s3_secret_key: nil)
+
+    expect(catalog).not_to be_valid
+    expect(catalog.errors[:s3_access_key]).to be_present
+    expect(catalog.errors[:s3_secret_key]).to be_present
+  end
+
+  it "requires access_key, secret_key, and role_arn for sts" do
+    catalog = build(:catalog, :s3_sts, s3_access_key: nil, s3_secret_key: nil, s3_role_arn: nil)
+
+    expect(catalog).not_to be_valid
+    expect(catalog.errors[:s3_access_key]).to be_present
+    expect(catalog.errors[:s3_secret_key]).to be_present
+    expect(catalog.errors[:s3_role_arn]).to be_present
+  end
+
+  it "accepts a valid static config" do
+    expect(build(:catalog, :s3_static)).to be_valid
+  end
+
+  it "accepts a valid sts config" do
+    expect(build(:catalog, :s3_sts)).to be_valid
+  end
+end

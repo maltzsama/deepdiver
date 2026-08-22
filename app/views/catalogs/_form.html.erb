@@ -116,6 +116,58 @@
         </div>
       </details>
 
+      <div class="field-group" data-controller="s3-auth">
+        <p class="field-group-title"><%= t("catalogs.form.s3_storage") %></p>
+
+        <div class="field">
+          <%= form.label :s3_authentication_type, t("catalogs.form.s3_auth_type"), class: "field-label" %>
+          <%= form.select :s3_authentication_type,
+                          Catalog::S3_AUTH_TYPES.map { |m| [ t("catalogs.s3_auth_types.#{m}"), m ] },
+                          {}, class: "field-input",
+                          data: { s3_auth_select: true, action: "s3-auth#change" } %>
+        </div>
+
+        <div class="field" data-s3-auth-target="field" data-s3-auth-show="static sts">
+          <%= form.label :s3_access_key, t("catalogs.form.s3_access_key"), class: "field-label" %>
+          <%= form.text_field :s3_access_key, class: "field-input field-input-mono",
+                              placeholder: "AKIAIOSFODNN7EXAMPLE" %>
+        </div>
+
+        <div class="field" data-s3-auth-target="field" data-s3-auth-show="static sts">
+          <%= form.label :s3_secret_key, t("catalogs.form.s3_secret_key"), class: "field-label" %>
+          <%= form.password_field :s3_secret_key, value: nil, autocomplete: "new-password",
+                                  placeholder: catalog.s3_secret_key.present? ? "••••" : nil,
+                                  class: "field-input field-input-mono" %>
+          <p class="field-hint"><%= t("catalogs.form.s3_secret_hint") %></p>
+        </div>
+
+        <div class="field" data-s3-auth-target="field" data-s3-auth-show="sts">
+          <%= form.label :s3_role_arn, t("catalogs.form.s3_role_arn"), class: "field-label" %>
+          <p class="field-hint"><%= t("catalogs.form.s3_role_arn_hint") %></p>
+          <%= form.text_field :s3_role_arn, class: "field-input field-input-mono",
+                              placeholder: "arn:aws:iam::123456789012:role/my-role" %>
+        </div>
+
+        <div class="field" data-s3-auth-target="field" data-s3-auth-show="sts">
+          <%= form.label :s3_external_id, t("catalogs.form.s3_external_id"), class: "field-label" %>
+          <p class="field-hint"><%= t("catalogs.form.s3_external_id_hint") %></p>
+          <%= form.text_field :s3_external_id, class: "field-input field-input-mono" %>
+        </div>
+
+        <div class="field" data-s3-auth-target="field" data-s3-auth-show="static sts">
+          <%= form.label :s3_region, t("catalogs.form.s3_region"), class: "field-label" %>
+          <%= form.text_field :s3_region, class: "field-input field-input-mono",
+                              placeholder: "us-east-1" %>
+        </div>
+
+        <div class="field" data-s3-auth-target="field" data-s3-auth-show="static sts">
+          <%= form.label :s3_endpoint, t("catalogs.form.s3_endpoint"), class: "field-label" %>
+          <p class="field-hint"><%= t("catalogs.form.s3_endpoint_hint") %></p>
+          <%= form.url_field :s3_endpoint, class: "field-input field-input-mono",
+                             placeholder: ENV.fetch("CEPH_ENDPOINT", "http://ceph.local") %>
+        </div>
+      </div>
+
       <div class="form-actions">
         <%= form.submit t("catalogs.form.submit"), class: "btn btn-primary" %>
         <%= link_to t("catalogs.form.cancel"), catalogs_path, class: "link text-body" %>
