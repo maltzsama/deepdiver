@@ -33,6 +33,11 @@ internalCA:
   existingSecret: ""
   caKey: ca.crt
 
+# PostgreSQL connection. The chart expects an existing Secret with a `url` key.
+postgresql:
+  existingSecret: ""
+  urlKey: url
+
 # Active Record Encryption keys. MUST be provided via existingSecret.
 # Generate with: bin/rails db:encryption:init
 # Losing these keys makes all catalog credentials unrecoverable.
