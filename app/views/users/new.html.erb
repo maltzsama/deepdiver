@@ -37,7 +37,8 @@
   </div>
 
   <div class="form-actions">
-    <%= form.submit t("users.new.submit"), class: "btn btn-primary" %>
+    <%= form.submit t("users.new.submit"), class: "btn btn-primary",
+                    data: { turbo_submits_with: t("actions.sending") } %>
     <%= link_to t("users.new.cancel"), users_path, class: "link text-body" %>
   </div>
 <% end %>

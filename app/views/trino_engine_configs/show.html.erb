@@ -71,7 +71,8 @@
       <p class="field-hint"><%= t("trino_engine_config.form.applies_next_start") %></p>
 
       <div class="form-actions">
-        <%= form.submit t("trino_engine_config.form.submit"), class: "btn btn-primary" %>
+        <%= form.submit t("trino_engine_config.form.submit"), class: "btn btn-primary",
+                        data: { turbo_submits_with: t("actions.sending") } %>
       </div>
     <% end %>
   </div>

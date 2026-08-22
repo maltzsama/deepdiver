@@ -20,7 +20,8 @@
         </div>
 
         <div class="form-actions">
-          <%= f.submit t("auth.passwords.new_title"), class: "btn btn-primary" %>
+          <%= f.submit t("auth.passwords.new_title"), class: "btn btn-primary",
+                      data: { turbo_submits_with: t("actions.sending") } %>
           <%= link_to t("auth.sign_in.forgot"), new_session_path(resource_name),
                       class: "link text-body" %>
         </div>

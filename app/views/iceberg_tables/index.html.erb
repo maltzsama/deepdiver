@@ -57,18 +57,18 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th><%= t("tables.index.col_table") %></th>
-            <th><%= t("tables.index.col_catalog") %></th>
-            <th><%= t("tables.index.col_health") %></th>
-            <th><%= t("tables.index.col_files") %></th>
-            <th><%= t("tables.index.col_avg_size") %></th>
-            <th><%= t("tables.index.col_records") %></th>
-            <th><%= t("tables.index.col_snapshots") %></th>
-            <th><%= t("tables.index.col_plan") %></th>
-            <th><%= t("tables.index.col_freshness") %></th>
-            <th><%= t("tables.index.col_last_write") %></th>
+            <th scope="col"><%= t("tables.index.col_table") %></th>
+            <th scope="col"><%= t("tables.index.col_catalog") %></th>
+            <th scope="col"><%= t("tables.index.col_health") %></th>
+            <th scope="col"><%= t("tables.index.col_files") %></th>
+            <th scope="col"><%= t("tables.index.col_avg_size") %></th>
+            <th scope="col"><%= t("tables.index.col_records") %></th>
+            <th scope="col"><%= t("tables.index.col_snapshots") %></th>
+            <th scope="col"><%= t("tables.index.col_plan") %></th>
+            <th scope="col"><%= t("tables.index.col_freshness") %></th>
+            <th scope="col"><%= t("tables.index.col_last_write") %></th>
             <% if can_run_maintenance? %>
-              <th><span class="sr-only"><%= t("tables.index.col_actions") %></span></th>
+              <th scope="col"><span class="sr-only"><%= t("tables.index.col_actions") %></span></th>
             <% end %>
           </tr>
         </thead>
@@ -125,3 +125,5 @@
     </div>
   <% end %>
 </section>
+
+<%== pager_nav(@pagy) %>

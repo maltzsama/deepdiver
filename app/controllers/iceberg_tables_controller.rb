@@ -47,6 +47,8 @@ class IcebergTablesController < ApplicationController
     end
 
     @tables = @tables.order(Arel.sql("health_score ASC NULLS LAST"), :namespace, :name)
+
+    @pagy, @tables = pagy(@tables)
   end
 
   # Shows one table with its open errors, schedules, recent executions,

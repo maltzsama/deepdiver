@@ -8,8 +8,6 @@
   </div>
 </div>
 
-<%= render "shared/flash" %>
-
 <section class="panel mb-6">
   <div class="panel-head">
     <h2 class="panel-title"><%= t("profiles.show.preferences_title") %></h2>
@@ -49,7 +47,8 @@
                      {}, class: "field-input" %>
       </div>
 
-      <%= f.submit t("profiles.show.save"), class: "btn btn-primary" %>
+      <%= f.submit t("profiles.show.save"), class: "btn btn-primary",
+                  data: { turbo_submits_with: t("actions.sending") } %>
     <% end %>
   </div>
 </section>
@@ -80,7 +79,8 @@
           <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "field-input" %>
         </div>
 
-        <%= f.submit t("profiles.show.change_password"), class: "btn btn-default" %>
+        <%= f.submit t("profiles.show.change_password"), class: "btn btn-default",
+                    data: { turbo_submits_with: t("actions.sending") } %>
       <% end %>
     <% end %>
   </div>

@@ -21,11 +21,11 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th><%= t("plans.index.col_table") %></th>
-            <th><%= t("plans.index.col_cron") %></th>
-            <th><%= t("plans.index.col_state") %></th>
-            <th><%= t("plans.index.col_failures") %></th>
-            <th><%= t("plans.index.col_policy") %></th>
+            <th scope="col"><%= t("plans.index.col_table") %></th>
+            <th scope="col"><%= t("plans.index.col_cron") %></th>
+            <th scope="col"><%= t("plans.index.col_state") %></th>
+            <th scope="col"><%= t("plans.index.col_failures") %></th>
+            <th scope="col"><%= t("plans.index.col_policy") %></th>
           </tr>
         </thead>
         <tbody>
@@ -54,3 +54,5 @@
     </div>
   </section>
 <% end %>
+
+<%== pager_nav(@pagy) %>

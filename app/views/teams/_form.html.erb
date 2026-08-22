@@ -34,7 +34,8 @@
   </div>
 
   <div class="form-actions">
-    <%= f.submit team.new_record? ? t("teams.form.submit_create") : t("teams.form.submit_update"), class: "btn btn-primary" %>
+    <%= f.submit team.new_record? ? t("teams.form.submit_create") : t("teams.form.submit_update"), class: "btn btn-primary",
+                data: { turbo_submits_with: t("actions.sending") } %>
     <%= link_to t("teams.form.cancel"), teams_path, class: "link text-body" %>
   </div>
 <% end %>

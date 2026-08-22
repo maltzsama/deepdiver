@@ -8,6 +8,7 @@ class MaintenancePlansController < ApplicationController
   def index
     authorize MaintenancePlan
     @plans = MaintenancePlan.includes(:iceberg_table, :maintenance_policy).order(:id)
+    @pagy, @plans = pagy(@plans)
   end
 
   # Shows a single maintenance plan.
