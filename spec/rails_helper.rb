@@ -49,6 +49,7 @@ RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
   config.include ActiveJob::TestHelper
   config.include Devise::Test::IntegrationHelpers, type: :request
+  config.include Devise::Test::IntegrationHelpers, type: :system
 
   # The default TrinoRuntime adapter is built lazily; make sure a fake from a
   # previous example never leaks into the next one, and use the in-memory test

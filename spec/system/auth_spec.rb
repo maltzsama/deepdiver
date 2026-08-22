@@ -23,7 +23,7 @@ RSpec.describe "Authentication", type: :system do
     login_as(admin, scope: :user)
     visit root_path
     find("button[aria-label='Profile']").click
-    find("[role='menuitem']", text: "Sign out").click
+    click_button "Sign out"
     expect(page).to have_current_path(new_user_session_path)
   end
 end
