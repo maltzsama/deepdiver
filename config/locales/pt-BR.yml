@@ -1,4 +1,14 @@
 pt-BR:
+  time:
+    formats:
+      long: "%d de %B de %Y %H:%M"
+      short: "%d de %b de %Y %H:%M"
+      iso8601: "%Y-%m-%dT%H:%M:%S%:z"
+  date:
+    formats:
+      long: "%d de %B de %Y"
+      short: "%d de %b de %Y"
+      iso8601: "%Y-%m-%d"
   layout:
     app_name: "LakeDeepDiver"
     nav:
@@ -337,10 +347,32 @@ pt-BR:
       secret_hint: "O segredo e armazenado criptografado e nunca e mostrado novamente."
       scope: "Escopo"
       advanced: "Avancado"
-    auth_methods:
-      none: "Nenhum"
-      bearer_static: "Token bearer estatico"
-      oauth2_client_credentials: "Credenciais de cliente OAuth2"
+      auth_methods:
+        none: "Nenhum"
+        bearer_static: "Token bearer estatico"
+        oauth2_client_credentials: "Credenciais de cliente OAuth2"
+        oauth2_token_exchange: "OAuth2 token exchange (Dremio PAT)"
+      secret_label: "Segredo / token"
+      token_endpoint: "Endpoint do token"
+      token_endpoint_hint: "Servidor OAuth2 externo quando nao e o proprio catalogo (Dremio: :9047/oauth/token)."
+      oauth_scope: "Escopo OAuth"
+      subject_token_type: "Tipo do token de assunto"
+      subject_token_type_hint: "Apenas token-exchange. Padrao para o tipo PAT do Dremio."
+      client_id_placeholder: "dremio-catalog-cli"
+      nessie_ref: "Ref do Nessie"
+      nessie_ref_hint: "Branch ou tag para leitura (ex: main, etl_dev). Vazio = padrao do servidor. Trino deve ler a mesma ref - veja o runbook."
+      s3_storage: "Armazenamento S3"
+      s3_auth_type: "Autenticacao do armazenamento"
+      s3_access_key: "ID da chave de acesso"
+      s3_secret_key: "Chave de acesso secreta"
+      s3_secret_hint: "Armazenado criptografado. Deixe em branco para manter o valor atual."
+      s3_role_arn: "ARN da role IAM"
+      s3_role_arn_hint: "O ARN da role a assumir via STS."
+      s3_external_id: "ID externo"
+      s3_external_id_hint: "Opcional. Necessario para AssumeRole entre contas para evitar confused deputy."
+      s3_region: "Regiao AWS"
+      s3_endpoint: "Endpoint S3"
+      s3_endpoint_hint: "Padrao da env var CEPH_ENDPOINT ou http://ceph.local. Configure para AWS S3: https://s3.{region}.amazonaws.com"
     verify:
       ok: "Conexao verificada."
       failed: "Conexao falhou: %{error}"
@@ -351,6 +383,10 @@ pt-BR:
       updated: "Catalogo atualizado."
       destroyed: "Catalogo excluido."
       sync_enqueued: "Sincronizacao do catalogo enfileirada."
+    s3_auth_types:
+      none: "Nenhum (anonimo)"
+      static: "Credenciais estaticas"
+      sts: "STS AssumeRole (temporario)"
 
   tables:
     run_maintenance:
@@ -714,6 +750,10 @@ pt-BR:
       no_sla: "sem SLA"
       refresh: "Atualizar"
       run_now: "Executar agora"
+    notices:
+      created: "Agendamento criado."
+      updated: "Agendamento atualizado."
+      destroyed: "Agendamento excluido."
 
   health_summary:
     tables: "Tabelas"
