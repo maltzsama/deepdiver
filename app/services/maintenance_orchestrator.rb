@@ -18,7 +18,9 @@ module MaintenanceOrchestrator
     # Idempotent: a table already queued or running does not queue again.
     # Without this, rapid "run now" clicks pile up N pending executions that
     # all resolve to "skipped" once the engine comes up.
-    existing = plan.execution_histories.find_by(status: %w[pending running])
+    # Query by iceberg_table_id (not maintenance_plan_id) so two plans for the
+    # same table never run concurrently.
+    existing = ExecutionHistory.where(iceberg_table_id: plan.iceberg_table_id, status: %w[pending running]).first
     return existing if existing
 
     # A leftover lock from a finished execution must never block a new run.
@@ -117,7 +119,7 @@ module MaintenanceOrchestrator
       status: :skipped,
       current_step: "start",
       finished_at: Time.current,
-      error_message: "previous execution still running on this table"
+      skip_reason: "previous execution still running on this table"
     )
     TrinoEngineSupervisor.demand_finished!
   end
