@@ -14,34 +14,52 @@ fullnameOverride: ""
 
 # Application credentials never live in this chart. DATABASE_URL, DB_QUEUE_URL,
 # RAILS_MASTER_KEY and SECRET_KEY_BASE are provided by an out-of-band Secret
-# (ArgoCD / SealedSecrets) referenced through appSecrets.existingSecret.
+# (SealedSecrets / external controller) referenced through appSecrets.existingSecret.
 appSecrets:
   existingSecret: ""
   # For simple local experiments only - renders a Secret from values.data.
   create: false
   data:
-    DATABASE_URL: postgresql://lakedeepdiver@postgres/lakedeepdiver_production
-    DB_QUEUE_URL: postgresql://lakedeepdiver@postgres/lakedeepdiver_queue_production
+    DATABASE_URL: ""
+    DB_QUEUE_URL: ""
     RAILS_MASTER_KEY: ""
     SECRET_KEY_BASE: ""
 
-# Internal TLS trust: the on-prem CA (Ceph/Polaris/Nessie/Trino) is mounted from
-# an external Secret and exposed to the app via SSL_CERT_FILE. The chart never
-# stores certificates.
+# Internal TLS trust: an internal CA can be mounted from an external Secret and
+# exposed to the app via SSL_CERT_FILE. The chart never stores certificates.
 internalCA:
-  enabled: true
+  enabled: false
   mountFile: /etc/ssl/certs/internal-ca.crt
   existingSecret: ""
   caKey: ca.crt
+
+# Active Record Encryption keys. MUST be provided via existingSecret.
+# Generate with: bin/rails db:encryption:init
+# Losing these keys makes all catalog credentials unrecoverable.
+activeRecordEncryption:
+  existingSecret: ""
 
 # Application tuning knobs surfaced as environment variables.
 env:
   trinoUrl: ""
   trinoNamespace: ""
-  trinoDeployment: trino-coordinator
+  trinoDeployment: ""
   logLevel: info
   jobConcurrency: 1
   host: ""
+
+# Trino provisioner: "chart" (TrinoCoordinator CR), "baleia" (BaleiaTrinoProvisioner),
+# or "fake" (FakeTrinoRuntime for dev/test).
+trino:
+  provisioner: fake
+
+# OIDC / SSO configuration. Set oidc.issuer to enable SSO.
+oidc:
+  issuer: ""
+  clientId: ""
+  clientSecret: ""
+  redirectUri: ""
+  providerLabel: SSO
 
 service:
   type: ClusterIP
@@ -52,15 +70,11 @@ ingress:
   enabled: false
   className: ""
   hosts:
-    - host: lakedeepdiver.example.com
+    - host: ""
       paths:
         - path: /
           pathType: Prefix
   tls: []
-  # tls:
-  #   - secretName: lakedeepdiver-tls
-  #     hosts:
-  #       - lakedeepdiver.example.com
 
 resources: {}
   # limits:
@@ -71,7 +85,15 @@ resources: {}
   #   memory: 256Mi
 
 podSecurityContext: {}
-securityContext: {}
+
+securityContext:
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
 
 nodeSelector: {}
 tolerations: []
@@ -108,6 +130,7 @@ workerEngine:
 # pods never race against schema changes.
 migrationJob:
   enabled: true
-  backoffLimit: 4
+  backoffLimit: 3
   activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 3600
   resources: {}

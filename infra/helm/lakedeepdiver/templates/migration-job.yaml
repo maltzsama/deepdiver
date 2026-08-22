@@ -13,6 +13,7 @@ metadata:
 spec:
   backoffLimit: {{ .Values.migrationJob.backoffLimit }}
   activeDeadlineSeconds: {{ .Values.migrationJob.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: {{ .Values.migrationJob.ttlSecondsAfterFinished | default 3600 }}
   template:
     metadata:
       labels:

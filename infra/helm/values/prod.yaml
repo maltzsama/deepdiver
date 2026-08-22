@@ -1,13 +1,19 @@
-# Production overrides for the lake:deep-diver Helm chart.
+# Production overrides for the lakedeepdiver Helm chart.
 # Usage: helm upgrade --install lakedeepdiver infra/helm/lakedeepdiver --values infra/helm/values/prod.yaml
 image:
-  repository: registry.onprem.example.com/lakedeepdiver
+  repository: ghcr.io/maltzsama/lakedeepdiver
   # Pin a concrete release; never "latest" in production.
   tag: "0.1.0"
   pullPolicy: IfNotPresent
 
+postgresql:
+  existingSecret: ""
+
+activeRecordEncryption:
+  existingSecret: ""
+
 appSecrets:
-  # Created out-of-band (ArgoCD / SealedSecrets) with DATABASE_URL,
+  # Created out-of-band (SealedSecrets / external controller) with DATABASE_URL,
   # DB_QUEUE_URL, RAILS_MASTER_KEY and SECRET_KEY_BASE.
   existingSecret: lakedeepdiver-secrets
   create: false
@@ -19,14 +25,14 @@ internalCA:
   caKey: ca.crt
 
 env:
-  trinoUrl: http://trino-coordinator:8080
+  trinoUrl: ""
   # Leave empty to trust the release namespace; set to the Trino namespace
   # when the engine lives elsewhere (remember to grant RBAC there).
   trinoNamespace: ""
-  trinoDeployment: trino-coordinator
+  trinoDeployment: ""
   logLevel: info
   jobConcurrency: 2
-  host: lakedeepdiver.apps.onprem.example.com
+  host: ""
 
 replicaCount: 1
 worker:
@@ -39,13 +45,13 @@ ingress:
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: 8m
   hosts:
-    - host: lakedeepdiver.apps.onprem.example.com
+    - host: ""
       paths:
         - path: /
           pathType: Prefix
   tls:
     - hosts:
-        - lakedeepdiver.apps.onprem.example.com
+        - ""
       secretName: lakedeepdiver-tls
 
 resources:

@@ -1,78 +1,57 @@
-# lakedeepdiver Helm chart
+# lakedeepdiver
 
-Helm chart for the LakeDeepDiver control plane: the Rails 8 web app (Thrust + Puma), the
-Solid Queue worker (`./bin/jobs`) and the minimal RBAC needed to scale the ephemeral
-Trino engine.
+LakeDeepDiver — Iceberg maintenance control plane (Rails 8 + Solid Queue).
 
-## Quick start
+## Installation
 
 ```bash
-# Build and push the image once per release (tag is x.y.z).
-docker build -t registry.example.com/lakedeepdiver:0.1.0 . <!-- x-release-please-version -->
-docker push registry.example.com/lakedeepdiver:0.1.0 <!-- x-release-please-version -->
-
-# Render and validate without a cluster.
-helm lint infra/helm/lakedeepdiver
-helm template lakedeepdiver infra/helm/lakedeepdiver \
-  --values infra/helm/values/prod.yaml
-
-# Install or upgrade on the cluster.
-helm upgrade --install lakedeepdiver infra/helm/lakedeepdiver \
-  --namespace lakedeepdiver --create-namespace \
-  --values infra/helm/values/prod.yaml
+helm repo add lakedeepdiver https://maltzsama.github.io/lakedeepdiver
+helm repo update
+helm install lakedeepdiver lakedeepdiver/lakedeepdiver \
+  --set postgresql.existingSecret=lakedeepdiver-db \
+  --set activeRecordEncryption.existingSecret=lakedeepdiver-encryption
 ```
 
-## Parameters
+## Prerequisites
 
-| Value | Default | Meaning |
-|---|---|---|
-| `image.repository` / `image.tag` | `lakedeepdiver` / `0.1.0` <!-- x-release-please-version --> | Image and pinned `x.y.z` tag (never `latest` in prod). |
-| `replicaCount` | `1` | Web pod replicas. |
-| `worker.enabled` / `worker.replicaCount` | `true` / `1` | Solid Queue supervisor (`./bin/jobs`) replicas. |
-| `appSecrets.existingSecret` | — | Out-of-band Secret with `DATABASE_URL`, `DB_QUEUE_URL`, `RAILS_MASTER_KEY`, `SECRET_KEY_BASE`. |
-| `appSecrets.create` | `false` | Render a Secret from `appSecrets.data` (local experiments only). |
-| `internalCA.existingSecret` / `caKey` | — / `ca.crt` | Secret with the on-prem CA; mounted and exposed as `SSL_CERT_FILE`. |
-| `env.trinoUrl` `trinoNamespace` `trinoDeployment` | — / release ns / `trino-coordinator` | Trino engine location and the Deployment to scale. |
-| `env.jobConcurrency` | `1` | Solid Queue worker processes per pod. |
-| `migrationJob.enabled` | `true` | Run `bin/rails db:migrate` as a pre-install/pre-upgrade hook Job. |
+- PostgreSQL accessible from the cluster
+- Secret with Active Record Encryption keys (see below)
+- OIDC provider (optional, for SSO)
 
-No certificate or credential is rendered by the chart. The two referenced Secrets
-(`appSecrets.existingSecret` and `internalCA.externalSecret`) are created by ArgoCD,
-SealedSecrets or any external controller.
+## Generating encryption keys
 
-## RBAC
+```bash
+bin/rails db:encryption:init
+kubectl create secret generic lakedeepdiver-encryption \
+  --from-literal=primary_key=... \
+  --from-literal=deterministic_key=... \
+  --from-literal=key_derivation_salt=...
+```
 
-The chart creates a ServiceAccount and a namespace-scoped `Role`/`RoleBinding`:
+> **Losing these keys makes all catalog credentials unrecoverable.**
 
-- `apps/deployments`: `get`, `list`, `patch`
-- `apps/deployments/scale`: `get`, `patch`
+## Values
 
-This is exactly what `K8sClientFactory`+`TrinoK8sClient` need to bring the Trino
-Deployment up (replicas 1) and down (replicas 0) in-cluster, using the pod's ServiceAccount
-token and CA. The Role is scoped to the release namespace by default; if the engine lives in
-another namespace (`env.trinoNamespace`), grant the equivalent Role/RoleBinding, or use a
-ClusterRole, in that namespace.
+| Key | Default | Description |
+|-----|---------|-------------|
+| `image.repository` | `lakedeepdiver` | Docker image repository |
+| `image.tag` | `0.1.0` | Docker image tag |
+| `postgresql.existingSecret` | `""` | **Required.** Secret with `url` key |
+| `activeRecordEncryption.existingSecret` | `""` | **Required.** Secret with `primary_key`, `deterministic_key`, `key_derivation_salt` |
+| `appSecrets.existingSecret` | `""` | Secret with `DATABASE_URL`, `DB_QUEUE_URL`, `RAILS_MASTER_KEY`, `SECRET_KEY_BASE` |
+| `internalCA.enabled` | `false` | Mount an internal CA certificate |
+| `internalCA.existingSecret` | `""` | Secret containing the CA cert |
+| `trino.provisioner` | `fake` | Trino provisioner: `chart`, `baleia`, or `fake` |
+| `oidc.issuer` | `""` | OIDC issuer URL (enables SSO) |
+| `env.trinoUrl` | `""` | Trino coordinator URL |
+| `env.logLevel` | `info` | Rails log level |
+| `worker.enabled` | `true` | Deploy Solid Queue worker |
+| `workerFreshness.enabled` | `true` | Deploy freshness worker |
+| `workerEngine.enabled` | `true` | Deploy engine lifecycle worker |
+| `migrationJob.enabled` | `true` | Run DB migrations as Helm hook |
+| `resources` | `{}` | Pod resource requests/limits |
+| `securityContext` | see values.yaml | Pod security context |
 
-## Internal CA trust
+## License
 
-The Ruby app talks over HTTPS to Polaris/Nessie catalogs and runs SQL through the Trino
-REST endpoint. When those are issued by the on-prem PKI, mount the root CA into the chart:
-
-- Create a Secret holding the cert under key `ca.crt`.
-- Set `internalCA.existingSecret`. The chart mounts it read-only to
-  `/etc/ssl/certs/internal-ca.crt` and sets `SSL_CERT_FILE` so `Net::HTTP` trusts it.
-
-Rotating the CA means rotating the Secret, no image rebuild.
-
-## Migrations
-
-`migrationJob` renders a `Job` annotated `helm.sh/hook: pre-install,pre-upgrade` with
-`hook-delete-policy` and a small weight, so schema is guaranteed before web/worker pods
-reach readiness. The image entrypoint still runs `db:prepare`, but only when started with
-`rails server` by hand (not used in the chart).
-
-## Image pipeline
-
-Image build+push is **not** wired into GitHub Actions. This chart expects an external
-pipeline (or manual `docker build`/`docker push`) to publish `image.repository:image.tag`;
-the repo CI only lints and tests the application.
+Apache-2.0. See [LICENSE](../../../LICENSE).
