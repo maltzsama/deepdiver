@@ -98,7 +98,7 @@ class CatalogsController < ApplicationController
   # an explicit edit to a placeholder sentinel handled by the model contract.
   def catalog_params
     permitted = params.require(:catalog).permit(
-      :name, :catalog_type, :endpoint, :trino_catalog_name_override,
+      :name, :catalog_type, :endpoint, :trino_catalog_name_override, :nessie_ref,
       catalog_credential_attributes: [
         :id, :auth_method, :client_id, :secret, :scope, :token_path,
         :token_endpoint, :oauth_scope, { properties: {} }

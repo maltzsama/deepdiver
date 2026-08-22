@@ -223,6 +223,15 @@ provisioning a new key set (`ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY`,
 `_DETERMINISTIC_KEY`, `_KEY_DERIVATION_SALT`). Keep the three keys only as
 Kubernetes Secrets; losing them is equivalent to losing the credentials themselves.
 
+**Nessie refs:** a Nessie catalog reads its server default branch unless
+`nessie_ref` is set on the catalog record. The ref IS the Iceberg REST prefix
+(Nessie answers `/iceberg/v1/config` with `prefix = <default ref>`); the app
+pins it per catalog and Trino must read the SAME ref. Trino's REST connector
+has no static branch property - queries only pin one via
+`FOR VERSION AS OF`. Keep app `nessie_ref`, Trino's Nessie configuration and
+any scheduled queries on the same branch, or health numbers describe one
+table while optimize rewrites another.
+
 **Dremio Open Catalog note:** the app authenticates via RFC 8693 token exchange
 against the external token server (`:9047/oauth/token`), storing only the PAT.
 The Trino side of that catalog needs its own auth configuration in the

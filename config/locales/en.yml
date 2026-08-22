@@ -339,6 +339,8 @@ en:
       subject_token_type: "Subject token type"
       subject_token_type_hint: "Token-exchange only. Defaults to the Dremio PAT type."
       client_id_placeholder: "dremio-catalog-cli"
+      nessie_ref: "Nessie ref"
+      nessie_ref_hint: "Branch or tag to read (e.g. main, etl_dev). Blank = server default. Trino must read the same ref - see the runbook."
       secret_set_at: "Secret set %{when} · ends in %{hint}"
       secret_keep: "Leave blank to keep the current secret"
       secret_hint: "The secret is stored encrypted and is never shown again."
@@ -958,6 +960,9 @@ en:
               must_exceed_severe: "must be greater than the severe threshold"
         catalog:
           attributes:
+            nessie_ref:
+              only_for_nessie: "only applies to Nessie catalogs"
+              invalid_format: "use letters, numbers, dot, dash or underscore"
             properties:
               must_not_hold_secrets: "must not contain secret values - secrets belong to the encrypted credential field"
             trino_catalog_name_override:

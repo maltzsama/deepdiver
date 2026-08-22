@@ -70,7 +70,7 @@ class TrinoCatalogProjection
 
     props = {
       "iceberg.catalog.type" => "rest",
-      "iceberg.rest-catalog.uri" => catalog.endpoint,
+      "iceberg.rest-catalog.uri" => rest_catalog_uri(catalog),
       # Polaris requires the warehouse (its catalog name) in the REST path.
       "iceberg.rest-catalog.warehouse" => catalog.name,
       # Nested namespace: the application configures it instead of relying on
@@ -89,5 +89,17 @@ class TrinoCatalogProjection
     end
 
     props.transform_values(&:to_s)
+  end
+
+  # Base URI Trino's REST client talks to. Nessie mounts the Iceberg surface
+  # at /iceberg (empirical, 0.108.4); Polaris at /api/catalog. The prefix
+  # itself is discovered by each client's own /v1/config call.
+  #
+  # @param catalog [Catalog] the catalog being projected
+  # @return [String] the REST base URI without trailing slash
+  def rest_catalog_uri(catalog)
+    uri = catalog.endpoint.chomp("/")
+    uri = "#{uri}/iceberg" if catalog.catalog_type == "nessie"
+    uri
   end
 end

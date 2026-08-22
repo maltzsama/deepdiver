@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_21_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_21_180000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"
@@ -34,7 +34,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_170000) do
     t.string "secret_hint"
     t.datetime "secret_set_at"
     t.string "token_endpoint"
-    t.string "token_path", default: "/v1/oauth/tokens"
+    t.string "token_path", default: "/api/catalog/v1/oauth/tokens"
     t.datetime "updated_at", null: false
     t.text "verification_error"
     t.datetime "verified_at"
@@ -47,6 +47,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_170000) do
     t.string "endpoint", null: false
     t.integer "iceberg_tables_count", default: 0, null: false
     t.string "name", null: false
+    t.string "nessie_ref"
     t.json "properties", default: {}
     t.string "trino_catalog_name_override"
     t.datetime "updated_at", null: false

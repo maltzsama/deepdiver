@@ -949,6 +949,9 @@ pt-BR:
               must_exceed_severe: "precisa ser maior que o limite de grave"
         catalog:
           attributes:
+            nessie_ref:
+              only_for_nessie: "so se aplica a catalogos Nessie"
+              invalid_format: "use letras, numeros, ponto, traco ou underscore"
             properties:
               must_not_hold_secrets: "nao pode conter valores secretos - segredos pertencem ao campo criptografado da credencial"
             trino_catalog_name_override:

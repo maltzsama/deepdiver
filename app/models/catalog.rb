@@ -21,6 +21,16 @@ class Catalog < ApplicationRecord
   validate :trino_catalog_name_is_valid
   validate :endpoint_not_internal
   validate :properties_carry_no_secrets
+  validate :nessie_ref_is_valid
+
+  # Which Nessie ref (branch/tag) this catalog reads. Only meaningful for
+  # catalog_type "nessie"; when blank the server default branch answers, and a
+  # Trino pointed elsewhere diverges silently - names match, numbers don't.
+  #
+  # Empirical (Nessie 0.108.4): the ref IS the Iceberg REST prefix returned by
+  # /v1/config ("prefix-pattern": "{ref}|{warehouse}"); an unknown ref answers
+  # HTTP 400 on any /v1/{ref}/... call.
+  NESSIE_REF_PATTERN = /\A[A-Za-z0-9][A-Za-z0-9._\-]*\z/
 
   # properties is CONFIGURATION only (path_prefix, warehouse...). Secrets have
   # exactly one home: CatalogCredential.secret, encrypted. Rejecting them here
@@ -98,6 +108,17 @@ class Catalog < ApplicationRecord
     return unless (properties.keys & CatalogCredential::PROPERTIES_SECRET_KEYS).any?
 
     errors.add(:properties, :must_not_hold_secrets)
+  end
+
+  # nessie_ref: optional, Nessie-only, sane ref-shaped string.
+  def nessie_ref_is_valid
+    return if nessie_ref.blank?
+
+    if catalog_type != "nessie"
+      errors.add(:nessie_ref, :only_for_nessie)
+    elsif nessie_ref !~ NESSIE_REF_PATTERN
+      errors.add(:nessie_ref, :invalid_format)
+    end
   end
 
   def endpoint_not_internal
