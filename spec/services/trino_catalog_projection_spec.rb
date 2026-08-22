@@ -1,4 +1,5 @@
 require "rails_helper"
+require "aws-sdk-sts"
 
 RSpec.describe TrinoCatalogProjection do
   let(:catalog) { create(:catalog, name: "Polaris Prod", endpoint: "https://polaris.local/api/catalog") }
@@ -61,5 +62,69 @@ RSpec.describe TrinoCatalogProjection do
       TrinoCatalogRegistry.create!(cluster_id: cluster.id, catalog_name: "system",
                                    connector_name: "iceberg", properties: {})
     }.to raise_error(ActiveRecord::StatementInvalid, /name_format/)
+  end
+
+  describe "S3 storage properties" do
+    it "uses the CEPH_ENDPOINT env var for the default s3.endpoint" do
+      catalog
+      described_class.new.sync_all!
+
+      props = TrinoCatalogRegistry.last.properties
+      expect(props["s3.endpoint"]).to eq(ENV.fetch("CEPH_ENDPOINT", "http://ceph.local"))
+    end
+
+    it "merges static S3 credentials when configured" do
+      create(:catalog, :s3_static, name: "s3-static")
+      described_class.new.sync_all!
+
+      props = TrinoCatalogRegistry.last.properties
+      expect(props["s3.access-key"]).to eq("AKIAIOSFODNN7EXAMPLE")
+      expect(props["s3.secret-key"]).to eq("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")
+    end
+
+    it "does not include s3.access-key when authentication is none" do
+      catalog
+      described_class.new.sync_all!
+
+      props = TrinoCatalogRegistry.last.properties
+      expect(props).not_to have_key("s3.access-key")
+    end
+
+    it "includes s3.region when set" do
+      create(:catalog, :s3_static, name: "s3-region", s3_region: "eu-west-1")
+      described_class.new.sync_all!
+
+      props = TrinoCatalogRegistry.last.properties
+      expect(props["s3.region"]).to eq("eu-west-1")
+    end
+
+    it "uses per-catalog s3.endpoint over the env default" do
+      create(:catalog, :s3_static, name: "s3-custom",
+             s3_endpoint: "https://s3.us-west-2.amazonaws.com")
+      described_class.new.sync_all!
+
+      props = TrinoCatalogRegistry.last.properties
+      expect(props["s3.endpoint"]).to eq("https://s3.us-west-2.amazonaws.com")
+    end
+
+    it "calls STS AssumeRole when authentication type is sts" do
+      sts_client = instance_double(Aws::STS::Client)
+      allow(Aws::STS::Client).to receive(:new).and_return(sts_client)
+      allow(sts_client).to receive(:assume_role).and_return(
+        double(credentials: double(
+          access_key_id: "ASIAIOSFODNN7TEMP",
+          secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYTEMPKEY",
+          session_token: "FwoGZXIvYXdzEBY"
+        ))
+      )
+
+      create(:catalog, :s3_sts, name: "s3-sts")
+      described_class.new.sync_all!
+
+      props = TrinoCatalogRegistry.last.properties
+      expect(props["s3.access-key"]).to eq("ASIAIOSFODNN7TEMP")
+      expect(props["s3.secret-key"]).to eq("wJalrXUtnFEMI/K7MDENG/bPxRfiCYTEMPKEY")
+      expect(props["s3.session-token"]).to eq("FwoGZXIvYXdzEBY")
+    end
   end
 end
