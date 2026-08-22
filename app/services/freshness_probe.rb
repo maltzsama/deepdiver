@@ -14,6 +14,8 @@ class FreshnessProbe
   Result = Struct.new(:max_timestamp, :delay_seconds, :status, :query_id,
                       :duration_ms, :error_message, keyword_init: true)
 
+  PROBE_TIMEOUT = ENV.fetch("FRESHNESS_PROBE_TIMEOUT_SECONDS", "120").to_i # 2 min per query
+
   # Creates the probe for one SLA with an injectable client and clock.
   #
   # @param sla [TableFreshnessSla] the SLA whose table is probed
@@ -23,7 +25,8 @@ class FreshnessProbe
     @sla = sla
     @table = sla.iceberg_table
     @now = now
-    @client = client || TrinoClient.new(catalog_name: @table.catalog.trino_catalog_name)
+    @client = client || TrinoClient.new(catalog_name: @table.catalog.trino_catalog_name,
+                                        query_timeout: PROBE_TIMEOUT)
   end
 
   # Measures freshness and returns a Result for the current table.

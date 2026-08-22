@@ -45,7 +45,7 @@ module TrinoDemand
 
     FreshnessRun
       .where(status: "running")
-      .where(started_at: ...STALE_AFTER.ago)
+      .where("COALESCE(last_heartbeat_at, started_at) < ?", STALE_AFTER.ago)
       .find_each do |run|
         run.update!(status: "failed", finished_at: Time.current, error_message: "sweep interrupted")
       end

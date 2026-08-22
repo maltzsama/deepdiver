@@ -13,10 +13,13 @@ class TrinoClient
   # @param endpoint [String] the Trino coordinator URL
   # @param catalog_name [String, nil] the default catalog header value
   # @param transport [HttpTransport] injectable transport (tests)
-  def initialize(endpoint: ENV.fetch("TRINO_URL"), catalog_name: nil, transport: HttpTransport.new)
+  # @param query_timeout [Integer, nil] per-query timeout in seconds (nil = MAX_POLL_SECONDS)
+  def initialize(endpoint: ENV.fetch("TRINO_URL"), catalog_name: nil, transport: HttpTransport.new,
+                 query_timeout: nil)
     @endpoint = endpoint
     @catalog_name = catalog_name
     @transport = transport
+    @query_timeout = query_timeout
   end
 
   # Runs arbitrary SQL and returns the rows as hashes keyed by column name.
@@ -68,7 +71,7 @@ class TrinoClient
   # @param limit [Integer, nil] stop paginating after this many rows (nil = all)
   # @return [Array<Hash>] rows keyed by column name
   def poll(sql, limit: nil)
-    deadline = Time.current + MAX_POLL_SECONDS
+    deadline = Time.current + (@query_timeout || MAX_POLL_SECONDS)
     current = statement(sql)
     rows = []
 
@@ -82,7 +85,8 @@ class TrinoClient
       return rows unless current["nextUri"]
       return rows if limit && rows.size >= limit
 
-      raise Error, "Trino query exceeded #{MAX_POLL_SECONDS}s without finishing" if Time.current > deadline
+      timeout = @query_timeout || MAX_POLL_SECONDS
+      raise Error, "Trino query exceeded #{timeout}s without finishing" if Time.current > deadline
 
       sleep POLL_INTERVAL
       current = @transport.get(uri(current["nextUri"]), headers: headers)

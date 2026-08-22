@@ -7,10 +7,14 @@ class FreshnessSweepJob < ApplicationJob
   # Probes every enabled SLA in a single run, records each check, and updates
   # the run with the aggregated counts. A failing table is recorded as an error
   # without taking the whole sweep down.
+  #
+  # The run's last_heartbeat_at is touched after every SLA so that the orphan
+  # reaper can distinguish "still working" from "coordinator lost".
+  #
   # @param freshness_run_id [Integer] the id of the run being executed.
   def perform(freshness_run_id)
     run = FreshnessRun.find(freshness_run_id)
-    run.update!(status: "running", started_at: Time.current)
+    run.update!(status: "running", started_at: Time.current, last_heartbeat_at: Time.current)
 
     slas = TableFreshnessSla.where(enabled: true)
                            .joins(:iceberg_table)
@@ -33,10 +37,19 @@ class FreshnessSweepJob < ApplicationJob
       errored += 1
       record_check(sla, FreshnessProbe::Result.new(status: "error", error_message: e.message))
       Rails.logger.error("Freshness failed for #{sla.iceberg_table_id}: #{e.message}")
+    ensure
+      # Signal the reaper after every SLA — if the worker dies mid-sweep, the
+      # gap between heartbeats tells the reaper the run is stale.
+      run.touch(:last_heartbeat_at)
     end
 
-    run.update!(status: "finished", finished_at: Time.current,
-                tables_checked: checked, tables_late: late, tables_errored: errored)
+    # Conditional update: if the reaper already marked this run as failed,
+    # do not overwrite that terminal state.
+    updated = FreshnessRun.where(id: run.id, status: "running")
+                          .update_all(status: "finished", finished_at: Time.current,
+                                      tables_checked: checked, tables_late: late,
+                                      tables_errored: errored, updated_at: Time.current)
+    Rails.logger.warn("FreshnessRun##{run.id} already terminated externally") if updated.zero?
   ensure
     TrinoEngineSupervisor.demand_finished!
   end
