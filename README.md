@@ -262,6 +262,12 @@ bundle exec rake docs:build     # generate RDoc + inject counter.dev tracking
 bundle exec rake docs:inject_counter  # re-inject tracking after manual rdoc regen
 ```
 
+## Security
+
+The `trino_catalog_registry` table contains Trino connector credentials in
+plaintext (required by the Baleia plugin). See [docs/security.md](docs/security.md)
+for mitigations, database role separation, and backup handling.
+
 ## License
 
 LakeDeepDiver is licensed under the [Apache License 2.0](LICENSE).

@@ -19,6 +19,7 @@ class CatalogSyncService
   #
   # @return [Hash] the list of collected errors under the `errors` key
   def sync
+    TrinoCatalogRegistry.warn_missing_role!
     errors = []
     seen = []
 
