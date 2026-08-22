@@ -1,7 +1,7 @@
 # Detects engines stuck in "starting" or "draining" for longer than the
 # configured timeouts and marks them failed so the operator can act.
 class EngineWatchdogJob < ApplicationJob
-  queue_as :default
+  queue_as :engine
 
   START_STUCK_AFTER = TrinoEngineSupervisor::READY_TIMEOUT + 2.minutes
   DRAIN_STUCK_AFTER = TrinoEngineSupervisor::DRAIN_GRACE + 10.minutes

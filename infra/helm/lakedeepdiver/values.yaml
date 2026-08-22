@@ -95,6 +95,15 @@ workerFreshness:
     limits:   { cpu: 500m, memory: 1Gi }
   securityContext: {}
 
+# Engine lifecycle — supervise start, drain, watchdog.
+workerEngine:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 250m, memory: 512Mi }
+  securityContext: {}
+
 # Schema migrations run as a pre-install/pre-upgrade Job so web and worker
 # pods never race against schema changes.
 migrationJob:

@@ -13,7 +13,7 @@ production:
     schedule: every 6 hours at minute 10
   engine_watchdog:
     class: EngineWatchdogJob
-    queue: default
+    queue: engine
     schedule: every 2 minutes
   data_retention:
     class: DataRetentionJob

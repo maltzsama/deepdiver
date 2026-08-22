@@ -50,7 +50,7 @@ spec:
           command: ["./bin/jobs"]
           env:
             - name: SOLID_QUEUE_QUEUES
-              value: "maintenance"
+              value: "maintenance,default,sync"
             # Only this process runs recurring tasks.
             - name: SOLID_QUEUE_RECURRING
               value: "true"
