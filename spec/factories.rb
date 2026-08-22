@@ -26,13 +26,6 @@ FactoryBot.define do
     end
   end
 
-  factory :role_change_log do
-    user
-    association :changed_by, factory: :user
-    from_role { 0 }
-    to_role { 0 }
-  end
-
   factory :catalog do
     sequence(:name) { |n| "catalog-#{n}" }
     catalog_type { "nessie" }
@@ -78,14 +71,6 @@ FactoryBot.define do
     catalog
     sequence(:name) { |n| "table-#{n}" }
     namespace { "reporting" }
-  end
-
-  factory :maintenance_schedule do
-    iceberg_table
-    operation { "optimize" }
-    cron { "0 3 * * *" }
-    is_paused { false }
-    config { {} }
   end
 
   factory :table_freshness_sla do

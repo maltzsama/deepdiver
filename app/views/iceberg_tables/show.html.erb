@@ -22,11 +22,6 @@
                     run_maintenance_iceberg_table_path(@table), method: :post,
                     class: "btn btn-primary" %>
     <% end %>
-    <% if current_user.admin? %>
-      <%= link_to t("tables.show.new_schedule"),
-                  new_maintenance_schedule_path(iceberg_table_id: @table.id),
-                  class: "btn btn-default" %>
-    <% end %>
   </div>
 </div>
 
@@ -53,72 +48,6 @@
       </div>
     </dl>
   </div>
-</section>
-
-<section class="panel mb-6">
-  <div class="panel-head">
-    <h2 class="panel-title"><%= t("tables.show.schedules_title") %></h2>
-    <span class="panel-note"><%= t("tables.show.schedules_note",
-                                   count: @schedules.size,
-                                   total: MaintenanceSchedule::OPERATIONS.size) %></span>
-  </div>
-
-  <% if @schedules.empty? %>
-    <div class="empty">
-      <p class="empty-title"><%= t("tables.show.empty_title") %></p>
-      <p class="empty-hint"><%= t("tables.show.empty_hint") %></p>
-      <% if current_user.admin? %>
-        <div class="empty-action">
-          <%= link_to t("tables.show.create_schedule"),
-                      new_maintenance_schedule_path(iceberg_table_id: @table.id),
-                      class: "btn btn-primary" %>
-        </div>
-      <% end %>
-    </div>
-  <% else %>
-    <div class="data-table-scroll">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th><%= t("tables.show.col_operation") %></th>
-            <th><%= t("tables.show.col_cron") %></th>
-            <th><%= t("tables.show.col_state") %></th>
-            <th><%= t("tables.show.col_failures") %></th>
-            <% if current_user.admin? %>
-              <th><span class="sr-only"><%= t("tables.show.col_actions") %></span></th>
-            <% end %>
-          </tr>
-        </thead>
-        <tbody>
-          <% @schedules.each do |schedule| %>
-            <tr>
-              <td><%= link_to schedule.operation, schedule, class: "link-mono" %></td>
-              <td class="cell-id"><%= schedule.cron %></td>
-              <td>
-                <% if schedule.paused? %>
-                  <span class="badge badge-critical"><span class="badge-dot"></span><%= t("tables.show.paused") %></span>
-                <% else %>
-                  <span class="badge badge-healthy"><span class="badge-dot"></span><%= t("tables.show.active") %></span>
-                <% end %>
-              </td>
-              <td class="cell-num"><%= schedule.consecutive_failures %></td>
-              <% if current_user.admin? %>
-                <td class="text-right whitespace-nowrap">
-                  <%= link_to t("tables.show.open"), maintenance_schedule_path(schedule),
-                              class: "btn btn-default btn-sm" %>
-                  <%= button_to t("tables.show.delete"), maintenance_schedule_path(schedule),
-                                method: :delete,
-                                class: "btn btn-danger btn-sm ml-1 inline-flex",
-                                form: { class: "inline-block" },
-                                data: { turbo_confirm: t("tables.show.delete_confirm") } %>
-                </td>
-              <% end %>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-  <% end %>
 </section>
 
 <%= render "metadata_tabs", table: @table %>

@@ -2,8 +2,8 @@ require "rails_helper"
 
 RSpec.describe SuperviseEngineStartJob, type: :job do
   it "brings the engine up and releases pending executions" do
-    schedule = create(:maintenance_schedule)
-    execution = schedule.execution_histories.create!(status: :pending, current_step: :start)
+    table = create(:iceberg_table)
+    execution = create(:execution_history, iceberg_table: table, status: :pending, current_step: :start)
     TrinoEngineSupervisor.state.update!(status: "starting", status_changed_at: Time.current)
 
     described_class.perform_now
@@ -14,7 +14,8 @@ RSpec.describe SuperviseEngineStartJob, type: :job do
   end
 
   it "marks the engine failed and fails pending executions after max attempts" do
-    pending = create(:maintenance_schedule).execution_histories.create!(status: :pending, current_step: :start)
+    table = create(:iceberg_table)
+    pending = create(:execution_history, iceberg_table: table, status: :pending, current_step: :start)
     state = TrinoEngineSupervisor.state
     state.update!(status: "starting", start_attempts: TrinoEngineSupervisor::MAX_START_ATTEMPTS,
                   status_changed_at: Time.current)

@@ -8,18 +8,21 @@ RSpec.describe "GET /execution_histories", type: :request do
   let(:table)        { create(:iceberg_table, catalog:, name: "sales") }
   let(:other_table)  { create(:iceberg_table, catalog: other, name: "orders") }
 
-  let(:optimize) { create(:maintenance_schedule, iceberg_table: table, operation: "optimize") }
-  let(:expire)   { create(:maintenance_schedule, iceberg_table: table, operation: "expire_snapshots") }
-  let(:foreign)  { create(:maintenance_schedule, iceberg_table: other_table, operation: "optimize") }
+  let(:plan)      { create(:maintenance_plan, iceberg_table: table) }
+  let(:other_plan) { create(:maintenance_plan, iceberg_table: other_table) }
+  let(:foreign_plan) { create(:maintenance_plan, iceberg_table: other_table) }
 
   let!(:failed_execution) do
-    optimize.execution_histories.create!(status: :failed, current_step: :done, error_message: "commit conflict")
+    create(:execution_history, maintenance_plan: plan, iceberg_table: table,
+                              status: :failed, current_step: :done, error_message: "commit conflict")
   end
   let!(:success_execution) do
-    expire.execution_histories.create!(status: :success, current_step: :done)
+    create(:execution_history, maintenance_plan: plan, iceberg_table: table,
+                              status: :success, current_step: :done)
   end
   let!(:foreign_execution) do
-    foreign.execution_histories.create!(status: :success, current_step: :done)
+    create(:execution_history, maintenance_plan: foreign_plan, iceberg_table: other_table,
+                              status: :success, current_step: :done)
   end
 
   before do

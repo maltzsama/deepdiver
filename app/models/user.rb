@@ -8,9 +8,6 @@ class User < ApplicationRecord
          :timeoutable, :lockable,
          :omniauthable, omniauth_providers: %i[openid_connect]
 
-  LOCK_THRESHOLD = 5
-  LOCK_DURATION = 30.minutes
-
   ROLES = %w[viewer operator admin].freeze
   STATUSES = %w[active invited suspended].freeze
 
@@ -30,8 +27,6 @@ class User < ApplicationRecord
   validates :theme, inclusion: { in: %w[light dark] }
 
   scope :active, -> { where(status: "active") }
-  scope :invited, -> { where(status: "invited") }
-  scope :suspended, -> { where(status: "suspended") }
 
   # Whether the user's account is active.
   # @return [Boolean]

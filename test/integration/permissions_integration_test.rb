@@ -12,7 +12,6 @@ class PermissionsIntegrationTest < ActionDispatch::IntegrationTest
     @plan.maintenance_steps.create!(operation: "optimize", position: 0, config: {})
     @policy = MaintenancePolicy.create!(name: "Nightly Compaction", cron: "0 3 * * *", steps_config: { "optimize" => {} })
     @execution = @plan.execution_histories.create!(status: :running, current_step: :start, iceberg_table_id: @table.id)
-    @schedule = @table.maintenance_schedules.create!(operation: "optimize", cron: "0 3 * * *")
   end
 
   test "unauthenticated users are redirected to sign in" do
@@ -37,10 +36,6 @@ class PermissionsIntegrationTest < ActionDispatch::IntegrationTest
     get "/maintenance_policies"
     assert_response :success
     get "/maintenance_policies/#{@policy.id}"
-    assert_response :success
-    get "/maintenance_schedules"
-    assert_response :success
-    get "/maintenance_schedules/#{@schedule.id}"
     assert_response :success
     get "/execution_histories"
     assert_response :success
@@ -99,22 +94,6 @@ class PermissionsIntegrationTest < ActionDispatch::IntegrationTest
     assert_equal "running", @execution.reload.status
   end
 
-  test "viewers cannot create or destroy maintenance schedules" do
-    sign_in @viewer
-
-    assert_no_difference("MaintenanceSchedule.count") do
-      post "/maintenance_schedules", params: {
-        maintenance_schedule: { iceberg_table_id: @table.id, operation: "optimize", cron: "0 3 * * *" }
-      }
-    end
-    assert_redirected_to root_path
-
-    assert_no_difference("MaintenanceSchedule.count") do
-      delete "/maintenance_schedules/#{@schedule.id}"
-    end
-    assert_redirected_to root_path
-  end
-
   test "viewers cannot restart the engine" do
     sign_in @viewer
 
@@ -150,17 +129,6 @@ class PermissionsIntegrationTest < ActionDispatch::IntegrationTest
     post "/execution_histories/#{@execution.id}/cancel"
     assert_response :redirect
     assert_equal "failed", @execution.reload.status
-  end
-
-  test "admins can create maintenance schedules" do
-    sign_in @admin
-
-    assert_difference("MaintenanceSchedule.count", 1) do
-      post "/maintenance_schedules", params: {
-        maintenance_schedule: { iceberg_table_id: @table.id, operation: "expire_snapshots", cron: "0 3 * * *" }
-      }
-    end
-    assert_response :redirect
   end
 
   test "admins can restart the engine" do

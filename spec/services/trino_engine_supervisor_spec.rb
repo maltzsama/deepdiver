@@ -1,10 +1,10 @@
 require "rails_helper"
 
 RSpec.describe TrinoEngineSupervisor do
-  let(:schedule) { create(:maintenance_schedule) }
+  let(:table) { create(:iceberg_table) }
 
   def enqueue_execution
-    schedule.execution_histories.create!(status: :pending, current_step: :start)
+    create(:execution_history, iceberg_table: table, status: :pending, current_step: :start)
   end
 
   it "starts the engine when an execution arrives while it is down" do
@@ -37,7 +37,7 @@ RSpec.describe TrinoEngineSupervisor do
   end
 
   it "starts draining when the last execution finishes" do
-    schedule.execution_histories.create!(status: :success, current_step: :done)
+    create(:execution_history, iceberg_table: table, status: :success, current_step: :done)
     described_class.state.update!(status: "up", status_changed_at: Time.current)
 
     described_class.demand_finished!
@@ -47,8 +47,8 @@ RSpec.describe TrinoEngineSupervisor do
   end
 
   it "does not drain while demand remains" do
-    schedule.execution_histories.create!(status: :running, current_step: :executing_sql)
-    schedule.execution_histories.create!(status: :success, current_step: :done)
+    create(:execution_history, iceberg_table: table, status: :running, current_step: :executing_sql)
+    create(:execution_history, iceberg_table: table, status: :success, current_step: :done)
     described_class.state.update!(status: "up", status_changed_at: Time.current)
 
     described_class.demand_finished!

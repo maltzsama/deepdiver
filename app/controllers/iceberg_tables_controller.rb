@@ -54,7 +54,6 @@ class IcebergTablesController < ApplicationController
   def show
     authorize @table
     @open_error_count = ErrorEvent.open.table_events(@table).count
-    @schedules = @table.maintenance_schedules.order(:operation)
     @executions = @table.execution_histories.latest.limit(20)
     @freshness_sla = @table.table_freshness_sla
     @freshness_checks = @table.freshness_checks.latest.limit(30)
