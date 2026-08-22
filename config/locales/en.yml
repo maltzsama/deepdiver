@@ -332,6 +332,13 @@ en:
       auth_method: "Auth method"
       client_id: "Client ID"
       client_secret: "Client secret"
+      secret_label: "Secret / token"
+      token_endpoint: "Token endpoint"
+      token_endpoint_hint: "External OAuth2 server when it is not the catalog itself (Dremio: :9047/oauth/token)."
+      oauth_scope: "OAuth scope"
+      subject_token_type: "Subject token type"
+      subject_token_type_hint: "Token-exchange only. Defaults to the Dremio PAT type."
+      client_id_placeholder: "dremio-catalog-cli"
       secret_set_at: "Secret set %{when} · ends in %{hint}"
       secret_keep: "Leave blank to keep the current secret"
       secret_hint: "The secret is stored encrypted and is never shown again."
@@ -341,6 +348,7 @@ en:
       none: "None"
       bearer_static: "Static bearer token"
       oauth2_client_credentials: "OAuth2 client credentials"
+      oauth2_token_exchange: "OAuth2 token exchange (Dremio PAT)"
     verify:
       ok: "Connection verified."
       failed: "Connection failed: %{error}"
@@ -950,6 +958,8 @@ en:
               must_exceed_severe: "must be greater than the severe threshold"
         catalog:
           attributes:
+            properties:
+              must_not_hold_secrets: "must not contain secret values - secrets belong to the encrypted credential field"
             trino_catalog_name_override:
               invalid_format: "must start with a lowercase letter and contain only letters, numbers and _ (max %{max}). Derived: %{derived}"
               reserved: "%{name} is reserved by Trino (%{reserved})"

@@ -93,12 +93,16 @@ class CatalogsController < ApplicationController
     @catalog = Catalog.find(params[:id])
   end
 
-  # Strong parameters for a catalog, including nested credential attributes;
-  # drops the secret when it is left blank.
+  # Strong parameters for a catalog, including nested credential attributes.
+  # A blank secret means "keep the stored one", never "erase it" - erasing is
+  # an explicit edit to a placeholder sentinel handled by the model contract.
   def catalog_params
     permitted = params.require(:catalog).permit(
       :name, :catalog_type, :endpoint, :trino_catalog_name_override,
-      catalog_credential_attributes: %i[id auth_method client_id secret scope token_path]
+      catalog_credential_attributes: [
+        :id, :auth_method, :client_id, :secret, :scope, :token_path,
+        :token_endpoint, :oauth_scope, { properties: {} }
+      ]
     )
 
     creds = permitted[:catalog_credential_attributes]

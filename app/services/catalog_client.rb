@@ -89,20 +89,30 @@ class CatalogClient
     raise NotImplementedError, "#{self.class} must define the default path prefix"
   end
 
-  # Returns the authorization headers via the catalog's token provider.
+  # Memoized token provider for this catalog.
   #
-  # @return [Hash] HTTP headers with the authorization token
-  def auth_headers
+  # @return [CatalogTokenProvider]
+  def token_provider
     @token_provider ||= CatalogTokenProvider.new(catalog, transport: @transport)
-    @token_provider.headers
   end
 
-  # Performs an authenticated GET request against the catalog REST API.
+  # Performs an authenticated GET against the catalog REST API. A single 401
+  # refreshes the derived token and retries once - covers a short-lived token
+  # that expired mid-sync without masking real authorization failures (those
+  # fail twice and surface as-is).
   #
   # @param path [String] the request path
   # @return [Hash] the parsed JSON response
   def get(path)
-    @transport.get(path, headers: auth_headers)
+    @transport.get(path, headers: token_provider.headers)
+  rescue HttpTransport::ApiError => e
+    raise if e.status != 401 || @refreshed_token
+
+    @refreshed_token = true
+    token_provider.refresh!
+    retry
+  ensure
+    @refreshed_token = false
   end
 
   # Converts a namespace entry from the REST response into a dotted string.
