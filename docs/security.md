@@ -1,44 +1,38 @@
 # Security
 
-## trino_catalog_registry plaintext credentials
+## Catalog credentials
 
-The `trino_catalog_registry.properties` column contains Trino connector credentials
-in **plaintext**. This is intentional: the Baleia Trino plugin reads this column
-directly at coordinator boot (`Database.java` v0.2.1) and cannot decrypt
-Active Record Encryption values.
+Catalog credentials are stored in two places:
 
-### Why not encrypt?
+1. **`catalog_credentials.secret`** — encrypted via Active Record Encryption,
+   never leaves the database in plaintext.
 
-The plugin is a JVM process that connects to the same PostgreSQL database. It
-reads `properties::text` with a simple SQL query. Making it decrypt would require
-changing the plugin to handle Active Record Encryption — a different project.
+2. **Kubernetes Secret** (`<release>-trino-catalog-secrets`) — materialized by
+   `TrinoSecretMaterializer` with Base64-encoded values. The Trino plugin
+   mounts this at `/etc/baleia/secrets` and reads credentials from files.
 
-### What this means
+The `trino_catalog_registry.properties` column contains **references** to the
+Secret files, not plaintext values:
 
-- **Backups** of `trino_catalog_registry` contain credentials in cleartext.
-  Treat backup files with the same care as a secrets file.
-- **`to_json` / `as_json`** on this model does **not** include `properties`
-  (filtered by `serializable_hash`).
-- **`inspect`** masks the column.
-- **Ad-hoc SQL queries** (psql, BI tools) will show the plaintext values.
+```
+"iceberg.rest-catalog.oauth2.credential": "@baleia-secret[file:catalog-42-iceberg_rest_catalog_oauth2_credential]"
+```
 
-### Required mitigations
+### How it works
 
-1. **Separate database role for the plugin.** The application role must NOT
-   be used by the Trino coordinator. The plugin needs DML on
-   `trino_catalog_registry` (it writes `sync_status` and `catalog_version`
-   during `CREATE CATALOG` and boot).
+1. `TrinoCatalogProjection` writes `@baleia-secret[file:...]` references into
+   `trino_catalog_registry.properties`.
+2. `TrinoSecretMaterializer` creates/updates a Kubernetes Secret with the
+   actual credential values from `CatalogCredential` and `Catalog`.
+3. The Trino plugin reads the registry, resolves each `@baleia-secret` reference
+   by reading the corresponding file from the mounted Secret.
 
-   See `db/grants/baleia_trino.sql` for the exact grants.
+### Why not encrypt in the database?
 
-2. **Restrict backup access.** Backups that include `trino_catalog_registry`
-   must be encrypted at rest and access-controlled like any secrets store.
-
-3. **Rotate credentials** when a team member with DB access leaves, or when
-   a backup may have been exposed. The CatalogCredential rotation flow
-   (Admin UI > Catalogs > Edit > rotate secret) pushes new credentials to
-   both `catalog_credentials` (encrypted) and `trino_catalog_registry`
-   (plaintext for the plugin).
+The Baleia plugin is a JVM process that reads `trino_catalog_registry` via
+SQL. It cannot decrypt Active Record Encryption values. The file-based
+secret approach keeps credentials out of the database while remaining
+compatible with the plugin.
 
 ## Database roles
 
@@ -48,3 +42,16 @@ changing the plugin to handle Active Record Encryption — a different project.
 | `baleia_trino` | Trino coordinator plugin | SELECT on `trino_clusters`; SELECT, INSERT, UPDATE, DELETE on `trino_catalog_registry` |
 
 See `db/grants/baleia_trino.sql` for the grant statements.
+
+## Credential rotation
+
+When a catalog credential is rotated (Admin UI > Catalogs > Edit > rotate secret):
+
+1. The new secret is saved encrypted in `catalog_credentials.secret`.
+2. On next sync, `TrinoSecretMaterializer` updates the Kubernetes Secret.
+3. `TrinoCatalogProjection` writes the new `@baleia-secret` reference.
+4. The Trino plugin picks up the change on next catalog reload (no restart needed).
+
+**Important:** Credentials that were in plaintext in older database versions
+may still exist in WAL, replicas, and backups. Rotate credentials if a backup
+may have been exposed.

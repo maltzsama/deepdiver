@@ -33,7 +33,7 @@ RSpec.describe TrinoCatalogProjection do
 
     props = TrinoCatalogRegistry.last.properties
     expect(props.values).to all(be_a(String))
-    expect(props["iceberg.rest-catalog.oauth2.credential"]).to eq("svc:s3cr3t")
+    expect(props["iceberg.rest-catalog.oauth2.credential"]).to match(/\A@baleia-secret\[file:catalog-\d+-iceberg_rest-catalog_oauth2_credential\]\z/)
     expect(props["iceberg.rest-catalog.nested-namespace-enabled"]).to eq("true")
   end
 
@@ -79,8 +79,8 @@ RSpec.describe TrinoCatalogProjection do
       described_class.new.sync_all!
 
       props = TrinoCatalogRegistry.last.properties
-      expect(props["s3.access-key"]).to eq("AKIAIOSFODNN7EXAMPLE")
-      expect(props["s3.secret-key"]).to eq("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")
+      expect(props["s3.access-key"]).to match(/\A@baleia-secret\[file:catalog-\d+-s3_access-key\]\z/)
+      expect(props["s3.secret-key"]).to match(/\A@baleia-secret\[file:catalog-\d+-s3_secret-key\]\z/)
     end
 
     it "does not include s3.access-key when authentication is none" do
@@ -123,9 +123,9 @@ RSpec.describe TrinoCatalogProjection do
       described_class.new.sync_all!
 
       props = TrinoCatalogRegistry.last.properties
-      expect(props["s3.access-key"]).to eq("ASIAIOSFODNN7TEMP")
-      expect(props["s3.secret-key"]).to eq("wJalrXUtnFEMI/K7MDENG/bPxRfiCYTEMPKEY")
-      expect(props["s3.session-token"]).to eq("FwoGZXIvYXdzEBY")
+      expect(props["s3.access-key"]).to match(/\A@baleia-secret\[file:catalog-\d+-s3_access-key\]\z/)
+      expect(props["s3.secret-key"]).to match(/\A@baleia-secret\[file:catalog-\d+-s3_secret-key\]\z/)
+      expect(props["s3.session-token"]).to match(/\A@baleia-secret\[file:catalog-\d+-s3_session-token\]\z/)
     end
   end
 end

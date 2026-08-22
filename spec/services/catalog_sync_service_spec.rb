@@ -1,6 +1,11 @@
 require "rails_helper"
 
 RSpec.describe CatalogSyncService do
+  before do
+    materializer = instance_double(TrinoSecretMaterializer)
+    allow(TrinoSecretMaterializer).to receive(:new).and_return(materializer)
+    allow(materializer).to receive(:materialize!)
+  end
   class FlakyCatalogClient
     def namespaces
       [ "bronze" ]

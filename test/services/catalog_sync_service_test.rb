@@ -18,6 +18,15 @@ class CatalogSyncServiceTest < ActiveSupport::TestCase
     end
   end
 
+  setup do
+    @original_materialize = TrinoSecretMaterializer.instance_method(:materialize!)
+    TrinoSecretMaterializer.define_method(:materialize!) { |_catalogs| nil }
+  end
+
+  teardown do
+    TrinoSecretMaterializer.define_method(:materialize!, @original_materialize)
+  end
+
   test "materialises tables with health signals from the catalog" do
     catalog = build_catalog
 

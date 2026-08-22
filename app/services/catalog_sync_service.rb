@@ -19,7 +19,7 @@ class CatalogSyncService
   #
   # @return [Hash] the list of collected errors under the `errors` key
   def sync
-    TrinoCatalogRegistry.warn_missing_role!
+    TrinoSecretMaterializer.new.materialize!(Catalog.includes(:catalog_credential))
     errors = []
     seen = []
 
@@ -45,6 +45,16 @@ class CatalogSyncService
     end
 
     deactivate_unseen(seen)
+
+    if errors.any? { |e| e.match?(/secret|file|resolve/i) }
+      ErrorEvent.record(
+        catalog: @catalog, schema: "security", operation: "secret-resolution",
+        source_system: "app", severity: "warning",
+        error_class: "SecretResolutionFailure",
+        message: "Catalog #{@catalog.name}: secret file not yet available — check trino-catalog-secrets and secret-file-base-dir"
+      )
+    end
+
     { errors: errors }
   end
 
