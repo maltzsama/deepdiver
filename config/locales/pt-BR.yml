@@ -949,6 +949,8 @@ pt-BR:
               must_exceed_severe: "precisa ser maior que o limite de grave"
         catalog:
           attributes:
+            properties:
+              must_not_hold_secrets: "nao pode conter valores secretos - segredos pertencem ao campo criptografado da credencial"
             trino_catalog_name_override:
               invalid_format: "precisa comecar com letra minúscula e conter so letras, numeros e _ (max. %{max}). Derivado: %{derived}"
               reserved: "%{name} e reservado pelo Trino (%{reserved})"

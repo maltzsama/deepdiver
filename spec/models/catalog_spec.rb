@@ -72,3 +72,16 @@ RSpec.describe Catalog, "#derived_trino_catalog_name" do
     end
   end
 end
+
+RSpec.describe "Catalog properties secret guard", type: :model do
+  it "rejects secret keys smuggled into the config bag" do
+    catalog = build(:catalog, properties: { "bearerToken" => "leak-me" })
+
+    expect(catalog).not_to be_valid
+    expect(catalog.errors[:properties]).to be_present
+  end
+
+  it "accepts configuration keys" do
+    expect(build(:catalog, properties: { "path_prefix" => "/iceberg" })).to be_valid
+  end
+end

@@ -202,6 +202,33 @@ The chart never renders credentials or certificates. `appSecrets.existingSecret`
 `internalCA.existingSecret` are created by ArgoCD, SealedSecrets, or any external controller.
 Set `appSecrets.create=true` + `appSecrets.data` only for throwaway local experiments.
 
+### Catalog credential runbook
+
+Catalog secrets live in `catalog_credentials.secret`, encrypted at rest with Active
+Record Encryption (non-deterministic). Derived OAuth tokens are never persisted.
+
+**Rotating a catalog credential:** edit the catalog in the UI and type the new secret
+into the password field. A blank field keeps the stored value; there is no way to
+accidentally clear it. After saving, the next sync picks up the new secret (the token
+cache key changes with the credential row).
+
+**After any suspected exposure:** rotate the credential on the provider first, then
+update it here. Encryption protects storage/backups going forward - it cannot un-leak
+a token already copied elsewhere. Old application logs from before the encrypted-
+credential migration may contain plaintext tokens; treat them as burned.
+
+**If the encryption keys are lost**, every stored credential becomes unreadable - no
+recovery exists by design. Re-enter each catalog's credential through the UI after
+provisioning a new key set (`ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY`,
+`_DETERMINISTIC_KEY`, `_KEY_DERIVATION_SALT`). Keep the three keys only as
+Kubernetes Secrets; losing them is equivalent to losing the credentials themselves.
+
+**Dremio Open Catalog note:** the app authenticates via RFC 8693 token exchange
+against the external token server (`:9047/oauth/token`), storing only the PAT.
+The Trino side of that catalog needs its own auth configuration in the
+`trino_catalog_registry` properties - if the Baleia plugin does not support token
+exchange, maintenance runs against Dremio tables are blocked even though sync works.
+
 ### After install
 
 ```bash

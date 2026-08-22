@@ -1,17 +1,24 @@
 # Fetches and keeps the catalog access token.
 #
-# Polaris: OAuth2 client credentials, POST <endpoint><token_path>, body
-# application/x-www-form-urlencoded, response carries access_token and
-# expires_in.
+# Strategies, selected by CatalogCredential#auth_method:
+#   none                        -> no Authorization header
+#   bearer_static               -> the stored secret IS the Bearer token
+#   oauth2_client_credentials   -> POST {endpoint}{token_path}, grant client_credentials (Polaris)
+#   oauth2_token_exchange       -> RFC 8693 at an EXTERNAL token server (Dremio:
+#                                  a PAT is the subject token; the catalog at
+#                                  :8181 and the token server at :9047 differ)
 #
-# The token is cached with a safety margin before it expires - never stored in
-# the database, because it is ephemeral and there is no reason to persist one
-# more secret.
+# Derived tokens are cached with a safety margin before expiry and NEVER
+# persisted - only the encrypted secret is. A stale cached token surfacing as
+# HTTP 401 mid-sync is handled by #refresh!.
 class CatalogTokenProvider
-  # Raised when the catalog cannot issue a token.
+  # Raised when the catalog cannot issue a token or rejects ours.
   class AuthError < StandardError; end
 
   EXPIRY_MARGIN = 60 # seconds before the real expiry
+
+  DEFAULT_EXCHANGE_CLIENT_ID = "dremio-catalog-cli"
+  DREMIO_PAT_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:dremio:personal-access-token"
 
   # Creates the token provider for a catalog with an injectable transport.
   #
@@ -29,6 +36,14 @@ class CatalogTokenProvider
     return { "Authorization" => "Bearer #{@credential.secret}" } if @credential.auth_method == "bearer_static"
 
     { "Authorization" => "Bearer #{access_token}" }
+  end
+
+  # Drops the cached derived token so the next #headers performs a fresh
+  # exchange. Used when the catalog answers 401 to an otherwise valid request:
+  # for token-exchange catalogs that means the short-lived token expired
+  # mid-sync - a refresh fixes it, retrying with the same PAT failure would not.
+  def refresh!
+    Rails.cache.delete(cache_key) if @credential.present?
   end
 
   private
@@ -49,17 +64,21 @@ class CatalogTokenProvider
   # request_token rewrites it with the real value.
   def cached_ttl = 5.minutes
 
-  # Performs the OAuth2 client-credentials grant and caches the token.
+  # Performs the configured OAuth2 grant and caches the resulting token.
   #
   # @return [String] the access token
   # @raise [AuthError] if the token request fails or returns no token
   def request_token
-    body = URI.encode_www_form(
-      grant_type: "client_credentials",
-      client_id: @credential.client_id,
-      client_secret: @credential.secret,
-      scope: @credential.scope
-    )
+    body = if @credential.token_exchange?
+             URI.encode_www_form(exchange_params)
+    else
+             URI.encode_www_form(
+               grant_type: "client_credentials",
+               client_id: @credential.client_id,
+               client_secret: @credential.secret,
+               scope: @credential.oauth_scope.presence || @credential.scope.presence
+             )
+    end
 
     response = @transport.post_form(token_url, body: body)
 
@@ -73,13 +92,42 @@ class CatalogTokenProvider
 
     token
   rescue HttpTransport::ApiError => e
-    raise AuthError, "failed to obtain a token from the catalog: #{e.message}"
+    raise AuthError, auth_failure_message(e)
   end
 
-  # Absolute URL of the OAuth2 token endpoint.
+  # RFC 8693 token-exchange form: the stored secret is the subject token (the
+  # PAT); provider knobs come from the credential's properties bag.
+  #
+  # @return [Hash] urlencoded-ready params
+  def exchange_params
+    {
+      grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
+      subject_token: @credential.secret,
+      subject_token_type: @credential.properties["subject_token_type"].presence || DREMIO_PAT_TOKEN_TYPE,
+      client_id: @credential.properties["exchange_client_id"].presence || @credential.client_id.presence || DEFAULT_EXCHANGE_CLIENT_ID,
+      scope: @credential.oauth_scope.presence || "dremio.all"
+    }
+  end
+
+  # Error copy that tells the operator WHAT broke: an expired PAT kills the
+  # whole catalog sync, a missing privilege kills one table - different fixes.
+  #
+  # @param error [HttpTransport::ApiError] the transport failure
+  # @return [String] the human-facing reason
+  def auth_failure_message(error)
+    base = "authentication failed against #{token_url}: #{error.message}"
+    return "#{base} - the personal access token may have expired; rotate it on the credential" if error.status == 401 || error.status == 403
+
+    base
+  end
+
+  # Absolute URL of the OAuth2 token endpoint. Token exchange targets the
+  # EXTERNAL token server; the other grants target the catalog itself.
   #
   # @return [String] the token endpoint URL
   def token_url
+    return @credential.token_endpoint if @credential.token_exchange?
+
     "#{@catalog.endpoint.chomp('/')}#{@credential.token_path}"
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_21_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_21_170000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"
@@ -27,10 +27,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_160000) do
     t.integer "catalog_id", null: false
     t.string "client_id"
     t.datetime "created_at", null: false
+    t.string "oauth_scope"
+    t.json "properties", default: {}
     t.string "scope", default: "PRINCIPAL_ROLE:ALL"
     t.text "secret"
     t.string "secret_hint"
     t.datetime "secret_set_at"
+    t.string "token_endpoint"
     t.string "token_path", default: "/v1/oauth/tokens"
     t.datetime "updated_at", null: false
     t.text "verification_error"
