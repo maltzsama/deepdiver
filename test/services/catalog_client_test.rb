@@ -25,6 +25,9 @@ class StubCatalogTransport
 end
 
 class CatalogClientTest < ActiveSupport::TestCase
+  POLARIS_CONFIG = "http://polaris:8181/api/catalog/v1/config?warehouse=analytics"
+  NESSIE_CONFIG  = "http://nessie:19120/iceberg/v1/config"
+
   def build_catalog
     catalog = Catalog.find_or_create_by!(name: "analytics") do |c|
       c.catalog_type = "polaris"
@@ -36,11 +39,12 @@ class CatalogClientTest < ActiveSupport::TestCase
 
   test "namespaces are flattened to dotted strings" do
     transport = StubCatalogTransport.new(
-      "http://polaris:8181/api/catalog/v1/namespaces" => {
+      POLARIS_CONFIG => { "defaults" => { "prefix" => "analytics" } },
+      "http://polaris:8181/api/catalog/v1/analytics/namespaces" => {
         "namespaces" => [ { "namespace" => %w[reporting dwd] }, { "namespace" => [ "raw" ] } ]
       },
-      "http://polaris:8181/api/catalog/v1/namespaces?parent=reporting%1Fdwd" => { "namespaces" => [] },
-      "http://polaris:8181/api/catalog/v1/namespaces?parent=raw" => { "namespaces" => [] }
+      "http://polaris:8181/api/catalog/v1/analytics/namespaces?parent=reporting%1Fdwd" => { "namespaces" => [] },
+      "http://polaris:8181/api/catalog/v1/analytics/namespaces?parent=raw" => { "namespaces" => [] }
     )
     client = PolarisCatalogClient.new(build_catalog, transport: transport)
 
@@ -50,14 +54,15 @@ class CatalogClientTest < ActiveSupport::TestCase
 
   test "namespaces recurses into nested children" do
     transport = StubCatalogTransport.new(
-      "http://polaris:8181/api/catalog/v1/namespaces" => {
+      POLARIS_CONFIG => { "defaults" => { "prefix" => "analytics" } },
+      "http://polaris:8181/api/catalog/v1/analytics/namespaces" => {
         "namespaces" => [ { "namespace" => %w[bronze vendas] } ]
       },
-      "http://polaris:8181/api/catalog/v1/namespaces?parent=bronze%1Fvendas" => {
+      "http://polaris:8181/api/catalog/v1/analytics/namespaces?parent=bronze%1Fvendas" => {
         "namespaces" => [ { "namespace" => %w[bronze vendas raw] }, { "namespace" => %w[bronze vendas silver] } ]
       },
-      "http://polaris:8181/api/catalog/v1/namespaces?parent=bronze%1Fvendas%1Fraw" => { "namespaces" => [] },
-      "http://polaris:8181/api/catalog/v1/namespaces?parent=bronze%1Fvendas%1Fsilver" => { "namespaces" => [] }
+      "http://polaris:8181/api/catalog/v1/analytics/namespaces?parent=bronze%1Fvendas%1Fraw" => { "namespaces" => [] },
+      "http://polaris:8181/api/catalog/v1/analytics/namespaces?parent=bronze%1Fvendas%1Fsilver" => { "namespaces" => [] }
     )
     client = PolarisCatalogClient.new(build_catalog, transport: transport)
 
@@ -66,20 +71,23 @@ class CatalogClientTest < ActiveSupport::TestCase
 
   test "tables_in encodes nested namespace with the unit separator" do
     transport = StubCatalogTransport.new(
-      "http://polaris:8181/api/catalog/v1/namespaces/bronze%1Fvendas/tables" => {
+      POLARIS_CONFIG => { "defaults" => { "prefix" => "analytics" } },
+      "http://polaris:8181/api/catalog/v1/analytics/namespaces/bronze%1Fvendas/tables" => {
         "identifiers" => [ { "name" => "pedidos" } ]
       }
     )
     client = PolarisCatalogClient.new(build_catalog, transport: transport)
 
     assert_equal [ "pedidos" ], client.tables_in("bronze.vendas")
-    assert_equal "http://polaris:8181/api/catalog/v1/namespaces/bronze%1Fvendas/tables",
-                 transport.requests.first[1]
+    table_request = transport.requests.find { |r| r[1].include?("/namespaces/") }
+    assert_equal "http://polaris:8181/api/catalog/v1/analytics/namespaces/bronze%1Fvendas/tables",
+                 table_request[1]
   end
 
   test "table names are read from the identifiers list" do
     transport = StubCatalogTransport.new(
-      "http://nessie:19120/api/v1/namespaces/reporting/tables" => {
+      NESSIE_CONFIG => { "defaults" => { "prefix" => "main" } },
+      "http://nessie:19120/iceberg/v1/main/namespaces/reporting/tables" => {
         "identifiers" => [ { "name" => "dwd_orders" }, { "name" => "dwd_items" } ]
       }
     )
@@ -91,7 +99,8 @@ class CatalogClientTest < ActiveSupport::TestCase
 
   test "metadata returns the raw table payload" do
     transport = StubCatalogTransport.new(
-      "http://polaris:8181/api/catalog/v1/namespaces/reporting/tables/dwd_orders" => { "metadata" => { "snapshots" => [] } }
+      POLARIS_CONFIG => { "defaults" => { "prefix" => "analytics" } },
+      "http://polaris:8181/api/catalog/v1/analytics/namespaces/reporting/tables/dwd_orders" => { "metadata" => { "snapshots" => [] } }
     )
     client = PolarisCatalogClient.new(build_catalog, transport: transport)
 
