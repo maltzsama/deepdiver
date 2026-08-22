@@ -1,6 +1,6 @@
 <section class="panel">
   <div class="panel-body">
-    <%= form_with model: catalog, class: "form-grid" do |form| %>
+    <%= form_with model: catalog, class: "form-grid", data: { controller: "catalog-type" } do |form| %>
       <% if catalog.errors.any? %>
         <div class="errors">
           <p class="errors-title">
@@ -23,7 +23,15 @@
 
       <div class="field">
         <%= form.label :catalog_type, t("catalogs.form.type"), class: "field-label" %>
-        <%= form.select :catalog_type, Catalog::CATALOG_TYPES, {}, class: "field-input" %>
+        <%= form.select :catalog_type, Catalog::CATALOG_TYPES, {}, class: "field-input",
+                        data: { catalog_type_select: true, action: "catalog-type#change" } %>
+      </div>
+
+      <div class="field hidden" data-catalog-type-target="field" data-type-show="nessie">
+        <%= form.label :nessie_ref, t("catalogs.form.nessie_ref"), class: "field-label" %>
+        <p class="field-hint"><%= t("catalogs.form.nessie_ref_hint") %></p>
+        <%= form.text_field :nessie_ref, class: "field-input field-input-mono",
+                            placeholder: "main" %>
       </div>
 
       <div class="field">

@@ -85,3 +85,24 @@ RSpec.describe "Catalog properties secret guard", type: :model do
     expect(build(:catalog, properties: { "path_prefix" => "/iceberg" })).to be_valid
   end
 end
+
+RSpec.describe "Catalog nessie_ref", type: :model do
+  it "accepts a ref on nessie catalogs" do
+    expect(build(:catalog, catalog_type: "nessie", nessie_ref: "etl_dev")).to be_valid
+  end
+
+  it "rejects a ref on polaris catalogs" do
+    catalog = build(:polaris_catalog, nessie_ref: "main")
+
+    expect(catalog).not_to be_valid
+    expect(catalog.errors[:nessie_ref]).to be_present
+  end
+
+  it "rejects ref-shaped garbage" do
+    expect(build(:catalog, catalog_type: "nessie", nessie_ref: "bad ref!")).not_to be_valid
+  end
+
+  it "allows a blank ref (server default)" do
+    expect(build(:catalog, catalog_type: "nessie", nessie_ref: nil)).to be_valid
+  end
+end

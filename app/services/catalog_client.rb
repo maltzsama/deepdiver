@@ -43,6 +43,21 @@ class CatalogClient
     get("#{base_url}/namespaces/#{encode_namespace(namespace)}/tables/#{ERB::Util.url_encode(table)}")
   end
 
+  # Absolute URL of the /v1/config discovery call, warehouse included when the
+  # provider names its warehouses.
+  #
+  # @return [String]
+  def config_url
+    url = +"#{catalog.endpoint}#{mount_prefix}/v1/config"
+    url << "?warehouse=#{CGI.escape(config_warehouse)}" if config_warehouse.present?
+    url.to_s
+  end
+
+  # Path segment mounted BEFORE /v1 on the server. Subclasses declare it;
+  # properties["path_prefix"] overrides the whole legacy regime instead.
+  #
+  # @return [String] the mount prefix
+
   private
 
   # Recursively collects every namespace under a parent, stopping at the max depth.
@@ -74,20 +89,60 @@ class CatalogClient
     ERB::Util.url_encode(namespace.to_s.split(".").join(NAMESPACE_SEPARATOR))
   end
 
-  # Builds the REST base URL from the catalog endpoint and configured path prefix.
+  # Builds the REST base URL for every catalog call.
+  #
+  # Two regimes:
+  #   legacy  - properties["path_prefix"] present: used verbatim after the
+  #             endpoint, exactly as before. Kept so hand-configured catalogs
+  #             keep syncing; deprecated.
+  #   spec    - everything else: GET /v1/config discovers the prefix the
+  #             server wants (Polaris: warehouse name; Nessie: the ref), and
+  #             calls go to {mount}/v1/{prefix}/namespaces...
   #
   # @return [String] the base URL for catalog REST calls
   def base_url
-    suffix = catalog.properties&.dig("path_prefix") || default_path_prefix
-    "#{catalog.endpoint}#{suffix}"
+    if (legacy = catalog.properties&.dig("path_prefix")).present?
+      "#{catalog.endpoint}#{legacy}"
+    else
+      "#{catalog.endpoint}#{mount_prefix}/v1/#{ERB::Util.url_encode(rest_prefix)}"
+    end
   end
 
-  # Path prefix for the catalog REST API; subclasses override this.
-  #
-  # @return [String] the default path prefix
-  def default_path_prefix
-    raise NotImplementedError, "#{self.class} must define the default path prefix"
+  def mount_prefix
+    raise NotImplementedError, "#{self.class} must define its mount prefix"
   end
+
+  # The Iceberg REST prefix this client addresses: from GET /v1/config
+  # ("overrides.prefix" then "defaults.prefix"), overridden by an explicit
+  # Nessie ref. Memoized per client instance - one config call per sync,
+  # not per table.
+  #
+  # @return [String]
+  def rest_prefix
+    return catalog.nessie_ref if catalog.nessie_ref.present?
+
+    discovered = rest_config.dig("overrides", "prefix") ||
+                 rest_config.dig("defaults", "prefix")
+    raise HttpTransport::ApiError.new(500, "catalog /v1/config returned no prefix") if discovered.blank?
+
+    discovered.to_s
+  end
+
+  # GET {mount}/v1/config per the Iceberg REST spec - the server's own answer
+  # about which prefix and defaults to use. Memoized; never called when the
+  # legacy path_prefix regime is in effect.
+  #
+  # @return [Hash] parsed config payload with "defaults" and "overrides"
+  def rest_config
+    @transport.get(config_url, headers: token_provider.headers)
+  end
+
+  # Warehouse sent to /v1/config. Polaris names its warehouses (the catalog
+  # name); Nessie defines warehouses server-side and REJECTS unknown names,
+  # so it sends none and rides the default.
+  #
+  # @return [String, nil]
+  def config_warehouse = nil
 
   # Memoized token provider for this catalog.
   #

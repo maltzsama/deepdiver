@@ -31,7 +31,7 @@ RSpec.describe CatalogTokenProvider, type: :service do
 
     it "posts the grant to the catalog's own token path and caches the result" do
       expect(transport).to receive(:post_form)
-        .with("http://polaris:8181/v1/oauth/tokens", body: a_string_including("grant_type=client_credentials", "client_id=app"))
+        .with("http://polaris:8181/api/catalog/v1/oauth/tokens", body: a_string_including("grant_type=client_credentials", "client_id=app"))
         .once
         .and_return({ "access_token" => "tok-1", "expires_in" => 3600 })
 
