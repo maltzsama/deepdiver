@@ -35,10 +35,20 @@
         <p class="field-group-title"><%= t("freshness_slas.form.probe_title") %></p>
         <p class="field-hint mb-4"><%= t("freshness_slas.form.probe_hint") %></p>
 
+        <%# Column suggestions come from the schema captured at the last sync
+            (schema_json). Free text stays valid for fresher-than-sync columns. %>
+        <% synced_fields = synced_schema_fields(@table) %>
+
         <div class="field">
           <%= form.label :timestamp_column, t("freshness_slas.form.timestamp_column"), class: "field-label" %>
           <%= form.text_field :timestamp_column, required: true, class: "field-input",
+                              list: "timestamp-column-options",
                               placeholder: "load_timestamp" %>
+          <datalist id="timestamp-column-options">
+            <% synced_fields.each do |name, type| %>
+              <option value="<%= name %>"><%= type %></option>
+            <% end %>
+          </datalist>
         </div>
 
         <div class="field">
@@ -56,7 +66,14 @@
         <div class="field">
           <%= form.label :partition_column, t("freshness_slas.form.partition_column"), class: "field-label" %>
           <p class="field-hint"><%= t("freshness_slas.form.partition_hint") %></p>
-          <%= form.text_field :partition_column, class: "field-input", placeholder: "dt" %>
+          <%= form.text_field :partition_column, class: "field-input",
+                              list: "partition-column-options",
+                              placeholder: "dt" %>
+          <datalist id="partition-column-options">
+            <% synced_fields.each do |name, type| %>
+              <option value="<%= name %>"><%= type %></option>
+            <% end %>
+          </datalist>
         </div>
 
         <div class="field">

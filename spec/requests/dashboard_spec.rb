@@ -48,3 +48,61 @@ RSpec.describe "GET /", type: :request do
     expect(response.body).to include("Nothing needs attention")
   end
 end
+
+RSpec.describe "Dashboard needs-action feed", type: :request do
+  let(:user)    { create(:user) }
+  let(:catalog) { create(:catalog) }
+
+  before { sign_in user }
+
+  it "lists open errors with links to their detail pages" do
+    error = ErrorEvent.record(catalog: nil, schema: "reporting", table: "pedidos",
+                              operation: "sync-table", source_system: "catalog",
+                              message: "connection timed out")
+
+    get root_path
+
+    expect(response.body).to include(error_event_path(error))
+    expect(response.body).to include("connection timed out")
+  end
+
+  it "lists paused plans linking to the plan" do
+    plan = create(:maintenance_plan, is_paused: true)
+
+    get root_path
+
+    expect(response.body).to include(maintenance_plan_path(plan))
+  end
+
+  it "keeps the empty state only when errors, triage and paused plans are all empty" do
+    ErrorEvent.record(catalog: nil, schema: "s", operation: "op",
+                      source_system: "catalog", message: "boom")
+
+    get root_path
+
+    expect(response.body).not_to include("Nothing needs attention")
+    expect(response.body).to include("boom")
+  end
+end
+
+RSpec.describe "Dashboard renders the demo chain", type: :request do
+  let(:user) { create(:user) }
+
+  before { sign_in user }
+
+  it "shows errors section and out-of-SLA tables together" do
+    table = create(:iceberg_table)
+    create(:table_freshness_sla, iceberg_table: table, status: "late",
+                                 breached_since: 2.hours.ago, sla_minutes: 5,
+                                 timestamp_column: "ts", timestamp_type: "timestamp_tz")
+    error = ErrorEvent.record(catalog: nil, schema: "s", operation: "op",
+                              source_system: "catalog", message: "boom")
+
+    get root_path
+
+    expect(response.body).to include("boom")
+    expect(response.body).to include(error_event_path(error))
+    expect(response.body).to include(iceberg_table_path(table))
+    expect(response.body).not_to include("Nothing needs attention")
+  end
+end

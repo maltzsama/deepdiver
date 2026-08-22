@@ -19,6 +19,11 @@ class DashboardController < ApplicationController
                                          .group(:status).count
     @open_error_count = ErrorEvent.open.count
 
+    # Needs-action feed: the newest open/acknowledged errors, each row linking
+    # straight to its detail page.
+    @action_errors = ErrorEvent.where(status: %w[open acknowledged])
+                               .order(last_seen_at: :desc).limit(5)
+
     # Without a sync there is no fresh data: the UI must say how old it is.
     @last_sync_at = IcebergTable.maximum(:metadata_synced_at)
 

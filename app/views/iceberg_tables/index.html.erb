@@ -101,7 +101,15 @@
               </td>
               <td>
                 <% freshness = freshness_label(table) %>
-                <span class="badge <%= freshness[1] %>"><span class="badge-dot"></span><%= freshness[0] %></span>
+                <% if table.table_freshness_sla.nil? || !table.table_freshness_sla.enabled %>
+                  <%= link_to edit_iceberg_table_freshness_sla_path(table),
+                              class: "badge badge-mute no-underline hover:text-cosmos-fg",
+                              title: t("tables.index.fresh_configure_title") do %>
+                    <span class="badge-dot"></span><%= freshness[0] %>
+                  <% end %>
+                <% else %>
+                  <span class="badge <%= freshness[1] %>"><span class="badge-dot"></span><%= freshness[0] %></span>
+                <% end %>
               </td>
               <td><%= timestamp(table.last_data_update) %></td>
               <% if can_run_maintenance? %>

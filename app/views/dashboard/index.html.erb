@@ -65,88 +65,110 @@
 <div class="panel">
   <div class="panel-head">
     <h2 class="panel-title"><%= t("dashboard.index.triage_title") %></h2>
-    <span class="panel-note">
-      <% if @triage.any? %>
-        <%= t("dashboard.index.triage_note", count: @triage.size) %>
-      <% end %>
-    </span>
+    <% if @triage.any? %>
+      <span class="panel-note"><%= t("dashboard.index.triage_note", count: @triage.size) %></span>
+    <% end %>
   </div>
 
-  <% if @triage.empty? %>
+  <% fresh_rows = @triage.select { |row| row.reasons.include?(:freshness) } %>
+  <% health_rows = @triage.select { |row| row.reasons.include?(:health) } %>
+  <% if @action_errors.empty? && @triage.empty? && @paused_plans.empty? %>
     <div class="panel-body text-center py-10">
       <p class="text-body text-cosmos-fg-soft"><%= t("dashboard.index.triage_empty_title") %></p>
       <p class="text-small text-cosmos-fg-mute mt-1"><%= t("dashboard.index.triage_empty_hint") %></p>
     </div>
   <% else %>
-    <div class="panel-body p-0 data-table-scroll">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th><%= t("dashboard.index.col_table") %></th>
-            <th><%= t("dashboard.index.col_maintenance") %></th>
-            <th><%= t("dashboard.index.col_freshness") %></th>
-            <th><%= t("dashboard.index.col_since") %></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @triage.each do |row| %>
-            <tr>
-              <td class="cell-id">
-                <%= link_to row.table.fully_qualified_name, row.table, class: "hover:underline" %>
-                <span class="text-small text-cosmos-fg-mute ml-2"><%= row.table.catalog.name %></span>
-              </td>
+    <div class="divide-y divide-cosmos-line">
 
-              <%# Coluna de manutenção — vermelha só se for esse o problema %>
-              <td>
-                <% if row.reasons.include?(:health) %>
-                  <span class="badge badge-err">
-                    <span class="badge-dot"></span><%= row.table.health_score %>
-                  </span>
-                <% elsif row.table.health_score %>
-                  <span class="text-small text-cosmos-fg-mute"><%= row.table.health_score %></span>
-                <% else %>
-                  <span class="text-small text-cosmos-fg-mute">—</span>
-                <% end %>
-              </td>
-
-              <%# Coluna de frescor %>
-              <td>
-                <% if row.reasons.include?(:freshness) %>
-                  <span class="badge <%= row.sla.status == "late" ? "badge-err" : "badge-warn" %>">
-                    <span class="badge-dot"></span>
-                    <% if row.sla.breached_since %>
-                      <%= distance_of_time_in_words(row.sla.breached_since, Time.current) %>
-                    <% else %>
-                      <%= t("freshness.status.#{row.sla.status}") %>
-                    <% end %>
-                  </span>
-                <% elsif row.sla&.enabled? %>
-                  <span class="text-small text-cosmos-fg-mute"><%= t("dashboard.index.on_track") %></span>
-                <% else %>
-                  <span class="text-small text-cosmos-fg-mute"><%= t("dashboard.index.no_sla") %></span>
-                <% end %>
-              </td>
-
-              <td class="cell-muted">
-                <% if row.degraded_at %>
-                  <%= distance_of_time_in_words(row.degraded_at, Time.current) %> ago
-                <% else %>
-                  <span class="text-cosmos-fg-mute">—</span>
-                <% end %>
-              </td>
-
-              <td class="text-right">
-                <% if row.reasons.include?(:health) && row.table.maintenance_plan && can_run_maintenance? %>
-                  <%= button_to t("dashboard.index.run_now"),
-                        run_maintenance_plan_path(row.table.maintenance_plan),
-                        method: :post, class: "link text-small" %>
-                <% end %>
-              </td>
-            </tr>
+      <% if @action_errors.any? %>
+        <section>
+          <div class="flex items-center justify-between px-4 pt-3 pb-1">
+            <h3 class="font-mono text-micro uppercase tracking-widest text-cosmos-fg-mute">
+              <%= t("dashboard.index.section_errors") %>
+              <span class="badge badge-err ml-2"><span class="badge-dot"></span><%= @action_errors.size %></span>
+            </h3>
+            <%= link_to t("dashboard.index.see_all"), error_events_path, class: "link text-small" %>
+          </div>
+          <% @action_errors.each do |error| %>
+            <a href="<%= error_event_path(error) %>" class="flex items-center gap-3 px-4 py-2.5 no-underline hover:bg-cosmos-soft group">
+              <span class="badge <%= {"open" => "badge-err", "acknowledged" => "badge-warn"}[error.status] %> flex-none">
+                <span class="badge-dot"></span><%= t("error_events.status_#{error.status}") %>
+              </span>
+              <span class="badge badge-mute flex-none"><%= error.operation %></span>
+              <span class="cell-id flex-1 min-w-0 truncate"><%= [error.catalog&.name, error.schema, error.table].reject(&:blank?).join(" · ") %></span>
+              <span class="cell-muted flex-1 min-w-0 truncate hidden md:inline"><%= error.message %></span>
+              <span class="cell-num text-small flex-none"><%= time_ago_in_words(error.last_seen_at) %></span>
+            </a>
           <% end %>
-        </tbody>
-      </table>
+        </section>
+      <% end %>
+
+      <% if fresh_rows.any? %>
+        <section>
+          <div class="px-4 pt-3 pb-1">
+            <h3 class="font-mono text-micro uppercase tracking-widest text-cosmos-fg-mute">
+              <%= t("dashboard.index.section_sla") %>
+              <span class="badge badge-err ml-2"><span class="badge-dot"></span><%= fresh_rows.size %></span>
+            </h3>
+          </div>
+          <% fresh_rows.each do |row| %>
+            <a href="<%= iceberg_table_path(row.table) %>" class="flex items-center gap-3 px-4 py-2.5 no-underline hover:bg-cosmos-soft">
+              <span class="badge <%= row.sla.status == "late" ? "badge-err" : "badge-warn" %> flex-none">
+                <span class="badge-dot"></span>
+                <% if row.sla.breached_since %>
+                  <%= distance_of_time_in_words(row.sla.breached_since, Time.current) %>
+                <% else %>
+                  <%= t("freshness.status.#{row.sla.status}") %>
+                <% end %>
+              </span>
+              <span class="cell-id flex-1 min-w-0 truncate"><%= row.table.fully_qualified_name %></span>
+              <span class="cell-meta flex-none"><%= row.table.catalog.name %></span>
+            </a>
+          <% end %>
+        </section>
+      <% end %>
+
+      <% if health_rows.any? %>
+        <section>
+          <div class="px-4 pt-3 pb-1">
+            <h3 class="font-mono text-micro uppercase tracking-widest text-cosmos-fg-mute">
+              <%= t("dashboard.index.section_health") %>
+              <span class="badge badge-critical ml-2"><span class="badge-dot"></span><%= health_rows.size %></span>
+            </h3>
+          </div>
+          <% health_rows.each do |row| %>
+            <div class="flex items-center gap-3 px-4 py-2.5 hover:bg-cosmos-soft">
+              <span class="badge badge-err flex-none"><span class="badge-dot"></span><%= row.table.health_score %></span>
+              <a href="<%= iceberg_table_path(row.table) %>" class="cell-id flex-1 min-w-0 truncate no-underline hover:underline"><%= row.table.fully_qualified_name %></a>
+              <span class="cell-meta flex-none"><%= row.table.catalog.name %></span>
+              <% if row.table.maintenance_plan && can_run_maintenance? %>
+                <%= button_to t("dashboard.index.run_now"),
+                      run_maintenance_plan_path(row.table.maintenance_plan),
+                      method: :post, class: "btn btn-default btn-sm flex-none" %>
+              <% end %>
+            </div>
+          <% end %>
+        </section>
+      <% end %>
+
+      <% if @paused_plans.any? %>
+        <section>
+          <div class="px-4 pt-3 pb-1">
+            <h3 class="font-mono text-micro uppercase tracking-widest text-cosmos-fg-mute">
+              <%= t("dashboard.index.section_paused") %>
+              <span class="badge badge-warn ml-2"><span class="badge-dot"></span><%= @paused_plans.size %></span>
+            </h3>
+          </div>
+          <% @paused_plans.each do |plan| %>
+            <a href="<%= maintenance_plan_path(plan) %>" class="flex items-center gap-3 px-4 py-2.5 no-underline hover:bg-cosmos-soft">
+              <span class="badge badge-warning flex-none"><span class="badge-dot"></span><%= t("dashboard.index.paused_badge") %></span>
+              <span class="cell-id flex-1 min-w-0 truncate"><%= plan.iceberg_table.fully_qualified_name %></span>
+              <span class="cell-meta flex-none"><%= plan.iceberg_table.catalog.name %></span>
+            </a>
+          <% end %>
+        </section>
+      <% end %>
+
     </div>
   <% end %>
 </div>
