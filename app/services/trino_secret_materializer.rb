@@ -79,6 +79,9 @@ class TrinoSecretMaterializer
     rescue Kubeclient::ResourceNotFoundError
       @k8s_client.create_secret(secret_metadata)
     end
+  rescue Kubeclient::HttpError, Errno::ECONNREFUSED, OpenSSL::SSL::SSLError => e
+    Rails.logger.warn("TrinoSecretMaterializer: could not sync secret (#{e.class}): #{e.message}")
+    nil
   end
 
   def default_k8s_client
