@@ -1,0 +1,19 @@
+<%# locals: (label:, value:, unit:, value_class: nil, fill_class: nil, track_pct: 0) %>
+<%#
+  Statistic card for overview grids.
+  Params:
+    label      - uppercase caption (e.g. "Tables")
+    value      - the headline number
+    unit       - small note under the number (e.g. "across all catalogs")
+    value_class - optional text color class, verbatim so Tailwind picks it up
+    fill_class  - optional bg color class for the track fill
+    track_pct   - 0..100 width of the fill
+%>
+<div class="stat-card">
+  <div class="stat-label"><%= label %></div>
+  <div class="stat-value <%= value_class %>"><%= value %></div>
+  <div class="stat-sub"><%= unit %></div>
+  <div class="stat-track">
+    <div class="stat-fill <%= fill_class %>" style="width:<%= track_pct %>%"></div>
+  </div>
+</div>

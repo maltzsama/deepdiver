@@ -1,0 +1,62 @@
+{{- if .Values.migrationJob.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "lakedeepdiver.fullname" . }}-migrate
+  labels:
+    {{- include "lakedeepdiver.labels" . | nindent 4 }}
+  annotations:
+    # Runs before install/upgrade so pods never race against schema changes.
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.migrationJob.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.migrationJob.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: {{ .Values.migrationJob.ttlSecondsAfterFinished | default 3600 }}
+  template:
+    metadata:
+      labels:
+        {{- include "lakedeepdiver.webSelector" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "lakedeepdiver.fullname" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- if and .Values.internalCA.enabled .Values.internalCA.existingSecret }}
+        - name: internal-ca
+          secret:
+            secretName: {{ .Values.internalCA.existingSecret | quote }}
+            optional: true
+            defaultMode: 0444
+            items:
+              - key: {{ .Values.internalCA.caKey | quote }}
+                path: {{ base .Values.internalCA.mountFile | quote }}
+        {{- end }}
+      containers:
+        - name: migrate
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: [ "./bin/rails", "db:prepare" ]
+          envFrom:
+            - configMapRef:
+                name: {{ include "lakedeepdiver.fullname" . }}
+            {{- if .Values.appSecrets.existingSecret }}
+            - secretRef:
+                name: {{ .Values.appSecrets.existingSecret | quote }}
+            {{- else if .Values.appSecrets.create }}
+            - secretRef:
+                name: {{ include "lakedeepdiver.fullname" . }}-app
+            {{- end }}
+          volumeMounts:
+            {{- if and .Values.internalCA.enabled .Values.internalCA.existingSecret }}
+            - name: internal-ca
+              mountPath: {{ dir .Values.internalCA.mountFile | quote }}
+              readOnly: true
+            {{- end }}
+          resources:
+            {{- toYaml .Values.migrationJob.resources | nindent 12 }}
+{{- end }}

@@ -1,0 +1,28 @@
+<%# Engine status strip. Also used by Turbo Stream broadcasts.
+     Action buttons live in a separate frame so they survive
+     broadcast_replace updates (which have no current_user). %>
+<section id="activity-engine-strip" class="panel mb-6">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("activity.engine.title") %></h2>
+    <span class="panel-note"><%= t("activity.engine.active_count", count: local_assigns[:active_count]) %></span>
+  </div>
+  <div class="panel-body flex flex-wrap items-center gap-4">
+    <span class="badge <%= engine_status_badge_class(engine_state.status) %>">
+      <span class="badge-dot"></span><%= engine_status_label(engine_state) %>
+    </span>
+    <% if engine_state.last_error.present? %>
+      <span class="cell-muted font-mono text-small"><%= engine_state.last_error %></span>
+    <% end %>
+    <%= turbo_frame_tag "activity-engine-actions" do %>
+      <% if local_assigns.fetch(:render_actions, false) && current_user&.admin? %>
+        <span class="ml-auto flex items-center gap-2">
+          <%= button_to t("activity.engine.retry"), restart_activity_path, method: :post,
+                        class: "btn btn-default btn-sm" %>
+          <%= button_to t("activity.engine.hard_reset"), hard_reset_activity_path, method: :post,
+                        class: "btn btn-danger btn-sm",
+                        data: { turbo_confirm: t("activity.engine.hard_reset_confirm") } %>
+        </span>
+      <% end %>
+    <% end %>
+  </div>
+</section>

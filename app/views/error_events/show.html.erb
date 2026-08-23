@@ -1,0 +1,116 @@
+<% content_for :title, "#{t("error_events.show.title")} ##{@event.id} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= link_to t("error_events.title"), error_events_path %></p>
+    <h1 class="page-title-mono"><%= @event.operation %></h1>
+    <div class="flex items-center gap-2 mt-2">
+      <span class="badge <%= {"open" => "badge-err", "acknowledged" => "badge-warn", "resolved" => "badge-ok"}[@event.status] %>">
+        <%= t("error_events.status_#{@event.status}") %>
+      </span>
+      <span class="badge badge-mute"><%= @event.severity %></span>
+      <% if @event.assigned_to %>
+        <span class="cell-meta"><%= t("error_events.show.assigned_to") %> <%= @event.assigned_to.email %></span>
+      <% elsif @event.context["assigned_team"].present? %>
+        <span class="cell-meta"><%= t("error_events.show.assigned_team") %> <%= @event.context["assigned_team"] %></span>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="page-actions flex flex-wrap items-center gap-2">
+    <% if policy(@event).assign? && !@event.resolved? %>
+      <%= form_with url: assign_error_event_path(@event), method: :patch,
+                    class: "flex items-center gap-1.5",
+                    data: { controller: "assignment-target" } do |f| %>
+        <%= select_tag :target_type,
+              options_for_select([[t("error_events.show.user"), "user"], [t("error_events.show.team"), "team"]], "user"),
+              class: "field-input field-input-sm",
+              aria_label: t("error_events.show.target_type"),
+              data: { action: "assignment-target#change" } %>
+        <%= select_tag :target_id,
+              options_from_collection_for_select(@assignable_users, :id, :email),
+              class: "field-input field-input-sm",
+              aria_label: t("error_events.show.user"),
+              data: { assignment_target_target: "select", target: "user" } %>
+        <%= select_tag :target_id,
+              options_from_collection_for_select(@teams, :id, :name),
+              class: "field-input field-input-sm hidden", disabled: true,
+              aria_label: t("error_events.show.team"),
+              data: { assignment_target_target: "select", target: "team" } %>
+        <button type="submit" class="btn btn-default btn-sm"><%= t("error_events.actions.assign") %></button>
+      <% end %>
+    <% end %>
+
+    <% if policy(@event).acknowledge? && @event.status == "open" %>
+      <%= button_to t("error_events.actions.acknowledge"), acknowledge_error_event_path(@event),
+                    method: :patch, class: "btn btn-primary btn-sm" %>
+    <% end %>
+    <% if policy(@event).resolve? && @event.status == "acknowledged" %>
+      <%= button_to t("error_events.actions.resolve"), resolve_error_event_path(@event),
+                    method: :patch, class: "btn btn-primary btn-sm",
+                    data: { turbo_confirm: t("actions.confirm") } %>
+    <% end %>
+  </div>
+</div>
+
+<section class="panel mb-4">
+  <div class="panel-head"><h2 class="panel-title"><%= t("error_events.show.message_title") %></h2></div>
+  <div class="panel-body">
+    <p class="font-mono text-body whitespace-pre-wrap break-words"><%= @event.message %></p>
+  </div>
+</section>
+
+<section class="panel mb-4">
+  <div class="panel-head"><h2 class="panel-title"><%= t("error_events.show.details_title") %></h2></div>
+  <div class="panel-body">
+    <dl class="dl">
+      <div>
+        <dt class="dl-term"><%= t("error_events.show.where") %></dt>
+        <dd class="dl-desc whitespace-nowrap">
+          <%= @event.catalog&.name || @event.source_system %>
+          <% location = [ @event.schema, @event.table ].reject(&:blank?).join(".") %>
+          <% if location.present? %><span class="cell-meta ml-1"><%= location %></span><% end %>
+        </dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("error_events.show.error_class") %></dt>
+        <dd class="dl-desc-mono"><%= @event.error_class %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("error_events.show.source_system") %></dt>
+        <dd class="dl-desc"><%= @event.source_system %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("error_events.show.occurrences") %></dt>
+        <dd class="dl-desc-mono"><%= @event.occurrence_count %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("error_events.show.first_seen") %></dt>
+        <dd class="dl-desc-mono text-small"><%= timestamp(@event.first_seen_at) %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("error_events.show.last_seen") %></dt>
+        <dd class="dl-desc-mono text-small"><%= timestamp(@event.last_seen_at) %></dd>
+      </div>
+      <% if @event.acknowledged_at.present? %>
+        <div>
+          <dt class="dl-term"><%= t("error_events.show.acknowledged_at") %></dt>
+          <dd class="dl-desc-mono text-small"><%= timestamp(@event.acknowledged_at) %></dd>
+        </div>
+      <% end %>
+      <% if @event.resolved_at.present? %>
+        <div>
+          <dt class="dl-term"><%= t("error_events.show.resolved_at") %></dt>
+          <dd class="dl-desc-mono text-small"><%= timestamp(@event.resolved_at) %></dd>
+        </div>
+      <% end %>
+    </dl>
+
+    <% if @event.context.present? %>
+      <details class="field-group mt-5">
+        <summary class="field-group-title cursor-pointer"><%= t("error_events.show.context_title") %></summary>
+        <pre class="font-mono text-small text-cosmos-fg-mute whitespace-pre-wrap break-words mt-3"><%= JSON.pretty_generate(@event.context) rescue @event.context.inspect %></pre>
+      </details>
+    <% end %>
+  </div>
+</section>

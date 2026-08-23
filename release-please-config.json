@@ -1,0 +1,17 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "version-file": "VERSION",
+      "bump-minor-pre-major": true,
+      "extra-files": [
+        { "type": "generic", "path": "config/locales/en.yml" },
+        { "type": "generic", "path": "config/locales/pt-BR.yml" },
+        { "type": "generic", "path": "infra/helm/lakedeepdiver/Chart.yaml" },
+        { "type": "generic", "path": "infra/helm/lakedeepdiver/values.yaml" },
+        { "type": "generic", "path": "README.md" },
+        { "type": "generic", "path": "infra/helm/lakedeepdiver/README.md" }
+      ]
+    }
+  }
+}

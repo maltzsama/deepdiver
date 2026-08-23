@@ -1,0 +1,48 @@
+<%# Engine lifecycle history - rendered last on the activity screen. %>
+<section id="activity-engine-history" class="panel mb-6">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("activity.engine.history_title") %></h2>
+  </div>
+
+  <% events = Array(local_assigns[:engine_events]) %>
+  <% if events.any? %>
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col" class="w-[34%]"><%= t("activity.engine.col_when") %></th>
+            <th scope="col" class="w-[44%]"><%= t("activity.engine.col_event") %></th>
+            <th scope="col" class="w-[22%]"><%= t("activity.engine.col_gen") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% events.each do |event| %>
+            <tr>
+              <td>
+                <span class="cell-muted"><%= timestamp(event.last_seen_at) %></span>
+              </td>
+              <td>
+                <span class="badge <%= engine_status_badge_class(engine_event_label(event)) %>">
+                  <span class="badge-dot"></span><%= engine_event_label(event) %>
+                </span>
+              </td>
+              <td class="cell-num">
+                <% if event.context["generation"] %>
+                  <%= t("activity.engine.gen", gen: event.context["generation"]) %>
+                <% elsif (g = engine_event_generation(event)) %>
+                  <%= t("activity.engine.gen", gen: g) %>
+                <% else %>
+                  <span class="cell-muted">—</span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="empty">
+      <p class="empty-title"><%= t("activity.engine.no_history") %></p>
+    </div>
+  <% end %>
+</section>

@@ -1,0 +1,73 @@
+<% content_for :title, t("alert_settings.title") %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("alert_settings.eyebrow") %></p>
+    <h1 class="page-title"><%= t("alert_settings.title") %></h1>
+    <p class="page-sub"><%= t("alert_settings.subtitle") %></p>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-body">
+    <%= form_with model: @setting, url: alert_settings_path, class: "form-grid" do |form| %>
+      <% if @setting.errors.any? %>
+        <div class="errors">
+          <p class="errors-title"><%= t("alert_settings.form.errors") %></p>
+          <ul class="errors-list">
+            <% @setting.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="field-group">
+        <p class="field-group-title"><%= t("alert_settings.form.smtp_title") %></p>
+        <p class="field-hint mb-4"><%= t("alert_settings.form.smtp_hint") %></p>
+
+        <div class="field">
+          <%= form.label :smtp_address, t("alert_settings.form.smtp_address"), class: "field-label" %>
+          <%= form.text_field :smtp_address, class: "field-input", placeholder: "smtp.example.com" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :smtp_port, t("alert_settings.form.smtp_port"), class: "field-label" %>
+          <%= form.number_field :smtp_port, min: 1, max: 65535, class: "field-input" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :smtp_user_name, t("alert_settings.form.smtp_user_name"), class: "field-label" %>
+          <%= form.text_field :smtp_user_name, class: "field-input" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :smtp_password, t("alert_settings.form.smtp_password"), class: "field-label" %>
+          <%= form.password_field :smtp_password, class: "field-input" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :smtp_from, t("alert_settings.form.smtp_from"), class: "field-label" %>
+          <p class="field-hint"><%= t("alert_settings.form.smtp_from_hint") %></p>
+          <%= form.text_field :smtp_from, class: "field-input", placeholder: "alerts@example.com" %>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <p class="field-group-title"><%= t("alert_settings.form.slack_title") %></p>
+        <p class="field-hint mb-4"><%= t("alert_settings.form.slack_hint") %></p>
+
+        <div class="field">
+          <%= form.label :slack_webhook_url, t("alert_settings.form.slack_webhook_url"), class: "field-label" %>
+          <%= form.url_field :slack_webhook_url, class: "field-input", placeholder: "https://hooks.slack.com/services/..." %>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <%= form.submit t("alert_settings.form.submit"), class: "btn btn-primary",
+                        data: { turbo_submits_with: t("actions.sending") } %>
+        <%= link_to t("alert_settings.form.cancel"), root_path, class: "link text-body" %>
+      </div>
+    <% end %>
+  </div>
+</section>

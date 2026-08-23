@@ -1,0 +1,63 @@
+# Production overrides for the lakedeepdiver Helm chart.
+# Usage: helm upgrade --install lakedeepdiver infra/helm/lakedeepdiver --values infra/helm/values/prod.yaml
+image:
+  repository: ghcr.io/maltzsama/lakedeepdiver
+  # Pin a concrete release; never "latest" in production.
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+postgresql:
+  existingSecret: ""
+
+activeRecordEncryption:
+  existingSecret: ""
+
+appSecrets:
+  # Created out-of-band (SealedSecrets / external controller) with DATABASE_URL,
+  # DB_QUEUE_URL, RAILS_MASTER_KEY and SECRET_KEY_BASE.
+  existingSecret: lakedeepdiver-secrets
+  create: false
+
+internalCA:
+  enabled: true
+  mountFile: /etc/ssl/certs/internal-ca.crt
+  existingSecret: lakedeepdiver-ca
+  caKey: ca.crt
+
+env:
+  trinoUrl: ""
+  # Leave empty to trust the release namespace; set to the Trino namespace
+  # when the engine lives elsewhere (remember to grant RBAC there).
+  trinoNamespace: ""
+  trinoDeployment: ""
+  logLevel: info
+  jobConcurrency: 2
+  host: ""
+
+replicaCount: 1
+worker:
+  enabled: true
+  replicaCount: 1
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 8m
+  hosts:
+    - host: ""
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - ""
+      secretName: lakedeepdiver-tls
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 512Mi

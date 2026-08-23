@@ -1,0 +1,42 @@
+<% content_for :title, "#{@team.name} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= link_to t("teams.index.title"), teams_path %></p>
+    <h1 class="page-title-mono"><%= @team.name %></h1>
+    <% if @team.description.present? %>
+      <p class="page-sub"><%= @team.description %></p>
+    <% end %>
+  </div>
+  <div class="page-actions">
+    <% if policy(@team).edit? %>
+      <%= link_to t("teams.show.edit"), edit_team_path(@team), class: "btn btn-default" %>
+    <% end %>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-head"><h2 class="panel-title"><%= t("teams.show.members_title") %></h2></div>
+  <div class="panel-body">
+    <% if @team.members.empty? %>
+      <p class="cell-muted"><%= t("teams.show.empty_members") %></p>
+    <% else %>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col"><%= t("teams.show.col_email") %></th>
+            <th scope="col"><%= t("teams.show.col_role") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @team.members.order(:email).each do |user| %>
+            <tr>
+              <td class="cell-id"><%= user.email %></td>
+              <td><span class="badge badge-mute"><%= user.role %></span></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+</section>

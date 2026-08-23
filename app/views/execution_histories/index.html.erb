@@ -1,0 +1,175 @@
+<% content_for :title, "#{t("operations.index.title")} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("operations.index.eyebrow") %></p>
+    <h1 class="page-title"><%= t("operations.index.title") %></h1>
+    <p class="page-sub"><%= t("operations.index.subtitle") %></p>
+  </div>
+</div>
+
+<%# Tabs replace the old kind dropdown: each source gets its own schema and
+    its own pagination - no interleaved merge with an arbitrary tail cut. %>
+<div class="flex gap-1 mb-4">
+  <% [ "maintenance", "freshness" ].each do |tab| %>
+    <%= link_to t("operations.index.tab_#{tab}"),
+                execution_histories_path(request.query_parameters.merge("tab" => tab, "page" => nil)),
+                class: "badge #{tab == @tab ? 'badge-ok' : 'badge-mute'} pager-page" %>
+  <% end %>
+</div>
+
+<%= render "shared/filters",
+           url: execution_histories_path,
+           fields: [
+             { name: :catalog_id, label: t("tables.filter_catalog"),
+               options: @catalogs.map { |c| [ c.name, c.id ] } },
+             { name: :status, label: t("operations.filter_status"),
+               options: (@tab == "freshness" ? FreshnessCheck::STATUSES : ExecutionHistory::STATUSES).map { |s| [ s, s ] } }
+           ] + (@tab == "maintenance" ? [
+             { name: :operation, label: t("operations.filter_operation"),
+               options: MaintenancePlan::CANONICAL_ORDER.map { |o| [ o, o ] } },
+             { name: :stopped_at_step, label: t("operations.index.filter_stopped_at"),
+               options: MaintenancePlan::CANONICAL_ORDER.map { |o| [ o, o ] } }
+           ] : []) %>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("operations.index.result") %></h2>
+    <span class="panel-note"><%= t("operations.index.count", count: @pagy.count) %></span>
+  </div>
+
+  <% if @tab == "freshness" %>
+    <% if @checks.empty? %>
+      <div class="empty">
+        <p class="empty-title"><%= t("operations.index.empty_title") %></p>
+        <p class="empty-hint">
+          <% if request.query_parameters.any? %>
+            <%= t("operations.index.empty_filters_hint") %>
+          <% else %>
+            <%= t("operations.index.empty_none_hint") %>
+          <% end %>
+        </p>
+      </div>
+    <% else %>
+      <div class="data-table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col"><%= t("operations.index.col_table") %></th>
+              <th scope="col"><%= t("operations.index.fresh_col_delay") %></th>
+              <th scope="col"><%= t("operations.index.fresh_col_sla") %></th>
+              <th scope="col"><%= t("operations.index.col_status") %></th>
+              <th scope="col"><%= t("operations.index.col_when") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @checks.each do |check| %>
+              <tr data-href="<%= iceberg_table_path(check.iceberg_table) %>">
+                <td>
+                  <%= link_to check.iceberg_table.fully_qualified_name, check.iceberg_table, class: "link-mono" %>
+                  <span class="ml-2 text-small cell-muted"><%= check.iceberg_table.catalog.name %></span>
+                </td>
+                <td class="cell-num"><%= freshness_delay_label(check.delay_seconds) || "—" %></td>
+                <td class="cell-num"><%= check.sla_minutes %></td>
+                <td><span class="badge <%= freshness_badge_class(check.status) %>"><%= check.status %></span></td>
+                <td><%= timestamp(check.checked_at) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <%== pager_nav(@pagy) %>
+    <% end %>
+  <% elsif @executions.empty? %>
+    <div class="empty">
+      <p class="empty-title"><%= t("operations.index.empty_title") %></p>
+      <p class="empty-hint">
+          <% if request.query_parameters.any? %>
+            <%= t("operations.index.empty_filters_hint") %>
+          <% else %>
+            <%= t("operations.index.empty_none_hint") %>
+          <% end %>
+        </p>
+    </div>
+  <% else %>
+    <% @executions.each do |execution| %>
+      <% timeline = ExecutionTimeline.new(execution) %>
+      <article class="op-run <%= "op-run--failed" if execution.status == "failed" %>">
+        <div class="op-head">
+          <span class="badge <%= execution_status_badge_class(execution.status) %>">
+            <span class="badge-dot"></span><%= execution.status %>
+          </span>
+          <span class="op-name cell-id">
+            <%= link_to execution.iceberg_table.fully_qualified_name, execution.iceberg_table, class: "link-mono" %>
+            <span class="cell-meta ml-2"><%= execution.iceberg_table.catalog.name %></span>
+          </span>
+          <span class="op-total"><%= duration_label(execution.duration) || "—" %></span>
+          <span class="op-at"><%= timestamp(execution.started_at || execution.created_at) %></span>
+        </div>
+
+        <% if timeline.total_seconds.positive? && timeline.segments.any? %>
+          <div class="op-bar" role="img"
+               aria-label="<%= t("operations.index.col_duration") %>: <%= duration_label(timeline.total_seconds) %>">
+            <% timeline.segments.each do |seg| %>
+              <div class="op-seg op-seg--<%= seg.kind %> <%= "op-seg--open" if seg.kind == :open %>"
+                   style="left: <%= seg.offset_pct %>%; width: <%= seg.width_pct %>%;"
+                   title="<%= seg.label %>"></div>
+            <% end %>
+            <% never_ran = execution.execution_steps.where(started_at: nil) %>
+            <% if never_ran.any? && !timeline.running? %>
+              <div class="op-tick" style="left: calc(100% - 2px);"></div>
+            <% end %>
+          </div>
+        <% end %>
+
+        <p class="op-legend">
+          <% legend_parts = [] %>
+          <% if timeline.wait_seconds.nil? && execution.status == "pending" %>
+            <% legend_parts << t("operations.index.legend_waiting_engine") %>
+          <% elsif timeline.wait_seconds.to_f.positive? %>
+            <% legend_parts << t("operations.index.legend_wait", dur: duration_label(timeline.wait_seconds)) %>
+          <% end %>
+          <% execution.execution_steps.order(:id).each do |step| %>
+            <% if step.started_at.present? %>
+              <% dur = duration_label(step.duration) || "—" %>
+              <% legend_parts <<
+                   case step.status
+                   when "failed"     then t("operations.index.legend_failed", op: step.operation, dur: dur)
+                   when "running"    then t("operations.index.legend_open", op: step.operation, dur: dur)
+                   else t("operations.index.legend_ok", op: step.operation, dur: dur)
+                   end %>
+            <% elsif step.blocked? %>
+              <% legend_parts << t("operations.index.legend_blocked", op: step.operation) %>
+            <% elsif step.skipped? && step.skip_reason.present? %>
+              <% legend_parts << t("operations.index.legend_skipped", op: step.operation, reason: step.skip_reason) %>
+            <% elsif step.pending? %>
+              <% legend_parts << t("operations.index.legend_blocked", op: step.operation) %>
+            <% end %>
+          <% end %>
+          <%= safe_join(legend_parts, content_tag(:span, " · ", class: "opacity-50")) %>
+        </p>
+
+        <% meta_lines = execution.execution_steps.order(:id).filter_map do |step|
+             next if step.trino_query_id.blank? && step.metrics.blank?
+             stats = step.metrics&.dig("stats") || {}
+             parts = []
+             parts << "#{number_with_delimiter(stats['elapsedTimeMillis'])} #{t('operations.metrics_ms')}" if stats["elapsedTimeMillis"]
+             parts << "#{number_to_human_size(stats['processedBytes'])} #{t('operations.metrics_processed')} → #{number_to_human_size(stats['physicalWrittenBytes'] || 0)} #{t('operations.metrics_written')}" if stats["processedBytes"]
+             parts << content_tag(:span, step.trino_query_id, title: t("operations.index.col_query_id")) if step.trino_query_id.present?
+             parts.empty? ? nil : safe_join(parts, content_tag(:span, " · ", class: "opacity-50"))
+           end %>
+        <% if meta_lines.any? %>
+          <p class="op-legend op-legend--meta"><%= safe_join(meta_lines, content_tag(:br)) %></p>
+        <% end %>
+
+        <% execution.execution_steps.where(status: "failed").where.not(error_message: nil).each do |step| %>
+          <div class="op-error"><span class="op-error-owner"><%= step.operation %> —</span> <%= step.error_message %></div>
+        <% end %>
+        <% if execution.error_message.present? %>
+          <div class="op-error"><span class="op-error-owner"><%= t("operations.index.owner_execution") %> —</span> <%= execution.error_message %></div>
+        <% end %>
+      </article>
+    <% end %>
+    <%== pager_nav(@pagy) %>
+  <% end %>
+</section>

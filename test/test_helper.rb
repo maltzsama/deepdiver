@@ -1,0 +1,103 @@
+ENV["RAILS_ENV"] ||= "test"
+require_relative "../config/environment"
+require "rails/test_help"
+
+class ActiveSupport::TestCase
+  parallelize(workers: :number_of_processors)
+  include ActiveJob::TestHelper
+
+  teardown :cleanup_table_locks
+  teardown :cleanup_engine_state
+  teardown :reset_trino_runtime
+  teardown :reset_trino_provisioner
+
+  # Test double for a runtime that raises Trino commit conflicts.
+  class ConflictRuntime
+    def ready?
+      true
+    end
+
+    def ensure_running
+    end
+
+    def ensure_stopped
+    end
+
+    def execute(*, **)
+      raise TrinoRuntime::CommitConflict, "another writer committed first"
+    end
+  end
+
+  # Test double for a runtime that never becomes ready.
+  class UnavailableRuntime
+    def ready?
+      false
+    end
+
+    def ensure_running
+    end
+
+    def ensure_stopped
+    end
+
+    def execute(*, **)
+      raise "should not be called"
+    end
+  end
+
+  private
+
+  def build_catalog
+    Catalog.find_or_create_by!(name: "analytics") do |catalog|
+      catalog.catalog_type = "nessie"
+      catalog.endpoint = "http://nessie:19120/api/v1"
+      catalog.trino_catalog_name_override = nil
+    end
+  end
+
+  def build_table
+    catalog = build_catalog
+    catalog.iceberg_tables.find_or_create_by!(namespace: "reporting", name: "dwd_orders")
+  end
+
+  def build_schedule(operation: "optimize", config: nil, cron: "0 3 * * *", **rest)
+    attrs = { operation: operation, cron: cron, **rest }
+    attrs[:config] = config if config
+    build_table.maintenance_schedules.create!(**attrs)
+  end
+
+  # A plan on a fresh table, so callers get distinct plans.
+  def build_plan(cron: "0 3 * * *", is_paused: false, **rest)
+    catalog = build_catalog
+    table = catalog.iceberg_tables.create!(namespace: "reporting", name: "plan_table_#{SecureRandom.hex(4)}")
+    plan = MaintenancePlan.create!(iceberg_table: table, cron: cron, is_paused: is_paused, **rest)
+    plan.maintenance_steps.create!(operation: "optimize", position: 0, config: {}) if plan.maintenance_steps.empty?
+    plan
+  end
+
+  def build_plan_with_steps(cron: "0 3 * * *")
+    catalog = build_catalog
+    table = catalog.iceberg_tables.create!(namespace: "reporting", name: "plan_table_#{SecureRandom.hex(4)}")
+    plan = MaintenancePlan.create!(iceberg_table: table, cron: cron)
+    MaintenancePlan::CANONICAL_ORDER.each_with_index do |operation, index|
+      plan.maintenance_steps.create!(operation: operation, position: index, config: {})
+    end
+    plan
+  end
+
+  def cleanup_table_locks
+    TableLock.delete_all
+  end
+
+  def cleanup_engine_state
+    TrinoEngineState.delete_all
+  end
+
+  def reset_trino_runtime
+    TrinoRuntime.reset_adapter!
+  end
+
+  def reset_trino_provisioner
+    TrinoProvisioner.reset_adapter!
+  end
+end

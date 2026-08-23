@@ -1,0 +1,56 @@
+<% content_for :title, "#{t("policies.index.title")} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("policies.index.eyebrow") %></p>
+    <h1 class="page-title"><%= t("policies.index.title") %></h1>
+    <p class="page-sub"><%= t("policies.index.subtitle") %></p>
+  </div>
+  <% if current_user.admin? %>
+    <div class="page-actions">
+      <%= link_to t("policies.index.new"), new_maintenance_policy_path, class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>
+
+<% if @policies.empty? %>
+  <section class="panel">
+    <div class="empty">
+      <p class="empty-title"><%= t("policies.index.empty_title") %></p>
+      <p class="empty-hint"><%= t("policies.index.empty_hint") %></p>
+      <% if current_user.admin? %>
+        <div class="empty-action">
+          <%= link_to t("policies.index.create"), new_maintenance_policy_path, class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </section>
+<% else %>
+  <section class="panel">
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col"><%= t("policies.index.col_name") %></th>
+            <th scope="col"><%= t("policies.index.col_cron") %></th>
+            <th scope="col"><%= t("policies.index.col_tables") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @policies.each do |policy| %>
+            <tr>
+              <td>
+                <%= link_to policy.name, policy, class: "link" %>
+                <% if policy.description.present? %>
+                  <p class="cell-muted text-small"><%= policy.description %></p>
+                <% end %>
+              </td>
+              <td class="cell-id"><%= policy.cron %></td>
+              <td class="cell-num"><%= policy.maintenance_plans.size %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% end %>

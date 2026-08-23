@@ -1,0 +1,53 @@
+<% content_for :title, "#{t("catalogs.index.eyebrow")} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("catalogs.index.eyebrow") %></p>
+    <h1 class="page-title"><%= t("catalogs.index.title") %></h1>
+    <p class="page-sub"><%= t("catalogs.index.subtitle") %></p>
+  </div>
+  <% if current_user.admin? %>
+    <div class="page-actions">
+      <%= link_to t("catalogs.index.new"), new_catalog_path, class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>
+
+<% if @catalogs.empty? %>
+  <section class="panel">
+    <div class="empty">
+      <p class="empty-title"><%= t("catalogs.index.empty_title") %></p>
+      <p class="empty-hint"><%= t("catalogs.index.empty_hint") %></p>
+      <% if current_user.admin? %>
+        <div class="empty-action">
+          <%= link_to t("catalogs.index.register"), new_catalog_path, class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </section>
+<% else %>
+  <section class="panel">
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col"><%= t("catalogs.form.name") %></th>
+            <th scope="col"><%= t("catalogs.form.type") %></th>
+            <th scope="col"><%= t("catalogs.form.endpoint") %></th>
+            <th scope="col"><%= t("catalogs.index.col_tables") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @catalogs.each do |catalog| %>
+            <tr>
+              <td><%= link_to catalog.name, catalog, class: "link-mono" %></td>
+              <td><span class="badge badge-neutral"><%= catalog.catalog_type %></span></td>
+              <td class="cell-muted font-mono text-small break-all"><%= catalog.endpoint %></td>
+              <td class="cell-num"><%= catalog.iceberg_tables.size %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% end %>

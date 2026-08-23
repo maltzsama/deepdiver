@@ -14,13 +14,10 @@ gem "importmap-rails"
 gem "turbo-rails"
 # Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
 gem "stimulus-rails"
-# Build JSON APIs with ease [https://github.com/rails/jbuilder]
-gem "jbuilder"
-
 # Authentication [https://github.com/heartcombo/devise]
 gem "devise"
 
-# Cron parsing for maintenance_schedules dispatch [https://github.com/floraison/fugit]
+# Cron parsing for maintenance plan dispatch [https://github.com/floraison/fugit]
 gem "fugit"
 
 # Kubernetes API client, used by the Trino scale up/down workers [https://github.com/abonas/kubeclient]
@@ -42,14 +39,14 @@ gem "pg", "~> 1.5", groups: %i[ production ]
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
-# Deploy this application anywhere as a Docker container [https://kamal-deploy.org]
-gem "kamal", require: false
+# Deploy this application as a Docker container consumed by the Helm chart
+# (see infra/helm/lakedeepdiver).
 
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
 gem "thruster", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
-gem "image_processing", "~> 2.0"
+# gem "image_processing", "~> 2.0"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
@@ -68,4 +65,32 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
+end
+
+gem "rspec-rails", "~> 8.0", groups: [ :development, :test ]
+
+gem "factory_bot_rails", "~> 6.5", groups: [ :development, :test ]
+
+gem "tailwindcss-rails", "~> 4.6"
+
+gem "rails-controller-testing", "~> 1.0", groups: [ :development, :test ]
+
+gem "omniauth_openid_connect", "~> 0.8.0"
+
+gem "omniauth-rails_csrf_protection", "~> 2.0"
+
+gem "bullet", "~> 8.1", groups: [ :development, :test ]
+
+gem "solid_cable", "~> 4.0"
+
+gem "pundit", "~> 2.5", require: "pundit"
+
+gem "pagy", "~> 9.0"
+
+# AWS STS for S3 temporary credentials (AssumeRole) used by Trino.
+gem "aws-sdk-sts", "~> 1.0", require: false
+
+group :test do
+  gem "capybara"
+  gem "selenium-webdriver"
 end

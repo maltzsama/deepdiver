@@ -1,0 +1,143 @@
+<section class="panel mb-6">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("tables.metadata.title") %></h2>
+    <span class="panel-note">
+      <% if @table.metadata_synced_at %>
+        <%= t("tables.metadata.synced_ago", time: time_ago_in_words(@table.metadata_synced_at)) %>
+      <% else %>
+        <%= t("tables.metadata.not_synced") %>
+      <% end %>
+    </span>
+  </div>
+  <div class="panel-body">
+    <input type="radio" name="metadata-tab" id="tab-info" class="peer/info sr-only" checked>
+    <input type="radio" name="metadata-tab" id="tab-snapshots" class="peer/snapshots sr-only">
+    <input type="radio" name="metadata-tab" id="tab-metrics" class="peer/metrics sr-only">
+
+    <div class="mb-4 flex gap-1 border-b border-cosmos-line">
+      <label for="tab-info" class="cursor-pointer border-b-2 border-transparent px-3 py-1.5 font-mono text-small font-bold uppercase tracking-[0.12em] text-cosmos-fg-mute hover:text-cosmos-fg peer-checked/info:border-accent-DEFAULT peer-checked/info:text-accent-DEFAULT"><%= t("tables.metadata.info_tab") %></label>
+      <label for="tab-snapshots" class="cursor-pointer border-b-2 border-transparent px-3 py-1.5 font-mono text-small font-bold uppercase tracking-[0.12em] text-cosmos-fg-mute hover:text-cosmos-fg peer-checked/snapshots:border-accent-DEFAULT peer-checked/snapshots:text-accent-DEFAULT"><%= t("tables.metadata.snapshots_tab") %></label>
+      <label for="tab-metrics" class="cursor-pointer border-b-2 border-transparent px-3 py-1.5 font-mono text-small font-bold uppercase tracking-[0.12em] text-cosmos-fg-mute hover:text-cosmos-fg peer-checked/metrics:border-accent-DEFAULT peer-checked/metrics:text-accent-DEFAULT"><%= t("tables.metadata.metrics_tab") %></label>
+    </div>
+
+    <div class="peer-checked/info:block hidden">
+      <dl class="dl mb-4">
+        <div>
+          <dt class="dl-term"><%= t("tables.metadata.uuid") %></dt>
+          <dd class="dl-desc-mono text-small"><%= @table.table_uuid || "—" %></dd>
+        </div>
+        <div>
+          <dt class="dl-term"><%= t("tables.metadata.location") %></dt>
+          <dd class="dl-desc-mono text-small break-all"><%= @table.storage_location || "—" %></dd>
+        </div>
+      </dl>
+
+      <h3 class="mb-2 text-body font-semibold"><%= t("tables.metadata.schema") %></h3>
+      <% fields = @table.schema_json&.last&.dig("fields") || [] %>
+      <% if fields.empty? %>
+        <p class="cell-muted text-body"><%= t("tables.metadata.no_data", field: "schema") %></p>
+      <% else %>
+        <div class="data-table-scroll mb-4">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th scope="col"><%= t("tables.metadata.col_column") %></th>
+                <th scope="col"><%= t("tables.metadata.col_type") %></th>
+                <th scope="col"><%= t("tables.metadata.col_required") %></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% fields.each do |field| %>
+                <tr>
+                  <td class="cell-id"><%= field["name"] %></td>
+                  <td class="cell-muted font-mono text-small"><%= field["type"] %></td>
+                  <td><%= field["required"] ? t("tables.metadata.val_yes") : t("tables.metadata.val_no") %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+
+      <h3 class="mb-2 text-body font-semibold"><%= t("tables.metadata.partitioning") %></h3>
+      <% if @table.partition_json.blank? %>
+        <p class="cell-muted text-body"><%= t("tables.metadata.no_data", field: "partitioning") %></p>
+      <% else %>
+        <% @table.partition_json.each do |spec| %>
+          <p class="mb-1 text-small font-mono text-cosmos-fg-soft">
+            <%= t("tables.metadata.spec_prefix") %> <%= spec["spec-id"] %>: <%= (spec["fields"] || []).map { |f| "#{f["transform"]}(#{f["name"]})" }.join(", ") %>
+          </p>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="peer-checked/snapshots:block hidden">
+      <h3 class="mb-2 text-body font-semibold"><%= t("tables.metadata.refs") %></h3>
+      <% if @table.refs_json.blank? %>
+        <p class="cell-muted text-body"><%= t("tables.metadata.no_data", field: "refs") %></p>
+      <% else %>
+        <div class="mb-4 flex flex-wrap gap-2">
+          <% @table.refs_json.each do |name, ref| %>
+            <span class="badge badge-neutral"><%= name %> → <%= ref["snapshot-id"] %></span>
+          <% end %>
+        </div>
+      <% end %>
+
+      <h3 class="mb-2 text-body font-semibold"><%= t("tables.metadata.snapshot_history") %></h3>
+      <% if @table.snapshots_json.blank? %>
+        <p class="cell-muted text-body"><%= t("tables.metadata.no_data", field: "snapshots") %></p>
+      <% else %>
+        <div class="data-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th scope="col"><%= t("tables.metadata.col_id") %></th>
+                <th scope="col"><%= t("tables.metadata.col_time") %></th>
+                <th scope="col"><%= t("tables.metadata.col_operation") %></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @table.snapshots_json.reverse_each do |snap| %>
+                <tr>
+                  <td class="cell-id"><%= snap["snapshot-id"] || snap["snapshot_id"] %></td>
+                  <td><%= timestamp(Time.at((snap["timestamp-ms"] || snap["timestamp_ms"]).to_f / 1000.0)) %></td>
+                  <td class="cell-muted"><%= snap.dig("summary", "operation") || "—" %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="peer-checked/metrics:block hidden">
+      <dl class="dl">
+        <div>
+          <dt class="dl-term"><%= t("tables.metrics.records") %></dt>
+          <dd class="dl-desc-mono"><%= @table.total_records ? number_to_human(@table.total_records) : "—" %></dd>
+        </div>
+        <div>
+          <dt class="dl-term"><%= t("tables.metrics.files") %></dt>
+          <dd class="dl-desc-mono"><%= @table.total_data_files || "—" %></dd>
+        </div>
+        <div>
+          <dt class="dl-term"><%= t("tables.metrics.size") %></dt>
+          <dd class="dl-desc-mono"><%= @table.total_size_bytes ? number_to_human_size(@table.total_size_bytes) : "—" %></dd>
+        </div>
+        <div>
+          <dt class="dl-term"><%= t("tables.metrics.avg_size") %></dt>
+          <dd class="dl-desc-mono"><%= @table.average_file_size ? number_to_human_size(@table.average_file_size) : "—" %></dd>
+        </div>
+        <div>
+          <dt class="dl-term"><%= t("tables.metrics.position_deletes") %></dt>
+          <dd class="dl-desc-mono"><%= @table.position_deletes || "—" %></dd>
+        </div>
+        <div>
+          <dt class="dl-term"><%= t("tables.metrics.equality_deletes") %></dt>
+          <dd class="dl-desc-mono"><%= @table.equality_deletes || "—" %></dd>
+        </div>
+      </dl>
+      <p class="mt-3 text-small cell-muted"><%= t("tables.metrics.missing_note") %></p>
+    </div>
+  </div>
+</section>

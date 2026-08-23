@@ -1,0 +1,97 @@
+<%# Running and retrying rows. Broadcast replaces #activity-running by preserving
+    the per-execution Turbo Frame for action buttons. %>
+<div id="activity-running" class="grid gap-6 lg:grid-cols-2">
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title"><%= t("activity.running.title") %></h2>
+    </div>
+    <div class="divide-y divide-cosmos-line">
+      <% running.select { |e| !e.retrying? }.each do |execution| %>
+        <div class="px-4 py-3">
+          <div class="flex items-center justify-between gap-3">
+            <%= link_to execution.iceberg_table.fully_qualified_name, execution.iceberg_table, class: "link-mono" %>
+            <%= turbo_frame_tag "cancel_#{execution.id}" do %>
+              <span class="flex items-center gap-2">
+                <span class="badge badge-running"><%= execution.current_step %></span>
+                <% if defined?(current_user) && can_cancel_query? %>
+                  <%= turbo_frame_tag "cancel_#{execution.id}" do %>
+                    <%= button_to t("activity.running.cancel"), cancel_execution_history_path(execution),
+                                  method: :post, class: "btn btn-danger btn-sm",
+                                  data: { turbo_confirm: t("activity.running.cancel_confirm") } %>
+                  <% end %>
+                <% end %>
+              </span>
+            <% end %>
+          </div>
+          <%= render "shared/step_chain", execution: execution %>
+          <p class="mt-1 text-small cell-muted">
+            <%= t("activity.running.elapsed", time: duration_label(Time.current - execution.current_step_started_at)) if execution.current_step_started_at %>
+            <% if (typical = execution.maintenance_plan&.typical_duration) %>
+              · <%= t("activity.running.typical", time: duration_label(typical)) %>
+            <% end %>
+          </p>
+        </div>
+      <% end %>
+      <% if running.none? { |e| !e.retrying? } %>
+        <div class="empty">
+          <p class="empty-title"><%= t("activity.running.empty") %></p>
+        </div>
+      <% end %>
+    </div>
+  </section>
+
+  <div class="flex flex-col gap-6">
+    <section class="panel">
+      <div class="panel-head">
+        <h2 class="panel-title"><%= t("activity.retrying.title") %></h2>
+      </div>
+      <div class="divide-y divide-cosmos-line">
+        <% running.select(&:retrying?).each do |execution| %>
+          <div class="px-4 py-3">
+            <div class="flex items-center justify-between gap-3">
+              <%= link_to execution.iceberg_table.fully_qualified_name, execution.iceberg_table, class: "link-mono" %>
+              <span class="badge badge-warn"><%= t("activity.retrying.next_attempt", time: duration_label(ExecuteMaintenanceJob::RETRY_WAIT)) %></span>
+            </div>
+            <%= render "shared/step_chain", execution: execution %>
+          </div>
+        <% end %>
+        <% if running.none?(&:retrying?) %>
+          <div class="empty">
+            <p class="empty-title"><%= t("activity.retrying.empty") %></p>
+          </div>
+        <% end %>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2 class="panel-title"><%= t("activity.queued.title") %></h2>
+        <span class="panel-note" id="activity-queued-count"><%= queued.size %></span>
+      </div>
+      <div id="activity-queued" class="divide-y divide-cosmos-line">
+        <% queued.each_with_index do |execution, index| %>
+          <div class="flex items-center justify-between gap-3 px-4 py-3">
+            <div class="min-w-0">
+              <p class="truncate font-mono text-small text-cosmos-fg" title="<%= execution.iceberg_table.fully_qualified_name %>">
+                <%= link_to execution.iceberg_table.fully_qualified_name, execution.iceberg_table, class: "link-mono" %>
+              </p>
+              <p class="cell-muted text-small">
+                <%= index + 1 %> · <%= execution.waiting_reason %>
+              </p>
+            </div>
+            <% if local_assigns.fetch(:show_actions, true) && can_cancel_query? %>
+              <%= button_to t("activity.queued.cancel"), cancel_execution_history_path(execution),
+                            method: :post, class: "btn btn-danger btn-sm",
+                            data: { turbo_confirm: t("activity.queued.cancel_confirm") } %>
+            <% end %>
+          </div>
+        <% end %>
+        <% if queued.empty? %>
+          <div class="empty">
+            <p class="empty-title"><%= t("activity.queued.empty") %></p>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  </div>
+</div>

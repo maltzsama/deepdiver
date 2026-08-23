@@ -1,0 +1,49 @@
+<% content_for :title, "#{t('auth.sign_in.title')} — #{t('auth.brand')}" %>
+
+<h2 class="auth-card-title"><%= t("auth.sign_in.title") %></h2>
+<p class="auth-card-sub"><%= t("auth.sign_in.subtitle") %></p>
+
+<% if AuthConfig.sso_enabled? %>
+  <%= button_to t("auth.sign_in.sso", provider: AuthConfig.provider_label),
+                user_openid_connect_omniauth_authorize_path,
+                data: { turbo: false },
+                class: "btn btn-sso" %>
+
+  <% if AuthConfig.local_login_enabled? %>
+    <p class="auth-divider"><%= t("auth.sign_in.or") %></p>
+  <% end %>
+<% end %>
+
+<% if AuthConfig.local_login_enabled? %>
+  <%= form_for(resource, as: resource_name,
+               url: session_path(resource_name), class: "form-grid") do |f| %>
+    <div class="field">
+      <%= f.label :email, t("auth.fields.email"), class: "field-label" %>
+      <%= f.email_field :email, autofocus: !AuthConfig.sso_enabled?,
+                        autocomplete: "email", class: "field-input" %>
+    </div>
+
+    <div class="field">
+      <%= f.label :password, t("auth.fields.password"), class: "field-label" %>
+      <%= f.password_field :password, autocomplete: "current-password",
+                           class: "field-input" %>
+    </div>
+
+    <% if devise_mapping.rememberable? %>
+      <label class="field-check">
+        <%= f.check_box :remember_me, class: "field-checkbox" %>
+        <%= t("auth.fields.remember_me") %>
+      </label>
+    <% end %>
+
+    <%= f.submit t("auth.sign_in.submit"), class: "btn btn-primary btn-block",
+                data: { turbo_submits_with: t("actions.sending") } %>
+
+    <% if devise_mapping.recoverable? %>
+      <p class="text-center">
+        <%= link_to t("auth.sign_in.forgot"), new_password_path(resource_name),
+                    class: "link text-body" %>
+      </p>
+    <% end %>
+  <% end %>
+<% end %>

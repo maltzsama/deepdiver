@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "lakedeepdiver.fullname" . }}
+  labels:
+    {{- include "lakedeepdiver.labels" . | nindent 4 }}
+data:
+  RAILS_ENV: production
+  RAILS_LOG_LEVEL: {{ .Values.env.logLevel | quote }}
+  TRINO_RUNTIME: real
+  {{- if .Values.env.trinoUrl }}
+  TRINO_URL: {{ .Values.env.trinoUrl | quote }}
+  {{- end }}
+  TRINO_NAMESPACE: {{ .Values.env.trinoNamespace | default .Release.Namespace | quote }}
+  TRINO_DEPLOYMENT: {{ .Values.env.trinoDeployment | quote }}
+  JOB_CONCURRENCY: {{ .Values.env.jobConcurrency | quote }}
+  {{- if .Values.env.host }}
+  HOST: {{ .Values.env.host | quote }}
+  {{- end }}
+  {{- if and .Values.internalCA.enabled .Values.internalCA.existingSecret }}
+  SSL_CERT_FILE: {{ .Values.internalCA.mountFile | quote }}
+  {{- end }}

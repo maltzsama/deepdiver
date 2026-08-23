@@ -1,0 +1,116 @@
+<header class="col-start-2 row-start-1 bg-cosmos-soft border-b border-cosmos-line flex items-center px-4 gap-4 min-w-0">
+
+  <!-- Search -->
+  <%= form_with url: iceberg_tables_path, method: :get, class: "flex-1 max-w-[520px] relative",
+                data: { controller: "search" } do %>
+    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-cosmos-fg-mute pointer-events-none" viewBox="0 0 16 16" fill="none">
+      <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5"/>
+    </svg>
+    <input type="search" name="q" value="<%= params[:q] %>" placeholder="<%= t("layout.topbar.search_placeholder") %>"
+           autocomplete="off"
+           aria-label="<%= t("layout.topbar.search_placeholder") %>"
+           data-search-target="input"
+           class="w-full h-8 pl-8 pr-20 bg-cosmos-sunk border border-cosmos-line-2 text-cosmos-fg font-sans text-body outline-none focus:border-cosmos-line-bold rounded-none" />
+    <kbd class="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-micro text-cosmos-fg-mute bg-cosmos-bg border border-cosmos-line-2 px-1.5 py-0.5">⌘K</kbd>
+  <% end %>
+
+  <!-- Tools / user -->
+  <div class="ml-auto flex items-center gap-1.5">
+    <%= button_to toggle_theme_path, method: :post, class: "topbar-btn", title: t("layout.topbar.theme_toggle_title"),
+                  aria: { label: t("layout.topbar.theme_toggle_label") },
+                  form: { data: { turbo: false } } do %>
+      <% if html_theme == "light" %>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M13 3l-1 1M4 12l-1 1" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      <% else %>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M13.5 9.5A6 6 0 0 1 6.5 2.5a6 6 0 1 0 7 7z" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      <% end %>
+    <% end %>
+
+    <%= link_to execution_histories_path(status: "failed"), class: "topbar-btn", aria: { label: t("layout.topbar.notifications_label") },
+                title: t("layout.topbar.notifications") do %>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M3 6a5 5 0 0 1 10 0v3l1 2H2l1-2zM6 13a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+      <% if @failed_execution_count&.positive? %>
+        <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-accent-DEFAULT rounded-full"></span>
+      <% end %>
+    <% end %>
+
+    <span class="font-mono text-small text-cosmos-fg-mute px-1"><%= t("auth.version") %></span>
+
+    <div class="relative" data-controller="dropdown">
+      <%= button_tag type: "button", class: "topbar-btn topbar-btn-avatar",
+                     title: t("profiles.show.title"),
+                     aria: { label: t("profiles.show.title"), haspopup: "menu", expanded: "false" },
+                     data: { action: "click->dropdown#toggle" } do %>
+        <span class="w-7 h-7 bg-accent-DEFAULT text-[#F4F1E8] flex items-center justify-center font-bold text-small">
+          <%= (current_user.display_name.presence || current_user.email).first.upcase %>
+        </span>
+      <% end %>
+
+      <div class="topbar-menu" role="menu" aria-label="<%= t("layout.topbar.user_menu") %>"
+           data-dropdown-target="menu" hidden>
+        <%= link_to profile_path, class: "topbar-menu-item", role: "menuitem" do %>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M2.5 14c0-2.6 2.5-4.2 5.5-4.2S13.5 11.4 13.5 14" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+          <%= t("profiles.show.title") %>
+        <% end %>
+
+        <%= button_to destroy_user_session_path, method: :delete,
+                        class: "topbar-menu-item topbar-menu-item-danger",
+                        role: "menuitem" do %>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M10 3v1M6 3v1M3.5 6h9M4.5 6l.6 7h5.8l.6-7M6.5 8v3M9.5 8v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <%= t("layout.session.sign_out") %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Topbar-only styles -->
+<style>
+  .topbar-btn {
+    height: 32px; min-width: 32px; padding: 0 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; border: 1px solid transparent;
+    color: var(--fg-mute); cursor: pointer; position: relative;
+    text-decoration: none;
+  }
+  .topbar-btn:hover { background: var(--sunk); border-color: var(--line); color: var(--fg); }
+  .topbar-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Profile avatar: the button hugs the 28px red square, no extra padding. */
+  .topbar-btn-avatar {
+    height: 28px; min-width: 28px; padding: 0;
+  }
+
+  .topbar-menu {
+    position: absolute; top: calc(100% + 6px); right: 0;
+    min-width: 180px;
+    display: flex; flex-direction: column;
+    background: var(--surface); border: 1px solid var(--line-2);
+    border-radius: 8px; box-shadow: var(--shadow-hover);
+    padding: 4px; z-index: 40;
+  }
+  .topbar-menu[hidden] { display: none; }
+  .topbar-menu-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; font-size: 13px; color: var(--fg);
+    text-decoration: none; border-radius: 6px;
+    width: 100%; text-align: left; cursor: pointer;
+    background: transparent; border: none;
+  }
+  .topbar-menu-item:hover { background: var(--soft); color: var(--fg); }
+  .topbar-menu-item-danger { color: var(--red); }
+  .topbar-menu-item-danger:hover { background: var(--red-soft); color: var(--red); }
+</style>

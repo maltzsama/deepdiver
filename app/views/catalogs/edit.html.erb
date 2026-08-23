@@ -1,0 +1,11 @@
+<% content_for :title, "#{t("catalogs.edit.title")} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("catalogs.index.eyebrow") %></p>
+    <h1 class="page-title"><%= t("catalogs.edit.title") %></h1>
+    <p class="page-sub"><%= @catalog.name %></p>
+  </div>
+</div>
+
+<%= render "form", catalog: @catalog %>

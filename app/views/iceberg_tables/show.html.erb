@@ -1,0 +1,57 @@
+<% content_for :title, "#{@table.fully_qualified_name} — LakeDeepDiver" %>
+
+<% if @open_error_count && @open_error_count.positive? %>
+  <a href="<%= error_events_path %>"
+     class="flash flash-alert mb-5 no-underline block">
+    <%= t("error_events.table_banner", count: @open_error_count) %>
+  </a>
+<% end %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow">
+      <%= t("tables.show.eyebrow_prefix") %>
+      <%= link_to @table.catalog.name, @table.catalog, class: "link" %>
+    </p>
+    <h1 class="page-title-mono"><%= @table.fully_qualified_name %></h1>
+  </div>
+
+  <div class="page-actions">
+    <% if can_run_maintenance? %>
+      <%= button_to t("tables.show.run_now"),
+                    run_maintenance_iceberg_table_path(@table), method: :post,
+                    class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>
+
+<%= render "shared/health_breakdown", evaluation: @evaluation, extractor: @extractor %>
+
+<section class="panel mb-6">
+  <div class="panel-body">
+    <dl class="dl">
+      <div>
+        <dt class="dl-term"><%= t("tables.show.status") %></dt>
+        <dd class="dl-desc">
+          <span class="badge <%= health_badge_class(@table.health_status) %>">
+            <span class="badge-dot"></span><%= @table.health_status %>
+          </span>
+        </dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("tables.show.last_write") %></dt>
+        <dd class="dl-desc-mono"><%= timestamp(@table.last_data_update) %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("tables.show.trino_id") %></dt>
+        <dd class="dl-desc-mono text-small"><%= @table.trino_identifier %></dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<%= render "metadata_tabs", table: @table %>
+
+<%= render "freshness", table: @table %>
+
+<%= render "shared/executions", executions: @executions %>

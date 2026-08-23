@@ -1,0 +1,73 @@
+<section class="panel">
+  <div class="panel-body">
+    <%= form_with model: policy, class: "form-grid" do |f| %>
+      <% if policy.errors.any? %>
+        <div class="errors">
+          <p class="errors-title">
+            <%= t("policies.form.errors_#{policy.errors.count == 1 ? "one" : "other"}",
+                  count: policy.errors.count) %>
+          </p>
+          <ul class="errors-list">
+            <% policy.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="field">
+        <%= f.label :name, t("policies.form.name"), class: "field-label" %>
+        <%= f.text_field :name, class: "field-input",
+                         placeholder: t("policies.form.name_placeholder") %>
+      </div>
+
+      <div class="field">
+        <%= f.label :description, t("policies.form.description"), class: "field-label" %>
+        <p class="field-hint"><%= t("policies.form.description_hint") %></p>
+        <%= f.text_area :description, rows: 2, class: "field-input" %>
+      </div>
+
+      <div class="field">
+        <%= f.label :cron, t("policies.form.cron"), class: "field-label" %>
+        <p class="field-hint"><%= t("policies.form.cron_hint") %></p>
+        <%= f.text_field :cron, class: "field-input field-input-mono",
+                         placeholder: t("policies.form.cron_placeholder") %>
+      </div>
+
+      <div class="field-group">
+        <p class="field-group-title"><%= t("policies.form.params_title") %></p>
+        <p class="field-hint mb-4"><%= t("policies.form.params_hint") %></p>
+
+        <% MaintenancePlan::CANONICAL_ORDER.each do |operation| %>
+          <div class="field rounded border border-cosmos-line p-3">
+            <label class="field-check">
+              <%= hidden_field_tag "maintenance_policy[steps_config][#{operation}][enabled]", "0" %>
+              <%= check_box_tag "maintenance_policy[steps_config][#{operation}][enabled]", "1",
+                                policy.steps_config.dig(operation, "enabled") != false,
+                                class: "field-checkbox" %>
+              <span class="font-mono text-small"><%= operation %></span>
+            </label>
+
+            <% if operation == "optimize" %>
+              <%= text_field_tag "maintenance_policy[steps_config][#{operation}][file_size_threshold]",
+                                 policy.steps_config.dig(operation, "file_size_threshold"),
+                                 placeholder: "128MB",
+                                 class: "field-input field-input-mono mt-2" %>
+            <% elsif %w[expire_snapshots remove_orphan_files].include?(operation) %>
+              <%= text_field_tag "maintenance_policy[steps_config][#{operation}][retention_threshold]",
+                                 policy.steps_config.dig(operation, "retention_threshold"),
+                                 placeholder: "7d",
+                                 class: "field-input field-input-mono mt-2" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="form-actions">
+        <%= f.submit t("policies.form.submit"), class: "btn btn-primary",
+                    data: { turbo_submits_with: t("actions.sending") } %>
+        <%= link_to t("policies.form.cancel"), maintenance_policies_path, class: "link text-body" %>
+      </div>
+    <% end %>
+  </div>
+</section>

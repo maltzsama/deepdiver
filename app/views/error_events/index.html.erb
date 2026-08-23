@@ -1,0 +1,77 @@
+<% content_for :title, "#{t("error_events.title")} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("error_events.eyebrow") %></p>
+    <h1 class="page-title"><%= t("error_events.title") %></h1>
+    <p class="page-sub"><%= t("error_events.subtitle", open: ErrorEvent.open.count) %></p>
+  </div>
+</div>
+
+<%= render "shared/filters",
+           url: error_events_path,
+           fields: [
+             { name: :status, label: t("error_events.col_status"),
+               options: ErrorEvent::STATUSES.map { |s| [ t("error_events.status_#{s}"), s ] } },
+             { name: :operation, label: t("error_events.col_operation"),
+               options: @operations.map { |o| [ o, o ] } }
+           ] %>
+
+<% if @events.empty? %>
+  <section class="panel">
+    <div class="empty">
+      <p class="empty-title"><%= t("error_events.empty_title") %></p>
+      <p class="empty-hint">
+        <% if request.query_parameters.any? %>
+          <%= t("error_events.empty_filters_hint") %>
+        <% else %>
+          <%= t("error_events.empty_hint") %>
+        <% end %>
+      </p>
+    </div>
+  </section>
+<% else %>
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title"><%= t("error_events.result_title") %></h2>
+      <span class="panel-note">
+        <%= ErrorEvent::STATUSES.map { |s| "#{t("error_events.status_#{s}")}: #{@status_counts.fetch(s, 0)}" }.join(" · ") %>
+      </span>
+    </div>
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col" class="w-1/4"><%= t("error_events.col_table") %></th>
+            <th scope="col"><%= t("error_events.col_operation") %></th>
+            <th scope="col"><%= t("error_events.col_message") %></th>
+            <th scope="col"><%= t("error_events.col_since") %></th>
+            <th scope="col"><%= t("error_events.col_count") %></th>
+            <th scope="col"><%= t("error_events.col_status") %></th>
+          </tr>
+        </thead>
+        <tbody>
+        <% @events.each do |event| %>
+          <tr data-href="<%= error_event_path(event) %>">
+            <td class="whitespace-nowrap">
+              <%= event.catalog&.name || event.source_system %>
+              <span class="cell-meta"><%= [ event.schema, event.table ].reject(&:blank?).join(".") %></span>
+            </td>
+            <td><span class="badge badge-mute"><%= event.operation %></span></td>
+            <td class="cell-muted"><%= event.message %></td>
+            <td class="cell-num" title="<%= event.first_seen_at&.iso8601 %>"><%= time_ago_in_words(event.first_seen_at) rescue "—" %></td>
+            <td class="cell-num"><%= event.occurrence_count %></td>
+            <td>
+              <span class="badge <%= {"open" => "badge-err", "acknowledged" => "badge-warn", "resolved" => "badge-ok"}[event.status] %>">
+                <%= t("error_events.status_#{event.status}") %>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <%== pager_nav(@pagy) %>
+<% end %>

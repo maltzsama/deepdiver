@@ -1,0 +1,18 @@
+<% content_for :title, "#{t("activity.title")} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("activity.eyebrow") %></p>
+    <h1 class="page-title"><%= t("activity.title") %></h1>
+    <p class="page-sub"><%= t("activity.subtitle") %></p>
+  </div>
+</div>
+
+<%= turbo_stream_from "activity" %>
+
+<%= render "engine_strip", engine_state: @engine_state, active_count: @running.size + @queued.size,
+           render_actions: true %>
+<%= render "queue", queue: @queue, running: @running, queued: @queued %>
+<%= render "running", running: @running, queued: @queued %>
+<%= render "queries", queries: @queries %>
+<%= render "engine_history", engine_events: @engine_events %>

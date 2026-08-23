@@ -1,0 +1,160 @@
+<% content_for :title, "#{@policy.name} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("policies.show.eyebrow") %></p>
+    <h1 class="page-title"><%= @policy.name %></h1>
+    <% if @policy.description.present? %>
+      <p class="page-sub"><%= @policy.description %></p>
+    <% end %>
+  </div>
+  <% if current_user.admin? %>
+    <div class="page-actions">
+      <%= link_to t("policies.show.edit"), edit_maintenance_policy_path(@policy), class: "btn btn-default" %>
+      <%= button_to t("policies.show.delete"), maintenance_policy_path(@policy), method: :delete,
+                    class: "btn btn-danger",
+                    data: { turbo_confirm: t("policies.show.delete_confirm") } %>
+    </div>
+  <% end %>
+</div>
+
+<section class="panel mb-6">
+  <div class="panel-body">
+    <dl class="dl">
+      <div>
+        <dt class="dl-term"><%= t("policies.show.operation") %></dt>
+        <dd class="dl-desc">
+          <div class="flex flex-wrap gap-1">
+            <% @policy.steps_config.each do |operation, config| %>
+              <% next if config["enabled"] == false %>
+              <span class="badge badge-neutral"><%= operation %></span>
+            <% end %>
+          </div>
+        </dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("policies.show.cron") %></dt>
+        <dd class="dl-desc-mono"><%= @policy.cron %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("policies.show.params") %></dt>
+        <dd class="dl-desc-mono text-small"><%= @policy.steps_config.presence&.to_json || t("policies.show.params_default") %></dd>
+      </div>
+      <div>
+        <dt class="dl-term"><%= t("policies.show.covered") %></dt>
+        <dd class="dl-desc-mono"><%= @plans.size %></dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<% if current_user.admin? %>
+  <section class="panel mb-6">
+    <div class="panel-head">
+      <h2 class="panel-title"><%= t("policies.show.apply_title") %></h2>
+      <span class="panel-note"><%= t("policies.show.apply_note") %></span>
+    </div>
+    <div class="panel-body">
+      <div class="mb-4 grid gap-3 text-body sm:grid-cols-2">
+        <p class="flex items-start gap-2"><span class="mt-0.5 text-accent-DEFAULT">•</span><%= t("policies.show.explain_apply") %></p>
+        <p class="flex items-start gap-2"><span class="mt-0.5 text-accent-DEFAULT">•</span><%= t("policies.show.explain_skip") %></p>
+        <p class="flex items-start gap-2"><span class="mt-0.5 text-accent-DEFAULT">•</span><%= t("policies.show.explain_propagate") %></p>
+        <p class="flex items-start gap-2"><span class="mt-0.5 text-accent-DEFAULT">•</span><%= t("policies.show.explain_pause") %></p>
+      </div>
+
+      <div class="mb-4 field-group">
+        <p class="text-body font-medium text-cosmos-fg">
+          <%= t("policies.show.preview_title", name: @policy.name, count: @candidates.size) %>
+        </p>
+        <ul class="mt-2 space-y-1 text-body text-cosmos-fg-soft">
+          <li><%= t("policies.show.preview_created", count: @apply_preview[:created]) %></li>
+          <li><%= t("policies.show.preview_updated", count: @apply_preview[:updated]) %></li>
+          <% if @apply_preview[:skipped].any? %>
+            <li class="text-warn-DEFAULT">
+              <%= t("policies.show.preview_skipped", count: @apply_preview[:skipped].size) %>
+              <ul class="mt-1 list-disc pl-5">
+                <% @apply_preview[:skipped].each do |table, policy_name| %>
+                  <li><span class="font-mono"><%= table %></span> — <%= policy_name %></li>
+                <% end %>
+              </ul>
+            </li>
+          <% end %>
+        </ul>
+        <p class="mt-2 text-small text-cosmos-fg-mute"><%= t("policies.show.preview_note") %></p>
+      </div>
+
+      <%= form_with url: apply_maintenance_policy_path(@policy), method: :post do %>
+        <div class="max-h-80 overflow-y-auto rounded border border-cosmos-line">
+          <table class="data-table">
+            <tbody>
+              <% @candidates.each do |table| %>
+                <tr>
+                  <td class="w-8">
+                    <%= check_box_tag "iceberg_table_ids[]", table.id,
+                                      @plans.any? { |p| p.iceberg_table_id == table.id },
+                                      id: "table_#{table.id}", class: "field-checkbox" %>
+                  </td>
+                  <td>
+                    <%= label_tag "table_#{table.id}", table.fully_qualified_name,
+                                  class: "cell-id cursor-pointer" %>
+                    <span class="ml-2 text-small cell-muted"><%= table.catalog.name %></span>
+                  </td>
+                  <td class="text-right">
+                    <span class="badge <%= health_badge_class(table.health_status) %>">
+                      <span class="badge-dot"></span><%= table.health_status %>
+                    </span>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="form-actions">
+          <%= submit_tag t("policies.show.apply_submit"), class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </section>
+<% end %>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("policies.show.managed_title") %></h2>
+    <span class="panel-note"><%= @plans.size %></span>
+  </div>
+
+  <% if @plans.empty? %>
+    <div class="empty">
+      <p class="empty-title"><%= t("policies.show.empty_title") %></p>
+      <p class="empty-hint"><%= t("policies.show.empty_hint") %></p>
+    </div>
+  <% else %>
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col"><%= t("policies.show.col_table") %></th>
+            <th scope="col"><%= t("policies.show.col_state") %></th>
+            <th scope="col"><%= t("policies.show.col_failures") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @plans.each do |plan| %>
+            <tr>
+              <td><%= link_to plan.iceberg_table.fully_qualified_name, plan.iceberg_table, class: "link-mono" %></td>
+              <td>
+                <% if plan.paused? %>
+                  <span class="badge badge-critical"><span class="badge-dot"></span><%= t("policies.show.paused") %></span>
+                <% else %>
+                  <span class="badge badge-healthy"><span class="badge-dot"></span><%= t("policies.show.active") %></span>
+                <% end %>
+              </td>
+              <td class="cell-num"><%= plan.consecutive_failures %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</section>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>" data-theme="dark">
+  <head>
+    <title><%= content_for(:title) || t("auth.brand") %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body data-theme="dark">
+    <div class="auth-shell">
+      <section class="auth-brand">
+        <div class="auth-brand-inner">
+          <div class="auth-logo-box">
+            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <ellipse cx="20" cy="20" rx="18" ry="7" transform="rotate(-22 20 20)" stroke="#60A5FA" stroke-width="2"/>
+              <circle cx="20" cy="20" r="8" fill="#F4F1E8"/>
+              <circle cx="20" cy="20" r="8" stroke="#0B0B0A" stroke-width="1.5"/>
+              <circle cx="36" cy="14" r="2.2" fill="#60A5FA"/>
+              <circle cx="6"  cy="26" r="1.8" fill="#B8862A"/>
+              <circle cx="14" cy="6"  r="1.4" fill="#B8862A"/>
+            </svg>
+          </div>
+
+          <p class="auth-mark"><%= t("auth.eyebrow") %></p>
+          <h1 class="auth-title"><%= t("auth.brand") %></h1>
+          <p class="auth-tagline"><%= t("auth.tagline") %></p>
+          <p class="auth-version"><%= t("auth.version") %></p>
+
+          <dl class="auth-facts">
+            <div>
+              <dd class="auth-fact-value">4</dd>
+              <dt class="auth-fact-label"><%= t("auth.facts.operations") %></dt>
+            </div>
+            <div>
+              <dd class="auth-fact-value"><%= Catalog.count %></dd>
+              <dt class="auth-fact-label"><%= t("auth.facts.catalogs") %></dt>
+            </div>
+            <div>
+              <dd class="auth-fact-value"><%= IcebergTable.count %></dd>
+              <dt class="auth-fact-label"><%= t("auth.facts.tables") %></dt>
+            </div>
+          </dl>
+        </div>
+
+        <p class="auth-foot"><%= t("auth.footer") %></p>
+      </section>
+
+      <section class="auth-panel">
+        <div class="auth-card">
+          <div class="auth-mobile-brand">
+            <p class="auth-mark"><%= t("auth.eyebrow") %></p>
+            <p class="mt-1 text-2xl font-semibold text-cosmos-fg"><%= t("auth.brand") %></p>
+          </div>
+
+          <%= render "shared/flash" %>
+          <%= yield %>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
