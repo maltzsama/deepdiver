@@ -6,7 +6,7 @@ namespace :docs do
 
   desc "Generate RDoc documentation"
   task :build do
-    sh "bundle exec rdoc --markup markdown --output doc --readme README.md app lib config Gemfile Rakefile"
+    sh "bundle exec rdoc --markup markdown --output doc --readme README.md app lib config Gemfile Rakefile --exclude config/credentials.yml.enc"
     Rake::Task["docs:inject_counter"].invoke
   end
 
