@@ -33,7 +33,9 @@ jobs:
             helm repo index infra/helm/lakedeepdiver --url https://maltzsama.github.io/lakedeepdiver --output .cr-index/index.yaml
 
       - name: copy artifacthub metadata
-        run: cp infra/helm/artifacthub-repo.yml .cr-index/artifacthub-repo.yml
+        run: |
+          sed "s/REPLACE_ME/${{ vars.ARTIFACTHUB_REPO_ID }}/" \
+            infra/helm/artifacthub-repo.yml > .cr-index/artifacthub-repo.yml
 
       - name: upload-pages-artifact
         uses: actions/upload-pages-artifact@v3
