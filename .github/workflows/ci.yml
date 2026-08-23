@@ -91,7 +91,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
       - name: sem premissas de deployment
         run: |
           ! grep -rniE 'etg-ca|ceph|argocd|argoproj|kyverno|cloudnativepg|anomalyco|registry\.example\.com|etraveli|PREENCHER_H1' infra/helm/
