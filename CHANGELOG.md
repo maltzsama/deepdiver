@@ -4,6 +4,20 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.1](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.0...v0.1.1) (2026-08-23)
+
+
+### Bug Fixes
+
+* **ci:** ARTIFACTHUB_REPO_ID from secrets ([5e3c2a2](https://github.com/maltzsama/lakedeepdiver/commit/5e3c2a216eaa8a066d397da1ac01968bc91cd327))
+* **ci:** docs exclude credentials + full pipeline (reapply after purge) ([7b3af31](https://github.com/maltzsama/lakedeepdiver/commit/7b3af31bbb18b2cd5eb04640eaab8a6aab61104b))
+* **ci:** docs exclude credentials + full release pipeline ([1842de2](https://github.com/maltzsama/lakedeepdiver/commit/1842de2209b048ab8dc57b9defafad7971c86c82))
+* **ci:** read ARTIFACTHUB_REPO_ID from secrets, not vars ([7258cdb](https://github.com/maltzsama/lakedeepdiver/commit/7258cdb92fac135e609c09019dc279a8a903722b))
+* **ci:** restore pages.yml doc deployer (lost in history purge) ([b217509](https://github.com/maltzsama/lakedeepdiver/commit/b2175099f7b88770e8b49a4f101a4e243af5b2d7))
+* **ci:** restore pages.yml docs deployer ([0e12f4b](https://github.com/maltzsama/lakedeepdiver/commit/0e12f4bec9629082dfe2a6df351ab9fbf5f5d71e))
+* **release:** remove 0.1.1 changelog entry, README badge back to 0.1.0 ([6915702](https://github.com/maltzsama/lakedeepdiver/commit/6915702499c85626bd0037eef3574411b7fe746e))
+* **release:** reset version state to 0.1.0 for correct chart-coordinated release ([e4a2aa5](https://github.com/maltzsama/lakedeepdiver/commit/e4a2aa5f80b34fbaedc70ac723ed766180a6660f))
+
 ## 0.1.0 (2026-08-23)
 
 
