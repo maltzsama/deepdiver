@@ -9,8 +9,6 @@ permissions:
   contents: write
   pull-requests: write
   packages: write
-  pages: write
-  id-token: write
 
 concurrency:
   group: release
@@ -59,6 +57,10 @@ jobs:
           push: true
           tags: ${{ steps.tags.outputs.tags }}
 
+  # Chart publish: chart-releaser creates the chart release (tgz asset) and
+  # stores the chart index on the gh-pages branch (index storage only). The
+  # pages.yml workflow deploys that index together with the docs via GitHub
+  # Actions - the gh-pages branch never serves the site.
   chart:
     needs: [ release-please, image ]
     if: needs.release-please.outputs.releases_created == 'true'
@@ -75,26 +77,5 @@ jobs:
       - uses: helm/chart-releaser-action@v1
         with:
           charts_dir: infra/helm
-          charts_repo_url: https://maltzsama.github.io/lakedeepdiver
         env:
           CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CR_INDEX_PATH: ".cr-index"
-      - name: include artifacthub metadata
-        run: |
-          sed "s/REPLACE_ME/${{ secrets.ARTIFACTHUB_REPO_ID }}/" \
-            infra/helm/artifacthub-repo.yml > .cr-index/artifacthub-repo.yml
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: .cr-index
-
-  deploy-pages:
-    needs: chart
-    if: needs.release-please.outputs.releases_created == 'true'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
