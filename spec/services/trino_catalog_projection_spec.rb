@@ -26,6 +26,21 @@ RSpec.describe TrinoCatalogProjection do
     expect(TrinoCatalogRegistry.last.properties).not_to have_key("connector.name")
   end
 
+  it "omits iceberg.rest-catalog.warehouse for Nessie catalogs" do
+    catalog
+    described_class.new.sync_all!
+
+    expect(TrinoCatalogRegistry.last.properties).not_to have_key("iceberg.rest-catalog.warehouse")
+  end
+
+  it "includes iceberg.rest-catalog.warehouse for Polaris catalogs" do
+    polaris = create(:polaris_catalog, name: "Polaris Prod")
+    described_class.new.sync_all!
+
+    row = TrinoCatalogRegistry.find_by(catalog_name: "polaris_prod")
+    expect(row.properties["iceberg.rest-catalog.warehouse"]).to eq("Polaris Prod")
+  end
+
   it "writes properties as a flat string map" do
     create(:catalog_credential, catalog:, auth_method: "oauth2_client_credentials",
                                 client_id: "svc", secret: "s3cr3t", scope: "PRINCIPAL_ROLE:ALL")

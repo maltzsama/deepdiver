@@ -78,8 +78,6 @@ class TrinoCatalogProjection
     props = {
       "iceberg.catalog.type" => "rest",
       "iceberg.rest-catalog.uri" => rest_catalog_uri(catalog),
-      # Polaris requires the warehouse (its catalog name) in the REST path.
-      "iceberg.rest-catalog.warehouse" => catalog.name,
       # Nested namespace: the application configures it instead of relying on
       # someone having enabled it on the cluster. See CR-02.
       "iceberg.rest-catalog.nested-namespace-enabled" => "true",
@@ -87,6 +85,11 @@ class TrinoCatalogProjection
       "s3.endpoint" => catalog.s3_endpoint.presence || ENV.fetch("CEPH_ENDPOINT", "http://ceph.local"),
       "s3.path-style-access" => "true"
     }
+
+    # Polaris requires the warehouse (its catalog name) in the REST path.
+    # Nessie defines warehouses server-side and rejects unknown names, so
+    # never send one — the configured default answers.
+    props["iceberg.rest-catalog.warehouse"] = catalog.name if catalog.catalog_type == "polaris"
 
     props["s3.region"] = catalog.s3_region if catalog.s3_region.present?
 
