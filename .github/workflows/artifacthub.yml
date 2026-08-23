@@ -19,26 +19,18 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
+        with: { ref: main }
 
-      - uses: azure/setup-helm@v4
-
-      - name: build chart index
+      - name: build pages artifact preserving published index
         run: |
           set -euo pipefail
           mkdir -p .cr-index
-          helm repo index infra/helm/lakedeepdiver --url https://maltzsama.github.io/lakedeepdiver --merge .cr-index/index.yaml 2>/dev/null || \
-            helm repo index infra/helm/lakedeepdiver --url https://maltzsama.github.io/lakedeepdiver --output .cr-index/index.yaml
-
-      - name: copy artifacthub metadata
-        run: |
+          curl -fsSL -o .cr-index/index.yaml https://maltzsama.github.io/lakedeepdiver/index.yaml \
+            || { echo "no published index yet"; rm -f .cr-index/index.yaml; }
           sed "s/REPLACE_ME/${{ vars.ARTIFACTHUB_REPO_ID }}/" \
             infra/helm/artifacthub-repo.yml > .cr-index/artifacthub-repo.yml
 
-      - name: upload-pages-artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: .cr-index
 
