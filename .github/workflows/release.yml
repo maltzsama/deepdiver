@@ -81,7 +81,7 @@ jobs:
           CR_INDEX_PATH: ".cr-index"
       - name: include artifacthub metadata
         run: |
-          sed "s/REPLACE_ME/${{ vars.ARTIFACTHUB_REPO_ID }}/" \
+          sed "s/REPLACE_ME/${{ secrets.ARTIFACTHUB_REPO_ID }}/" \
             infra/helm/artifacthub-repo.yml > .cr-index/artifacthub-repo.yml
       - uses: actions/upload-pages-artifact@v3
         with:
