@@ -4,6 +4,13 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.1](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.0...v0.1.1) (2026-08-23)
+
+
+### Bug Fixes
+
+* **projection:** omit rest-catalog warehouse for Nessie catalogs ([ac7c506](https://github.com/maltzsama/lakedeepdiver/commit/ac7c5061fe30ab5214b577dd3e8f79251a85f819))
+
 ## 0.1.0 (2026-08-23)
 
 
