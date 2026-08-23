@@ -36,7 +36,7 @@ jobs:
         run: cp infra/helm/artifacthub-repo.yml .cr-index/artifacthub-repo.yml
 
       - name: upload-pages-artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: .cr-index
 
