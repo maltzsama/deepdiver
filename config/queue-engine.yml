@@ -1,0 +1,10 @@
+# Engine deployment: engine lifecycle only. No dispatcher, no recurring.
+# Used by Helm engine deployment via SOLID_QUEUE_CONFIG.
+default: &default
+  workers:
+    - queues: engine
+      threads: 1
+      polling_interval: 1
+
+production:
+  <<: *default

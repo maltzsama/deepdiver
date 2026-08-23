@@ -1,0 +1,45 @@
+name: artifacthub-metadata
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ "infra/helm/artifacthub-repo.yml" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: azure/setup-helm@v4
+
+      - name: build chart index
+        run: |
+          set -euo pipefail
+          mkdir -p .cr-index
+          helm repo index infra/helm/lakedeepdiver --url https://maltzsama.github.io/lakedeepdiver --merge .cr-index/index.yaml 2>/dev/null || \
+            helm repo index infra/helm/lakedeepdiver --url https://maltzsama.github.io/lakedeepdiver --output .cr-index/index.yaml
+
+      - name: copy artifacthub metadata
+        run: cp infra/helm/artifacthub-repo.yml .cr-index/artifacthub-repo.yml
+
+      - name: upload-pages-artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .cr-index
+
+      - name: deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

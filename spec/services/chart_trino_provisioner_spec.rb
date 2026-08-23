@@ -1,0 +1,108 @@
+require "rails_helper"
+
+RSpec.describe ChartTrinoProvisioner do
+  let(:transport)  { instance_double(HttpTransport) }
+  let(:k8s)        { double("coordinator k8s") }
+  let(:worker_k8s) { double("worker k8s") }
+  let(:provisioner) do
+    described_class.new(k8s: k8s, worker_k8s: worker_k8s, transport: transport, base_url: "http://trino")
+  end
+
+  it "cancels a query via DELETE /v1/query/:id" do
+    allow(transport).to receive(:delete).and_return({})
+
+    expect(provisioner.cancel_query("qid-123")).to be(true)
+    expect(transport).to have_received(:delete).with("http://trino/v1/query/qid-123")
+  end
+
+  it "returns false when the cancel request fails" do
+    allow(transport).to receive(:delete).and_raise(HttpTransport::ApiError.new(404, ""))
+
+    expect(provisioner.cancel_query("qid-123")).to be(false)
+  end
+
+  it "lists active queries from GET /v1/query" do
+    allow(transport).to receive(:get).and_return(
+      [ { "queryId" => "1", "state" => "RUNNING", "query" => "SELECT 1" } ]
+    )
+
+    expect(provisioner.active_queries.size).to eq(1)
+  end
+
+  it "wait_gone! returns once the deployment is scaled to zero" do
+    allow(k8s).to receive(:replicas).and_return(0)
+
+    expect(provisioner.wait_gone!(timeout: 5.seconds)).to be_nil
+    expect(k8s).to have_received(:replicas)
+  end
+
+  it "reports the desired replica count from the k8s client" do
+    allow(k8s).to receive(:replicas).and_return(2)
+
+    expect(provisioner.replicas).to eq(2)
+  end
+
+  describe "#create!" do
+    before do
+      TrinoEngineConfig.instance.update!(topology: "cluster", worker_replicas: 3,
+                                         coordinator_cpu: "2", coordinator_memory: "2Gi",
+                                         worker_cpu: "1", worker_memory: "2Gi")
+      allow(k8s).to receive(:apply_spec)
+      allow(worker_k8s).to receive(:apply_spec)
+    end
+
+    it "scales coordinator and workers with the configured resources" do
+      provisioner.create!
+
+      expect(k8s).to have_received(:apply_spec).with(
+        replicas: 1, cpu: "2", memory: "2Gi", env: { "TRINO_INCLUDE_COORDINATOR" => "false" }
+      )
+      expect(worker_k8s).to have_received(:apply_spec).with(
+        replicas: 3, cpu: "1", memory: "2Gi"
+      )
+    end
+
+    it "runs the coordinator as a task node in single topology and leaves workers alone" do
+      TrinoEngineConfig.instance.update!(topology: "single")
+
+      provisioner.create!
+
+      expect(k8s).to have_received(:apply_spec).with(
+        replicas: 1, cpu: "2", memory: "2Gi", env: { "TRINO_INCLUDE_COORDINATOR" => "true" }
+      )
+      expect(worker_k8s).not_to have_received(:apply_spec)
+    end
+  end
+
+  describe "#destroy!" do
+    it "scales both coordinator and workers to zero" do
+      allow(k8s).to receive(:scale)
+      allow(worker_k8s).to receive(:scale)
+
+      provisioner.destroy!
+
+      expect(k8s).to have_received(:scale).with(0)
+      expect(worker_k8s).to have_received(:scale).with(0)
+    end
+  end
+
+  describe "#rollout_complete?" do
+    it "requires the coordinator and, in cluster mode, the workers" do
+      TrinoEngineConfig.instance.update!(topology: "cluster")
+      allow(k8s).to receive(:ready?).and_return(true)
+      allow(worker_k8s).to receive(:ready?).and_return(true)
+
+      expect(provisioner.rollout_complete?).to be(true)
+      expect(worker_k8s).to have_received(:ready?)
+    end
+
+    it "only requires the coordinator in single mode" do
+      TrinoEngineConfig.instance.update!(topology: "single")
+      allow(k8s).to receive(:ready?).and_return(true)
+      allow(worker_k8s).to receive(:ready?)
+
+      expect(provisioner.rollout_complete?).to be(true)
+      expect(worker_k8s).not_to have_received(:ready?)
+    end
+  end
+end

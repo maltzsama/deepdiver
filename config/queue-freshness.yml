@@ -1,0 +1,10 @@
+# Freshness deployment: freshness only. No dispatcher, no recurring.
+# Used by Helm freshness deployment via SOLID_QUEUE_CONFIG.
+default: &default
+  workers:
+    - queues: freshness
+      threads: 1
+      polling_interval: 1
+
+production:
+  <<: *default

@@ -1,0 +1,25 @@
+production:
+  schedule_dispatch:
+    class: ScheduleDispatchJob
+    queue: maintenance
+    schedule: every minute
+  freshness_sweep:
+    class: EnqueueFreshnessSweepJob
+    queue: freshness
+    schedule: every hour at minute 5
+  catalog_sync:
+    class: EnqueueCatalogSyncJob
+    queue: sync
+    schedule: every 6 hours at minute 10
+  engine_watchdog:
+    class: EngineWatchdogJob
+    queue: engine
+    schedule: every 2 minutes
+  data_retention:
+    class: DataRetentionJob
+    queue: default
+    schedule: every day at 3:00
+  refresh_sts_credentials:
+    class: RefreshStsCredentialsJob
+    queue: default
+    schedule: every 30 minutes

@@ -1,0 +1,141 @@
+# Default values for lakedeepdiver.
+# This is a YAML-formatted file. Overrides live in infra/helm/values/*.yaml.
+
+replicaCount: 1
+
+image:
+  repository: lakedeepdiver
+  pullPolicy: IfNotPresent
+  # x.y.z - tag is pinned per environment, never "latest" in production.
+  tag: "0.1.0" # x-release-please-version
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Application credentials never live in this chart. DATABASE_URL, DB_QUEUE_URL,
+# RAILS_MASTER_KEY and SECRET_KEY_BASE are provided by an out-of-band Secret
+# (SealedSecrets / external controller) referenced through appSecrets.existingSecret.
+appSecrets:
+  existingSecret: ""
+  # For simple local experiments only - renders a Secret from values.data.
+  create: false
+  data:
+    DATABASE_URL: ""
+    DB_QUEUE_URL: ""
+    RAILS_MASTER_KEY: ""
+    SECRET_KEY_BASE: ""
+
+# Internal TLS trust: an internal CA can be mounted from an external Secret and
+# exposed to the app via SSL_CERT_FILE. The chart never stores certificates.
+internalCA:
+  enabled: false
+  mountFile: /etc/ssl/certs/internal-ca.crt
+  existingSecret: ""
+  caKey: ca.crt
+
+# PostgreSQL connection. The chart expects an existing Secret with a `url` key.
+postgresql:
+  existingSecret: ""
+  urlKey: url
+
+# Active Record Encryption keys. MUST be provided via existingSecret.
+# Generate with: bin/rails db:encryption:init
+# Losing these keys makes all catalog credentials unrecoverable.
+activeRecordEncryption:
+  existingSecret: ""
+
+# Application tuning knobs surfaced as environment variables.
+env:
+  trinoUrl: ""
+  trinoNamespace: ""
+  trinoDeployment: ""
+  logLevel: info
+  jobConcurrency: 1
+  host: ""
+
+# Trino provisioner: "chart" (TrinoCoordinator CR), "baleia" (BaleiaTrinoProvisioner),
+# or "fake" (FakeTrinoRuntime for dev/test).
+trino:
+  provisioner: fake
+
+# OIDC / SSO configuration. Set oidc.issuer to enable SSO.
+oidc:
+  issuer: ""
+  clientId: ""
+  clientSecret: ""
+  redirectUri: ""
+  providerLabel: SSO
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: http
+
+ingress:
+  enabled: false
+  className: ""
+  hosts:
+    - host: ""
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources: {}
+  # limits:
+  #   cpu: 500m
+  #   memory: 512Mi
+  # requests:
+  #   cpu: 250m
+  #   memory: 256Mi
+
+podSecurityContext: {}
+
+securityContext:
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Solid Queue supervisor (bin/jobs): workers + recurring schedules.
+worker:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests: { cpu: 100m, memory: 512Mi }
+    limits:   { cpu: 500m, memory: 1Gi }
+  securityContext: {}
+
+# Freshness runs on its own process so it never waits behind an optimize.
+workerFreshness:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests: { cpu: 100m, memory: 512Mi }
+    limits:   { cpu: 500m, memory: 1Gi }
+  securityContext: {}
+
+# Engine lifecycle — supervise start, drain, watchdog.
+workerEngine:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 250m, memory: 512Mi }
+  securityContext: {}
+
+# Schema migrations run as a pre-install/pre-upgrade Job so web and worker
+# pods never race against schema changes.
+migrationJob:
+  enabled: true
+  backoffLimit: 3
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 3600
+  resources: {}

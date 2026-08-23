@@ -1,0 +1,47 @@
+<%# Active Trino queries, as reported by the coordinator. %>
+<section id="activity-queries" class="panel mb-6">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("activity.queries.title") %></h2>
+    <span class="panel-note"><%= t("activity.queries.count", count: queries.size) %></span>
+  </div>
+
+  <% if queries.empty? %>
+    <div class="empty">
+      <p class="empty-title"><%= t("activity.queries.empty") %></p>
+    </div>
+  <% else %>
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col"><%= t("activity.queries.col_id") %></th>
+            <th scope="col"><%= t("activity.queries.col_state") %></th>
+            <th scope="col"><%= t("activity.queries.col_query") %></th>
+            <th scope="col"><span class="sr-only"><%= t("activity.queries.col_actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% queries.each do |query| %>
+            <tr>
+              <td class="cell-id"><%= query["queryId"] %></td>
+              <td>
+                <span class="badge <%= query_state_badge_class(query["state"]) %>">
+                  <span class="badge-dot"></span><%= query["state"] %>
+                </span>
+              </td>
+              <td class="cell-muted font-mono text-small break-all"><%= truncate(query["query"].to_s, length: 120) %></td>
+              <td class="text-right whitespace-nowrap">
+                <% if %w[RUNNING QUEUED].include?(query["state"]) && local_assigns.fetch(:show_actions, true) && can_cancel_query? %>
+                  <%= button_to t("activity.queries.cancel"),
+                                cancel_trino_query_activity_path(query_id: query["queryId"]),
+                                method: :post, class: "btn btn-danger btn-sm",
+                                data: { turbo_confirm: t("activity.queries.cancel_confirm") } %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</section>

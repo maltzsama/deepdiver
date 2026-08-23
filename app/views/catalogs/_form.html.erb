@@ -1,0 +1,178 @@
+<section class="panel">
+  <div class="panel-body">
+    <%= form_with model: catalog, class: "form-grid", data: { controller: "catalog-type" } do |form| %>
+      <% if catalog.errors.any? %>
+        <div class="errors">
+          <p class="errors-title">
+            <%= t("catalogs.form.errors_#{catalog.errors.count == 1 ? "one" : "other"}",
+                  count: catalog.errors.count) %>
+          </p>
+          <ul class="errors-list">
+            <% catalog.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="field">
+        <%= form.label :name, t("catalogs.form.name"), class: "field-label" %>
+        <p class="field-hint"><%= t("catalogs.form.name_hint") %></p>
+        <%= form.text_field :name, class: "field-input", placeholder: t("catalogs.form.name_placeholder") %>
+      </div>
+
+      <div class="field">
+        <%= form.label :catalog_type, t("catalogs.form.type"), class: "field-label" %>
+        <%= form.select :catalog_type, Catalog::CATALOG_TYPES, {}, class: "field-input",
+                        data: { catalog_type_select: true, action: "catalog-type#change" } %>
+      </div>
+
+      <div class="field hidden" data-catalog-type-target="field" data-type-show="nessie">
+        <%= form.label :nessie_ref, t("catalogs.form.nessie_ref"), class: "field-label" %>
+        <p class="field-hint"><%= t("catalogs.form.nessie_ref_hint") %></p>
+        <%= form.text_field :nessie_ref, class: "field-input field-input-mono",
+                            placeholder: "main" %>
+      </div>
+
+      <div class="field">
+        <%= form.label :endpoint, t("catalogs.form.endpoint"), class: "field-label" %>
+        <p class="field-hint"><%= t("catalogs.form.endpoint_hint") %></p>
+        <%= form.url_field :endpoint, class: "field-input field-input-mono",
+                           placeholder: t("catalogs.form.endpoint_placeholder") %>
+      </div>
+
+      <div class="field-group" data-controller="catalog-auth">
+        <p class="field-group-title"><%= t("catalogs.form.auth") %></p>
+
+        <%= form.fields_for :catalog_credential do |cf| %>
+          <div class="field">
+            <%= cf.label :auth_method, t("catalogs.form.auth_method"), class: "field-label" %>
+            <%= cf.select :auth_method,
+                          CatalogCredential::AUTH_METHODS.map { |m| [ t("catalogs.auth_methods.#{m}"), m ] },
+                          {}, class: "field-input", data: { auth_method_select: true, action: "catalog-auth#change" } %>
+          </div>
+
+          <div class="field" data-catalog-auth-target="field" data-auth-show="oauth2_client_credentials oauth2_token_exchange">
+            <%= cf.label :client_id, t("catalogs.form.client_id"), class: "field-label" %>
+            <%= cf.text_field :client_id, class: "field-input field-input-mono",
+                              placeholder: t("catalogs.form.client_id_placeholder") %>
+          </div>
+
+          <div class="field" data-catalog-auth-target="field" data-auth-show="bearer_static oauth2_client_credentials oauth2_token_exchange">
+            <%= cf.label :secret, t("catalogs.form.secret_label"), class: "field-label" %>
+            <% if cf.object&.secret_set? %>
+              <p class="field-hint">
+                <%= t("catalogs.form.secret_set_at",
+                      when: l(cf.object.secret_set_at, format: :short),
+                      hint: cf.object.secret_hint) %>
+              </p>
+            <% end %>
+            <%= cf.password_field :secret, value: nil, autocomplete: "new-password",
+                                  placeholder: cf.object&.secret_set? ? t("catalogs.form.secret_keep") : nil,
+                                  class: "field-input field-input-mono" %>
+            <p class="field-hint"><%= t("catalogs.form.secret_hint") %></p>
+          </div>
+
+          <div class="field" data-catalog-auth-target="field" data-auth-show="oauth2_client_credentials oauth2_token_exchange">
+            <%= cf.label :token_endpoint, t("catalogs.form.token_endpoint"), class: "field-label" %>
+            <p class="field-hint"><%= t("catalogs.form.token_endpoint_hint") %></p>
+            <%= cf.url_field :token_endpoint, class: "field-input field-input-mono",
+                             placeholder: "http://dremio:9047/oauth/token" %>
+          </div>
+
+          <div class="field" data-catalog-auth-target="field" data-auth-show="oauth2_client_credentials oauth2_token_exchange">
+            <%= cf.label :oauth_scope, t("catalogs.form.oauth_scope"), class: "field-label" %>
+            <%= cf.text_field :oauth_scope, class: "field-input field-input-mono",
+                              placeholder: "dremio.all" %>
+          </div>
+
+          <% subject_type = cf.object.properties["subject_token_type"].presence if cf.object.respond_to?(:properties) %>
+          <div class="field" data-catalog-auth-target="field" data-auth-show="oauth2_token_exchange">
+            <%= cf.label :subject_token_type, t("catalogs.form.subject_token_type"), class: "field-label" %>
+            <p class="field-hint"><%= t("catalogs.form.subject_token_type_hint") %></p>
+            <%= text_field_tag "catalog[catalog_credential_attributes][properties][subject_token_type]",
+                               subject_type || CatalogTokenProvider::DREMIO_PAT_TOKEN_TYPE,
+                               class: "field-input field-input-mono" %>
+          </div>
+
+          <div class="field" data-catalog-auth-target="field" data-auth-show="oauth2_client_credentials">
+            <%= cf.label :scope, t("catalogs.form.scope"), class: "field-label" %>
+            <%= cf.text_field :scope, class: "field-input field-input-mono" %>
+            <p class="field-hint">Polaris: <code class="font-mono">PRINCIPAL_ROLE:ALL</code></p>
+          </div>
+        <% end %>
+      </div>
+
+      <details class="field-group">
+        <summary class="field-group-title cursor-pointer"><%= t("catalogs.form.advanced") %></summary>
+
+        <div class="field mt-4">
+          <%= form.label :trino_catalog_name_override, t("catalogs.form.trino_name"), class: "field-label" %>
+          <p class="field-hint">
+            <%= t("catalogs.form.trino_name_hint", derived: catalog.send(:derived_trino_catalog_name)) %>
+          </p>
+          <%= form.text_field :trino_catalog_name_override, class: "field-input field-input-mono",
+                              placeholder: catalog.send(:derived_trino_catalog_name) %>
+        </div>
+      </details>
+
+      <div class="field-group" data-controller="s3-auth">
+        <p class="field-group-title"><%= t("catalogs.form.s3_storage") %></p>
+
+        <div class="field">
+          <%= form.label :s3_authentication_type, t("catalogs.form.s3_auth_type"), class: "field-label" %>
+          <%= form.select :s3_authentication_type,
+                          Catalog::S3_AUTH_TYPES.map { |m| [ t("catalogs.s3_auth_types.#{m}"), m ] },
+                          {}, class: "field-input",
+                          data: { s3_auth_select: true, action: "s3-auth#change" } %>
+        </div>
+
+        <div class="field" data-s3-auth-target="field" data-s3-auth-show="static sts">
+          <%= form.label :s3_access_key, t("catalogs.form.s3_access_key"), class: "field-label" %>
+          <%= form.text_field :s3_access_key, class: "field-input field-input-mono",
+                              placeholder: "AKIAIOSFODNN7EXAMPLE" %>
+        </div>
+
+        <div class="field" data-s3-auth-target="field" data-s3-auth-show="static sts">
+          <%= form.label :s3_secret_key, t("catalogs.form.s3_secret_key"), class: "field-label" %>
+          <%= form.password_field :s3_secret_key, value: nil, autocomplete: "new-password",
+                                  placeholder: catalog.s3_secret_key.present? ? "••••" : nil,
+                                  class: "field-input field-input-mono" %>
+          <p class="field-hint"><%= t("catalogs.form.s3_secret_hint") %></p>
+        </div>
+
+        <div class="field" data-s3-auth-target="field" data-s3-auth-show="sts">
+          <%= form.label :s3_role_arn, t("catalogs.form.s3_role_arn"), class: "field-label" %>
+          <p class="field-hint"><%= t("catalogs.form.s3_role_arn_hint") %></p>
+          <%= form.text_field :s3_role_arn, class: "field-input field-input-mono",
+                              placeholder: "arn:aws:iam::123456789012:role/my-role" %>
+        </div>
+
+        <div class="field" data-s3-auth-target="field" data-s3-auth-show="sts">
+          <%= form.label :s3_external_id, t("catalogs.form.s3_external_id"), class: "field-label" %>
+          <p class="field-hint"><%= t("catalogs.form.s3_external_id_hint") %></p>
+          <%= form.text_field :s3_external_id, class: "field-input field-input-mono" %>
+        </div>
+
+        <div class="field" data-s3-auth-target="field" data-s3-auth-show="static sts">
+          <%= form.label :s3_region, t("catalogs.form.s3_region"), class: "field-label" %>
+          <%= form.text_field :s3_region, class: "field-input field-input-mono",
+                              placeholder: "us-east-1" %>
+        </div>
+
+        <div class="field" data-s3-auth-target="field" data-s3-auth-show="static sts">
+          <%= form.label :s3_endpoint, t("catalogs.form.s3_endpoint"), class: "field-label" %>
+          <p class="field-hint"><%= t("catalogs.form.s3_endpoint_hint") %></p>
+          <%= form.url_field :s3_endpoint, class: "field-input field-input-mono",
+                             placeholder: ENV.fetch("CEPH_ENDPOINT", "http://ceph.local") %>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <%= form.submit t("catalogs.form.submit"), class: "btn btn-primary",
+                        data: { turbo_submits_with: t("actions.sending") } %>
+        <%= link_to t("catalogs.form.cancel"), catalogs_path, class: "link text-body" %>
+      </div>
+    <% end %>
+  </div>
+</section>

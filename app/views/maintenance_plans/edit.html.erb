@@ -1,0 +1,93 @@
+<% content_for :title, "#{t("plans.edit.title")} — LakeDeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= t("plans.show.eyebrow") %></p>
+    <h1 class="page-title-mono"><%= @plan.iceberg_table.fully_qualified_name %></h1>
+    <p class="page-sub"><%= t("plans.edit.subtitle") %></p>
+  </div>
+</div>
+
+<% if @plan.needs_review || @plan.paused? %>
+  <section class="panel mb-6">
+    <div class="panel-body">
+      <% if @plan.paused? %>
+        <p class="field-hint"><%= t("plans.edit.paused_hint") %></p>
+      <% end %>
+      <% if @plan.needs_review %>
+        <p class="field-hint"><%= t("plans.edit.review_hint", failures: @plan.consecutive_failures) %></p>
+      <% end %>
+    </div>
+  </section>
+<% end %>
+
+<%= form_with model: @plan, class: "form-grid" do |f| %>
+  <% if @plan.errors.any? %>
+    <div class="errors">
+      <p class="errors-title">
+        <%= t("plans.edit.errors", count: @plan.errors.count) %>
+      </p>
+      <ul class="errors-list">
+        <% @plan.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title"><%= t("plans.edit.schedule_title") %></h2>
+    </div>
+    <div class="panel-body">
+      <div class="field">
+        <%= f.label :cron, t("plans.edit.cron"), class: "field-label" %>
+        <p class="field-hint"><%= t("plans.edit.cron_hint") %></p>
+        <%= f.text_field :cron, class: "field-input field-input-mono", placeholder: "0 3 * * *" %>
+        <p class="field-hint"><%= t("plans.edit.next_fires", time: plan_next_fire(@plan)) %></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title"><%= t("plans.edit.steps_title") %></h2>
+      <p class="panel-meta"><%= t("plans.edit.steps_meta") %></p>
+    </div>
+    <div class="panel-body">
+      <%= f.fields_for :maintenance_steps, @plan.maintenance_steps.sort_by(&:position) do |sf| %>
+        <div class="field rounded border border-cosmos-line p-3 mb-3">
+          <div class="flex items-center justify-between gap-2">
+            <label class="field-check">
+              <%= sf.hidden_field :enabled, value: "0" %>
+              <%= sf.check_box :enabled, class: "field-checkbox" %>
+              <span class="font-mono text-small"><%= sf.object.operation %></span>
+            </label>
+          </div>
+
+          <div class="mt-2">
+            <%= sf.label :cadence_cron, t("plans.edit.cadence"), class: "field-label" %>
+            <%= sf.text_field :cadence_cron, class: "field-input field-input-mono",
+                              placeholder: t("plans.edit.cadence_placeholder") %>
+          </div>
+
+          <% step_config_fields(sf.object.operation).each do |config_key| %>
+            <div class="mt-2">
+              <%= label_tag "config_#{sf.index}_#{config_key}", step_config_label(config_key), class: "field-label" %>
+              <%= text_field_tag "maintenance_plan[maintenance_steps_attributes][#{sf.index}][config][#{config_key}]",
+                                 sf.object.config&.dig(config_key),
+                                 class: "field-input field-input-mono",
+                                 placeholder: step_config_placeholder(config_key) %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </section>
+
+  <div class="form-actions">
+    <%= f.submit t("plans.edit.submit"), class: "btn btn-primary",
+                data: { turbo_submits_with: t("actions.sending") } %>
+    <%= link_to t("plans.edit.cancel"), @plan, class: "link text-body" %>
+  </div>
+<% end %>

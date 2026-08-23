@@ -1,0 +1,37 @@
+<%# Maintenance pipeline: what is in flight right now, on top of the page. %>
+<section id="activity-queue" class="panel mb-6">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("activity.pipeline.title") %></h2>
+    <span class="panel-note"><%= t("activity.pipeline.in_flight", count: running.size + queued.size) %></span>
+  </div>
+
+  <div class="grid gap-4 p-5 sm:grid-cols-3">
+    <div>
+      <p class="dl-term"><%= t("activity.pipeline.queued") %></p>
+      <p class="mt-1 font-mono text-2xl tabular-nums text-cosmos-fg"><%= queued.size %></p>
+    </div>
+    <div>
+      <p class="dl-term"><%= t("activity.pipeline.running") %></p>
+      <p class="mt-1 font-mono text-2xl tabular-nums text-ok-DEFAULT"><%= running.size %></p>
+    </div>
+    <div>
+      <p class="dl-term"><%= t("activity.pipeline.ready") %></p>
+      <p class="mt-1 font-mono text-2xl tabular-nums text-cosmos-fg-soft"><%= queue[:ready] %></p>
+    </div>
+  </div>
+
+  <% if queued.any? %>
+    <div class="border-t border-cosmos-line">
+      <div class="divide-y divide-cosmos-line">
+        <% queued.first(5).each do |execution| %>
+          <div class="flex items-center justify-between gap-3 px-5 py-2.5">
+            <span class="font-mono text-small text-cosmos-fg"><%= execution.iceberg_table.fully_qualified_name %></span>
+            <span class="badge badge-neutral">
+              <%= execution.waiting_reason == :lock ? t("activity.pipeline.waiting_lock") : t("activity.pipeline.waiting_engine") %>
+            </span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</section>
