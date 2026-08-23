@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.1](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.0...v0.1.1) (2026-08-23)
+
+
+### Bug Fixes
+
+* **ci:** ARTIFACTHUB_REPO_ID from secrets ([0904032](https://github.com/maltzsama/lakedeepdiver/commit/0904032bde2efa9c5203f2251ea0ae4cb57f4eaa))
+* **ci:** read ARTIFACTHUB_REPO_ID from secrets, not vars ([eb6e4f5](https://github.com/maltzsama/lakedeepdiver/commit/eb6e4f5b7685d812a9440a18dd87096d68dd1832))
+
 ## 0.1.0 (2026-08-23)
 
 
