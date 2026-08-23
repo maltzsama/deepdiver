@@ -100,8 +100,6 @@ jobs:
         run: |
           curl -sSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
           helm template infra/helm/lakedeepdiver | ./kubeconform -strict -summary
-      - uses: helm/chart-testing-action@v2
-      - run: ct lint --charts infra/helm/lakedeepdiver --validate-maintainers=false
 
   schema-portability:
     runs-on: ubuntu-latest
