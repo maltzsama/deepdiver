@@ -1,0 +1,60 @@
+name: Deploy documentation to GitHub Pages
+
+on:
+  workflow_run:
+    workflows: [ Release ]
+    types: [ completed ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Generate RDoc + inject counter.dev tracking
+        run: bundle exec rake docs:build
+        env:
+          SSO_ENABLED: "false"
+          SECRET_KEY_BASE_DUMMY: "1"
+          DATA_TRACKING: ${{ secrets.DATA_TRACKING }}
+      - name: assemble pages artifact (docs + chart index)
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cp -r doc/* _site/
+          # chart-releaser stores the chart index on the gh-pages branch
+          # (index storage only). It is served here via GitHub Actions,
+          # never from the branch directly.
+          git fetch origin gh-pages:refs/remotes/origin/gh-pages || true
+          git show origin/gh-pages:index.yaml > _site/index.yaml 2>/dev/null || true
+          sed "s/REPLACE_ME/${{ secrets.ARTIFACTHUB_REPO_ID }}/" \
+            infra/helm/artifacthub-repo.yml > _site/artifacthub-repo.yml
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
