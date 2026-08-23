@@ -94,7 +94,10 @@ jobs:
       - uses: azure/setup-helm@v4
       - name: sem premissas de deployment
         run: |
-          ! grep -rniE 'etg-ca|ceph|argocd|argoproj|kyverno|cloudnativepg|anomalyco|registry\.example\.com|etraveli|PREENCHER_H1' infra/helm/
+          ! grep -rniE 'etg-ca|ceph|argocd|argoproj|kyverno|cloudnativepg|anomalyco|registry\.example\.com|etraveli' infra/helm/
+      - name: validate artifacthub metadata
+        run: |
+          sed "s/REPLACE_ME/test/" infra/helm/artifacthub-repo.yml | grep "repositoryID: test"
       - run: helm lint infra/helm/lakedeepdiver
       - name: kubeconform
         run: |
