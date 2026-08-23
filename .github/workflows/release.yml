@@ -9,6 +9,8 @@ permissions:
   contents: write
   pull-requests: write
   packages: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: release
@@ -29,8 +31,9 @@ jobs:
           manifest-file: .release-please-manifest.json
 
   # The tag is created by GITHUB_TOKEN, which never triggers tag-based
-  # workflows (GitHub anti-recursion). So the publish jobs run HERE, in the
-  # same run that merged the release PR - no PAT needed.
+  # workflows (GitHub anti-recursion). So image, chart, docs and Pages all
+  # publish HERE, in the same run that merged the release PR - one pipeline,
+  # no PAT needed.
   image:
     needs: release-please
     if: needs.release-please.outputs.releases_created == 'true'
@@ -57,10 +60,9 @@ jobs:
           push: true
           tags: ${{ steps.tags.outputs.tags }}
 
-  # Chart publish: chart-releaser creates the chart release (tgz asset) and
-  # stores the chart index on the gh-pages branch (index storage only). The
-  # pages.yml workflow deploys that index together with the docs via GitHub
-  # Actions - the gh-pages branch never serves the site.
+  # Chart publish: chart-releaser packages the chart, creates the chart
+  # GitHub release (tgz asset) and writes the index to gh-pages (storage
+  # only - never the deployment source).
   chart:
     needs: [ release-please, image ]
     if: needs.release-please.outputs.releases_created == 'true'
@@ -79,3 +81,66 @@ jobs:
           charts_dir: infra/helm
         env:
           CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CR_INDEX_PATH: ".cr-index"
+      - name: include artifacthub metadata
+        run: |
+          sed "s/REPLACE_ME/${{ secrets.ARTIFACTHUB_REPO_ID }}/" \
+            infra/helm/artifacthub-repo.yml > .cr-index/artifacthub-repo.yml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chart
+          path: .cr-index
+          if-no-files-found: error
+
+  docs:
+    needs: release-please
+    if: needs.release-please.outputs.releases_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: build docs
+        run: bundle exec rake docs:build
+        env:
+          SSO_ENABLED: "false"
+          SECRET_KEY_BASE_DUMMY: "1"
+          DATA_TRACKING: ${{ secrets.DATA_TRACKING }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docs
+          path: doc
+          if-no-files-found: error
+
+  pages:
+    needs: [ release-please, chart, docs ]
+    if: needs.release-please.outputs.releases_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: assemble pages artifact (docs + chart index)
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cp -r artifacts/docs/* _site/
+          cp -r artifacts/chart/* _site/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy-pages:
+    needs: pages
+    if: needs.release-please.outputs.releases_created == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
