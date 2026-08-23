@@ -7,6 +7,12 @@ on:
 permissions:
   contents: write
   packages: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   image:
@@ -46,5 +52,23 @@ jobs:
       - uses: helm/chart-releaser-action@v1
         with:
           charts_dir: infra/helm
+          skip_packaging: false
+          charts_repo_url: https://maltzsama.github.io/lakedeepdiver
         env:
           CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CR_INDEX_PATH: "_index"
+      - name: upload-pages-artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .cr-index
+
+  deploy-pages:
+    needs: chart
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
