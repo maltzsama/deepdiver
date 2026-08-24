@@ -41,6 +41,14 @@ module MaintenanceOrchestrator
       ExecuteMaintenanceJob.set(wait: 10.minutes).perform_later(execution_history_id)
     end
 
+    # Re-enqueues ExecuteMaintenanceJob shortly after it was consumed before
+    # the primary status: :running write was visible (cross-database race).
+    #
+    # @param execution_history_id [Integer] the execution to retry
+    def retry_pending_maintenance(execution_history_id)
+      ExecuteMaintenanceJob.set(wait: 5.seconds).perform_later(execution_history_id)
+    end
+
     # Enqueues FreshnessSweepJob.
     #
     # @param freshness_run_id [Integer] the run to start

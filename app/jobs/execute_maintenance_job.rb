@@ -15,7 +15,7 @@ class ExecuteMaintenanceJob < ApplicationJob
     execution = ExecutionHistory.find(execution_history_id)
 
     unless execution.status == "running"
-      Rails.logger.warn("ExecuteMaintenanceJob: execution #{execution.id} is #{execution.status}, skipping")
+      retry_pending(execution, execution_history_id)
       return
     end
 
@@ -29,6 +29,25 @@ class ExecuteMaintenanceJob < ApplicationJob
   end
 
   private
+
+  # A pending execution means start_execution_on_engine wrote status: :running
+  # on the primary DB but the commit may not be visible yet (the enqueue happens
+  # on a separate queue-DB connection before the primary transaction commits). A
+  # worker that consumed the job in that window must retry shortly instead of
+  # abandoning the execution - it would stay running with a NULL heartbeat and
+  # be reaped as an orphan. Limited by retry_count so a genuinely stuck
+  # execution does not loop forever.
+  #
+  # @param execution [ExecutionHistory] the execution whose job was consumed
+  # @param execution_history_id [Integer] the execution id to re-enqueue
+  def retry_pending(execution, execution_history_id)
+    return unless execution.status == "pending"
+    return if execution.retry_count >= MAX_RETRIES
+
+    execution.increment!(:retry_count)
+    Rails.logger.info("ExecuteMaintenanceJob: execution #{execution.id} still pending; retrying")
+    MaintenanceOrchestrator.retry_pending_maintenance(execution_history_id)
+  end
 
   # Finds the next pending step for the execution, ordered by the maintenance
   # plan's position.

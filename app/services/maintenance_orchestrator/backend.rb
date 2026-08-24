@@ -24,6 +24,12 @@ module MaintenanceOrchestrator
     #
     # @param execution_history_id [Integer] the execution to retry
     def retry_maintenance(execution_history_id) = raise NotImplementedError
+    # Retries the maintenance chain shortly after a dispatch was consumed
+    # before the primary status: :running write was visible. Used to close the
+    # cross-database race without a long backoff.
+    #
+    # @param execution_history_id [Integer] the execution to retry
+    def retry_pending_maintenance(execution_history_id) = raise NotImplementedError
     # Runs a freshness sweep against the enabled SLAs.
     #
     # @param freshness_run_id [Integer] the run to start

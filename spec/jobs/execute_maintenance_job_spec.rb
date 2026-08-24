@@ -59,6 +59,36 @@ RSpec.describe ExecuteMaintenanceJob, type: :job do
     expect(execution.execution_steps.first.retry_count).to eq(1)
   end
 
+  it "re-enqueues shortly when the execution is still pending (primary commit not yet visible)" do
+    execution = create(:execution_history, iceberg_table: plan.iceberg_table, status: :pending)
+
+    described_class.perform_now(execution.id)
+
+    expect(execution.reload.retry_count).to eq(1)
+    retried = enqueued_jobs.last
+    expect(retried[:job]).to eq(ExecuteMaintenanceJob)
+    expect(retried[:at]).to be_between((Time.current + 1.second).to_f, (Time.current + 10.seconds).to_f)
+  end
+
+  it "does not retry a pending execution past the retry limit" do
+    execution = create(:execution_history, iceberg_table: plan.iceberg_table, status: :pending,
+                                           retry_count: described_class::MAX_RETRIES)
+
+    expect { described_class.perform_now(execution.id) }
+      .not_to change { enqueued_jobs.size }
+
+    expect(execution.reload.retry_count).to eq(described_class::MAX_RETRIES)
+  end
+
+  it "skips (without retrying) an execution that is no longer running or pending" do
+    execution = create(:execution_history, iceberg_table: plan.iceberg_table, status: :success)
+
+    expect { described_class.perform_now(execution.id) }
+      .not_to change { enqueued_jobs.size }
+
+    expect(execution.reload.retry_count).to eq(0)
+  end
+
   it "drains when a failure drops the last demand" do
     execution = released_execution
     TrinoEngineSupervisor.state.update!(status: "up", status_changed_at: Time.current)

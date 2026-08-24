@@ -157,6 +157,14 @@ module MaintenanceOrchestrator
     backend.execute_maintenance(execution_history_id)
   end
 
+  # Retries the maintenance chain shortly, for a dispatch consumed before the
+  # primary status: :running write was visible.
+  #
+  # @param execution_history_id [Integer] the execution to retry
+  def self.retry_pending_maintenance(execution_history_id)
+    backend.retry_pending_maintenance(execution_history_id)
+  end
+
   # Retries the maintenance of an execution via the backend.
   #
   # @param execution_history_id [Integer] the execution to retry
