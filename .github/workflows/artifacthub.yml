@@ -1,39 +1,23 @@
 name: artifacthub-metadata
 
+# Republishes the site when the Artifact Hub metadata changes, without waiting
+# for a release. It used to deploy Pages itself with a site containing only
+# index.yaml + artifacthub-repo.yml, which removed the whole documentation from
+# the published site. It now delegates to the Pages workflow, which always
+# assembles docs and the Helm index together.
+
 on:
   push:
     branches: [ main ]
     paths: [ "infra/helm/artifacthub-repo.yml" ]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/checkout@v4
-        with: { ref: main }
-
-      - name: build pages artifact preserving published index
-        run: |
-          set -euo pipefail
-          mkdir -p .cr-index
-          curl -fsSL -o .cr-index/index.yaml https://maltzsama.github.io/lakedeepdiver/index.yaml \
-            || { echo "no published index yet"; rm -f .cr-index/index.yaml; }
-          sed "s/REPLACE_ME/${{ secrets.ARTIFACTHUB_REPO_ID }}/" \
-            infra/helm/artifacthub-repo.yml > .cr-index/artifacthub-repo.yml
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: .cr-index
-
-      - name: deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+  pages:
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      actions: read
+    uses: ./.github/workflows/pages.yml
+    secrets: inherit

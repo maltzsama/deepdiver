@@ -52,13 +52,17 @@ jobs:
           bundler-cache: true
 
       - name: Prepare the test database
-        run: RAILS_ENV=test bin/rails db:prepare
+        env:
+          RAILS_ENV: test
+        run: bin/rails db:prepare
 
       - name: Run Rails test suite
         run: bin/rails test
 
       - name: Run RSpec suite
-        run: RAILS_ENV=test bundle exec rspec
+        env:
+          RAILS_ENV: test
+        run: bundle exec rspec
 
   lint:
     runs-on: ubuntu-latest
@@ -89,10 +93,10 @@ jobs:
   chart:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       - uses: azure/setup-helm@v4
-      - name: sem premissas de deployment
+      - name: no deployment-specific assumptions in the chart
         run: |
           ! grep -rniE 'etg-ca|ceph|argocd|argoproj|kyverno|cloudnativepg|anomalyco|registry\.example\.com|etraveli' infra/helm/
       - name: validate artifacthub metadata
@@ -117,10 +121,10 @@ jobs:
           --health-cmd pg_isready --health-interval 10s
           --health-timeout 5s --health-retries 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ruby/setup-ruby@v1
         with: { bundler-cache: true }
-      - name: schema.rb carrega em Postgres
+      - name: schema.rb loads on PostgreSQL
         env:
           DATABASE_URL: postgresql://postgres@localhost:5432/ldd_schema_check
           DB_QUEUE_URL: postgresql://postgres@localhost:5432/ldd_schema_check_queue
@@ -133,7 +137,7 @@ jobs:
   build-image:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: build image
         uses: docker/build-push-action@v6
         with:
@@ -141,5 +145,43 @@ jobs:
           push: false
           tags: lakedeepdiver:ci
 
+  # The docs build used to pass `--readme`, which RDoc does not have: it was
+  # silently ignored ("invalid options are ignored") and the landing page stayed
+  # on RDoc's placeholder for months. docs:verify asserts the README rendered
+  # and, when DATA_TRACKING is available, that the tracking script is present.
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
 
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: build documentation
+        run: bundle exec rake docs:build
+        env:
+          SSO_ENABLED: "false"
+          SECRET_KEY_BASE_DUMMY: "1"
+          DATA_TRACKING: ${{ secrets.DATA_TRACKING }}
+
+      - name: verify documentation
+        run: bundle exec rake docs:verify
+        env:
+          DATA_TRACKING: ${{ secrets.DATA_TRACKING }}
+
+  # actionlint catches what YAML parsing and a green run do not: unknown action
+  # inputs, bad `needs`/`if` expressions and reusable-workflow contract errors.
+  # Without it, a broken workflow is only found when it runs - which is how the
+  # release Pages job stayed broken.
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: lint workflows
+        run: |
+          set -euo pipefail
+          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
 

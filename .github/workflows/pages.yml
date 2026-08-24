@@ -1,50 +1,114 @@
-name: Deploy documentation to GitHub Pages
+name: Pages
+
+# The single publisher for GitHub Pages. Pages hosts two things that must be
+# deployed together, because every deploy REPLACES the whole site:
+#
+#   - the RDoc documentation (doc/)
+#   - the Helm repo index (index.yaml) + artifacthub-repo.yml
+#
+# Three workflows used to deploy Pages independently, and artifacthub.yml
+# uploaded a site containing only the index, which wiped the documentation.
+# Everything now routes through this workflow via workflow_call.
 
 on:
-  workflow_run:
-    workflows: [ Release ]
-    types: [ completed ]
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit-ish to build the documentation from.
+        type: string
+        required: false
+        default: ""
+      chart-index-artifact:
+        description: >-
+          Name of an artifact holding index.yaml (and artifacthub-repo.yml)
+          produced earlier in the same run. When empty, the currently published
+          index is reused so a docs-only deploy never drops the Helm repo.
+        type: string
+        required: false
+        default: ""
   workflow_dispatch:
+
+# Serialize against every other Pages deploy. Not cancel-in-progress: a
+# half-applied deploy would leave the site missing either docs or the index.
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 permissions:
   contents: read
   pages: write
   id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
+  # deploy-pages resolves the uploaded artifact by ID and needs this.
+  actions: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+          ref: ${{ inputs.ref || github.sha }}
+
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-      - name: Generate RDoc + inject counter.dev tracking
+
+      - name: build documentation
         run: bundle exec rake docs:build
         env:
           SSO_ENABLED: "false"
           SECRET_KEY_BASE_DUMMY: "1"
           DATA_TRACKING: ${{ secrets.DATA_TRACKING }}
-      - name: assemble pages artifact (docs + chart index)
+
+      # Fails when the landing page is RDoc's placeholder instead of the README,
+      # or when the tracking script did not make it into the output.
+      - name: verify documentation
+        run: bundle exec rake docs:verify
+        env:
+          DATA_TRACKING: ${{ secrets.DATA_TRACKING }}
+
+      # Truthiness rather than `!= ''`: on workflow_dispatch the input is null,
+      # and GitHub casts both null and '' to 0 when comparing across types,
+      # which makes `!= ''` read false for an empty string too. Relying on that
+      # coercion is a trap; an empty or absent value is simply falsy here.
+      - name: download chart index built in this run
+        if: inputs.chart-index-artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.chart-index-artifact }}
+          path: chart-index
+
+      - name: assemble site
+        env:
+          ARTIFACTHUB_REPO_ID: ${{ secrets.ARTIFACTHUB_REPO_ID }}
         run: |
           set -euo pipefail
           mkdir -p _site
-          cp -r doc/* _site/
-          # chart-releaser stores the chart index on the gh-pages branch
-          # (index storage only). It is served here via GitHub Actions,
-          # never from the branch directly.
-          git fetch origin gh-pages:refs/remotes/origin/gh-pages || true
-          git show origin/gh-pages:index.yaml > _site/index.yaml 2>/dev/null || true
-          sed "s/REPLACE_ME/${{ secrets.ARTIFACTHUB_REPO_ID }}/" \
+          cp -r doc/. _site/
+
+          if [ -f chart-index/index.yaml ]; then
+            cp chart-index/index.yaml _site/index.yaml
+          else
+            # Docs-only deploy: carry the published index forward. Without this
+            # the deploy would silently drop the Helm repo from the site.
+            # `curl -f` plus the explicit test keeps a failed fetch from
+            # publishing a truncated index.
+            curl -fsSL -o published-index.yaml \
+              https://maltzsama.github.io/lakedeepdiver/index.yaml || true
+            if [ -s published-index.yaml ]; then
+              cp published-index.yaml _site/index.yaml
+            else
+              echo "::warning::no published index.yaml to carry forward; the Helm repo will be empty until the next chart release"
+            fi
+          fi
+
+          sed "s/REPLACE_ME/${ARTIFACTHUB_REPO_ID}/" \
             infra/helm/artifacthub-repo.yml > _site/artifacthub-repo.yml
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+
+          test -f _site/index.html || { echo "::error::documentation missing from the site"; exit 1; }
+
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
@@ -55,6 +119,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
+      - name: deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
