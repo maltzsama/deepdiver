@@ -2,6 +2,11 @@
 # password. Actions operate on current_user, so no Pundit authorization call
 # is needed.
 class ProfilesController < ApplicationController
+  # Every action operates on current_user only - there is no record another
+  # user could reach and no id parameter, and profile_params excludes role and
+  # status. Opting out explicitly so the global verify_authorized stays on.
+  skip_after_action :verify_authorized
+
   # Renders the account preferences screen.
   def show
   end

@@ -13,7 +13,8 @@ class DataRetentionJob < ApplicationJob
     execution_steps: 90.days,
     freshness_checks: 30.days,
     freshness_runs: 30.days,
-    solid_queue_finished: 7.days
+    # Key name drives the env override: SOLID_QUEUE_RETENTION_DAYS.
+    solid_queue: 7.days
   }.freeze
 
   # Explicit table map — no constantize, no rescue NameError.
@@ -24,6 +25,16 @@ class DataRetentionJob < ApplicationJob
     freshness_checks: FreshnessCheck,
     freshness_runs: FreshnessRun
   }.freeze
+
+  # Which column decides "old". ErrorEvent dedupes by message: a recurring
+  # failure keeps its original created_at and only bumps last_seen_at, so
+  # pruning it by created_at deleted OPEN errors that were still happening -
+  # exactly the ones worth keeping. The schema's [status, last_seen_at] index
+  # points at the right column.
+  TIMESTAMP_COLUMNS = {
+    error_events: :last_seen_at
+  }.freeze
+  DEFAULT_TIMESTAMP_COLUMN = :created_at
 
   BATCH_SIZE = 5_000
 
@@ -44,18 +55,28 @@ class DataRetentionJob < ApplicationJob
   private
 
   def prune(key, klass)
-    cutoff = ENV.fetch("#{key.to_s.upcase}_RETENTION_DAYS", "#{DEFAULT_RETENTION[key] / 1.day}").to_i.days.ago
+    cutoff = retention_cutoff(key)
+    column = TIMESTAMP_COLUMNS.fetch(key, DEFAULT_TIMESTAMP_COLUMN)
 
     loop do
-      deleted = klass.where(created_at: ...cutoff).limit(BATCH_SIZE).delete_all
-      Rails.logger.info("DataRetention: deleted #{deleted} #{key}") if deleted.positive?
+      deleted = klass.where(column => ...cutoff).limit(BATCH_SIZE).delete_all
+      Rails.logger.info("DataRetention: deleted #{deleted} #{key} by #{column}") if deleted.positive?
       break if deleted.zero?
     end
   end
 
+  # Retention window for a key: the <KEY>_RETENTION_DAYS override, else the
+  # DEFAULT_RETENTION entry.
+  #
+  # @param key [Symbol] the retention key
+  # @return [ActiveSupport::TimeWithZone] the cutoff instant
+  def retention_cutoff(key)
+    default_days = DEFAULT_RETENTION.fetch(key) / 1.day
+    ENV.fetch("#{key.to_s.upcase}_RETENTION_DAYS", default_days.to_s).to_i.days.ago
+  end
+
   def prune_solid_queue
-    days = ENV.fetch("SOLID_QUEUE_RETENTION_DAYS", "7").to_i
-    cutoff = days.days.ago
+    cutoff = retention_cutoff(:solid_queue)
 
     loop do
       deleted = SolidQueue::Job.where.not(finished_at: nil)

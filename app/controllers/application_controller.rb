@@ -15,6 +15,15 @@ class ApplicationController < ActionController::Base
   before_action :set_locale_and_theme, if: :user_signed_in?
   before_action :set_failed_execution_count, if: :user_signed_in?
 
+  # A forgotten `authorize` is otherwise indistinguishable from an intentional
+  # one: the action just runs for any signed-in user. This turns the omission
+  # into a loud failure. Controllers that act only on current_user opt out
+  # explicitly with skip_after_action, which documents the decision.
+  # Not verify_policy_scoped: index actions here authorize the class
+  # (`authorize IcebergTable`) rather than scoping a relation, so
+  # verify_authorized is the check that matches how this app is written.
+  after_action :verify_authorized, unless: :devise_controller?
+
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
   layout :layout_by_resource

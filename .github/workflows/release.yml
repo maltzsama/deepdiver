@@ -24,7 +24,7 @@ jobs:
       releases_created: ${{ steps.release.outputs.releases_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -50,12 +50,12 @@ jobs:
           VERSION="${VERSION#v}"
           MAJOR_MINOR="${VERSION%.*}"
           echo "tags=ghcr.io/maltzsama/lakedeepdiver:${VERSION},ghcr.io/maltzsama/lakedeepdiver:${MAJOR_MINOR}" >> "$GITHUB_OUTPUT"
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -76,7 +76,7 @@ jobs:
       - run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
       - uses: helm/chart-releaser-action@v1
         with:
           charts_dir: infra/helm

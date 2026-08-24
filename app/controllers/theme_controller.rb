@@ -2,6 +2,9 @@
 # preference (the current user is already authenticated, so no explicit Pundit
 # call is needed).
 class ThemeController < ApplicationController
+  # Own-account preference, keyed off current_user with no id parameter.
+  skip_after_action :verify_authorized
+
   THEMES = %w[light dark].freeze
 
   # Switches the paper/ink theme. It used to live in a cookie and disappear
