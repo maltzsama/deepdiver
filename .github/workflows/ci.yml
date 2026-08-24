@@ -128,5 +128,18 @@ jobs:
           SECRET_KEY_BASE: dummy
         run: bin/rails db:create db:schema:load
 
+  # Validate the Dockerfile on every PR so a broken image surfaces before the
+  # release workflow builds and pushes it on a tag. No push, no registry.
+  build-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: lakedeepdiver:ci
+
 
 
