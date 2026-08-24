@@ -35,4 +35,48 @@ RSpec.describe MaintenanceStep do
       expect(step).to be_valid
     end
   end
+
+  describe "config validation" do
+    it "accepts well-formed thresholds and integer snapshot ids" do
+      step = build(:maintenance_step, maintenance_plan: plan, operation: "expire_snapshots",
+                                      position: 0, config: {
+                                        "retention_threshold" => "7d",
+                                        "file_size_threshold" => "128MB",
+                                        "snapshot_ids" => "123, 456"
+                                      })
+
+      expect(step).to be_valid
+    end
+
+    it "rejects a retention_threshold that is not a magnitude plus unit" do
+      step = build(:maintenance_step, maintenance_plan: plan, operation: "expire_snapshots",
+                                      position: 0, config: { "retention_threshold" => "7d; DROP TABLE x" })
+
+      expect(step).not_to be_valid
+      expect(step.errors[:config].join).to include("retention_threshold")
+    end
+
+    it "rejects a file_size_threshold that is not a magnitude plus unit" do
+      step = build(:maintenance_step, maintenance_plan: plan, operation: "optimize",
+                                      position: 0, config: { "file_size_threshold" => "128MB OR 1=1" })
+
+      expect(step).not_to be_valid
+      expect(step.errors[:config].join).to include("file_size_threshold")
+    end
+
+    it "rejects snapshot_ids that are not integers" do
+      step = build(:maintenance_step, maintenance_plan: plan, operation: "expire_snapshots",
+                                      position: 0, config: { "snapshot_ids" => "1, 2; DROP TABLE x" })
+
+      expect(step).not_to be_valid
+      expect(step.errors[:config].join).to include("snapshot_ids")
+    end
+
+    it "ignores config without the validated keys" do
+      step = build(:maintenance_step, maintenance_plan: plan, operation: "optimize",
+                                      position: 0, config: { "where" => "1 = 1" })
+
+      expect(step).to be_valid
+    end
+  end
 end
