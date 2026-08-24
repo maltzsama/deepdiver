@@ -100,7 +100,7 @@ module MaintenanceOrchestrator
       return
     end
 
-    execution.update!(status: :running, current_step: :start)
+    execution.update!(status: :running, current_step: :start, last_heartbeat_at: Time.current)
 
     if TableLock.acquire(execution)
       execute_maintenance(execution_history_id)

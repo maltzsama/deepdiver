@@ -37,7 +37,7 @@ module TrinoDemand
   def reap_orphans!
     ExecutionHistory
       .where(status: "running")
-      .where(last_heartbeat_at: ...STALE_AFTER.ago)
+      .where("COALESCE(last_heartbeat_at, started_at) < ?", STALE_AFTER.ago)
       .find_each do |execution|
         ExecutionFailureHandler.handle(execution,
                                        "Trino coordinator lost during execution (no heartbeat for #{STALE_AFTER.inspect})")
