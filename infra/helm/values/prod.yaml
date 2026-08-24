@@ -1,16 +1,27 @@
 # Production overrides for the lakedeepdiver Helm chart.
 # Usage: helm upgrade --install lakedeepdiver infra/helm/lakedeepdiver --values infra/helm/values/prod.yaml
+#
+# Replace every CHANGE_ME below with the real value for the target cluster.
+# Do not deploy with the placeholders.
 image:
   repository: ghcr.io/maltzsama/lakedeepdiver
   # Pin a concrete release; never "latest" in production.
-  tag: "0.1.0"
+  tag: "0.1.7"
   pullPolicy: IfNotPresent
 
 postgresql:
-  existingSecret: ""
+  # CHANGE_ME: name of an out-of-band Secret with a `url` key holding the
+  # primary DATABASE_URL. (The chart does not consume this Secret yet; the app
+  # reads DATABASE_URL from appSecrets.existingSecret.)
+  existingSecret: CHANGE_ME-postgresql-url-secret
+  urlKey: url
 
 activeRecordEncryption:
-  existingSecret: ""
+  # CHANGE_ME: name of an out-of-band Secret with primary_key,
+  # deterministic_key and key_derivation_salt (generate with
+  # bin/rails db:encryption:init). Without these, catalog credential secrets
+  # cannot be read/written and the web pod gets no encryption keys.
+  existingSecret: CHANGE_ME-ar-encryption-secret
 
 appSecrets:
   # Created out-of-band (SealedSecrets / external controller) with DATABASE_URL,
@@ -21,18 +32,32 @@ appSecrets:
 internalCA:
   enabled: true
   mountFile: /etc/ssl/certs/internal-ca.crt
+  # CHANGE_ME: Secret holding the internal CA (key ca.crt) that signs the
+  # catalog/Trino TLS certificates.
   existingSecret: lakedeepdiver-ca
   caKey: ca.crt
 
+admin:
+  bootstrap:
+    # CHANGE_ME: set BOTH to seed an admin on first install. Setting only one
+    # fails the migration Job (seeds.rb fetches the password). Omit both to
+    # skip admin bootstrap.
+    email: ""
+    password: ""
+
 env:
+  # CHANGE_ME: Trino coordinator URL, e.g. http://trino-coordinator:8080
   trinoUrl: ""
   # Leave empty to trust the release namespace; set to the Trino namespace
   # when the engine lives elsewhere (remember to grant RBAC there).
   trinoNamespace: ""
+  # CHANGE_ME: name of the Trino coordinator Deployment, e.g. trino-coordinator
   trinoDeployment: ""
   logLevel: info
   jobConcurrency: 2
+  # CHANGE_ME: public hostname (used for mailer links and RAILS_ALLOWED_HOSTS).
   host: ""
+  allowedHosts: []
 
 replicaCount: 1
 worker:
@@ -45,13 +70,13 @@ ingress:
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: 8m
   hosts:
-    - host: ""
+    - host: CHANGE_ME.ingress.host
       paths:
         - path: /
           pathType: Prefix
   tls:
     - hosts:
-        - ""
+        - CHANGE_ME.tls.host
       secretName: lakedeepdiver-tls
 
 resources:

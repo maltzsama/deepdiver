@@ -7,6 +7,9 @@ metadata:
 data:
   RAILS_ENV: production
   RAILS_LOG_LEVEL: {{ .Values.env.logLevel | quote }}
+  # Migrations run in the pre-install/pre-upgrade Job; web pods must not run
+  # db:prepare again (they would race each other with replicaCount > 1).
+  SKIP_DB_PREPARE: "true"
   TRINO_RUNTIME: real
   TRINO_PROVISIONER: {{ .Values.trino.provisioner | quote }}
   {{- if .Values.env.trinoUrl }}
@@ -20,7 +23,10 @@ data:
   APP_HOST: {{ .Values.env.host | quote }}
   {{- end }}
   {{- if and .Values.internalCA.enabled .Values.internalCA.existingSecret }}
-  SSL_CERT_FILE: {{ .Values.internalCA.mountFile | quote }}
+  # INTERNAL_CA_FILE is consumed by HttpTransport as an explicit ca_file for
+  # catalog/Trino TLS. Do NOT set SSL_CERT_FILE here: pointing it at only the
+  # internal CA replaces the system bundle and breaks HTTPS to public
+  # endpoints (e.g. Slack webhooks).
   INTERNAL_CA_FILE: {{ .Values.internalCA.mountFile | quote }}
   {{- end }}
   {{- if .Values.ingress.tls }}
@@ -37,4 +43,8 @@ data:
   OIDC_CLIENT_SECRET: {{ .Values.oidc.clientSecret | quote }}
   OIDC_REDIRECT_URI: {{ .Values.oidc.redirectUri | quote }}
   OIDC_PROVIDER_LABEL: {{ .Values.oidc.providerLabel | default "SSO" | quote }}
+  {{- end }}
+  {{- if and .Values.admin.bootstrap.email .Values.admin.bootstrap.password }}
+  BOOTSTRAP_ADMIN_EMAIL: {{ .Values.admin.bootstrap.email | quote }}
+  BOOTSTRAP_ADMIN_PASSWORD: {{ .Values.admin.bootstrap.password | quote }}
   {{- end }}

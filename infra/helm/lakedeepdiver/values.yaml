@@ -72,6 +72,15 @@ oidc:
   redirectUri: ""
   providerLabel: SSO
 
+# Bootstrap an admin account during the pre-install seed (db:prepare). The
+# app only creates it when BOTH env vars are set (seeds.rb); setting just the
+# email raises KeyError and fails the migration hook. Password is interpolated
+# by the seed, so it is not shown in the UI afterwards.
+admin:
+  bootstrap:
+    email: ""
+    password: ""
+
 service:
   type: ClusterIP
   port: 80

@@ -1,7 +1,9 @@
 #!/bin/bash -e
 
-# If running the rails server then create or migrate existing database
-if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+# If running the rails server then create or migrate existing database.
+# Helm sets SKIP_DB_PREPARE=true because the chart runs migrations in a
+# pre-install/pre-upgrade Job - the web pod must not race against it.
+if [ "${SKIP_DB_PREPARE:-}" != "true" ] && [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   ./bin/rails db:prepare
 fi
 
