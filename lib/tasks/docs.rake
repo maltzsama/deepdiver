@@ -18,7 +18,9 @@ namespace :docs do
   # which is megabytes of generated output with nothing to document.
   # `docs` is included so the guides the README links to (security, the Helm
   # remediation notes) become pages instead of dead links on the published site.
-  SOURCES = %w[README.md docs app lib config Gemfile Rakefile].freeze
+  # CHANGELOG.md is release-please's output and is what people look for first
+  # after "what is this".
+  SOURCES = %w[README.md CHANGELOG.md docs app lib config Gemfile Rakefile].freeze
   EXCLUDES = %w[
     config/credentials.yml.enc
     app/assets/builds
@@ -91,6 +93,12 @@ namespace :docs do
 
     if content.include?("This is the API documentation for")
       raise "docs:verify: index.html still shows RDoc's placeholder page; --main did not take effect"
+    end
+
+    # Pages that must exist, so dropping one from SOURCES fails the build
+    # instead of quietly disappearing from the published site.
+    %w[doc/CHANGELOG_md.html doc/docs/security_md.html].each do |page|
+      raise "docs:verify: #{page} missing - check docs:build SOURCES" unless File.exist?(page)
     end
 
     if ENV["DATA_TRACKING"].to_s.strip.empty?
