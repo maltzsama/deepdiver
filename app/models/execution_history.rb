@@ -31,7 +31,9 @@ class ExecutionHistory < ApplicationRecord
     %w[success failed skipped].include?(status)
   end
 
-  # Whether the execution is currently running and has already been retried.
+  # Whether the execution is running while a dispatch retry is still in flight.
+  # retry_count here counts pending-dispatch retries only; commit-conflict
+  # retries are per-step and live on ExecutionStep#retry_count.
   # @return [Boolean]
   def retrying?
     status == "running" && retry_count.positive?

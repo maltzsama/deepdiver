@@ -115,12 +115,12 @@ module ApplicationHelper
     STEP_LABELS.fetch(step.to_s, step.to_s)
   end
 
-# Visual state of an execution. Returns :retrying, :failed or :running.
-# A running execution with a positive retry count is waiting for the next
-# commit-conflict attempt - its own demand keeps the engine up.
-def execution_visual_state(execution)
+  # Visual state of an execution. Returns :retrying, :failed or :running.
+  # A running execution with a positive retry count still has a dispatch retry
+  # in flight - its own demand keeps the engine up.
+  def execution_visual_state(execution)
     return :failed if execution.status == "failed"
-    return :retrying if execution.status == "running" && execution.retry_count.positive?
+    return :retrying if execution.retrying?
 
     :running
   end

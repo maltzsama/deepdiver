@@ -56,4 +56,22 @@ RSpec.describe TrinoDemand do
       expect(run.reload.status).to eq("failed")
     end
   end
+
+  describe "abandoned pending executions" do
+    it "fails a pending execution whose dispatch never arrived" do
+      stuck = create(:execution_history, status: :pending,
+                                         started_at: (described_class::PENDING_STALE_AFTER + 5.minutes).ago)
+
+      expect(described_class.count).to eq(0)
+      expect(stuck.reload.status).to eq("failed")
+      expect(stuck.error_message).to include("dispatch never arrived")
+    end
+
+    it "leaves a recently queued execution alone" do
+      waiting = create(:execution_history, status: :pending, started_at: 2.minutes.ago)
+
+      expect(described_class.count).to eq(1)
+      expect(waiting.reload.status).to eq("pending")
+    end
+  end
 end
