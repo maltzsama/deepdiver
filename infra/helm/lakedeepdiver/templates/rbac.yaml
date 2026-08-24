@@ -1,30 +1,11 @@
+{{- $trinoNamespace := .Values.env.trinoNamespace | default .Release.Namespace }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: {{ include "lakedeepdiver.fullname" . }}-trino
   labels:
     {{- include "lakedeepdiver.labels" . | nindent 4 }}
-rules:
-  # The Trino engine is an ephemeral Deployment (scaled 0/1) in the same or a
-  # dedicated namespace (TRINO_NAMESPACE). The app patches it via kubeclient.
-  - apiGroups: [ "apps" ]
-    resources: [ "deployments" ]
-    verbs: [ "get", "list", "patch" ]
-  - apiGroups: [ "apps" ]
-    resources: [ "deployments/scale" ]
-    verbs: [ "get", "patch" ]
-  # Catalog credentials are materialized as a Secret that the Trino plugin
-  # mounts at /etc/baleia/secrets. The app creates/updates this Secret.
-  # Scoped to the materialized Secret only (resourceNames is ignored for
-  # create, so the create rule stays separate) so the app's own Secret -
-  # DATABASE_URL, RAILS_MASTER_KEY, encryption keys - is never reachable.
-  - apiGroups: [ "" ]
-    resources: [ "secrets" ]
-    verbs: [ "create" ]
-  - apiGroups: [ "" ]
-    resources: [ "secrets" ]
-    resourceNames: [ "{{ include "lakedeepdiver.fullname" . }}-trino-catalog-secrets" ]
-    verbs: [ "get", "update", "patch" ]
+{{- include "lakedeepdiver.trinoRules" . | nindent 0 }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -40,3 +21,33 @@ subjects:
   - kind: ServiceAccount
     name: {{ include "lakedeepdiver.fullname" . }}
     namespace: {{ .Release.Namespace }}
+{{- if ne $trinoNamespace .Release.Namespace }}
+---
+# The Trino engine lives in a dedicated namespace (env.trinoNamespace): grant
+# the release-namespace ServiceAccount the same permissions there so the app
+# can scale the Deployment and materialize the credentials Secret in it.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "lakedeepdiver.fullname" . }}-trino
+  namespace: {{ $trinoNamespace }}
+  labels:
+    {{- include "lakedeepdiver.labels" . | nindent 4 }}
+{{- include "lakedeepdiver.trinoRules" . | nindent 0 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "lakedeepdiver.fullname" . }}-trino
+  namespace: {{ $trinoNamespace }}
+  labels:
+    {{- include "lakedeepdiver.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "lakedeepdiver.fullname" . }}-trino
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "lakedeepdiver.fullname" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
