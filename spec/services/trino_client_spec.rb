@@ -43,13 +43,28 @@ RSpec.describe TrinoClient, "pagination" do
   end
 
   describe "query_scalar" do
-    it "stops paginating after the first row" do
-      page1 = { "columns" => columns, "data" => [ row ], "nextUri" => "http://trino:8080/v1/statement/1/2" }
+    it "stops paginating after the first row and cancels the query" do
+      next_uri = "http://trino:8080/v1/statement/1/2"
+      page1 = { "columns" => columns, "data" => [ row ], "nextUri" => next_uri }
 
       allow(transport).to receive(:post)
         .with("http://trino:8080/v1/statement", body: "SQL", headers: anything)
         .and_return(page1)
+      allow(transport).to receive(:delete)
       expect(transport).not_to receive(:get)
+
+      expect(client.query_scalar("SQL", "max_ts")).to eq("2026-08-19 14:07:34.368 UTC")
+
+      # Walking away from an outstanding nextUri leaves the query RUNNING on the
+      # coordinator, which makes the engine look busy for the whole drain grace.
+      expect(transport).to have_received(:delete).with(next_uri, headers: anything)
+    end
+
+    it "still returns the row when the cancel fails" do
+      page1 = { "columns" => columns, "data" => [ row ], "nextUri" => "http://trino:8080/v1/statement/1/2" }
+
+      allow(transport).to receive(:post).and_return(page1)
+      allow(transport).to receive(:delete).and_raise(HttpTransport::ApiError.new(500, ""))
 
       expect(client.query_scalar("SQL", "max_ts")).to eq("2026-08-19 14:07:34.368 UTC")
     end

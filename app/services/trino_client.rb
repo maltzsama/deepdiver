@@ -83,7 +83,16 @@ class TrinoClient
       rows.concat(rows_with_names(current))
 
       return rows unless current["nextUri"]
-      return rows if limit && rows.size >= limit
+
+      # Enough rows: stop reading, but tell Trino so. Walking away from an
+      # outstanding nextUri leaves the query RUNNING on the coordinator until
+      # its client timeout, and ChartTrinoProvisioner#idle? then reports the
+      # engine busy - so every freshness sweep held the engine up for the whole
+      # drain grace period and logged "queries still active".
+      if limit && rows.size >= limit
+        cancel(current["nextUri"])
+        return rows
+      end
 
       timeout = @query_timeout || MAX_POLL_SECONDS
       raise Error, "Trino query exceeded #{timeout}s without finishing" if Time.current > deadline
@@ -91,6 +100,17 @@ class TrinoClient
       sleep POLL_INTERVAL
       current = @transport.get(uri(current["nextUri"]), headers: headers)
     end
+  end
+
+  # Asks Trino to abandon a query we stopped reading. DELETE on the outstanding
+  # nextUri is the protocol's cancel. Best effort: the query may already have
+  # finished, and failing to cancel must never fail the probe that succeeded.
+  #
+  # @param next_uri [String] the outstanding nextUri
+  def cancel(next_uri)
+    @transport.delete(uri(next_uri), headers: headers)
+  rescue StandardError => e
+    Rails.logger.debug { "TrinoClient: could not cancel query (#{e.class}): #{e.message}" }
   end
 
   # Converts Trino data rows into hashes keyed by column name.
