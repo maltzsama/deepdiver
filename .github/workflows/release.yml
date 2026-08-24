@@ -131,6 +131,11 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
+          name: chart
+          path: artifacts
+      - uses: actions/download-artifact@v4
+        with:
+          name: docs
           path: artifacts
       - name: assemble pages artifact (docs + chart index)
         run: |
