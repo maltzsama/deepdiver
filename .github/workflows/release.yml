@@ -39,7 +39,7 @@ jobs:
     if: needs.release-please.outputs.releases_created == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
       - name: compute image tags
@@ -68,7 +68,7 @@ jobs:
     if: needs.release-please.outputs.releases_created == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
           fetch-depth: 0
@@ -101,60 +101,18 @@ jobs:
           path: chart-index
           if-no-files-found: error
 
-  docs:
-    needs: release-please
-    if: needs.release-please.outputs.releases_created == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.release-please.outputs.tag_name }}
-      - uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-      - name: build docs
-        run: bundle exec rake docs:build
-        env:
-          SSO_ENABLED: "false"
-          SECRET_KEY_BASE_DUMMY: "1"
-          DATA_TRACKING: ${{ secrets.DATA_TRACKING }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: docs
-          path: doc
-          if-no-files-found: error
-
+  # Docs + Helm index are published by the Pages workflow, which owns the whole
+  # site: every Pages deploy replaces it, so they cannot be deployed separately.
+  # The chart job's artifact carries index.yaml into that run.
   pages:
-    needs: [ release-please, chart, docs ]
+    needs: [ release-please, chart ]
     if: needs.release-please.outputs.releases_created == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: chart
-          path: artifacts
-      - uses: actions/download-artifact@v4
-        with:
-          name: docs
-          path: artifacts
-      - name: assemble pages artifact (docs + chart index)
-        run: |
-          set -euo pipefail
-          mkdir -p _site
-          cp -r artifacts/docs/* _site/
-          cp -r artifacts/chart/* _site/
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
-  deploy-pages:
-    needs: pages
-    if: needs.release-please.outputs.releases_created == 'true'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml
+    with:
+      ref: ${{ needs.release-please.outputs.tag_name }}
+      chart-index-artifact: chart
+    secrets: inherit

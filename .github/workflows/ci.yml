@@ -89,10 +89,10 @@ jobs:
   chart:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       - uses: azure/setup-helm@v4
-      - name: sem premissas de deployment
+      - name: no deployment-specific assumptions in the chart
         run: |
           ! grep -rniE 'etg-ca|ceph|argocd|argoproj|kyverno|cloudnativepg|anomalyco|registry\.example\.com|etraveli' infra/helm/
       - name: validate artifacthub metadata
@@ -117,10 +117,10 @@ jobs:
           --health-cmd pg_isready --health-interval 10s
           --health-timeout 5s --health-retries 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ruby/setup-ruby@v1
         with: { bundler-cache: true }
-      - name: schema.rb carrega em Postgres
+      - name: schema.rb loads on PostgreSQL
         env:
           DATABASE_URL: postgresql://postgres@localhost:5432/ldd_schema_check
           DB_QUEUE_URL: postgresql://postgres@localhost:5432/ldd_schema_check_queue
@@ -133,7 +133,7 @@ jobs:
   build-image:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: build image
         uses: docker/build-push-action@v6
         with:
@@ -141,5 +141,28 @@ jobs:
           push: false
           tags: lakedeepdiver:ci
 
+  # The docs build used to pass `--readme`, which RDoc does not have: it was
+  # silently ignored ("invalid options are ignored") and the landing page stayed
+  # on RDoc's placeholder for months. docs:verify asserts the README rendered
+  # and, when DATA_TRACKING is available, that the tracking script is present.
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
 
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: build documentation
+        run: bundle exec rake docs:build
+        env:
+          SSO_ENABLED: "false"
+          SECRET_KEY_BASE_DUMMY: "1"
+          DATA_TRACKING: ${{ secrets.DATA_TRACKING }}
+
+      - name: verify documentation
+        run: bundle exec rake docs:verify
+        env:
+          DATA_TRACKING: ${{ secrets.DATA_TRACKING }}
 
