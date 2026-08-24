@@ -4,6 +4,15 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.1](https://github.com/maltzsama/lakedeepdiver/compare/v0.2.0...v0.2.1) (2026-08-24)
+
+
+### Bug Fixes
+
+* **engine:** enqueue maintenance only after the primary transaction commits ([27741f3](https://github.com/maltzsama/lakedeepdiver/commit/27741f325f2d575c392655195cf285d4b9c0b528))
+* **engine:** enqueue maintenance only after the primary transaction commits ([ad40c1c](https://github.com/maltzsama/lakedeepdiver/commit/ad40c1c45a5dfdad01fb102696ae932969134b35))
+* **engine:** retry the maintenance job when the primary commit is not visible ([a6e0ea9](https://github.com/maltzsama/lakedeepdiver/commit/a6e0ea98829d6c39744ca646637bc91bfadb1926))
+
 ## [0.2.0](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.8...v0.2.0) (2026-08-24)
 
 
