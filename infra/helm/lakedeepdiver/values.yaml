@@ -51,12 +51,18 @@ env:
   trinoDeployment: ""
   logLevel: info
   jobConcurrency: 1
+  # Public hostname (used for mailer links via APP_HOST). Leave empty to fall
+  # back to localhost.
   host: ""
+  # Hosts allowed to reach the app (RAILS_ALLOWED_HOSTS). When set, Rails host
+  # authorization is enabled. Include the ingress host here.
+  allowedHosts: []
 
 # Trino provisioner: "chart" (TrinoCoordinator CR), "baleia" (BaleiaTrinoProvisioner),
-# or "fake" (FakeTrinoRuntime for dev/test).
+# or "fake" (FakeTrinoRuntime for dev/test). Defaults to "chart" so a plain
+# install provisions the ephemeral Trino Deployment instead of a stub.
 trino:
-  provisioner: fake
+  provisioner: chart
 
 # OIDC / SSO configuration. Set oidc.issuer to enable SSO.
 oidc:
