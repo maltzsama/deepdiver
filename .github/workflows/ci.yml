@@ -95,7 +95,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
       - name: no deployment-specific assumptions in the chart
         run: |
           ! grep -rniE 'etg-ca|ceph|argocd|argoproj|kyverno|cloudnativepg|anomalyco|registry\.example\.com|etraveli' infra/helm/
@@ -139,7 +139,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: build image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: false
