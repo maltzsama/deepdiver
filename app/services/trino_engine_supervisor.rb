@@ -192,7 +192,13 @@ module TrinoEngineSupervisor
   # @param extra [Hash] additional attributes to write
   def transition!(record, status, **extra)
     new_gen = record.generation + 1
-    updated = TrinoEngineState.where(id: record.id)
+    # The generation predicate is what makes this a compare-and-set. Without it
+    # the UPDATE always matched its own id, `updated` was always 1, and the
+    # ConcurrentTransitionError below was unreachable - the row lock in the
+    # callers was carrying the whole guarantee, and any caller that transitions
+    # from a stale record (the watchdog re-reads state outside the lock) would
+    # have overwritten a concurrent transition silently.
+    updated = TrinoEngineState.where(id: record.id, generation: record.generation)
                                 .update_all(status: status, status_changed_at: Time.current,
                                            generation: new_gen, **extra)
     unless updated == 1

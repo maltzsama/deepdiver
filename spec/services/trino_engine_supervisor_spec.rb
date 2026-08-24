@@ -170,4 +170,29 @@ RSpec.describe TrinoEngineSupervisor do
       expect(queued.execution_steps.where(status: "blocked").count).to eq(1)
     end
   end
+
+  describe "transition! compare-and-set" do
+    it "refuses to transition from a stale record" do
+      state = described_class.state
+      stale = TrinoEngineState.find(state.id)
+
+      described_class.transition!(state, "starting")
+
+      # `stale` still carries the old generation, so its UPDATE must match no
+      # rows. Without the generation predicate this silently overwrote the
+      # transition that just happened.
+      expect { described_class.transition!(stale, "down") }
+        .to raise_error(described_class::ConcurrentTransitionError, /CAS lost/)
+      expect(state.reload.status).to eq("starting")
+    end
+
+    it "advances the generation on every accepted transition" do
+      state = described_class.state
+      before = state.generation
+
+      described_class.transition!(state, "starting")
+
+      expect(state.reload.generation).to eq(before + 1)
+    end
+  end
 end
