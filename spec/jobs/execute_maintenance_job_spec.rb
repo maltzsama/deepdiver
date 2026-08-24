@@ -123,6 +123,16 @@ RSpec.describe ExecuteMaintenanceJob, type: :job do
     expect(TrinoEngineSupervisor.state.reload.status).to eq("draining")
   end
 
+  it "finishes a chain with no maintenance_plan without raising" do
+    # maintenance_plan is optional: true on ExecutionHistory. finish_chain
+    # called plan.update! unconditionally, which raised NoMethodError on nil.
+    execution = create(:execution_history, iceberg_table: plan.iceberg_table,
+                                           maintenance_plan: nil, status: :running)
+
+    expect { described_class.perform_now(execution.id) }.not_to raise_error
+    expect(execution.reload.status).to eq("success")
+  end
+
   it "releases the table lock when the chain finishes successfully" do
     execution = released_execution
     TableLock.acquire(execution)
