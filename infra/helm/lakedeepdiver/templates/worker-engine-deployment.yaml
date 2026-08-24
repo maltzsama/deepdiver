@@ -12,6 +12,8 @@ spec:
       {{- include "lakedeepdiver.workerEngineSelector" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       labels:
         {{- include "lakedeepdiver.workerEngineSelector" . | nindent 8 }}
     spec:
@@ -49,6 +51,12 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["./bin/jobs"]
           env:
+            - name: K8S_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: HELM_RELEASE
+              value: {{ .Release.Name | quote }}
             # Engine lifecycle only — supervise start, drain, watchdog.
             - name: SOLID_QUEUE_CONFIG
               value: "config/queue-engine.yml"
@@ -87,6 +95,13 @@ spec:
               mountPath: {{ dir .Values.internalCA.mountFile | quote }}
               readOnly: true
             {{- end }}
+          livenessProbe:
+            exec:
+              command: [ "pgrep", "-f", "solid_queue" ]
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
           {{- with .Values.workerEngine.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}

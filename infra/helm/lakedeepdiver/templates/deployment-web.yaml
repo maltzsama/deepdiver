@@ -12,6 +12,8 @@ spec:
       {{- include "lakedeepdiver.webSelector" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       labels:
         {{- include "lakedeepdiver.webSelector" . | nindent 8 }}
     spec:
@@ -57,8 +59,14 @@ spec:
             - secretRef:
                 name: {{ include "lakedeepdiver.fullname" . }}-app
             {{- end }}
-          {{- if .Values.activeRecordEncryption.existingSecret }}
           env:
+            - name: K8S_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: HELM_RELEASE
+              value: {{ .Release.Name | quote }}
+            {{- if .Values.activeRecordEncryption.existingSecret }}
             - name: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
               valueFrom:
                 secretKeyRef:
@@ -74,7 +82,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.activeRecordEncryption.existingSecret | quote }}
                   key: key_derivation_salt
-          {{- end }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 80
