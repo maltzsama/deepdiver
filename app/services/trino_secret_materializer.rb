@@ -86,12 +86,10 @@ class TrinoSecretMaterializer
 
   def default_k8s_client
     Kubeclient::Client.new(
-      ENV.fetch("KUBE_API_URL", "https://kubernetes.default.svc"),
+      K8sClientFactory.api_endpoint,
       "v1",
-      ssl_options: {
-        ca_file: ENV["KUBE_CA_FILE"],
-        verify_ssl: OpenSSL::SSL::VERIFY_PEER
-      }
+      auth_options: { bearer_token: K8sClientFactory.bearer_token },
+      ssl_options: { ca_file: K8sClientFactory.ca_file }.compact
     )
   end
 end
