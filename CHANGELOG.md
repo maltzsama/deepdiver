@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.2](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.1...v0.1.2) (2026-08-24)
+
+
+### Bug Fixes
+
+* **engine:** reap running executions with NULL heartbeat ([d271916](https://github.com/maltzsama/lakedeepdiver/commit/d2719160490da2722f2fe9c7c09a036664bba254))
+* **engine:** reap running executions with NULL heartbeat ([68aed38](https://github.com/maltzsama/lakedeepdiver/commit/68aed38ea61604633303b20ae2cc58f03ff1bcfd))
+
 ## [0.1.1](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.0...v0.1.1) (2026-08-23)
 
 
