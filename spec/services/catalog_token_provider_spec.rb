@@ -92,4 +92,68 @@ RSpec.describe CatalogTokenProvider, type: :service do
       expect(provider.headers["Authorization"]).to eq("Bearer v2") # still cached fetch re-runs block
     end
   end
+
+  describe "cache TTL" do
+    # Rails.cache.fetch writes the block's result itself, with the TTL given to
+    # fetch - which discarded the real expires_in from the token response. A
+    # token valid for less than the fallback TTL was then served expired.
+    def ttl_for(key)
+      store = Rails.cache
+      entry = store.send(:read_entry, store.send(:normalize_key, key, {}), **{})
+      return nil if entry.nil?
+
+      (entry.expires_at - Time.now.to_f).round
+    end
+
+    def cache_key_for(credential)
+      "catalog_token/#{catalog.id}/#{credential.updated_at.to_i}"
+    end
+
+    around do |example|
+      previous = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+      example.run
+    ensure
+      Rails.cache = previous
+    end
+
+    it "honours a short expires_in from the provider" do
+      credential = credential_with(auth_method: "oauth2_client_credentials", client_id: "id", secret: "sh")
+      allow(transport).to receive(:post_form).and_return({ "access_token" => "t", "expires_in" => 120 })
+
+      described_class.new(catalog, transport: transport).headers
+
+      # 120 - EXPIRY_MARGIN, not the 5-minute fallback.
+      expect(ttl_for(cache_key_for(credential))).to be_within(2).of(60)
+    end
+
+    it "clamps an expires_in below the floor instead of caching it for minutes" do
+      credential = credential_with(auth_method: "oauth2_client_credentials", client_id: "id", secret: "sh")
+      allow(transport).to receive(:post_form).and_return({ "access_token" => "t", "expires_in" => 45 })
+
+      described_class.new(catalog, transport: transport).headers
+
+      expect(ttl_for(cache_key_for(credential))).to be_within(2).of(30)
+    end
+
+    it "falls back to the conservative TTL when expires_in is absent" do
+      credential = credential_with(auth_method: "oauth2_client_credentials", client_id: "id", secret: "sh")
+      allow(transport).to receive(:post_form).and_return({ "access_token" => "t" })
+
+      described_class.new(catalog, transport: transport).headers
+
+      expect(ttl_for(cache_key_for(credential))).to be_within(5).of(300)
+    end
+
+    it "reuses the cached token instead of re-requesting it" do
+      credential_with(auth_method: "oauth2_client_credentials", client_id: "id", secret: "sh")
+      allow(transport).to receive(:post_form).and_return({ "access_token" => "t", "expires_in" => 3600 })
+
+      provider = described_class.new(catalog, transport: transport)
+      provider.headers
+      provider.headers
+
+      expect(transport).to have_received(:post_form).once
+    end
+  end
 end

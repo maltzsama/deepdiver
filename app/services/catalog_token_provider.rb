@@ -50,9 +50,19 @@ class CatalogTokenProvider
 
   # Returns a cached, still-valid access token, requesting one on a miss.
   #
+  # Deliberately not Rails.cache.fetch: fetch writes the block's result itself,
+  # with the TTL passed to fetch, which silently discarded the real expires_in
+  # the token response carries. A token valid for less than the fallback TTL
+  # was then served after it had expired.
+  #
   # @return [String] the access token
   def access_token
-    Rails.cache.fetch(cache_key, expires_in: cached_ttl) { request_token }
+    cached = Rails.cache.read(cache_key)
+    return cached if cached.present?
+
+    token, ttl = request_token
+    Rails.cache.write(cache_key, token, expires_in: ttl)
+    token
   end
 
   # Cache key that changes whenever the credential (or its secret) changes.
@@ -60,13 +70,12 @@ class CatalogTokenProvider
   # @return [String] the Rails cache key
   def cache_key = "catalog_token/#{@catalog.id}/#{@credential.updated_at.to_i}"
 
-  # Without knowing expires_in before the call, the cache TTL is conservative;
-  # request_token rewrites it with the real value.
+  # Fallback TTL for a provider that omits expires_in from the response.
   def cached_ttl = 5.minutes
 
-  # Performs the configured OAuth2 grant and caches the resulting token.
+  # Performs the configured OAuth2 grant.
   #
-  # @return [String] the access token
+  # @return [Array(String, ActiveSupport::Duration)] the token and its cache TTL
   # @raise [AuthError] if the token request fails or returns no token
   def request_token
     body = if @credential.token_exchange?
@@ -85,14 +94,21 @@ class CatalogTokenProvider
     token = response["access_token"]
     raise AuthError, "response without access_token" if token.blank?
 
-    expires_in = response["expires_in"].to_i
-    if expires_in.positive?
-      Rails.cache.write(cache_key, token, expires_in: (expires_in - EXPIRY_MARGIN).clamp(30, 86_400))
-    end
-
-    token
+    [ token, token_ttl(response["expires_in"].to_i) ]
   rescue HttpTransport::ApiError => e
     raise AuthError, auth_failure_message(e)
+  end
+
+  # Cache TTL derived from the response's expires_in, kept a margin short of the
+  # real expiry so a token is never handed out on its last second. Falls back to
+  # cached_ttl when the provider omits expires_in.
+  #
+  # @param expires_in [Integer] seconds reported by the provider (0 when absent)
+  # @return [ActiveSupport::Duration] the TTL to cache the token for
+  def token_ttl(expires_in)
+    return cached_ttl unless expires_in.positive?
+
+    (expires_in - EXPIRY_MARGIN).clamp(30, 86_400).seconds
   end
 
   # RFC 8693 token-exchange form: the stored secret is the subject token (the
