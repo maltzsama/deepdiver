@@ -4,6 +4,17 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.2](https://github.com/maltzsama/lakedeepdiver/compare/v0.2.1...v0.2.2) (2026-08-24)
+
+
+### Bug Fixes
+
+* **catalogs:** take the materialized Secret name and namespace from the chart ([7454a77](https://github.com/maltzsama/lakedeepdiver/commit/7454a77376eb0e00d1d96d6b994db7bdf779fd6b))
+* **chart:** close the install blockers found in the second review ([37e6f1b](https://github.com/maltzsama/lakedeepdiver/commit/37e6f1bbd0ca04380d2cb3ae6f72c3688b5938af))
+* **engine:** stop leaking demand from an execution whose dispatch never lands ([4ae9138](https://github.com/maltzsama/lakedeepdiver/commit/4ae9138c4bb07cdd54eb41a6d37bda359f1b49aa))
+* **engine:** surface Kubernetes failures to the engine start retry ([4d0a41f](https://github.com/maltzsama/lakedeepdiver/commit/4d0a41f82617b9b266890390cc0290fc1cbb6390))
+* **plans:** reject a nil maintenance step config instead of raising on it ([3939912](https://github.com/maltzsama/lakedeepdiver/commit/3939912b06edb972a6c4c98d945ca2212246e3eb))
+
 ## [0.2.1](https://github.com/maltzsama/lakedeepdiver/compare/v0.2.0...v0.2.1) (2026-08-24)
 
 
