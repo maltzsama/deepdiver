@@ -15,6 +15,16 @@ RSpec.describe UserInviter do
       expect(user.encrypted_password).to be_present
     end
 
+    it "returns a validation error instead of raising for a malformed email" do
+      # save! used to be called here, turning a bad email into a 500 instead
+      # of the [user, error] tuple the controller expects.
+      user, error = described_class.call(email: "not-an-email", role: "viewer", invited_by: admin)
+
+      expect(user).to be_present
+      expect(user).not_to be_persisted
+      expect(error).to match(/email/i)
+    end
+
     it "refuses a blank email" do
       user, error = described_class.call(email: "  ", role: "viewer", invited_by: admin)
 
