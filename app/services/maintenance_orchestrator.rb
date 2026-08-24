@@ -103,11 +103,29 @@ module MaintenanceOrchestrator
     execution.update!(status: :running, current_step: :start, last_heartbeat_at: Time.current)
 
     if TableLock.acquire(execution)
-      execute_maintenance(execution_history_id)
+      enqueue_maintenance_after_commit(execution_history_id)
     else
       skip_for_overlap(execution)
     end
   end
+
+  # Enqueues the maintenance chain only after the current (primary) transaction
+  # commits. start_execution_on_engine runs inside the supervisor's with_lock,
+  # so the status: :running write is not yet visible to other pods; a queue
+  # worker could consume the job before the commit and skip the execution as
+  # still pending, stranding it in running. Deferring the enqueue closes that
+  # cross-database race.
+  #
+  # @param execution_history_id [Integer] the execution to run
+  def self.enqueue_maintenance_after_commit(execution_history_id)
+    connection = ActiveRecord::Base.connection
+    if connection.transaction_open?
+      connection.current_transaction.after_commit { execute_maintenance(execution_history_id) }
+    else
+      execute_maintenance(execution_history_id)
+    end
+  end
+  private_class_method :enqueue_maintenance_after_commit
 
   # Marks an execution skipped because its table lock is contended, and tells
   # the supervisor demand dropped - otherwise the engine would stay up forever

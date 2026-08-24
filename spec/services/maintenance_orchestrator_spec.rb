@@ -70,6 +70,22 @@ RSpec.describe "Cadence per step" do
     expect(execution.last_heartbeat_at).to be_present
   end
 
+  it "defers the maintenance enqueue until the primary transaction commits" do
+    execution = MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 03:00"))
+    maintenance_jobs = -> { enqueued_jobs.count { |job| job[:job] == ExecuteMaintenanceJob } }
+
+    # The supervisor dispatches inside a with_lock; the queue worker could
+    # consume the job before the status: :running write is committed and skip
+    # it as still pending. The enqueue must wait for the commit.
+    ActiveRecord::Base.transaction do
+      MaintenanceOrchestrator.start_execution_on_engine(execution.id)
+      expect(maintenance_jobs.call).to eq(0)
+    end
+
+    expect(execution.reload.status).to eq("running")
+    expect(maintenance_jobs.call).to eq(1)
+  end
+
   it "skips for overlap when the lock is held by a different execution" do
     execution = MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 03:00"))
 
