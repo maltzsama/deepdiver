@@ -4,6 +4,15 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.3](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.2...v0.1.3) (2026-08-24)
+
+
+### Bug Fixes
+
+* **k8s:** authenticate TrinoSecretMaterializer to the API ([3d85e18](https://github.com/maltzsama/lakedeepdiver/commit/3d85e18b9f2202a1eeadff0e8867d791436908fc))
+* **k8s:** authenticate TrinoSecretMaterializer to the API ([14d8be5](https://github.com/maltzsama/lakedeepdiver/commit/14d8be5c2aa669e7020763e76209acd4a071d336))
+* **k8s:** avoid KeyError for API endpoint outside the cluster ([163483a](https://github.com/maltzsama/lakedeepdiver/commit/163483a3d8c6cdcd25295519dba093fc88103398))
+
 ## [0.1.2](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.1...v0.1.2) (2026-08-24)
 
 
