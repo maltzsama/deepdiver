@@ -47,6 +47,10 @@ activeRecordEncryption:
 # Application tuning knobs surfaced as environment variables.
 env:
   trinoUrl: ""
+  # Namespace where the Trino engine lives. Leave empty to use the release
+  # namespace. When set to a DIFFERENT namespace, the chart also creates the
+  # Role/RoleBinding there, binding the release ServiceAccount so the app can
+  # scale the engine and materialize the credentials Secret in that namespace.
   trinoNamespace: ""
   trinoDeployment: ""
   logLevel: info
