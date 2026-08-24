@@ -40,8 +40,14 @@ class MaintenanceStep < ApplicationRecord
     validate_snapshot_ids
   end
 
+  # The column defaults to {}, but a form that submits a blank config sends nil
+  # - and validation must reject bad input, not raise NoMethodError on it.
+  def config_hash
+    config.is_a?(Hash) ? config : {}
+  end
+
   def validate_threshold(key)
-    value = config[key]
+    value = config_hash[key]
     return if value.blank?
     return if value.to_s.match?(THRESHOLD_PATTERN)
 
@@ -49,7 +55,7 @@ class MaintenanceStep < ApplicationRecord
   end
 
   def validate_snapshot_ids
-    value = config["snapshot_ids"]
+    value = config_hash["snapshot_ids"]
     return if value.blank?
     return if value.to_s.strip.match?(SNAPSHOT_IDS_PATTERN)
 
