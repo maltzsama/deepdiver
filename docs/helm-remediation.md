@@ -216,6 +216,107 @@ the chart.
   under load that a primary commit is always visible within it.
 - **Unscoped Secret `create`**: `resourceNames` is ignored for `create`, so the
   app can create (not overwrite) an arbitrary Secret in the release and Trino
-  namespaces. Closing this needs an admission policy, not RBAC.
-- **cache_store**: `:memory_store` with `replicaCount > 1` makes in-memory
-  counters diverge between replicas (cosmetic).
+  namespaces. Closing this needs an admission policy (Kyverno/Gatekeeper), not
+  RBAC - there is no RBAC expression for "create only this name".
+- **cache_store**: `:memory_store` is per-process. For the catalog OAuth token
+  cache that is correct, just not shared - each pod performs its own token
+  exchange. For `failed_execution_count` (30s TTL) it means replicas can show
+  slightly different numbers. Left as is deliberately: a shared cache would add
+  a dependency for no correctness gain.
+
+## Round 3: application-level findings
+
+Found while reviewing the code the earlier rounds had not covered (catalog sync,
+freshness, retention, authorization).
+
+### A failed sync deactivated tables that still exist
+
+`CatalogSyncService` rescues per table and per namespace, so a table whose sync
+raised never reached `seen` - and `deactivate_unseen` then marked it "dropped
+from the catalog". A namespace that failed to list took all of its tables with
+it, and with every namespace failing `seen` was empty, where
+`where.not(id: [])` renders as `1=1` and deactivated the entire catalog.
+
+Deactivation is a real signal - it hides the table from the tables screen, from
+freshness sweeps (which filter on `active`) and from maintenance dispatch - so a
+transient catalog error silenced monitoring until the next successful sync, six
+hours by default, with only a warn log.
+
+It is now restricted to namespaces that synced with no errors at all.
+
+### Retention deleted open errors that were still happening
+
+`DataRetentionJob` pruned `ErrorEvent` by `created_at`, but `ErrorEvent.record`
+dedupes by message: a recurring failure keeps its original `created_at` and only
+bumps `last_seen_at`. An open error first seen 100 days ago and last seen an
+hour ago was deleted by the nightly job. The schema's `[status, last_seen_at]`
+index already pointed at the right column. Pruning is per-model now, with
+`error_events` keyed on `last_seen_at`.
+
+### The OAuth token's real expiry was discarded
+
+`CatalogTokenProvider` wrapped `request_token` in `Rails.cache.fetch(...,
+expires_in: 5.minutes)`. `fetch` writes the block's result itself, with the TTL
+given to `fetch`, so the `expires_in` the provider returned was always thrown
+away and a token valid for less than five minutes was served after it expired.
+It self-healed through the retry-once on 401 in `CatalogClient#get`, so the cost
+was a wasted round-trip rather than a failed sync. An explicit read/write pair
+now honours the response's `expires_in`, keeping the conservative TTL only as
+the fallback for providers that omit it.
+
+### Freshness probes left queries running on the coordinator
+
+`TrinoClient#query_scalar` returned as soon as it had enough rows, abandoning an
+outstanding `nextUri`. Trino keeps such a query alive until its client timeout,
+so `ChartTrinoProvisioner#idle?` reported the engine busy and every sweep held
+it up for the whole drain grace period, logging "Drain grace period exhausted
+with queries still active" with no real query behind it. The client now DELETEs
+the outstanding `nextUri`, best effort.
+
+### The engine state machine's compare-and-set did not compare
+
+`TrinoEngineSupervisor.transition!` raised a "CAS lost" error that was
+unreachable: its UPDATE matched on `id` alone, so it always affected one row.
+The row lock in the callers was carrying the entire guarantee. The `generation`
+predicate is now part of the UPDATE, which also makes a transition from a stale
+record - the watchdog re-reads state outside the lock - fail loudly instead of
+overwriting a concurrent transition.
+
+### A forgotten `authorize` was indistinguishable from an intentional one
+
+Pundit's `verify_authorized` was not enabled, so an action without `authorize`
+simply ran for any signed-in user. An audit of all sixteen controllers found no
+actual hole: the two actions without `authorize` (`ProfilesController`,
+`ThemeController#toggle`) operate only on `current_user`, take no id parameter,
+and exclude `role`/`status` from strong params. `verify_authorized` is now on
+globally, with those two opting out explicitly so the decision is visible.
+
+`verify_policy_scoped` is deliberately not enabled: index actions here authorize
+the class rather than scoping a relation.
+
+### Smaller
+
+- `TrinoRestClient` reported `rows` from the final Trino page only. Trino
+  streams rows on intermediate pages and the last one usually carries just
+  columns, so the metric was ~0 regardless of the statement. It is counted
+  across pages now, matching what `TrinoClient#poll` already did.
+- `DataRetentionJob`'s Solid Queue retention duplicated its default instead of
+  reading `DEFAULT_RETENTION`, leaving that constant entry dead. It is derived
+  now, with the key renamed so the env override stays
+  `SOLID_QUEUE_RETENTION_DAYS`.
+- Every GitHub Action is on a current major. The third-party bumps held back
+  last round (release-please v4 to v5, setup-helm v4 to v5, build-push-action v6
+  to v7, login-action v3 to v4) turned out to be Node 24 runtime and ESM changes
+  only; release-please's engine moved 17.3 to 17.6 as a fix, not a breaking
+  change, and build-push-action v7 drops two deprecated env vars this repo does
+  not set.
+
+### Checked and found correct
+
+Recorded so they are not re-investigated: `FreshnessProbe` quotes both
+identifiers and literals, and `partition_lookback` is validated positive with a
+DB default; `CatalogClient#get` retries exactly once on 401, because Ruby runs
+`ensure` after `retry` rather than before, so there is no loop; suspension is
+enforced per request by Devise's activatable hook through
+`active_for_authentication?`, including OIDC sessions; and `delete_all` does
+honour `limit`, via a subquery on the primary key.
