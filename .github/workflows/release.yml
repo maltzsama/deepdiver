@@ -86,10 +86,19 @@ jobs:
         run: |
           sed "s/REPLACE_ME/${{ secrets.ARTIFACTHUB_REPO_ID }}/" \
             infra/helm/artifacthub-repo.yml > .cr-index/artifacthub-repo.yml
+      - name: stage chart index for Pages
+        run: |
+          # .cr-index is the gh-pages branch checked out by chart-releaser, so
+          # it contains a .git dir that upload-artifact@v4 refuses to upload
+          # (treated as an embedded repository). Copy just the files the Helm
+          # repo needs into a clean dir.
+          mkdir -p chart-index
+          cp .cr-index/index.yaml chart-index/
+          cp .cr-index/artifacthub-repo.yml chart-index/
       - uses: actions/upload-artifact@v4
         with:
           name: chart
-          path: .cr-index
+          path: chart-index
           if-no-files-found: error
 
   docs:
