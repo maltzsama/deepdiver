@@ -4,6 +4,13 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.5](https://github.com/maltzsama/lakedeepdiver/compare/v0.2.4...v0.2.5) (2026-08-24)
+
+
+### Bug Fixes
+
+* **icons:** replace hardcoded SVGs with icon files, add favicon.ico ([2ae5c8c](https://github.com/maltzsama/lakedeepdiver/commit/2ae5c8cbe0e5dd30b01bf4f15998566de844f48c))
+
 ## [0.2.4](https://github.com/maltzsama/lakedeepdiver/compare/v0.2.3...v0.2.4) (2026-08-24)
 
 
