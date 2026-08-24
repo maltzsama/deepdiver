@@ -38,6 +38,8 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  # deploy-pages resolves the uploaded artifact by ID and needs this.
+  actions: read
 
 jobs:
   build:
@@ -71,7 +73,7 @@ jobs:
       # coercion is a trap; an empty or absent value is simply falsy here.
       - name: download chart index built in this run
         if: inputs.chart-index-artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ${{ inputs.chart-index-artifact }}
           path: chart-index
@@ -105,8 +107,8 @@ jobs:
 
           test -f _site/index.html || { echo "::error::documentation missing from the site"; exit 1; }
 
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
@@ -119,4 +121,4 @@ jobs:
     steps:
       - name: deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

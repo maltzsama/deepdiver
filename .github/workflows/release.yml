@@ -11,6 +11,7 @@ permissions:
   packages: write
   pages: write
   id-token: write
+  actions: read
 
 concurrency:
   group: release
@@ -95,7 +96,7 @@ jobs:
           mkdir -p chart-index
           cp .cr-index/index.yaml chart-index/
           cp .cr-index/artifacthub-repo.yml chart-index/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: chart
           path: chart-index
@@ -111,6 +112,7 @@ jobs:
       contents: read
       pages: write
       id-token: write
+      actions: read
     uses: ./.github/workflows/pages.yml
     with:
       ref: ${{ needs.release-please.outputs.tag_name }}
