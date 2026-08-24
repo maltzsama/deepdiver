@@ -565,7 +565,7 @@ en:
     brand: "LakeDeepDiver"
     eyebrow: "Iceberg table maintenance"
     tagline: "Schedule, run and track compaction, snapshot expiry and orphan cleanup — with a record of every step."
-    version: "v0.1.4" # x-release-please-version
+    version: "v0.1.5" # x-release-please-version
     footer: "Licensed under the Apache License 2.0."
     facts:
       operations: "Operations"
