@@ -7,7 +7,7 @@ image:
   repository: lakedeepdiver
   pullPolicy: IfNotPresent
   # x.y.z - tag is pinned per environment, never "latest" in production.
-  tag: "0.1.4" # x-release-please-version
+  tag: "0.1.5" # x-release-please-version
 
 nameOverride: ""
 fullnameOverride: ""

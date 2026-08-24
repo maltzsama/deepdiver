@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.5](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.4...v0.1.5) (2026-08-24)
+
+
+### Bug Fixes
+
+* **security:** scope secret RBAC and validate maintenance step config ([2274bb8](https://github.com/maltzsama/lakedeepdiver/commit/2274bb8b10a130e2910b1fffad8ad0abd702e54e))
+* **security:** scope secret RBAC and validate maintenance step config ([8ddeab4](https://github.com/maltzsama/lakedeepdiver/commit/8ddeab407d8c1fc3dcfc76ceed062f65dc5d1552))
+
 ## [0.1.4](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.3...v0.1.4) (2026-08-24)
 
 
