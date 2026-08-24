@@ -86,12 +86,21 @@ class TrinoSecretMaterializer
 
   def default_k8s_client
     Kubeclient::Client.new(
-      ENV.fetch("KUBE_API_URL", "https://kubernetes.default.svc"),
+      k8s_api_endpoint,
       "v1",
-      ssl_options: {
-        ca_file: ENV["KUBE_CA_FILE"],
-        verify_ssl: OpenSSL::SSL::VERIFY_PEER
-      }
+      auth_options: { bearer_token: K8sClientFactory.bearer_token },
+      ssl_options: { ca_file: K8sClientFactory.ca_file }.compact
     )
+  end
+
+  # The Kubernetes API endpoint. In the cluster it is derived from the
+  # service-account env vars; outside it falls back to KUBE_API_URL and then
+  # to the well-known in-cluster service so this never raises KeyError.
+  #
+  # @return [String] the API endpoint URL
+  def k8s_api_endpoint
+    return K8sClientFactory.api_endpoint if ENV["KUBERNETES_SERVICE_HOST"].present?
+
+    ENV.fetch("KUBE_API_URL", "https://kubernetes.default.svc")
   end
 end
