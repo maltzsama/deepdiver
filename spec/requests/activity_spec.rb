@@ -18,6 +18,20 @@ RSpec.describe "GET /activity", type: :request do
     expect(response.body).to include("Up for")
   end
 
+  it "renders the cancel turbo frame only once per running execution" do
+    sign_in create(:user, :admin)
+    plan = create(:maintenance_plan, :with_all_steps)
+    execution = create(:execution_history, maintenance_plan: plan, iceberg_table: plan.iceberg_table,
+                                           status: :running)
+    TrinoEngineSupervisor.state.update!(status: "up", status_changed_at: Time.current)
+
+    get activity_path
+
+    # The frame used to be nested inside an identical one with the same id,
+    # duplicating it in the DOM and confusing any turbo_stream targeting it.
+    expect(response.body.scan("id=\"cancel_#{execution.id}\"").size).to eq(1)
+  end
+
   it "lists queued executions with their wait reason" do
     plan = create(:maintenance_plan, :with_all_steps)
     create(:execution_history, maintenance_plan: plan, iceberg_table: plan.iceberg_table, status: :pending)
