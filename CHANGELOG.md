@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.0](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.8...v0.2.0) (2026-08-24)
+
+
+### Features
+
+* **chart:** grant RBAC in the Trino namespace when it differs from release ([5639cf8](https://github.com/maltzsama/lakedeepdiver/commit/5639cf851c216ffafd0d5f48c3b92207c8687cc5))
+* **chart:** grant RBAC in the Trino namespace when it differs from release ([e81f034](https://github.com/maltzsama/lakedeepdiver/commit/e81f034fdc5f1f884b166baa64c17f15a06c0957))
+
 ## [0.1.8](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.7...v0.1.8) (2026-08-24)
 
 
