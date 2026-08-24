@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.6](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.5...v0.1.6) (2026-08-24)
+
+
+### Bug Fixes
+
+* **ci:** upload a clean chart index so the release pages job works ([09ff806](https://github.com/maltzsama/lakedeepdiver/commit/09ff806adc60213bf92f17967f8c522ea541adb0))
+* **ci:** upload a clean chart index so the release pages job works ([2fc5b78](https://github.com/maltzsama/lakedeepdiver/commit/2fc5b785069cb52838c823cb92fc49a8faf1a40e))
+
 ## [0.1.5](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.4...v0.1.5) (2026-08-24)
 
 
