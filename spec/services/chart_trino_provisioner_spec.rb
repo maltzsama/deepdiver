@@ -105,4 +105,42 @@ RSpec.describe ChartTrinoProvisioner do
       expect(worker_k8s).not_to have_received(:ready?)
     end
   end
+
+  describe "Kubernetes failures" do
+    # SuperviseEngineStartJob only rescues TrinoProvisioner::Error and
+    # Timeout::Error, and ApplicationJob has no generic retry - so an unwrapped
+    # Kubeclient error killed the job, skipped MAX_START_ATTEMPTS and left the
+    # engine in "starting" until the watchdog gave up minutes later.
+    let(:not_found) { Kubeclient::ResourceNotFoundError.new(404, "deployments 'trino-worker' not found", nil) }
+
+    before do
+      allow(k8s).to receive(:target).and_return("ldd/trino-coordinator")
+      allow(worker_k8s).to receive(:target).and_return("ldd/trino-worker")
+    end
+
+    it "wraps a missing coordinator on create! as TrinoProvisioner::Error" do
+      allow(TrinoEngineConfig).to receive(:instance).and_return(TrinoEngineConfig.new(topology: "single"))
+      allow(k8s).to receive(:apply_spec).and_raise(not_found)
+
+      expect { provisioner.create! }
+        .to raise_error(TrinoProvisioner::Error, /coordinator .ldd\/trino-coordinator./)
+    end
+
+    it "wraps a missing worker on create! and names the Deployment addressed" do
+      allow(TrinoEngineConfig).to receive(:instance).and_return(TrinoEngineConfig.new(topology: "cluster"))
+      allow(k8s).to receive(:apply_spec)
+      allow(worker_k8s).to receive(:apply_spec).and_raise(not_found)
+
+      expect { provisioner.create! }
+        .to raise_error(TrinoProvisioner::Error, /worker .ldd\/trino-worker./)
+    end
+
+    it "tolerates a missing worker Deployment on destroy!" do
+      allow(k8s).to receive(:scale)
+      allow(worker_k8s).to receive(:scale).and_raise(not_found)
+
+      expect { provisioner.destroy! }.not_to raise_error
+      expect(k8s).to have_received(:scale).with(0)
+    end
+  end
 end
