@@ -495,7 +495,7 @@
     @apply flex h-[72px] w-[72px] items-center justify-center rounded-[20px]
            border border-accent-DEFAULT/30 bg-accent-DEFAULT/10 shadow-[var(--glow-accent)];
   }
-  .auth-logo-box svg { @apply h-9 w-9; }
+  .auth-logo-box img { @apply h-9 w-9; }
   .auth-title { @apply text-4xl font-bold tracking-tight text-[#F8F9FA]; }
   .auth-tagline { @apply max-w-md text-body text-cosmos-fg-soft leading-relaxed; }
   .auth-version {
