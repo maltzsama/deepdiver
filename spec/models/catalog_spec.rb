@@ -136,4 +136,16 @@ RSpec.describe "Catalog S3 config", type: :model do
   it "accepts a valid sts config" do
     expect(build(:catalog, :s3_sts)).to be_valid
   end
+
+  describe "#resolve_s3_credentials" do
+    it "returns an empty hash for an unrecognized authentication type instead of nil" do
+      # s3_authentication_type is validated + defaulted, so this is normally
+      # unreachable - but callers do props.merge!(resolve_s3_credentials), and
+      # merge!(nil) raises TypeError.
+      catalog = build(:catalog, s3_authentication_type: "none")
+      catalog.s3_authentication_type = "unknown"
+
+      expect(catalog.resolve_s3_credentials).to eq({})
+    end
+  end
 end

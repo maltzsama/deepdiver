@@ -41,7 +41,8 @@ class UserInviter
     user.invited_at ||= Time.current
     user.invited_by_id ||= @invited_by&.id
     user.password = Devise.friendly_token(32) if user.encrypted_password.blank?
-    user.save!
+    return [ user, user.errors.full_messages.to_sentence ] unless user.save
+
     [ user, nil ]
   end
 end

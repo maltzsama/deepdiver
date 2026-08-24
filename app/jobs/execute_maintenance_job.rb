@@ -142,7 +142,7 @@ class ExecuteMaintenanceJob < ApplicationJob
     end
 
     execution.update!(status: :success, current_step: "done", finished_at: Time.current)
-    execution.maintenance_plan.update!(consecutive_failures: 0)
+    execution.maintenance_plan&.update!(consecutive_failures: 0)
     TableLock.release(execution)
     TrinoEngineSupervisor.demand_finished!
   end

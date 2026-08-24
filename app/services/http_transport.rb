@@ -94,10 +94,15 @@ class HttpTransport
 
   # Internal company CA, mounted into the pod via Secret/ConfigMap. Without it,
   # HTTPS against Polaris/Trino fails with "certificate verify failed".
+  #
+  # Timeouts apply regardless of scheme - they used to be nested under the
+  # https-only branch, so a plain http:// endpoint (the default TRINO_URL is
+  # one) fell back to Net::HTTP's own default instead of failing fast.
   def ssl_options(uri)
-    return { use_ssl: false } unless uri.scheme == "https"
+    options = { open_timeout: 10, read_timeout: 60 }
+    return options.merge(use_ssl: false) unless uri.scheme == "https"
 
-    options = { use_ssl: true, open_timeout: 10, read_timeout: 60 }
+    options[:use_ssl] = true
     ca_file = ENV["INTERNAL_CA_FILE"]
     options[:ca_file] = ca_file if ca_file.present? && File.exist?(ca_file)
     options
