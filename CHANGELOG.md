@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.8](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.7...v0.1.8) (2026-08-24)
+
+
+### Bug Fixes
+
+* **helm:** bootstrap admin login, skip web db:prepare, stop overriding SSL bundle ([3af64f8](https://github.com/maltzsama/lakedeepdiver/commit/3af64f850072d04ea245cb5f41af452217002bcb))
+* **helm:** bootstrap admin login, skip web db:prepare, stop overriding SSL bundle ([58a7eae](https://github.com/maltzsama/lakedeepdiver/commit/58a7eaefeb9b490a1bb768767631b0e1a9fa1169))
+
 ## [0.1.7](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.6...v0.1.7) (2026-08-24)
 
 
