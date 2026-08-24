@@ -17,14 +17,26 @@ RSpec.describe DataRetentionJob, type: :job do
       expect(ExecutionStep.exists?(recent_step.id)).to be(true)
     end
 
-    it "deletes old error_events" do
-      old = create(:error_event, created_at: 100.days.ago)
-      recent = create(:error_event, created_at: 10.days.ago)
+    it "deletes error_events not seen for the retention window" do
+      old = create(:error_event, created_at: 100.days.ago, last_seen_at: 100.days.ago)
+      recent = create(:error_event, created_at: 10.days.ago, last_seen_at: 10.days.ago)
 
       described_class.perform_now
 
       expect(ErrorEvent.exists?(old.id)).to be(false)
       expect(ErrorEvent.exists?(recent.id)).to be(true)
+    end
+
+    it "keeps an old error_event that is still recurring" do
+      # ErrorEvent.record dedupes by message: a recurring failure keeps its
+      # original created_at and only bumps last_seen_at. Pruning by created_at
+      # deleted open errors that were still happening.
+      recurring = create(:error_event, created_at: 100.days.ago, last_seen_at: 1.hour.ago,
+                                       status: "open", occurrence_count: 42)
+
+      described_class.perform_now
+
+      expect(ErrorEvent.exists?(recurring.id)).to be(true)
     end
 
     it "deletes old freshness_checks" do
@@ -57,7 +69,7 @@ RSpec.describe DataRetentionJob, type: :job do
   describe "batch deletion" do
     it "deletes in batches of BATCH_SIZE" do
       records = Array.new(described_class::BATCH_SIZE + 10) do
-        create(:error_event, created_at: 100.days.ago)
+        create(:error_event, created_at: 100.days.ago, last_seen_at: 100.days.ago)
       end
 
       described_class.perform_now
