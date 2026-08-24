@@ -4,6 +4,20 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.4](https://github.com/maltzsama/lakedeepdiver/compare/v0.2.3...v0.2.4) (2026-08-24)
+
+
+### Bug Fixes
+
+* catalog sync deactivation, error retention, token expiry and four more ([7d7dcdf](https://github.com/maltzsama/lakedeepdiver/commit/7d7dcdfc387010bf13f8c22e864bf79e5484c1bc))
+* **catalogs:** honour the OAuth token's real expiry ([73cd371](https://github.com/maltzsama/lakedeepdiver/commit/73cd37135a10318fdcd17a2b5c29d184401b5f8c))
+* **catalogs:** stop deactivating tables a failed sync could not see ([d5a4b8b](https://github.com/maltzsama/lakedeepdiver/commit/d5a4b8bfd8c013876ea821cd7f6c880a9103d0cf))
+* **engine:** count maintenance rows across every Trino page ([ae39c8b](https://github.com/maltzsama/lakedeepdiver/commit/ae39c8b2b73f439ac853e0d27e158df5d70b2e35))
+* **engine:** make the state transition an actual compare-and-set ([b5ff54e](https://github.com/maltzsama/lakedeepdiver/commit/b5ff54e838b29696ad516971dc17cbe3c50a43c0))
+* **freshness:** cancel the Trino query a probe stops reading ([4dba160](https://github.com/maltzsama/lakedeepdiver/commit/4dba1609935c1e9ca648b09c71f32787c671ee12))
+* **retention:** prune error events by last_seen_at, not created_at ([c18d07c](https://github.com/maltzsama/lakedeepdiver/commit/c18d07c13d968a7c05c77d71d53c4712f189677c))
+* **security:** fail loudly when an action forgets to authorize ([48f9c8a](https://github.com/maltzsama/lakedeepdiver/commit/48f9c8a2e52adf365da482c4cd1c8707ac2cf654))
+
 ## [0.2.3](https://github.com/maltzsama/lakedeepdiver/compare/v0.2.2...v0.2.3) (2026-08-24)
 
 
