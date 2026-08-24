@@ -22,6 +22,15 @@ RSpec.describe TrinoDemand do
     expect(alive.reload.status).to eq("running")
   end
 
+  it "uses COALESCE to reap a running execution without last_heartbeat_at" do
+    orphan = create(:execution_history, status: :running, started_at: 20.minutes.ago,
+                                        last_heartbeat_at: nil)
+
+    expect(described_class.count).to eq(0)
+    expect(orphan.reload.status).to eq("failed")
+    expect(orphan.error_message).to include("coordinator")
+  end
+
   describe "freshness run reaping" do
     it "reaps a freshness run without heartbeat beyond STALE_AFTER" do
       run = FreshnessRun.create!(status: "running", started_at: 20.minutes.ago)

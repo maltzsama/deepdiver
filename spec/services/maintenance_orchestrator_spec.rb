@@ -60,6 +60,16 @@ RSpec.describe "Cadence per step" do
     expect(execution.id).to eq(previous.id)
   end
 
+  it "stamps last_heartbeat_at when transitioning to running" do
+    execution = MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 03:00"))
+    expect(execution.last_heartbeat_at).to be_nil
+
+    MaintenanceOrchestrator.start_execution_on_engine(execution.id)
+
+    expect(execution.reload.status).to eq("running")
+    expect(execution.last_heartbeat_at).to be_present
+  end
+
   it "skips for overlap when the lock is held by a different execution" do
     execution = MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 03:00"))
 
