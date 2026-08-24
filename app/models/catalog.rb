@@ -118,6 +118,12 @@ class Catalog < ApplicationRecord
         "s3.secret-key" => resp.credentials.secret_access_key,
         "s3.session-token" => resp.credentials.session_token
       }
+    else
+      # s3_authentication_type is validated against S3_AUTH_TYPES with a
+      # non-null default, so this is unreachable in practice - but callers
+      # (TrinoCatalogProjection) do `props.merge!(resolve_s3_credentials)`,
+      # and merge!(nil) raises TypeError. An empty hash is the safe no-op.
+      {}
     end
   end
 
