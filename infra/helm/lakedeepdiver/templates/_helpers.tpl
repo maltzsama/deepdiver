@@ -63,6 +63,49 @@ app.kubernetes.io/component: worker-engine
 {{- end }}
 
 {{/*
+Name of the Secret into which the app materializes catalog credentials.
+Single source of truth: it is both authorized by the Role (resourceNames) and
+handed to the app as TRINO_CATALOG_SECRET_NAME. The app must never compute it
+itself - when it did, it derived the name from the release name while the Role
+authorized the fullname, and every get returned 403.
+*/}}
+{{- define "lakedeepdiver.trinoSecretName" -}}
+{{- printf "%s-trino-catalog-secrets" (include "lakedeepdiver.fullname" .) }}
+{{- end }}
+
+{{/*
+Non-empty when the chart renders the <fullname>-chart-env Secret, i.e. when the
+operator supplied a sensitive value through chart values. Every pod must mount
+it whenever it exists: config/initializers/devise.rb runs ENV.fetch on the OIDC
+vars in EVERY process (web and all three workers), so a missing
+OIDC_CLIENT_SECRET while SSO_ENABLED=true is a boot-time KeyError, not just a
+broken login.
+*/}}
+{{- define "lakedeepdiver.hasChartEnvSecret" -}}
+{{- if or (and .Values.oidc.issuer .Values.oidc.clientSecret) (and .Values.admin.bootstrap.email .Values.admin.bootstrap.password) }}true{{ end }}
+{{- end }}
+
+{{/*
+The envFrom entries shared by every workload: the ConfigMap, the out-of-band
+app Secret and, when present, the chart-env Secret.
+*/}}
+{{- define "lakedeepdiver.envFrom" -}}
+- configMapRef:
+    name: {{ include "lakedeepdiver.fullname" . }}
+{{- if .Values.appSecrets.existingSecret }}
+- secretRef:
+    name: {{ .Values.appSecrets.existingSecret | quote }}
+{{- else if .Values.appSecrets.create }}
+- secretRef:
+    name: {{ include "lakedeepdiver.fullname" . }}-app
+{{- end }}
+{{- if include "lakedeepdiver.hasChartEnvSecret" . }}
+- secretRef:
+    name: {{ include "lakedeepdiver.fullname" . }}-chart-env
+{{- end }}
+{{- end }}
+
+{{/*
 Rules granted to the app's ServiceAccount over the Trino engine and the
 materialized catalog-credentials Secret. Used by the Role in the release
 namespace and, when Trino lives elsewhere, by the Role created there.
@@ -87,6 +130,6 @@ rules:
     verbs: [ "create" ]
   - apiGroups: [ "" ]
     resources: [ "secrets" ]
-    resourceNames: [ "{{ include "lakedeepdiver.fullname" . }}-trino-catalog-secrets" ]
+    resourceNames: [ {{ include "lakedeepdiver.trinoSecretName" . | quote }} ]
     verbs: [ "get", "update", "patch" ]
 {{- end }}

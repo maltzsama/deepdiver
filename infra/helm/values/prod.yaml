@@ -5,8 +5,11 @@
 # Do not deploy with the placeholders.
 image:
   repository: ghcr.io/maltzsama/lakedeepdiver
-  # Pin a concrete release; never "latest" in production.
-  tag: "0.1.7"
+  # Pin a concrete release; never "latest" in production. Kept in step with the
+  # chart by release-please (see release-please-config.json extra-files): this
+  # file used to drift, and an install with a stale tag silently ships an image
+  # that predates the chart's assumptions.
+  tag: "0.2.1" # x-release-please-version
   pullPolicy: IfNotPresent
 
 postgresql:
@@ -46,13 +49,17 @@ admin:
     password: ""
 
 env:
-  # CHANGE_ME: Trino coordinator URL, e.g. http://trino-coordinator:8080
-  trinoUrl: ""
+  # CHANGE_ME: Trino coordinator URL. Defaults to the conventional in-cluster
+  # service name; point it at the real coordinator.
+  trinoUrl: "http://trino-coordinator:8080"
   # Leave empty to trust the release namespace; set to the Trino namespace
   # when the engine lives elsewhere (remember to grant RBAC there).
   trinoNamespace: ""
-  # CHANGE_ME: name of the Trino coordinator Deployment, e.g. trino-coordinator
-  trinoDeployment: ""
+  # CHANGE_ME: name of the Trino coordinator Deployment.
+  trinoDeployment: "trino-coordinator"
+  # Worker Deployment name. Required when the engine topology is "cluster"
+  # (the default); leave empty for a single-node engine.
+  trinoWorkerDeployment: ""
   logLevel: info
   jobConcurrency: 2
   # CHANGE_ME: public hostname (used for mailer links and RAILS_ALLOWED_HOSTS).

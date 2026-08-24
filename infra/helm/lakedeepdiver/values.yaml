@@ -46,13 +46,24 @@ activeRecordEncryption:
 
 # Application tuning knobs surfaced as environment variables.
 env:
-  trinoUrl: ""
+  # Both of the next two are read with a bare ENV.fetch in the app
+  # (RealTrinoRuntime, ChartTrinoProvisioner, K8sClientFactory), so an absent
+  # key is a KeyError on the first "Run" - the app boots fine and only then
+  # dies. They default to the conventional in-cluster names instead of empty:
+  # a wrong host is a legible connection error, an absent key is not.
+  trinoUrl: "http://trino-coordinator:8080"
   # Namespace where the Trino engine lives. Leave empty to use the release
   # namespace. When set to a DIFFERENT namespace, the chart also creates the
   # Role/RoleBinding there, binding the release ServiceAccount so the app can
   # scale the engine and materialize the credentials Secret in that namespace.
   trinoNamespace: ""
-  trinoDeployment: ""
+  trinoDeployment: "trino-coordinator"
+  # Worker Deployment name, only used when the engine topology is "cluster"
+  # (the default in TrinoEngineConfig). Empty falls back to "trino-worker".
+  # A cluster topology pointing at a Deployment that does not exist fails the
+  # engine start, so either create it or switch the topology to "single" on the
+  # Engine config screen.
+  trinoWorkerDeployment: ""
   logLevel: info
   jobConcurrency: 1
   # Public hostname (used for mailer links via APP_HOST). Leave empty to fall
@@ -130,6 +141,8 @@ worker:
   resources:
     requests: { cpu: 100m, memory: 512Mi }
     limits:   { cpu: 500m, memory: 1Gi }
+  # Empty inherits the top-level `securityContext` (PSA restricted compliant).
+  # Set only to deviate from it for this workload.
   securityContext: {}
 
 # Freshness runs on its own process so it never waits behind an optimize.
@@ -139,6 +152,7 @@ workerFreshness:
   resources:
     requests: { cpu: 100m, memory: 512Mi }
     limits:   { cpu: 500m, memory: 1Gi }
+  # Empty inherits the top-level `securityContext`.
   securityContext: {}
 
 # Engine lifecycle — supervise start, drain, watchdog.
@@ -148,6 +162,7 @@ workerEngine:
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits:   { cpu: 250m, memory: 512Mi }
+  # Empty inherits the top-level `securityContext`.
   securityContext: {}
 
 # Schema migrations run as a pre-install/pre-upgrade Job so web and worker

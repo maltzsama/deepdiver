@@ -19,6 +19,12 @@ data:
   {{- if .Values.env.trinoDeployment }}
   TRINO_DEPLOYMENT: {{ .Values.env.trinoDeployment | quote }}
   {{- end }}
+  {{- if .Values.env.trinoWorkerDeployment }}
+  TRINO_WORKER_DEPLOYMENT: {{ .Values.env.trinoWorkerDeployment | quote }}
+  {{- end }}
+  # The app must not derive this name itself - the Role authorizes exactly this
+  # string via resourceNames.
+  TRINO_CATALOG_SECRET_NAME: {{ include "lakedeepdiver.trinoSecretName" . | quote }}
   {{- if .Values.env.host }}
   APP_HOST: {{ .Values.env.host | quote }}
   {{- end }}
@@ -37,14 +43,16 @@ data:
   RAILS_ALLOWED_HOSTS: {{ join "," .Values.env.allowedHosts | quote }}
   {{- end }}
   {{- if .Values.oidc.issuer }}
+  # OIDC_CLIENT_SECRET is NOT here: a ConfigMap is world-readable to anyone with
+  # `get configmap` in the namespace and is kept in the Helm release. It lives
+  # in the <fullname>-chart-env Secret instead. Same for the bootstrap admin
+  # password. The non-secret half stays here.
   SSO_ENABLED: "true"
   OIDC_ISSUER: {{ .Values.oidc.issuer | quote }}
   OIDC_CLIENT_ID: {{ .Values.oidc.clientId | quote }}
-  OIDC_CLIENT_SECRET: {{ .Values.oidc.clientSecret | quote }}
   OIDC_REDIRECT_URI: {{ .Values.oidc.redirectUri | quote }}
   OIDC_PROVIDER_LABEL: {{ .Values.oidc.providerLabel | default "SSO" | quote }}
   {{- end }}
   {{- if and .Values.admin.bootstrap.email .Values.admin.bootstrap.password }}
   BOOTSTRAP_ADMIN_EMAIL: {{ .Values.admin.bootstrap.email | quote }}
-  BOOTSTRAP_ADMIN_PASSWORD: {{ .Values.admin.bootstrap.password | quote }}
   {{- end }}

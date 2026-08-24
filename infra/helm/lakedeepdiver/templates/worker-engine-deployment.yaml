@@ -80,15 +80,7 @@ spec:
                   key: key_derivation_salt
             {{- end }}
           envFrom:
-            - configMapRef:
-                name: {{ include "lakedeepdiver.fullname" . }}
-            {{- if .Values.appSecrets.existingSecret }}
-            - secretRef:
-                name: {{ .Values.appSecrets.existingSecret | quote }}
-            {{- else if .Values.appSecrets.create }}
-            - secretRef:
-                name: {{ include "lakedeepdiver.fullname" . }}-app
-            {{- end }}
+            {{- include "lakedeepdiver.envFrom" . | nindent 12 }}
           volumeMounts:
             {{- if and .Values.internalCA.enabled .Values.internalCA.existingSecret }}
             - name: internal-ca
@@ -102,7 +94,7 @@ spec:
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3
-          {{- with .Values.workerEngine.securityContext }}
+          {{- with default .Values.securityContext .Values.workerEngine.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
