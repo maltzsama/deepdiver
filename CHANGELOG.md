@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.4](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.3...v0.1.4) (2026-08-24)
+
+
+### Bug Fixes
+
+* **chart:** close the env gaps that block a working install ([5069c53](https://github.com/maltzsama/lakedeepdiver/commit/5069c53b133b4647267cffca052e36ffa7ccb42d))
+* **chart:** close the env gaps that block a working install ([7549353](https://github.com/maltzsama/lakedeepdiver/commit/7549353fdad49deaf120c674f61bff88ebd91402))
+
 ## [0.1.3](https://github.com/maltzsama/lakedeepdiver/compare/v0.1.2...v0.1.3) (2026-08-24)
 
 
