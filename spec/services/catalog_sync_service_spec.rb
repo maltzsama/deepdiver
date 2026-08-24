@@ -135,4 +135,68 @@ RSpec.describe CatalogSyncService do
     expect(new_table).to be_present
     expect(new_table.id).not_to eq(old.id)
   end
+
+  describe "deactivation safety" do
+    # A table absent from `seen` because its sync errored has NOT been dropped
+    # from the catalog. Deactivating it removes it from the tables screen, from
+    # freshness sweeps (which filter on active) and from maintenance dispatch.
+    class NamespaceListingFails
+      def namespaces            = [ "bronze" ]
+      def tables_in(_namespace) = raise "catalog unreachable"
+      def table_metadata(_n, _t) = {}
+    end
+
+    class TableSyncFails
+      def namespaces            = [ "bronze" ]
+      def tables_in(_namespace) = [ "t" ]
+      def table_metadata(_n, _t) = raise "metadata unreadable"
+    end
+
+    class EmptyNamespace
+      def namespaces            = [ "bronze" ]
+      def tables_in(_namespace) = []
+      def table_metadata(_n, _t) = {}
+    end
+
+    it "does not deactivate the catalog when every namespace fails to list" do
+      catalog = create(:catalog)
+      a = create(:iceberg_table, catalog: catalog, namespace: "bronze", name: "a", active: true)
+      b = create(:iceberg_table, catalog: catalog, namespace: "bronze", name: "b", active: true)
+
+      described_class.new(catalog, client: NamespaceListingFails.new).sync
+
+      # `where.not(id: [])` renders as `1=1`, so an empty `seen` used to take
+      # out every active table in the catalog.
+      expect(a.reload.active).to be(true)
+      expect(b.reload.active).to be(true)
+    end
+
+    it "does not deactivate a table whose own sync failed" do
+      catalog = create(:catalog)
+      table = create(:iceberg_table, catalog: catalog, namespace: "bronze", name: "t", active: true)
+
+      result = described_class.new(catalog, client: TableSyncFails.new).sync
+
+      expect(result[:errors].size).to eq(1)
+      expect(table.reload.active).to be(true)
+    end
+
+    it "still deactivates a table the catalog no longer lists" do
+      catalog = create(:catalog)
+      dropped = create(:iceberg_table, catalog: catalog, namespace: "bronze", name: "gone", active: true)
+
+      described_class.new(catalog, client: EmptyNamespace.new).sync
+
+      expect(dropped.reload.active).to be(false)
+    end
+
+    it "leaves tables of an unlisted namespace alone" do
+      catalog = create(:catalog)
+      other = create(:iceberg_table, catalog: catalog, namespace: "silver", name: "x", active: true)
+
+      described_class.new(catalog, client: EmptyNamespace.new).sync
+
+      expect(other.reload.active).to be(true)
+    end
+  end
 end

@@ -23,12 +23,20 @@ class CatalogSyncService
     errors = []
     seen = []
 
+    # Only namespaces whose listing succeeded AND whose every table synced can
+    # authorise a deactivation. A namespace that errored tells us nothing about
+    # what it contains, so its tables must be left alone.
+    complete_namespaces = []
+
     @client.namespaces.each do |namespace|
       begin
+        namespace_failed = false
+
         @client.tables_in(namespace).each do |table_name|
           begin
             seen << upsert_table(namespace, table_name)
           rescue StandardError => e
+            namespace_failed = true
             ErrorEvent.record(catalog: @catalog, schema: namespace, table: table_name,
                               operation: "sync-table", source_system: "catalog",
                               error_class: e.class.name, message: e.message)
@@ -36,6 +44,8 @@ class CatalogSyncService
             Rails.logger.warn("Sync failed for #{namespace}.#{table_name}: #{e.message}")
           end
         end
+
+        complete_namespaces << namespace unless namespace_failed
       rescue StandardError => e
         ErrorEvent.record(catalog: @catalog, schema: namespace, operation: "sync-namespace",
                           source_system: "catalog", error_class: e.class.name, message: e.message)
@@ -44,7 +54,7 @@ class CatalogSyncService
       end
     end
 
-    deactivate_unseen(seen)
+    deactivate_unseen(seen, complete_namespaces)
 
     if errors.any? { |e| e.match?(/secret|file|resolve/i) }
       ErrorEvent.record(
@@ -60,13 +70,28 @@ class CatalogSyncService
 
   private
 
-  # Marks as inactive every table of the catalog that was not seen in this
-  # sync - they were dropped from the catalog and their history is preserved.
+  # Marks as inactive the tables that the catalog no longer lists, so their
+  # history is preserved.
+  #
+  # Restricted to namespaces that synced completely. A table missing from `seen`
+  # because its own sync raised, or because its namespace failed to list, has
+  # not been dropped from the catalog - we simply do not know its state, and
+  # deactivating it removes it from the tables screen, from freshness sweeps
+  # (which filter on active) and from maintenance dispatch. A transient catalog
+  # error used to silence monitoring for every table it touched; with every
+  # namespace failing, `where.not(id: [])` renders as `1=1` and took out the
+  # whole catalog.
   #
   # @param seen [Array<IcebergTable>] the tables synced in this run.
-  def deactivate_unseen(seen)
-    seen_ids = seen.map(&:id)
-    @catalog.iceberg_tables.active.where.not(id: seen_ids).find_each do |table|
+  # @param complete_namespaces [Array<String>] namespaces that synced with no errors.
+  def deactivate_unseen(seen, complete_namespaces)
+    return if complete_namespaces.empty?
+
+    scope = @catalog.iceberg_tables.active.where(namespace: complete_namespaces)
+    seen_ids = seen.map(&:id).compact
+    scope = scope.where.not(id: seen_ids) if seen_ids.any?
+
+    scope.find_each do |table|
       table.deactivate!
       Rails.logger.info("Table #{table.fully_qualified_name} dropped from catalog; marked inactive")
     end
