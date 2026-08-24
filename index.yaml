@@ -10,6 +10,36 @@ entries:
         - name: source
           url: https://github.com/maltzsama/lakedeepdiver
     apiVersion: v2
+    appVersion: 0.1.4
+    created: "2026-08-24T08:53:38.950440114Z"
+    description: LakeDeepDiver - Iceberg maintenance control plane (Rails 8 + Solid
+      Queue)
+    digest: 282b1a6ad1ed76d3e6f8a9ebc244279ec0ca8441b109853b21ca4880e7364378
+    home: https://github.com/maltzsama/lakedeepdiver
+    keywords:
+    - iceberg
+    - trino
+    - rails
+    - lakehouse
+    maintainers:
+    - email: demetrius.albuquerque@yahoo.com.br
+      name: Demetrius Albuquerque
+    name: lakedeepdiver
+    sources:
+    - https://github.com/maltzsama/lakedeepdiver
+    type: application
+    urls:
+    - https://github.com/maltzsama/lakedeepdiver/releases/download/lakedeepdiver-0.1.4/lakedeepdiver-0.1.4.tgz
+    version: 0.1.4
+  - annotations:
+      artifacthub.io/images: |
+        - name: lakedeepdiver
+          image: ghcr.io/maltzsama/lakedeepdiver:0.1.0
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: source
+          url: https://github.com/maltzsama/lakedeepdiver
+    apiVersion: v2
     appVersion: 0.1.3
     created: "2026-08-24T08:38:58.348656922Z"
     description: LakeDeepDiver - Iceberg maintenance control plane (Rails 8 + Solid
@@ -121,4 +151,4 @@ entries:
     urls:
     - https://github.com/maltzsama/lakedeepdiver/releases/download/lakedeepdiver-0.1.0/lakedeepdiver-0.1.0.tgz
     version: 0.1.0
-generated: "2026-08-24T08:38:58.348670903Z"
+generated: "2026-08-24T08:53:38.95045851Z"
