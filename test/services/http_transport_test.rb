@@ -5,8 +5,12 @@ class HttpTransportTest < ActiveSupport::TestCase
     HttpTransport.new
   end
 
-  test "ssl_options disables TLS for plain http" do
-    assert_equal({ use_ssl: false }, transport.send(:ssl_options, URI("http://polaris:8181")))
+  test "ssl_options disables TLS for plain http but still sets timeouts" do
+    # Timeouts used to be nested inside the https-only branch, so a plain
+    # http:// endpoint (the default TRINO_URL is one) fell back to Net::HTTP's
+    # own default read/open timeout instead of failing fast.
+    assert_equal({ open_timeout: 10, read_timeout: 60, use_ssl: false },
+                 transport.send(:ssl_options, URI("http://polaris:8181")))
   end
 
   test "ssl_options enables TLS for https without a CA file" do
