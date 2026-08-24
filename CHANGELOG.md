@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.3](https://github.com/maltzsama/lakedeepdiver/compare/v0.2.2...v0.2.3) (2026-08-24)
+
+
+### Bug Fixes
+
+* **docs:** README as the docs landing page, changelog page, single Pages publisher ([c384f5f](https://github.com/maltzsama/lakedeepdiver/commit/c384f5f8fd2d34e2504eb8e0af5bea71e1efab09))
+* **docs:** render the README as the documentation landing page ([6cd514a](https://github.com/maltzsama/lakedeepdiver/commit/6cd514ad1ee18cea0c88997b447179633ea8190d))
+
 ## [0.2.2](https://github.com/maltzsama/lakedeepdiver/compare/v0.2.1...v0.2.2) (2026-08-24)
 
 
