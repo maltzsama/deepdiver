@@ -42,6 +42,10 @@ seed).
 emitted (even as `""`), so a blank deployment made `K8sClientFactory` target an
 empty name. Both are now guarded by `{{- if }}` — absent when empty.
 
+Superseded in round 2: guarding alone still let the chart install into a state
+that raises `KeyError` on the first "Run". Both now carry conventional defaults
+and are enforced non-empty by `values.schema.json`.
+
 ## Pod/container security
 
 The migration Job (pre-install/pre-upgrade hook) got the container
@@ -53,8 +57,9 @@ namespace.
 
 - `K8S_NAMESPACE` (via `fieldRef: metadata.namespace`) and `HELM_RELEASE`
   (`{{ .Release.Name }}`) are injected into web + worker + migration pods, so
-  `TrinoSecretMaterializer` writes the credentials Secret into the right
-  namespace/release instead of `default`/`lakedeepdiver`.
+  `TrinoSecretMaterializer` no longer falls back to `default`/`lakedeepdiver`.
+  Round 2 made the Secret's namespace prefer `TRINO_NAMESPACE` and its name come
+  from the chart.
 - `TrinoSecretMaterializer` now authenticates to the Kubernetes API with the
   ServiceAccount bearer token and CA (reusing `K8sClientFactory`), instead of
   calling anonymously (401) with a nil CA.
@@ -80,8 +85,12 @@ transition stamps `last_heartbeat_at`.
 
 The Role granted `get/list/create/update/patch` on **all** secrets in the
 release namespace (including the app's own Secret). It is now scoped:
-`get`/`update`/`patch` restricted to `<fullname>-trino-catalog-secrets` via
+`get`/`update`/`patch` restricted to the materialized Secret via
 `resourceNames`, `create` kept in a separate unscoped rule, `list` dropped.
+
+Superseded in round 2: the authorized name did not match the one the app wrote.
+The name now comes from a single helper and is handed to the app as
+`TRINO_CATALOG_SECRET_NAME`.
 
 ## Maintenance step config
 
@@ -102,13 +111,111 @@ admin-only via Pundit.
   avoiding the internal `*.dockerbuild` artifact from `docker/build-push-action`
   that intermittently failed the download.
 
+## Round 2: regressions the first round introduced
+
+### Worker pods lost their securityContext
+
+`migration-job.yaml` was fixed by applying `.Values.securityContext`, but the
+three worker Deployments still read their own `worker*.securityContext`, which
+defaults to `{}` — so `{{- with }}` skipped it and they rendered with no
+security context at all. Under Pod Security Admission `restricted` the
+Deployments are created but every pod is rejected, so `helm status` looks
+healthy while no job, schedule or freshness sweep ever runs. They now fall back
+to the top-level context: `default .Values.securityContext .Values.worker.securityContext`.
+
+### The RBAC scope authorized a name nothing wrote
+
+The Role restricted `get`/`update`/`patch` to
+`<fullname>-trino-catalog-secrets`, but `TrinoSecretMaterializer` computed
+`<HELM_RELEASE>-trino-catalog-secrets` — and `fullname` is
+`<release>-<chart>`, so the two never matched. `get_secret` returned 403,
+which is `Kubeclient::HttpError` and not `ResourceNotFoundError`
+(`kubeclient/common.rb` only maps 404 to the latter), so the `rescue` that
+would have created the Secret never fired and the outer rescue swallowed it:
+credentials silently never materialized.
+
+The name is now computed once, in `lakedeepdiver.trinoSecretName`, and used by
+both the Role's `resourceNames` and the `TRINO_CATALOG_SECRET_NAME` env var the
+app reads. The app no longer derives it. The swallowing rescue logs at `error`
+with the namespace, name and HTTP status, and records an ErrorEvent.
+
+### Secrets were rendered into a ConfigMap
+
+`OIDC_CLIENT_SECRET` and `BOOTSTRAP_ADMIN_PASSWORD` were emitted into the
+ConfigMap — readable by anyone with `get configmap` in the namespace and kept
+in the Helm release. They moved to a `<fullname>-chart-env` Secret, mounted by
+every workload through the shared `lakedeepdiver.envFrom` helper.
+
+Every pod, not just web: `config/initializers/devise.rb` runs `ENV.fetch` on
+the OIDC vars in every process, so a worker without `OIDC_CLIENT_SECRET` while
+`SSO_ENABLED=true` is a boot-time KeyError.
+
+### prod.yaml pinned a stale image tag
+
+`infra/helm/values/prod.yaml` was on `0.1.7` while the chart was `0.2.1`,
+because the `x-release-please-version` marker lived only in `values.yaml` and
+`Chart.yaml`. Installing with prod.yaml therefore shipped an image predating
+`SKIP_DB_PREPARE` (0.1.8), reintroducing the web-pod migration race the chart
+believed it had fixed — and dropping the step-config validation and the
+cross-database retry with it. The file is now a release-please extra-file and
+carries the marker, as does the `artifacthub.io/images` annotation.
+
+### The credentials Secret went to the wrong namespace
+
+The cross-namespace Role exists so the app can materialize the Secret where
+Trino runs, but the app wrote to `K8S_NAMESPACE` (its own pod's namespace). It
+now prefers `TRINO_NAMESPACE` and falls back to `K8S_NAMESPACE`.
+
+## Round 2: fixes that had not gone far enough
+
+### The cross-database retry leaked a different way
+
+`retry_pending` gave up after `MAX_RETRIES` and left the execution `pending`
+forever. `pending` counts as demand, `reap_orphans!` only looked at `running`,
+and `EngineWatchdogJob` only watches the engine row — so the engine never
+drained and `run_plan`'s already-queued guard blocked that table permanently.
+
+Two changes: the job now fails the execution explicitly through
+`ExecutionFailureHandler` and signals `demand_finished!`; and
+`TrinoDemand.reap_orphans!` also reaps executions left `pending` past
+`TRINO_PENDING_STALE_MINUTES` (default 45, comfortably above
+`READY_TIMEOUT * MAX_START_ATTEMPTS`), covering the case where the dispatch
+never arrived at all.
+
+`ExecutionHistory#retry_count` is now cleared once the dispatch is visible;
+otherwise a healthy execution rendered as "retrying" for the rest of its chain.
+
+### Blank TRINO_URL / TRINO_DEPLOYMENT installed happily
+
+Guarding both with `{{- if }}` stopped the empty-string bug but produced a
+chart that installs into a state that raises `KeyError` on the first "Run",
+with nothing to catch it — `values.schema.json` had no `env` block at all.
+They now default to the conventional in-cluster names and are enforced
+non-empty by the schema, which also requires the OIDC quartet together and
+the bootstrap admin email/password as a pair.
+
+### Kubeclient errors bypassed the engine retry
+
+`ChartTrinoProvisioner` let `Kubeclient` errors escape, but
+`SuperviseEngineStartJob` only rescues `TrinoProvisioner::Error` and
+`Timeout::Error` and `ApplicationJob` has no generic retry — so a missing
+Deployment or a 403 killed the job, skipped `MAX_START_ATTEMPTS`, and left the
+engine in `starting` until the watchdog failed it minutes later. They are now
+wrapped as `TrinoProvisioner::Error` with the addressed `namespace/deployment`
+in the message. A worker Deployment absent on `destroy!` is tolerated, since
+single topology legitimately has none.
+
+`env.trinoWorkerDeployment` is now a chart value; the default engine topology
+is `cluster`, so the worker Deployment name was previously unreachable from
+the chart.
+
 ## Still open / verify under load
 
-- **Cross-database race**: `start_execution_on_engine` updates the execution to
-  `running` on the primary DB inside the supervisor lock, then enqueues on the
-  queue DB (independent commit). An engine worker could consume the job before
-  the primary commit, read `pending` and skip. Confirm under load.
-- **CI does not build the image**: only the release workflow builds/pushes the
-  Docker image, so a broken Dockerfile surfaces only at release time.
+- **Cross-database race**: handled by a bounded retry plus an explicit failure
+  and the pending reaper above, but the 5s x 3 retry window is a guess. Confirm
+  under load that a primary commit is always visible within it.
+- **Unscoped Secret `create`**: `resourceNames` is ignored for `create`, so the
+  app can create (not overwrite) an arbitrary Secret in the release and Trino
+  namespaces. Closing this needs an admission policy, not RBAC.
 - **cache_store**: `:memory_store` with `replicaCount > 1` makes in-memory
   counters diverge between replicas (cosmetic).

@@ -7,6 +7,13 @@ class TrinoK8sClient
     @client = client || K8sClientFactory.build
   end
 
+  # The addressed Deployment as "namespace/name", for error messages.
+  #
+  # @return [String] the namespace-qualified Deployment name
+  def target
+    @client.target
+  end
+
   # Whether the Trino Deployment is ready.
   #
   # @return [Boolean] true when ready

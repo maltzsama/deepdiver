@@ -70,14 +70,37 @@ RSpec.describe ExecuteMaintenanceJob, type: :job do
     expect(retried[:at]).to be_between((Time.current + 1.second).to_f, (Time.current + 10.seconds).to_f)
   end
 
-  it "does not retry a pending execution past the retry limit" do
+  it "fails a pending execution past the retry limit instead of abandoning it" do
+    execution = create(:execution_history, iceberg_table: plan.iceberg_table, status: :pending,
+                                           retry_count: described_class::MAX_RETRIES)
+
+    described_class.perform_now(execution.id)
+
+    # Abandoning it left "pending" demand forever: the engine never drained and
+    # run_plan's already-queued guard blocked the table permanently.
+    expect(execution.reload.status).to eq("failed")
+    expect(execution.error_message).to match(/never became visible/)
+    expect(TrinoDemand.maintenance_count).to eq(0)
+  end
+
+  it "does not re-enqueue once the retry limit is spent" do
     execution = create(:execution_history, iceberg_table: plan.iceberg_table, status: :pending,
                                            retry_count: described_class::MAX_RETRIES)
 
     expect { described_class.perform_now(execution.id) }
       .not_to change { enqueued_jobs.size }
+  end
 
-    expect(execution.reload.retry_count).to eq(described_class::MAX_RETRIES)
+  it "clears the dispatch retry budget once the execution is visible as running" do
+    execution = released_execution
+    execution.update!(retry_count: 2)
+
+    described_class.perform_now(execution.id)
+
+    # Otherwise a healthy execution renders as "retrying" for the rest of the
+    # chain (execution_visual_state reads retrying?).
+    expect(execution.reload.retry_count).to eq(0)
+    expect(execution).not_to be_retrying
   end
 
   it "skips (without retrying) an execution that is no longer running or pending" do

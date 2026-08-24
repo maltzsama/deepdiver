@@ -21,6 +21,12 @@ class ExecuteMaintenanceJob < ApplicationJob
 
     execution.update!(started_at: Time.current) if execution.started_at.nil?
 
+    # retry_count on the execution counts pending-dispatch retries only (step
+    # retries live on ExecutionStep). Once the dispatch is visible those are
+    # spent, so clear the budget - otherwise a healthy execution kept rendering
+    # as "retrying" for the rest of the chain.
+    execution.update!(retry_count: 0) if execution.retry_count.positive?
+
     step = next_step_for(execution)
 
     return finish_chain(execution) if step.nil?
@@ -42,7 +48,22 @@ class ExecuteMaintenanceJob < ApplicationJob
   # @param execution_history_id [Integer] the execution id to re-enqueue
   def retry_pending(execution, execution_history_id)
     return unless execution.status == "pending"
-    return if execution.retry_count >= MAX_RETRIES
+
+    if execution.retry_count >= MAX_RETRIES
+      # Do NOT just give up: "pending" counts as demand (TrinoDemand::
+      # ACTIVE_EXECUTION_STATUSES), reap_orphans! only looks at "running", and
+      # the watchdog only watches the engine row - so an abandoned pending
+      # execution kept the engine up forever and permanently blocked its table
+      # through run_plan's already-queued guard. Fail it explicitly instead.
+      Rails.logger.error("ExecuteMaintenanceJob: execution #{execution.id} still pending after " \
+                         "#{MAX_RETRIES} retries; failing it so demand drops")
+      ExecutionFailureHandler.handle(
+        execution,
+        "dispatch never became visible after #{MAX_RETRIES} retries (primary commit lost?)"
+      )
+      TrinoEngineSupervisor.demand_finished!
+      return
+    end
 
     execution.increment!(:retry_count)
     Rails.logger.info("ExecuteMaintenanceJob: execution #{execution.id} still pending; retrying")

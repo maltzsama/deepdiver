@@ -17,6 +17,15 @@ class K8sClient
     @deployment = deployment
   end
 
+  # The addressed Deployment as "namespace/name", for error messages: a wrong
+  # TRINO_DEPLOYMENT or a Role missing in the Trino namespace is otherwise
+  # indistinguishable from any other Kubernetes failure.
+  #
+  # @return [String] the namespace-qualified Deployment name
+  def target
+    "#{namespace}/#{deployment}"
+  end
+
   # Sets the Deployment replica count via a JSON patch.
   #
   # @param replicas [Integer] the desired replica count

@@ -50,15 +50,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           envFrom:
-            - configMapRef:
-                name: {{ include "lakedeepdiver.fullname" . }}
-            {{- if .Values.appSecrets.existingSecret }}
-            - secretRef:
-                name: {{ .Values.appSecrets.existingSecret | quote }}
-            {{- else if .Values.appSecrets.create }}
-            - secretRef:
-                name: {{ include "lakedeepdiver.fullname" . }}-app
-            {{- end }}
+            {{- include "lakedeepdiver.envFrom" . | nindent 12 }}
           env:
             - name: K8S_NAMESPACE
               valueFrom:

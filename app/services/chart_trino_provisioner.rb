@@ -90,14 +90,23 @@ class ChartTrinoProvisioner
   # Applies the engine config and scales the coordinator up (and workers, in
   # cluster topology).
   def create!
-    apply_coordinator_spec
-    apply_worker_spec if config.cluster?
+    wrap_k8s_errors("coordinator") { apply_coordinator_spec }
+    wrap_k8s_errors("worker") { apply_worker_spec } if config.cluster?
   end
 
   # Scales both the coordinator and workers down to 0 replicas.
+  #
+  # The worker Deployment may legitimately not exist in single topology, so a
+  # missing one is not a failure here - there is nothing to scale down.
   def destroy!
-    @k8s.scale(0)
-    @worker_k8s.scale(0)
+    wrap_k8s_errors("coordinator") { @k8s.scale(0) }
+    begin
+      @worker_k8s.scale(0)
+    rescue Kubeclient::ResourceNotFoundError
+      Rails.logger.info("Trino worker Deployment absent; nothing to scale down")
+    rescue Kubeclient::HttpError => e
+      raise TrinoProvisioner::Error, k8s_message("worker", e)
+    end
   end
 
   # Blocks until the coordinator is scaled down or the timeout elapses.
@@ -108,10 +117,36 @@ class ChartTrinoProvisioner
   # @param timeout [ActiveSupport::Duration] how long to wait
   def wait_gone!(timeout:)
     deadline = Time.current + timeout
-    sleep 1 until @k8s.replicas.zero? || Time.current > deadline
+    sleep 1 until wrap_k8s_errors("coordinator") { @k8s.replicas }.zero? || Time.current > deadline
   end
 
   private
+
+  # Kubeclient raises its own errors (a missing Deployment, a 403 from absent
+  # RBAC in the Trino namespace). SuperviseEngineStartJob only rescues
+  # TrinoProvisioner::Error and Timeout::Error, and ApplicationJob has no
+  # generic retry - so an unwrapped Kubeclient error killed the job outright,
+  # bypassing MAX_START_ATTEMPTS and leaving the engine in "starting" until the
+  # watchdog flipped it to "failed" minutes later, with the real cause visible
+  # only in the worker log.
+  #
+  # @param role [String] "coordinator" or "worker", for the message
+  def wrap_k8s_errors(role)
+    yield
+  rescue Kubeclient::HttpError => e
+    raise TrinoProvisioner::Error, k8s_message(role, e)
+  end
+
+  # A message that names the Deployment and namespace actually addressed, so a
+  # wrong TRINO_DEPLOYMENT or a missing Role is obvious from the error alone.
+  #
+  # @param role [String] "coordinator" or "worker"
+  # @param error [Kubeclient::HttpError] the underlying error
+  # @return [String] the failure message
+  def k8s_message(role, error)
+    client = role == "worker" ? @worker_k8s : @k8s
+    "Trino #{role} (#{client.target}): #{error.message}"
+  end
 
   # The env the coordinator's config.properties resolves via ${ENV:...}:
   # whether it also runs tasks (single topology) or is a pure coordinator.

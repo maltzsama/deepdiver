@@ -79,4 +79,10 @@ RSpec.describe MaintenanceStep do
       expect(step).to be_valid
     end
   end
+
+  it "rejects, rather than raising on, a nil config" do
+    step = build(:maintenance_step, config: nil)
+
+    expect(step).to be_valid
+  end
 end

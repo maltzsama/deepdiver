@@ -7,11 +7,18 @@
 class TrinoSecretMaterializer
   SECRET_NAME_SUFFIX = "trino-catalog-secrets"
 
-  def initialize(release_name: ENV.fetch("HELM_RELEASE", "lakedeepdiver"),
-                 namespace: ENV.fetch("K8S_NAMESPACE", "default"),
-                 k8s_client: nil)
-    @release_name = release_name
-    @namespace = namespace
+  # The Secret name is provided by the Helm chart through
+  # TRINO_CATALOG_SECRET_NAME so it always matches the name the RBAC Role
+  # authorizes via resourceNames. Computing it here from the release name
+  # duplicated the chart's `fullname` logic and drifted from it: the Role
+  # authorized "<release>-<chart>-trino-catalog-secrets" while this class
+  # wrote "<release>-trino-catalog-secrets", so every get was a 403.
+  #
+  # The Secret must live where the Trino pods run (TRINO_NAMESPACE), not
+  # where this pod runs - the chart grants the same RBAC in both.
+  def initialize(secret_name: nil, namespace: nil, k8s_client: nil)
+    @secret_name = secret_name || default_secret_name
+    @namespace = namespace || default_namespace
     @k8s_client = k8s_client || default_k8s_client
   end
 
@@ -31,8 +38,19 @@ class TrinoSecretMaterializer
 
   private
 
-  def secret_name
-    "#{@release_name}-#{SECRET_NAME_SUFFIX}"
+  attr_reader :secret_name
+
+  # The chart-provided name, falling back to the release-prefixed one so local
+  # runs (where no chart injects the var) still work.
+  def default_secret_name
+    ENV["TRINO_CATALOG_SECRET_NAME"].presence ||
+      "#{ENV.fetch("HELM_RELEASE", "lakedeepdiver")}-#{SECRET_NAME_SUFFIX}"
+  end
+
+  # Trino's namespace first: the Secret is mounted by the Trino pods, so it has
+  # to exist there. Falls back to this pod's namespace when they coincide.
+  def default_namespace
+    ENV["TRINO_NAMESPACE"].presence || ENV.fetch("K8S_NAMESPACE", "default")
   end
 
   # Collects catalog credential secrets (client_secret, bearer token, etc.).
@@ -80,7 +98,17 @@ class TrinoSecretMaterializer
       @k8s_client.create_secret(secret_metadata)
     end
   rescue Kubeclient::HttpError, Errno::ECONNREFUSED, OpenSSL::SSL::SSLError => e
-    Rails.logger.warn("TrinoSecretMaterializer: could not sync secret (#{e.class}): #{e.message}")
+    # Logged at error, not warn: a swallowed failure here means Trino boots
+    # without catalog credentials and maintenance fails later with a confusing
+    # "catalog not found". The name/namespace are included because an RBAC
+    # mismatch (403) is the likeliest cause and is invisible otherwise.
+    Rails.logger.error(
+      "TrinoSecretMaterializer: could not sync Secret #{@namespace}/#{secret_name} " \
+      "(#{e.class}#{" HTTP #{e.error_code}" if e.respond_to?(:error_code)}): #{e.message}"
+    )
+    ErrorEvent.record(catalog: nil, schema: "engine", operation: "catalog-secret-sync",
+                      source_system: "engine", error_class: e.class.name,
+                      message: "could not sync Secret #{@namespace}/#{secret_name}: #{e.message}")
     nil
   end
 

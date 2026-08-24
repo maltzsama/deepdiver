@@ -5,6 +5,16 @@ module TrinoDemand
   ACTIVE_RUN_STATUSES = %w[pending running].freeze
   STALE_AFTER = ENV.fetch("TRINO_HEARTBEAT_STALE_MINUTES", "15").to_i.minutes
 
+  # A "pending" execution is demand too, so one whose dispatch never arrived
+  # (worker down when it was enqueued, queue row lost, primary commit rolled
+  # back) held the engine up forever - reaping only looked at "running".
+  #
+  # Deliberately well above the whole start path: READY_TIMEOUT x
+  # MAX_START_ATTEMPTS plus slack, so a run legitimately waiting for a slow
+  # engine start is never reaped. A failed start already fails its pending
+  # executions through SuperviseEngineStartJob#fail_pending_executions!.
+  PENDING_STALE_AFTER = ENV.fetch("TRINO_PENDING_STALE_MINUTES", "45").to_i.minutes
+
   module_function
 
   # Total executions and freshness sweeps currently needing the engine, after
@@ -41,6 +51,14 @@ module TrinoDemand
       .find_each do |execution|
         ExecutionFailureHandler.handle(execution,
                                        "Trino coordinator lost during execution (no heartbeat for #{STALE_AFTER.inspect})")
+      end
+
+    ExecutionHistory
+      .where(status: "pending")
+      .where("COALESCE(started_at, created_at) < ?", PENDING_STALE_AFTER.ago)
+      .find_each do |execution|
+        ExecutionFailureHandler.handle(execution,
+                                       "dispatch never arrived (pending for over #{PENDING_STALE_AFTER.inspect})")
       end
 
     FreshnessRun

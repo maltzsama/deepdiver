@@ -2,9 +2,46 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "additionalProperties": true,
-  "required": ["image", "postgresql", "activeRecordEncryption"],
+  "required": ["image", "activeRecordEncryption", "env"],
   "properties": {
     "replicaCount": { "type": "integer", "minimum": 1 },
+    "env": {
+      "type": "object",
+      "description": "trinoUrl and trinoDeployment are read with a bare ENV.fetch in the app, so an empty value is a KeyError on the first engine start. Both must be non-empty.",
+      "required": ["trinoUrl", "trinoDeployment"],
+      "properties": {
+        "trinoUrl": { "type": "string", "minLength": 1, "format": "uri" },
+        "trinoDeployment": { "type": "string", "minLength": 1 },
+        "trinoWorkerDeployment": { "type": "string" },
+        "trinoNamespace": { "type": "string" },
+        "logLevel": { "type": "string", "enum": ["debug", "info", "warn", "error"] },
+        "host": { "type": "string" },
+        "allowedHosts": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "admin": {
+      "type": "object",
+      "properties": {
+        "bootstrap": {
+          "type": "object",
+          "description": "Both or neither: seeds.rb does ENV.fetch on the password, so an email without a password fails the migration Job.",
+          "properties": {
+            "email": { "type": "string" },
+            "password": { "type": "string" }
+          },
+          "allOf": [
+            {
+              "if": { "required": ["email"], "properties": { "email": { "minLength": 1 } } },
+              "then": { "required": ["password"], "properties": { "password": { "minLength": 1 } } }
+            },
+            {
+              "if": { "required": ["password"], "properties": { "password": { "minLength": 1 } } },
+              "then": { "required": ["email"], "properties": { "email": { "minLength": 1 } } }
+            }
+          ]
+        }
+      }
+    },
     "image": {
       "type": "object",
       "required": ["repository", "tag"],
@@ -37,8 +74,22 @@
     },
     "oidc": {
       "type": "object",
+      "description": "Setting issuer turns SSO_ENABLED on for every process. config/initializers/devise.rb then does ENV.fetch on clientId, clientSecret and redirectUri, so a partial config yields a login button that cannot complete a flow.",
       "properties": {
-        "issuer": { "type": "string" }
+        "issuer": { "type": "string" },
+        "clientId": { "type": "string" },
+        "clientSecret": { "type": "string" },
+        "redirectUri": { "type": "string" },
+        "providerLabel": { "type": "string" }
+      },
+      "if": { "required": ["issuer"], "properties": { "issuer": { "minLength": 1 } } },
+      "then": {
+        "required": ["clientId", "clientSecret", "redirectUri"],
+        "properties": {
+          "clientId": { "minLength": 1 },
+          "clientSecret": { "minLength": 1 },
+          "redirectUri": { "minLength": 1 }
+        }
       }
     },
     "appSecrets": {

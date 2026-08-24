@@ -10,6 +10,7 @@
         { "type": "generic", "path": "config/locales/pt-BR.yml" },
         { "type": "generic", "path": "infra/helm/lakedeepdiver/Chart.yaml" },
         { "type": "generic", "path": "infra/helm/lakedeepdiver/values.yaml" },
+        { "type": "generic", "path": "infra/helm/values/prod.yaml" },
         { "type": "generic", "path": "README.md" },
         { "type": "generic", "path": "infra/helm/lakedeepdiver/README.md" }
       ]
