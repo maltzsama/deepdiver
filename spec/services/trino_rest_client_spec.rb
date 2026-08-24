@@ -76,4 +76,25 @@ RSpec.describe TrinoRestClient do
     expect { client.execute("ALTER TABLE t EXECUTE optimize", execution_id: 1) }
       .to raise_error(TrinoRestClient::Error, /Cannot obtain metadata → Failed to resolve table → HTTP 404 from catalog/)
   end
+
+  describe "row accounting" do
+    it "counts rows across every page, not just the last one" do
+      transport = instance_double(HttpTransport)
+      client = described_class.new(endpoint: "http://trino", transport: transport)
+
+      # Trino streams rows on intermediate pages; the final page usually carries
+      # only columns, so reading the count off it reported ~0 either way.
+      first = { "id" => "q1", "data" => [ [ 1 ], [ 2 ] ], "nextUri" => "http://trino/next/1" }
+      middle = { "id" => "q1", "data" => [ [ 3 ] ], "nextUri" => "http://trino/next/2" }
+      last = { "id" => "q1", "columns" => [ { "name" => "n" } ], "stats" => {} }
+
+      allow(transport).to receive(:post).and_return(first)
+      allow(transport).to receive(:get).and_return(middle, last)
+      stub_const("#{described_class}::POLL_INTERVAL", 0)
+
+      metrics = client.execute("SELECT 1", execution_id: 1)
+
+      expect(metrics["rows"]).to eq(3)
+    end
+  end
 end

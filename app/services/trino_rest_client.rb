@@ -63,10 +63,16 @@ class TrinoRestClient
   def poll(response, execution_id:, execution: nil, step: nil)
     deadline = Time.current + MAX_POLL_SECONDS
     current = response
+    # Trino streams rows page by page and the final page usually carries only
+    # columns, so counting them off the last response reported ~0 regardless of
+    # what the statement returned.
+    row_count = 0
 
     loop do
-      return finish(current) if current["error"]
-      return finish(current) unless current["nextUri"]
+      row_count += rows(current).size
+
+      return finish(current, row_count) if current["error"]
+      return finish(current, row_count) unless current["nextUri"]
 
       if Time.current > deadline
         raise Error, "Trino query exceeded #{MAX_POLL_SECONDS}s without finishing"
@@ -114,15 +120,16 @@ class TrinoRestClient
   # Turns a final response into metrics, raising on errors or conflicts.
   #
   # @param response [Hash] the final Trino response
+  # @param row_count [Integer] rows accumulated across every page
   # @return [Hash] the metrics payload
-  def finish(response)
+  def finish(response, row_count)
     raise commit_conflict(response) if conflict?(response)
 
     raise Error, error_message(response) if response["error"]
 
     {
       "columns" => columns(response),
-      "rows" => rows(response).size,
+      "rows" => row_count,
       "stats" => (response["stats"] || {}).slice("elapsedTimeMillis", "processedBytes", "physicalWrittenBytes")
     }.compact
   end
