@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/maltzsama/lakedeepdiver/main/public/icon.svg" width="72" height="72" alt="LakeDeepDiver">
+
 # lakedeepdiver
 
 LakeDeepDiver — Iceberg maintenance control plane (Rails 8 + Solid Queue).
