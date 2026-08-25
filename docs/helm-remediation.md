@@ -503,6 +503,26 @@ removed from `values.yaml`/`prod.yaml`, so it looked configurable. Dropped.
 not something a chart distributed to third parties should assert in the file
 `helm show values` prints. Reworded to be consumer-agnostic.
 
+### The new `podAnnotations` hook collided with the hardcoded metrics annotations
+
+The `extraEnv`/`podAnnotations` extension hooks above landed with a bug: on
+`deployment-web.yaml`, `podAnnotations` was rendered as its own block
+*alongside* the hardcoded `prometheus.io/scrape`/`port`/`path` annotations
+(only emitted when `metrics.enabled`). An operator using the new hook for its
+obvious purpose — disabling scraping for one release via `podAnnotations:
+{prometheus.io/scrape: "false"}` — got a Deployment with the same annotation
+key emitted twice. `helm template`/`helm lint` render and pass this without
+complaint; most YAML parsers then silently resolve duplicate keys to
+"whichever came last" (here, the hardcoded `"true"`), so the override has no
+effect and nothing signals why. `lakedeepdiver.podAnnotations` (`_helpers.tpl`)
+now takes an optional `extra` dict of caller-specific annotations (used only
+by web, for the Prometheus ones) and builds one merged map —
+`.Values.podAnnotations` taking precedence over `extra` and the computed
+checksums — rendered with a single `toYaml`. Also gave the migration Job's pod
+template a `checksum/config` annotation, since `podAnnotations`/`podLabels`
+are documented as applying to every workload but the Job's pod template had
+no `annotations:` block at all to merge into.
+
 ### Rejected
 
 - **`readinessProbe` on the workers, implemented as a duplicate `pgrep -f

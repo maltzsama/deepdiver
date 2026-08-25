@@ -12,13 +12,12 @@ spec:
       {{- include "lakedeepdiver.webSelector" . | nindent 6 }}
   template:
     metadata:
+      {{- $metricsAnnotations := dict }}
+      {{- if .Values.metrics.enabled }}
+      {{- $metricsAnnotations = dict "prometheus.io/scrape" "true" "prometheus.io/port" (.Values.metrics.port | toString) "prometheus.io/path" .Values.metrics.path }}
+      {{- end }}
       annotations:
-        {{- include "lakedeepdiver.podAnnotations" . | nindent 8 }}
-        {{- if .Values.metrics.enabled }}
-        prometheus.io/scrape: "true"
-        prometheus.io/port: {{ .Values.metrics.port | quote }}
-        prometheus.io/path: {{ .Values.metrics.path | quote }}
-        {{- end }}
+        {{- include "lakedeepdiver.podAnnotations" (dict "root" . "extra" $metricsAnnotations) | nindent 8 }}
       labels:
         {{- include "lakedeepdiver.webSelector" . | nindent 8 }}
         {{- with .Values.podLabels }}

@@ -158,17 +158,26 @@ rules:
 Pod-template annotations shared by every workload: the ConfigMap checksum,
 the checksum of chart-rendered Secrets (secret-app.yaml / secret-chart-env.yaml,
 when either renders - NOT the out-of-band appSecrets.existingSecret, which the
-chart never sees and so cannot checksum) and any operator-supplied
-podAnnotations.
+chart never sees and so cannot checksum), any caller-specific annotations
+(e.g. web's Prometheus scrape annotations) and operator-supplied
+podAnnotations - merged into a single map and rendered once, so an operator
+overriding e.g. prometheus.io/scrape via podAnnotations cannot collide with
+the computed key. A naive two-block render (checksums, then a hardcoded
+metrics block, then a separate podAnnotations block) emits the same key
+twice, which is invalid YAML that most parsers silently resolve to
+"last value wins" - a scrape override in podAnnotations would then have no
+effect.
+Takes a dict: root (the "." of the calling template), extra (optional dict
+of caller-specific annotations, e.g. Prometheus scrape settings on web only).
 */}}
 {{- define "lakedeepdiver.podAnnotations" -}}
-checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-{{- if or .Values.appSecrets.create (include "lakedeepdiver.hasChartEnvSecret" .) }}
-checksum/secrets: {{ printf "%s%s" (include (print $.Template.BasePath "/secret-app.yaml") .) (include (print $.Template.BasePath "/secret-chart-env.yaml") .) | sha256sum }}
+{{- $root := .root }}
+{{- $computed := dict "checksum/config" (include (print $root.Template.BasePath "/configmap.yaml") $root | sha256sum) }}
+{{- if or $root.Values.appSecrets.create (include "lakedeepdiver.hasChartEnvSecret" $root) }}
+{{- $_ := set $computed "checksum/secrets" (printf "%s%s" (include (print $root.Template.BasePath "/secret-app.yaml") $root) (include (print $root.Template.BasePath "/secret-chart-env.yaml") $root) | sha256sum) }}
 {{- end }}
-{{- with .Values.podAnnotations }}
-{{ toYaml . }}
-{{- end }}
+{{- $merged := merge (deepCopy $root.Values.podAnnotations) (.extra | default (dict)) $computed }}
+{{- toYaml $merged }}
 {{- end }}
 
 {{/*
@@ -205,7 +214,7 @@ spec:
   template:
     metadata:
       annotations:
-        {{- include "lakedeepdiver.podAnnotations" $root | nindent 8 }}
+        {{- include "lakedeepdiver.podAnnotations" (dict "root" $root) | nindent 8 }}
       labels:
         {{- include .selector $root | nindent 8 }}
         {{- with $root.Values.podLabels }}

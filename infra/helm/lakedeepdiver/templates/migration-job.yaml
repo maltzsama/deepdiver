@@ -16,6 +16,8 @@ spec:
   ttlSecondsAfterFinished: {{ .Values.migrationJob.ttlSecondsAfterFinished | default 3600 }}
   template:
     metadata:
+      annotations:
+        {{- include "lakedeepdiver.podAnnotations" (dict "root" .) | nindent 8 }}
       labels:
         {{- include "lakedeepdiver.webSelector" . | nindent 8 }}
         {{- with .Values.podLabels }}
