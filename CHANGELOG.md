@@ -4,6 +4,19 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.6](https://github.com/maltzsama/lakedeepdiver/compare/v0.2.5...v0.2.6) (2026-08-24)
+
+
+### Bug Fixes
+
+* **catalogs:** make resolve_s3_credentials exhaustive ([e9fd313](https://github.com/maltzsama/lakedeepdiver/commit/e9fd313627773ec922b36560ec64487ae4ee4e4e))
+* CSP, turbo frame dup, and five defensive guards ([eaecb23](https://github.com/maltzsama/lakedeepdiver/commit/eaecb23ffea7c3c5f0b872d5d4355f9125cefd20))
+* **engine:** tolerate a finished chain with no maintenance_plan ([aa2bce2](https://github.com/maltzsama/lakedeepdiver/commit/aa2bce2d5d27cfd3fa6396a366b06fdd168a1769))
+* **http:** apply timeouts to plain http connections too ([cb9a1e5](https://github.com/maltzsama/lakedeepdiver/commit/cb9a1e554b2f44cd35769d18688aeed3ca6a0a3c))
+* **security:** enable Content-Security-Policy in report-only mode ([90877fd](https://github.com/maltzsama/lakedeepdiver/commit/90877fd1fcf3283af68aca0d8c6720b49ee0865d))
+* **ui:** remove duplicate nested turbo frame in activity running list ([6330dc7](https://github.com/maltzsama/lakedeepdiver/commit/6330dc7bf3cfe9faa89f6dbf58935a0669e1dd3b))
+* **users:** return a validation error instead of raising ([4df028f](https://github.com/maltzsama/lakedeepdiver/commit/4df028fca02b5139999633b667afd6c84f17b0af))
+
 ## [0.2.5](https://github.com/maltzsama/lakedeepdiver/compare/v0.2.4...v0.2.5) (2026-08-24)
 
 
