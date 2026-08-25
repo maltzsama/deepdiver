@@ -4,6 +4,19 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.1](https://github.com/maltzsama/lakedeepdiver/compare/v0.3.0...v0.3.1) (2026-08-25)
+
+
+### Bug Fixes
+
+* **helm:** add the missing chart icon ([e504fe8](https://github.com/maltzsama/lakedeepdiver/commit/e504fe8a28a44f874a0d7fa6949677e7bb3e7d19))
+* **helm:** fix runtime bugs and close extensibility gaps from install review ([7684488](https://github.com/maltzsama/lakedeepdiver/commit/768448806363d054b50b42e081bf15bf489df7b2))
+* **helm:** runtime bugs and extensibility gaps from install review ([b801a39](https://github.com/maltzsama/lakedeepdiver/commit/b801a39857e6b6aebb5153f41deaa12e5fcd2110))
+* **helm:** stop podAnnotations from colliding with the metrics annotations ([69b02bc](https://github.com/maltzsama/lakedeepdiver/commit/69b02bcdd149268b73ca8db17afa5356ca07f1a0))
+* **spec:** update auth smoke test for the frameless login icon ([7db5fb0](https://github.com/maltzsama/lakedeepdiver/commit/7db5fb089a3a71d7ab7908d68ba8fdf9ed639798))
+* **ui:** drop the invert filter and bump the login icon to 96px ([2a555b6](https://github.com/maltzsama/lakedeepdiver/commit/2a555b65d22341116635ea8c0538afe0a9fb5095))
+* **ui:** remove the square frame around the login logo ([354dd92](https://github.com/maltzsama/lakedeepdiver/commit/354dd92c3c77127b54d15d5ccdad808cf9651bc7))
+
 ## [0.3.0](https://github.com/maltzsama/lakedeepdiver/compare/v0.2.6...v0.3.0) (2026-08-25)
 
 
