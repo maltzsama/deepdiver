@@ -320,3 +320,61 @@ DB default; `CatalogClient#get` retries exactly once on 401, because Ruby runs
 enforced per request by Devise's activatable hook through
 `active_for_authentication?`, including OIDC sessions; and `delete_all` does
 honour `limit`, via a subquery on the primary key.
+
+## Observability: Prometheus metrics and structured logging
+
+The chart does not create the `PodMonitor` (or the log collector): those are
+owned by the cluster/platform team, out of this repo. What the chart does is
+expose a scrapeable `/metrics` endpoint and structured JSON logs to STDOUT.
+
+### Metrics
+
+The web pod serves Prometheus metrics at `GET <metrics.path>` (default
+`/metrics`) on port 80 — the same listener that serves the app, so there is no
+extra port to open. The endpoint is a bare `ActionController::Metal`, open (no
+auth) because the in-cluster `PodMonitor` cannot authenticate.
+
+Application metrics are always on and derived from the database at scrape time
+(`PrometheusMetrics.refresh!`), because only the web pod is scraped and any
+counter a worker incremented in-process would be invisible:
+
+- `lakedeepdiver_execution_status{status}` — maintenance executions by status.
+- `lakedeepdiver_trino_engine_status{status}` — 1/0 per lifecycle state.
+- `lakedeepdiver_error_events{status}` — error events by status.
+- `lakedeepdiver_solid_queue_jobs{queue_name,state}` — jobs ready/running/
+  blocked/scheduled/failed, per queue.
+
+Service metrics (`lakedeepdiver_http_requests_total`, `http_request_duration`,
+`sql_queries_total`, `sql_query_duration`, `process_cpu`, `process_resident_memory`)
+are opt-in via `metrics.serviceMetrics: true`.
+
+A `PodMonitor` for it looks like:
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: lakedeepdiver
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lakedeepdiver
+      app.kubernetes.io/component: web
+  podMetricsEndpoints:
+    - port: http          # or 80
+      path: /metrics
+```
+
+The pod also carries `prometheus.io/scrape`/`port`/`path` annotations for
+clusters still using annotation-based discovery.
+
+### Logging
+
+Structured JSON logging is provided by `semantic_logger` +
+`rails_semantic_logger`, replacing the previous `TaggedLogging` STDOUT logger.
+`config/environments/production.rb` declares a single appender — JSON to
+`$stdout` — so the platform's log collector (Promtail/Alloy → Loki, or Fluent
+Bit → Logstash) parses every field. `logging.format: text` switches back to
+human-readable lines via `LOG_FORMAT`. Because the appender is declared in the
+Rails environment config, web, all three workers and the migration Job emit the
+same shape.

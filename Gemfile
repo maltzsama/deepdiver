@@ -90,6 +90,14 @@ gem "pagy", "~> 9.0"
 # AWS STS for S3 temporary credentials (AssumeRole) used by Trino.
 gem "aws-sdk-sts", "~> 1.0", require: false
 
+# Prometheus metrics exposed on GET /metrics (scraped by a cluster-side PodMonitor).
+gem "prometheus-client", "~> 4.2"
+
+# Structured, appendable logging: JSON to STDOUT today, swap the appender for
+# Loki/Logstash/Elasticsearch later without rewriting log calls.
+gem "semantic_logger", "~> 5.1"
+gem "rails_semantic_logger", "~> 5.1"
+
 group :test do
   gem "capybara"
   gem "selenium-webdriver"

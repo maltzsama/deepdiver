@@ -26,17 +26,25 @@ Rails.application.configure do
 
   config.assume_ssl = ENV.fetch("RAILS_ASSUME_SSL", "false") == "true"
   config.force_ssl = ENV.fetch("RAILS_FORCE_SSL", "false") == "true"
-  config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+  # The health check and the metrics endpoint are hit in-cluster over plain
+  # HTTP (kubelet probes and the Prometheus PodMonitor), so they must not be
+  # redirected to HTTPS when the ingress terminates TLS.
+  config.ssl_options = { redirect: { exclude: ->(request) { request.path.in?(%w[/up /metrics]) } } }
 
-  # Log to STDOUT with the current request id as a default log tag.
+  # Structured JSON logging to STDOUT so the cluster log collector (Loki via
+  # Promtail/Alloy) can parse every field. Declaring an appender makes it the
+  # single destination; set LOG_FORMAT=text to switch to human-readable lines.
   config.log_tags = [ :request_id ]
-  config.logger   = ActiveSupport::TaggedLogging.logger(STDOUT)
+  config.rails_semantic_logger.appenders do |appenders|
+    formatter = ENV.fetch("LOG_FORMAT", "json") == "text" ? :default : :json
+    appenders.add(io: $stdout, formatter: formatter)
+  end
 
   # Change to "debug" to log everything (including potentially personally-identifiable information!).
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
 
-  # Prevent health checks from clogging up the logs.
-  config.silence_healthcheck_path = "/up"
+  # Prevent health checks and Prometheus scrapes from clogging up the logs.
+  config.silence_healthcheck_path = %r{\A/(?:up|metrics)\z}
 
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
@@ -71,6 +79,9 @@ Rails.application.configure do
 
   if ENV["RAILS_ALLOWED_HOSTS"].present?
     config.hosts = ENV.fetch("RAILS_ALLOWED_HOSTS").split(",")
-    config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+    # The metrics endpoint is scraped by the PodMonitor using the pod IP as
+    # Host, which is never in the allowed list - exempt it like the health
+    # check so host authorization does not block scraping.
+    config.host_authorization = { exclude: ->(request) { request.path.in?(%w[/up /metrics]) } }
   end
 end

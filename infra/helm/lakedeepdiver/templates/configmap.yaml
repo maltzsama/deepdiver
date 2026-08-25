@@ -25,6 +25,10 @@ data:
   # The app must not derive this name itself - the Role authorizes exactly this
   # string via resourceNames.
   TRINO_CATALOG_SECRET_NAME: {{ include "lakedeepdiver.trinoSecretName" . | quote }}
+  {{- if .Values.metrics.serviceMetrics }}
+  PROMETHEUS_SERVICE_METRICS: "1"
+  {{- end }}
+  LOG_FORMAT: {{ .Values.logging.format | quote }}
   {{- if .Values.env.host }}
   APP_HOST: {{ .Values.env.host | quote }}
   {{- end }}
