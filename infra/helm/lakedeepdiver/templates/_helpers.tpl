@@ -170,3 +170,146 @@ checksum/secrets: {{ printf "%s%s" (include (print $.Template.BasePath "/secret-
 {{ toYaml . }}
 {{- end }}
 {{- end }}
+
+{{/*
+Renders one of the three Solid Queue worker Deployments (worker,
+worker-engine, worker-freshness). They differ only in: name/labels/selector,
+values key (replicaCount/resources/securityContext), the SOLID_QUEUE_CONFIG
+file, the second SOLID_QUEUE_* env var, and an optional comment above it.
+Takes a dict: root (the "." of the calling template), component (name
+suffix / label value), selector (fully-qualified selector template name),
+valuesKey (key under .Values), queueConfig, queueComment (optional),
+queueEnvName, queueEnvValue.
+*/}}
+{{- define "lakedeepdiver.workerDeployment" -}}
+{{- $root := .root }}
+{{- $vals := index $root.Values .valuesKey }}
+{{- if $vals.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "lakedeepdiver.fullname" $root }}-{{ .component }}
+  labels:
+    {{- include "lakedeepdiver.labels" $root | nindent 4 }}
+    app.kubernetes.io/component: {{ .component }}
+spec:
+  replicas: {{ $vals.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      {{- include .selector $root | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- include "lakedeepdiver.podAnnotations" $root | nindent 8 }}
+      labels:
+        {{- include .selector $root | nindent 8 }}
+        {{- with $root.Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "lakedeepdiver.fullname" $root }}
+      automountServiceAccountToken: {{ $root.Values.automountServiceAccountToken }}
+      {{- with $root.Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $root.Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $root.Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $root.Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $root.Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- if and $root.Values.internalCA.enabled $root.Values.internalCA.existingSecret }}
+        - name: internal-ca
+          secret:
+            secretName: {{ $root.Values.internalCA.existingSecret | quote }}
+            optional: true
+            defaultMode: 0444
+            items:
+              - key: {{ $root.Values.internalCA.caKey | quote }}
+                path: {{ base $root.Values.internalCA.mountFile | quote }}
+        {{- end }}
+        {{- with $root.Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      containers:
+        - name: solid-queue
+          image: "{{ $root.Values.image.repository }}:{{ $root.Values.image.tag }}"
+          imagePullPolicy: {{ $root.Values.image.pullPolicy }}
+          command: ["./bin/jobs"]
+          env:
+            - name: K8S_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: HELM_RELEASE
+              value: {{ $root.Release.Name | quote }}
+            {{- with .queueComment }}
+            # {{ . }}
+            {{- end }}
+            - name: SOLID_QUEUE_CONFIG
+              value: {{ .queueConfig | quote }}
+            - name: {{ .queueEnvName }}
+              value: {{ .queueEnvValue | quote }}
+            {{- with $root.Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- if $root.Values.activeRecordEncryption.existingSecret }}
+            - name: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $root.Values.activeRecordEncryption.existingSecret | quote }}
+                  key: primary_key
+            - name: ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $root.Values.activeRecordEncryption.existingSecret | quote }}
+                  key: deterministic_key
+            - name: ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $root.Values.activeRecordEncryption.existingSecret | quote }}
+                  key: key_derivation_salt
+            {{- end }}
+          envFrom:
+            {{- include "lakedeepdiver.envFrom" $root | nindent 12 }}
+          volumeMounts:
+            {{- if and $root.Values.internalCA.enabled $root.Values.internalCA.existingSecret }}
+            - name: internal-ca
+              mountPath: {{ dir $root.Values.internalCA.mountFile | quote }}
+              readOnly: true
+            {{- end }}
+            {{- with $root.Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          livenessProbe:
+            exec:
+              command: [ "pgrep", "-f", "solid_queue" ]
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          {{- with default $root.Values.securityContext $vals.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml $vals.resources | nindent 12 }}
+{{- end }}
+{{- end }}
