@@ -118,6 +118,21 @@
         "activeDeadlineSeconds": { "type": "integer" },
         "ttlSecondsAfterFinished": { "type": "integer" }
       }
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "path": { "type": "string", "minLength": 1 },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "serviceMetrics": { "type": "boolean" }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "properties": {
+        "format": { "type": "string", "enum": ["json", "text"] }
+      }
     }
   }
 }

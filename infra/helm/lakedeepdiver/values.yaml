@@ -101,6 +101,23 @@ service:
   port: 80
   targetPort: http
 
+# Observability. Application metrics are always exposed on GET <path> by the
+# web pod (port 80, the same listener that serves the app); a cluster-side
+# PodMonitor scrapes it. Service metrics (HTTP/SQL/process) are opt-in.
+# Structured JSON logging goes to STDOUT so the cluster log collector (Loki via
+# Promtail/Alloy) can parse it. See docs/helm-remediation.md.
+metrics:
+  enabled: true
+  path: /metrics
+  # Port the metrics endpoint is served on; must match the web container port.
+  port: 80
+  # Opt-in service metrics (HTTP requests, SQL queries, process CPU/memory).
+  serviceMetrics: false
+
+logging:
+  # "json" (structured, parseable by Loki/Logstash) or "text" (human-readable).
+  format: json
+
 ingress:
   enabled: false
   className: ""
