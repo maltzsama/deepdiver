@@ -1,6 +1,7 @@
 apiVersion: v2
 name: lakedeepdiver
 description: LakeDeepDiver - Iceberg maintenance control plane (Rails 8 + Solid Queue)
+icon: https://raw.githubusercontent.com/maltzsama/lakedeepdiver/main/public/icon.svg
 type: application
 version: 0.3.0 # x-release-please-version
 appVersion: "0.3.0" # x-release-please-version

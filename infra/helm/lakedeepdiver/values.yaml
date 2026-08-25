@@ -1,13 +1,17 @@
 # Default values for lakedeepdiver.
-# This is a YAML-formatted file. Overrides live in infra/helm/values/*.yaml.
+# This is a YAML-formatted file. Overrides are provided by the consumer, one
+# file per environment (see the chart README for the convention this repo uses).
 
 replicaCount: 1
 
 image:
-  repository: lakedeepdiver
+  repository: ghcr.io/maltzsama/lakedeepdiver
   pullPolicy: IfNotPresent
   # x.y.z - tag is pinned per environment, never "latest" in production.
   tag: "0.3.0" # x-release-please-version
+
+# Credentials for a private registry mirror, e.g. [{name: my-registry-creds}].
+imagePullSecrets: []
 
 nameOverride: ""
 fullnameOverride: ""
@@ -32,11 +36,6 @@ internalCA:
   mountFile: /etc/ssl/certs/internal-ca.crt
   existingSecret: ""
   caKey: ca.crt
-
-# PostgreSQL connection. The chart expects an existing Secret with a `url` key.
-postgresql:
-  existingSecret: ""
-  urlKey: url
 
 # Active Record Encryption keys. MUST be provided via existingSecret.
 # Generate with: bin/rails db:encryption:init
@@ -65,7 +64,6 @@ env:
   # Engine config screen.
   trinoWorkerDeployment: ""
   logLevel: info
-  jobConcurrency: 1
   # Public hostname (used for mailer links via APP_HOST). Leave empty to fall
   # back to localhost.
   host: ""
@@ -146,6 +144,28 @@ securityContext:
       - ALL
   seccompProfile:
     type: RuntimeDefault
+
+# Mounted on the app's ServiceAccount by default; every workload except the
+# migration Job talks to the k8s API (Trino provisioning, catalog secrets),
+# so this stays true except where a template overrides it explicitly.
+automountServiceAccountToken: true
+
+serviceAccount:
+  # e.g. eks.amazonaws.com/role-arn or iam.gke.io/gcp-service-account, for
+  # cloud IAM federation. Empty by default.
+  annotations: {}
+
+# Extra env vars appended to every workload's container, e.g. for a setting
+# this chart has no dedicated value for.
+extraEnv: []
+# Extra volumes/mounts on every workload, e.g. to inject a sidecar cert or a
+# config file this chart does not model directly.
+extraVolumes: []
+extraVolumeMounts: []
+# Extra pod-level annotations/labels merged onto every workload's template,
+# e.g. a Prometheus scrape override or a service-mesh injection label.
+podAnnotations: {}
+podLabels: {}
 
 nodeSelector: {}
 tolerations: []

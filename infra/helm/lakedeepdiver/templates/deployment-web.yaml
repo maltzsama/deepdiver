@@ -12,17 +12,24 @@ spec:
       {{- include "lakedeepdiver.webSelector" . | nindent 6 }}
   template:
     metadata:
+      {{- $metricsAnnotations := dict }}
+      {{- if .Values.metrics.enabled }}
+      {{- $metricsAnnotations = dict "prometheus.io/scrape" "true" "prometheus.io/port" (.Values.metrics.port | toString) "prometheus.io/path" .Values.metrics.path }}
+      {{- end }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-        {{- if .Values.metrics.enabled }}
-        prometheus.io/scrape: "true"
-        prometheus.io/port: {{ .Values.metrics.port | quote }}
-        prometheus.io/path: {{ .Values.metrics.path | quote }}
-        {{- end }}
+        {{- include "lakedeepdiver.podAnnotations" (dict "root" . "extra" $metricsAnnotations) | nindent 8 }}
       labels:
         {{- include "lakedeepdiver.webSelector" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: {{ include "lakedeepdiver.fullname" . }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -50,6 +57,9 @@ spec:
               - key: {{ .Values.internalCA.caKey | quote }}
                 path: {{ base .Values.internalCA.mountFile | quote }}
         {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       containers:
         - name: web
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -63,6 +73,9 @@ spec:
                   fieldPath: metadata.namespace
             - name: HELM_RELEASE
               value: {{ .Release.Name | quote }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
             {{- if .Values.activeRecordEncryption.existingSecret }}
             - name: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
               valueFrom:
@@ -93,6 +106,9 @@ spec:
             - name: internal-ca
               mountPath: {{ dir .Values.internalCA.mountFile | quote }}
               readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           livenessProbe:
             httpGet:

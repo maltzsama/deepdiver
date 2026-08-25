@@ -5,7 +5,7 @@ RSpec.describe "Auth smoke", type: :request do
     get new_user_session_path
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("auth-brand")
-    expect(response.body).to include("auth-logo-box")
+    expect(response.body).to include('src="/icon.svg"')
     expect(response.body).to include("auth-version")
     expect(response.body).not_to include("auth-strata")
   end

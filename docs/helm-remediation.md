@@ -378,3 +378,159 @@ Bit → Logstash) parses every field. `logging.format: text` switches back to
 human-readable lines via `LOG_FORMAT`. Because the appender is declared in the
 Rails environment config, web, all three workers and the migration Job emit the
 same shape.
+
+## Round 3: installation review (bugs and extensibility gaps)
+
+Findings from an install attempt against a real cluster. Several suggested
+fixes in the original review were wrong for this codebase and are rejected
+below with the evidence; the rest are applied.
+
+### Ingress backend port was hardcoded
+
+`templates/ingress.yaml` pointed the backend at a literal `number: 80`
+regardless of `service.port`. Setting `service.port: 8080` (e.g. to sit behind
+a proxy that already terminates elsewhere) rendered clean and only failed as a
+`503`/`Connection refused` at the load balancer. Now
+`number: {{ .Values.service.port }}`.
+
+### Default image did not resolve, and there was no way to use a private registry
+
+`image.repository` defaulted to `lakedeepdiver` (no registry host); the image
+that is actually published is `ghcr.io/maltzsama/lakedeepdiver` (see the
+`artifacthub.io/images` annotation in `Chart.yaml`). A plain `helm template`
+with no overrides therefore rendered an image that does not resolve. The
+default is now `ghcr.io/maltzsama/lakedeepdiver`. Also added `imagePullSecrets`
+(`values.yaml`, consumed by all 4 workloads) — there was previously no way to
+pull from a private mirror without forking the chart.
+
+### `worker.enabled` / `workerFreshness.enabled` / `workerEngine.enabled` were dead
+
+The three flags existed in `values.yaml` but no template guarded on them —
+setting any to `false` still rendered the Deployment. Each
+`worker-*-deployment.yaml` is now wrapped in `{{- if .Values.<key>.enabled }}`.
+
+### Worker rollouts could run two engine supervisors at once
+
+No worker Deployment set `spec.strategy`. `config/queue-engine.yml` runs the
+engine supervisor with `threads: 1`, and `SuperviseEngineStartJob` holds no
+lock around the start/drain/watchdog sequence (only `DrainEngineJob` and
+`EngineWatchdogJob` use `with_lock`). With the Kubernetes default
+`RollingUpdate`, a `helm upgrade` could surge a second `worker-engine` pod
+before the old one terminates — two supervisors racing the same Trino engine.
+All three workers now set:
+
+```yaml
+strategy:
+  type: RollingUpdate
+  rollingUpdate: { maxSurge: 0, maxUnavailable: 1 }
+```
+
+`web` is unchanged (stateless, tolerates the default). No PodDisruptionBudget
+was added: with `replicaCount: 1` a PDB would only block node drains.
+
+### `checksum/config` did not cover chart-rendered Secrets
+
+Pod templates only hashed `configmap.yaml`. A `helm upgrade --set
+oidc.clientSecret=...` (or any change materializing/altering
+`secret-chart-env.yaml` or `secret-app.yaml`) changed the Secret's content
+without changing any annotation the Deployment watches, so Kubernetes saw no
+diff and did not roll the pods — they kept running with the old value in
+`envFrom` until recycled for an unrelated reason. A new
+`lakedeepdiver.podAnnotations` helper (`_helpers.tpl`) adds `checksum/secrets`
+(guarded so an all-empty render does not hash to a constant), used by every
+Deployment. **Scope**: this only covers Secrets the chart itself renders.
+Rotating the out-of-band `appSecrets.existingSecret` still does not trigger a
+rollout — the chart never sees its contents to hash them.
+
+### RBAC granted Deployment-patch rights even when nothing used them — fixed differently than proposed
+
+The original suggestion was to wrap all of `rbac.yaml` in
+`{{- if eq .Values.trino.provisioner "chart" }}`. That would have been wrong:
+`lakedeepdiver.trinoRules` bundled two independent grants — rights over the
+materialized catalog-credentials Secret (used by `TrinoSecretMaterializer`,
+called from `CatalogSyncService` regardless of the provisioner) and rights to
+patch/scale the Trino Deployment (used by `ChartTrinoProvisioner`, which
+`BaleiaTrinoProvisioner` inherits from and only overrides `create!`). Gating on
+`"chart"` would have broken catalog sync under `baleia`/`fake` and left
+`baleia` unable to scale the engine it still manages via inheritance. The rules
+are now split into `lakedeepdiver.trinoSecretRules` (always granted) and
+`lakedeepdiver.trinoDeploymentRules` (granted whenever `trino.provisioner !=
+"fake"`, which covers `chart` and `baleia`).
+
+### No customization hooks
+
+Nothing in `templates/` read `extraEnv`, `extraVolumes`, `extraVolumeMounts`,
+`podAnnotations` or `podLabels` — any need outside what the chart models
+(mount a cert, add a scrape override, inject a sidecar env var) required a
+fork. All five are now plumbed through every workload (`extraEnv` also on the
+migration Job).
+
+### `serviceaccount.yaml` had no `annotations` hook
+
+Cloud IAM federation (`eks.amazonaws.com/role-arn`, `iam.gke.io/gcp-service-account`)
+attaches via a ServiceAccount annotation; there was no value for it. Added
+`serviceAccount.annotations` (default `{}`).
+
+### `automountServiceAccountToken` was not configurable — fixed differently than proposed
+
+The original suggestion was `automountServiceAccountToken: false` on the web
+Deployment. That is wrong here:
+`TrinoEngineConfigsController#apply_to_running_cluster!` calls
+`TrinoProvisioner.adapter.send(:apply_coordinator_spec)` directly from the web
+process, which patches the Trino Deployment via the k8s API — web needs the
+token. `automountServiceAccountToken` is now a value (default `true`) applied
+to web and all three workers; it is hardcoded `false` only on the migration
+Job, since `db:prepare`/`db/seeds.rb` never call the k8s API.
+
+### Dead `postgresql` value
+
+`postgresql.existingSecret`/`urlKey` were `required` in `values.schema.json`
+but consumed by no template — the app reads `DATABASE_URL` from
+`appSecrets.existingSecret`. Removed from `values.yaml`,
+`values.schema.json` and `infra/helm/values/prod.yaml` in one change (the root
+schema keeps `additionalProperties: true`, so a leftover `postgresql:` key in
+an existing values file still validates harmlessly).
+
+### Dead `env.jobConcurrency` value
+
+Never emitted to the ConfigMap (concurrency comes from `config/queue-*.yml`;
+see "Chart values that were dead" above), but the value itself was never
+removed from `values.yaml`/`prod.yaml`, so it looked configurable. Dropped.
+
+### `values.yaml`'s header comment named a specific consumer layout
+
+`# Overrides live in infra/helm/values/*.yaml` is this repo's own convention,
+not something a chart distributed to third parties should assert in the file
+`helm show values` prints. Reworded to be consumer-agnostic.
+
+### The new `podAnnotations` hook collided with the hardcoded metrics annotations
+
+The `extraEnv`/`podAnnotations` extension hooks above landed with a bug: on
+`deployment-web.yaml`, `podAnnotations` was rendered as its own block
+*alongside* the hardcoded `prometheus.io/scrape`/`port`/`path` annotations
+(only emitted when `metrics.enabled`). An operator using the new hook for its
+obvious purpose — disabling scraping for one release via `podAnnotations:
+{prometheus.io/scrape: "false"}` — got a Deployment with the same annotation
+key emitted twice. `helm template`/`helm lint` render and pass this without
+complaint; most YAML parsers then silently resolve duplicate keys to
+"whichever came last" (here, the hardcoded `"true"`), so the override has no
+effect and nothing signals why. `lakedeepdiver.podAnnotations` (`_helpers.tpl`)
+now takes an optional `extra` dict of caller-specific annotations (used only
+by web, for the Prometheus ones) and builds one merged map —
+`.Values.podAnnotations` taking precedence over `extra` and the computed
+checksums — rendered with a single `toYaml`. Also gave the migration Job's pod
+template a `checksum/config` annotation, since `podAnnotations`/`podLabels`
+are documented as applying to every workload but the Job's pod template had
+no `annotations:` block at all to merge into.
+
+### Rejected
+
+- **`readinessProbe` on the workers, implemented as a duplicate `pgrep -f
+  solid_queue`.** That is the same signal `livenessProbe` already reports —
+  it does not prove the process reached a working state (DB/queue connection),
+  which was the actual failure mode described. Left out until there is a real
+  health signal to probe.
+- **Already fixed by an earlier round**: `web` already has an HTTP
+  `readinessProbe` and Prometheus scrape annotations; `env.jobConcurrency` was
+  already dropped from the ConfigMap (only the value definition itself was
+  stale — see above).
