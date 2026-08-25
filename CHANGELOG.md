@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.0](https://github.com/maltzsama/lakedeepdiver/compare/v0.2.6...v0.3.0) (2026-08-25)
+
+
+### Features
+
+* **observability:** expose Prometheus metrics and structured JSON logs ([0555416](https://github.com/maltzsama/lakedeepdiver/commit/0555416d3e72e010ff9af304b6ac45874875e0d2))
+* **observability:** expose Prometheus metrics and structured JSON logs ([bc9c749](https://github.com/maltzsama/lakedeepdiver/commit/bc9c74912900d6f9b1a443dc29483b4680e38435))
+
 ## [0.2.6](https://github.com/maltzsama/lakedeepdiver/compare/v0.2.5...v0.2.6) (2026-08-24)
 
 
