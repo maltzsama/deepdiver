@@ -106,20 +106,11 @@ app Secret and, when present, the chart-env Secret.
 {{- end }}
 
 {{/*
-Rules granted to the app's ServiceAccount over the Trino engine and the
-materialized catalog-credentials Secret. Used by the Role in the release
-namespace and, when Trino lives elsewhere, by the Role created there.
+Rules over the materialized catalog-credentials Secret. Used by
+TrinoSecretMaterializer (app/services/trino_secret_materializer.rb), called
+from CatalogSyncService independently of trino.provisioner - always granted.
 */}}
-{{- define "lakedeepdiver.trinoRules" -}}
-rules:
-  # The Trino engine is an ephemeral Deployment (scaled 0/1) in the same or a
-  # dedicated namespace (TRINO_NAMESPACE). The app patches it via kubeclient.
-  - apiGroups: [ "apps" ]
-    resources: [ "deployments" ]
-    verbs: [ "get", "list", "patch" ]
-  - apiGroups: [ "apps" ]
-    resources: [ "deployments/scale" ]
-    verbs: [ "get", "patch" ]
+{{- define "lakedeepdiver.trinoSecretRules" -}}
   # Catalog credentials are materialized as a Secret that the Trino plugin
   # mounts at /etc/baleia/secrets. The app creates/updates this Secret.
   # Scoped to the materialized Secret only (resourceNames is ignored for
@@ -132,4 +123,50 @@ rules:
     resources: [ "secrets" ]
     resourceNames: [ {{ include "lakedeepdiver.trinoSecretName" . | quote }} ]
     verbs: [ "get", "update", "patch" ]
+{{- end }}
+
+{{/*
+Rules to scale/patch the ephemeral Trino engine Deployment. Needed by both the
+"chart" and "baleia" provisioners (BaleiaTrinoProvisioner < ChartTrinoProvisioner
+only overrides create!), pointless only under "fake".
+*/}}
+{{- define "lakedeepdiver.trinoDeploymentRules" -}}
+  # The Trino engine is an ephemeral Deployment (scaled 0/1) in the same or a
+  # dedicated namespace (TRINO_NAMESPACE). The app patches it via kubeclient.
+  - apiGroups: [ "apps" ]
+    resources: [ "deployments" ]
+    verbs: [ "get", "list", "patch" ]
+  - apiGroups: [ "apps" ]
+    resources: [ "deployments/scale" ]
+    verbs: [ "get", "patch" ]
+{{- end }}
+
+{{/*
+Rules granted to the app's ServiceAccount over the Trino engine and the
+materialized catalog-credentials Secret. Used by the Role in the release
+namespace and, when Trino lives elsewhere, by the Role created there.
+*/}}
+{{- define "lakedeepdiver.trinoRules" -}}
+rules:
+{{- if ne .Values.trino.provisioner "fake" }}
+{{ include "lakedeepdiver.trinoDeploymentRules" . }}
+{{- end }}
+{{ include "lakedeepdiver.trinoSecretRules" . }}
+{{- end }}
+
+{{/*
+Pod-template annotations shared by every workload: the ConfigMap checksum,
+the checksum of chart-rendered Secrets (secret-app.yaml / secret-chart-env.yaml,
+when either renders - NOT the out-of-band appSecrets.existingSecret, which the
+chart never sees and so cannot checksum) and any operator-supplied
+podAnnotations.
+*/}}
+{{- define "lakedeepdiver.podAnnotations" -}}
+checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+{{- if or .Values.appSecrets.create (include "lakedeepdiver.hasChartEnvSecret" .) }}
+checksum/secrets: {{ printf "%s%s" (include (print $.Template.BasePath "/secret-app.yaml") .) (include (print $.Template.BasePath "/secret-chart-env.yaml") .) | sha256sum }}
+{{- end }}
+{{- with .Values.podAnnotations }}
+{{ toYaml . }}
+{{- end }}
 {{- end }}

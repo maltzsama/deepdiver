@@ -1,3 +1,4 @@
+{{- if .Values.workerFreshness.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,17 +8,30 @@ metadata:
     app.kubernetes.io/component: worker-freshness
 spec:
   replicas: {{ .Values.workerFreshness.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       {{- include "lakedeepdiver.workerFreshnessSelector" . | nindent 6 }}
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- include "lakedeepdiver.podAnnotations" . | nindent 8 }}
       labels:
         {{- include "lakedeepdiver.workerFreshnessSelector" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: {{ include "lakedeepdiver.fullname" . }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -45,6 +59,9 @@ spec:
               - key: {{ .Values.internalCA.caKey | quote }}
                 path: {{ base .Values.internalCA.mountFile | quote }}
         {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       containers:
         - name: solid-queue
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -62,6 +79,9 @@ spec:
               value: "config/queue-freshness.yml"
             - name: SOLID_QUEUE_SKIP_RECURRING
               value: "true"
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
             {{- if .Values.activeRecordEncryption.existingSecret }}
             - name: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
               valueFrom:
@@ -87,6 +107,9 @@ spec:
               mountPath: {{ dir .Values.internalCA.mountFile | quote }}
               readOnly: true
             {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           livenessProbe:
             exec:
               command: [ "pgrep", "-f", "solid_queue" ]
@@ -100,3 +123,4 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.workerFreshness.resources | nindent 12 }}
+{{- end }}

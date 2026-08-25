@@ -18,9 +18,19 @@ spec:
     metadata:
       labels:
         {{- include "lakedeepdiver.webSelector" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       restartPolicy: Never
       serviceAccountName: {{ include "lakedeepdiver.fullname" . }}
+      # db:prepare / db/seeds.rb never talk to the k8s API - unlike web and the
+      # workers, this pod has no business holding the ServiceAccount token.
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -36,6 +46,9 @@ spec:
               - key: {{ .Values.internalCA.caKey | quote }}
                 path: {{ base .Values.internalCA.mountFile | quote }}
         {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       containers:
         - name: migrate
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -48,6 +61,9 @@ spec:
                   fieldPath: metadata.namespace
             - name: HELM_RELEASE
               value: {{ .Release.Name | quote }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           envFrom:
             {{- include "lakedeepdiver.envFrom" . | nindent 12 }}
           {{- with .Values.securityContext }}
@@ -59,6 +75,9 @@ spec:
             - name: internal-ca
               mountPath: {{ dir .Values.internalCA.mountFile | quote }}
               readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           resources:
             {{- toYaml .Values.migrationJob.resources | nindent 12 }}

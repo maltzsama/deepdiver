@@ -12,13 +12,6 @@ image:
   tag: "0.3.0" # x-release-please-version
   pullPolicy: IfNotPresent
 
-postgresql:
-  # CHANGE_ME: name of an out-of-band Secret with a `url` key holding the
-  # primary DATABASE_URL. (The chart does not consume this Secret yet; the app
-  # reads DATABASE_URL from appSecrets.existingSecret.)
-  existingSecret: CHANGE_ME-postgresql-url-secret
-  urlKey: url
-
 activeRecordEncryption:
   # CHANGE_ME: name of an out-of-band Secret with primary_key,
   # deterministic_key and key_derivation_salt (generate with
@@ -61,7 +54,6 @@ env:
   # (the default); leave empty for a single-node engine.
   trinoWorkerDeployment: ""
   logLevel: info
-  jobConcurrency: 2
   # CHANGE_ME: public hostname (used for mailer links and RAILS_ALLOWED_HOSTS).
   host: ""
   allowedHosts: []

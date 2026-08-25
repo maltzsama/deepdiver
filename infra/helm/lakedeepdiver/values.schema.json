@@ -51,14 +51,6 @@
         "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
       }
     },
-    "postgresql": {
-      "type": "object",
-      "required": ["existingSecret"],
-      "properties": {
-        "existingSecret": { "type": "string" },
-        "urlKey": { "type": "string", "default": "url" }
-      }
-    },
     "activeRecordEncryption": {
       "type": "object",
       "required": ["existingSecret"],

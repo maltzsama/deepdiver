@@ -29,7 +29,7 @@ spec:
               service:
                 name: {{ include "lakedeepdiver.fullname" $ }}
                 port:
-                  number: 80
+                  number: {{ $.Values.service.port }}
           {{- end }}
     {{- end }}
 {{- end }}
