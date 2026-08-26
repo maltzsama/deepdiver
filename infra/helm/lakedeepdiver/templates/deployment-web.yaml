@@ -110,11 +110,17 @@ spec:
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+          startupProbe:
+            httpGet:
+              path: /up
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 30
           livenessProbe:
             httpGet:
               path: /up
               port: http
-            initialDelaySeconds: 20
             periodSeconds: 15
             timeoutSeconds: 2
             failureThreshold: 3
@@ -122,7 +128,6 @@ spec:
             httpGet:
               path: /up
               port: http
-            initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 2
           resources:

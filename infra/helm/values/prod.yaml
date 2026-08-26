@@ -27,7 +27,7 @@ appSecrets:
 
 internalCA:
   enabled: true
-  mountFile: /etc/ssl/certs/internal-ca.crt
+  mountFile: /etc/lakedeepdiver/certs/internal-ca.crt
   # CHANGE_ME: Secret holding the internal CA (key ca.crt) that signs the
   # catalog/Trino TLS certificates.
   existingSecret: lakedeepdiver-ca

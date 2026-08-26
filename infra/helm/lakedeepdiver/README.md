@@ -55,6 +55,7 @@ kubectl create secret generic lakedeepdiver-encryption \
 | `appSecrets.existingSecret` | `""` | Secret with `DATABASE_URL`, `DB_QUEUE_URL`, `RAILS_MASTER_KEY`, `SECRET_KEY_BASE` |
 | `internalCA.enabled` | `false` | Mount an internal CA certificate |
 | `internalCA.existingSecret` | `""` | Secret containing the CA cert |
+| `internalCA.mountFile` | `/etc/lakedeepdiver/certs/internal-ca.crt` | Where the CA cert is mounted. Keep this outside `/etc/ssl/certs`: the mount replaces the whole containing directory, and that path is the system CA bundle |
 | `trino.provisioner` | `chart` | Trino provisioner: `chart`, `baleia`, or `fake`. RBAC to patch/scale the Trino Deployment is granted for `chart`/`baleia`; the Secret rules used by catalog sync are granted regardless |
 | `oidc.issuer` | `""` | OIDC issuer URL (enables SSO). Setting it requires `clientId`, `clientSecret` and `redirectUri` too |
 | `admin.bootstrap.email` / `.password` | `""` | Seeds an admin on first install. Both or neither; the password is rendered into a Secret, not the ConfigMap |
@@ -68,7 +69,7 @@ kubectl create secret generic lakedeepdiver-encryption \
 | `workerFreshness.enabled` | `true` | Deploy the freshness worker. `false` omits the Deployment entirely |
 | `workerEngine.enabled` | `true` | Deploy the engine lifecycle worker. `false` omits the Deployment entirely |
 | `migrationJob.enabled` | `true` | Run DB migrations as a Helm hook |
-| `resources` | `{}` | Pod resource requests/limits |
+| `resources` | see values.yaml | web pod resource requests/limits |
 | `securityContext` | see values.yaml | Container security context, applied to every workload. The per-worker `worker*.securityContext` keys override it and inherit this when empty |
 | `podSecurityContext` | `{}` | Pod-level security context |
 | `automountServiceAccountToken` | `true` | Applied to web and all three workers (they call the k8s API to manage the Trino engine/catalog secrets). Always `false` on the migration Job, which never does |
