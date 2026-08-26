@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.3](https://github.com/maltzsama/lakedeepdiver/compare/v0.3.2...v0.3.3) (2026-08-26)
+
+
+### Bug Fixes
+
+* **spec:** expect cache-busted icon URL in auth smoke test ([5ef6a51](https://github.com/maltzsama/lakedeepdiver/commit/5ef6a51fa355333cff67df52f58293a83df90088))
+* **spec:** expect cache-busted icon URL in auth smoke test ([56a1d70](https://github.com/maltzsama/lakedeepdiver/commit/56a1d70336c74c8a5c62cd5158e8560848d3c4fc))
+
 ## [0.3.2](https://github.com/maltzsama/lakedeepdiver/compare/v0.3.1...v0.3.2) (2026-08-26)
 
 
