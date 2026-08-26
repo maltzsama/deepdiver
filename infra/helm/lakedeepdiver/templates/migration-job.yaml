@@ -19,7 +19,7 @@ spec:
       annotations:
         {{- include "lakedeepdiver.podAnnotations" (dict "root" .) | nindent 8 }}
       labels:
-        {{- include "lakedeepdiver.webSelector" . | nindent 8 }}
+        {{- include "lakedeepdiver.migrateSelector" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

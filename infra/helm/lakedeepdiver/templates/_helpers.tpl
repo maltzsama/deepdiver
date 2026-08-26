@@ -63,6 +63,19 @@ app.kubernetes.io/component: worker-engine
 {{- end }}
 
 {{/*
+Selector labels for the migration Job. Must be distinct from webSelector -
+the migration pod has no readinessProbe (it runs once and exits), so if it
+carried the web component label it would become Ready as soon as its
+container starts and receive traffic from the web Service for the duration
+of db:prepare.
+*/}}
+{{- define "lakedeepdiver.migrateSelector" -}}
+app.kubernetes.io/name: {{ include "lakedeepdiver.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: migrate
+{{- end }}
+
+{{/*
 Name of the Secret into which the app materializes catalog credentials.
 Single source of truth: it is both authorized by the Role (resourceNames) and
 handed to the app as TRINO_CATALOG_SECRET_NAME. The app must never compute it
@@ -307,10 +320,15 @@ spec:
             {{- with $root.Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+          startupProbe:
+            exec:
+              command: [ "pgrep", "-f", "solid_queue" ]
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 30
           livenessProbe:
             exec:
               command: [ "pgrep", "-f", "solid_queue" ]
-            initialDelaySeconds: 30
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3

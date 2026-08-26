@@ -30,10 +30,15 @@ appSecrets:
     SECRET_KEY_BASE: ""
 
 # Internal TLS trust: an internal CA can be mounted from an external Secret and
-# exposed to the app via SSL_CERT_FILE. The chart never stores certificates.
+# exposed to the app via INTERNAL_CA_FILE. The chart never stores certificates.
 internalCA:
   enabled: false
-  mountFile: /etc/ssl/certs/internal-ca.crt
+  # A dedicated directory, not /etc/ssl/certs: the volume mount covers the
+  # whole directory (Secret has one key, internal-ca.crt), and /etc/ssl/certs
+  # is the system CA bundle location - mounting there replaces
+  # ca-certificates.crt and every other system cert, breaking HTTPS to any
+  # public endpoint (e.g. Slack webhooks) the moment internalCA is enabled.
+  mountFile: /etc/lakedeepdiver/certs/internal-ca.crt
   existingSecret: ""
   caKey: ca.crt
 
