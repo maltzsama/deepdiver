@@ -4,6 +4,15 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.4](https://github.com/maltzsama/lakedeepdiver/compare/v0.3.3...v0.3.4) (2026-08-26)
+
+
+### Bug Fixes
+
+* **helm:** add schema coverage, web resource defaults, migration Job scheduling hooks ([a4e8b51](https://github.com/maltzsama/lakedeepdiver/commit/a4e8b5190aeec82b6bf5c160d04eff25b6d4de79))
+* **helm:** fix install-blocking pod scheduling and probe bugs ([491a875](https://github.com/maltzsama/lakedeepdiver/commit/491a875f0800a7640f543129fbc8a9f37cc89c7f))
+* **helm:** fix real install-blocking bugs (round 4) ([a98b67a](https://github.com/maltzsama/lakedeepdiver/commit/a98b67a001aa29d2268fc96e398d0c943f36c9a4))
+
 ## [0.3.3](https://github.com/maltzsama/lakedeepdiver/compare/v0.3.2...v0.3.3) (2026-08-26)
 
 
