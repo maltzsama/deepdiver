@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.2](https://github.com/maltzsama/lakedeepdiver/compare/v0.3.1...v0.3.2) (2026-08-26)
+
+
+### Bug Fixes
+
+* **icons:** serve updated icon without inversion, bundle chart icon as data URI ([f8fd304](https://github.com/maltzsama/lakedeepdiver/commit/f8fd30424d144faa967b17bac6f78ac89887fb74))
+* **icons:** serve updated icon without inversion, bundle chart icon as data URI ([aedf79d](https://github.com/maltzsama/lakedeepdiver/commit/aedf79d6adff9c8104f9f0ffd8f769ca9de7f958))
+
 ## [0.3.1](https://github.com/maltzsama/lakedeepdiver/compare/v0.3.0...v0.3.1) (2026-08-25)
 
 
