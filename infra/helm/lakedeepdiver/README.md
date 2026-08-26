@@ -69,7 +69,7 @@ kubectl create secret generic lakedeepdiver-encryption \
 | `workerFreshness.enabled` | `true` | Deploy the freshness worker. `false` omits the Deployment entirely |
 | `workerEngine.enabled` | `true` | Deploy the engine lifecycle worker. `false` omits the Deployment entirely |
 | `migrationJob.enabled` | `true` | Run DB migrations as a Helm hook |
-| `resources` | `{}` | Pod resource requests/limits |
+| `resources` | see values.yaml | web pod resource requests/limits |
 | `securityContext` | see values.yaml | Container security context, applied to every workload. The per-worker `worker*.securityContext` keys override it and inherit this when empty |
 | `podSecurityContext` | `{}` | Pod-level security context |
 | `automountServiceAccountToken` | `true` | Applied to web and all three workers (they call the k8s API to manage the Trino engine/catalog secrets). Always `false` on the migration Job, which never does |

@@ -534,3 +534,106 @@ no `annotations:` block at all to merge into.
   `readinessProbe` and Prometheus scrape annotations; `env.jobConcurrency` was
   already dropped from the ConfigMap (only the value definition itself was
   stale — see above).
+
+## Round 4: install-blocking bugs in the published image and manifests
+
+Findings from another install review. Verified each against the current chart before fixing;
+two items from the review no longer applied (the Ingress port was already templated by round 3,
+and a suggested `kubeVersion` field was polish, not a bug).
+
+### `pgrep` did not exist in the published image
+
+The three worker Deployments' `livenessProbe` (`lakedeepdiver.workerDeployment` in
+`_helpers.tpl`) runs `pgrep -f solid_queue`, but `Dockerfile`'s runtime stage installed only
+`curl libjemalloc2 imagemagick sqlite3` on top of `ruby:4.0.6-slim` — a Debian slim image ships
+without `procps` (the package that provides `pgrep`). Every worker pod, on any install using the
+published `ghcr.io/maltzsama/lakedeepdiver` image, hit "executable file not found" on the first
+liveness check and `CrashLoopBackOff`ed roughly 75s after boot
+(`initialDelaySeconds: 30` + `3 × periodSeconds: 15`). Added `procps` to the `apt-get install`
+line in the base stage.
+
+### The migration Job's pod could receive traffic from the web Service
+
+`migration-job.yaml`'s pod template used `lakedeepdiver.webSelector` for its labels — the exact
+selector `service.yaml` uses for the web Service. The Job has no `readinessProbe` (it runs
+`db:prepare` once and exits), so its pod becomes `Ready` the instant the container starts;
+matching the web selector meant the Service could route live HTTP traffic to a pod that never
+serves HTTP, causing a transient 502/timeout window on every `helm install`/`upgrade`, not just
+on failure. Added a dedicated `lakedeepdiver.migrateSelector` (`component: migrate`) so the
+Job's pod is never selected by the web Service.
+
+### No `startupProbe` on web or the workers
+
+`deployment-web.yaml` only had `livenessProbe`/`readinessProbe` (liveness budget ~65s:
+`initialDelaySeconds: 20` + `3 × periodSeconds: 15`); the worker helper only had `livenessProbe`
+(~75s budget). A slow cold boot (large migration backlog, cold cache, a busy node) past that
+window caused a liveness-triggered restart mid-startup instead of just taking longer to become
+ready. Added a `startupProbe` to both (web: `httpGet /up`; workers: the same `pgrep` exec check,
+now that `procps` is installed), each with `periodSeconds: 5` / `failureThreshold: 30` (~150s of
+startup grace) — `initialDelaySeconds` was dropped from the liveness/readiness probes since
+Kubernetes does not evaluate them until the startup probe first succeeds, so the delay was
+redundant once a startup probe exists.
+
+### `internalCA.mountFile` default clobbered the system CA bundle
+
+`internalCA.mountFile` defaulted to `/etc/ssl/certs/internal-ca.crt`. Every workload mounts the
+volume at `dir .Values.internalCA.mountFile` — `/etc/ssl/certs`, the Debian system CA bundle
+directory. The Secret behind that mount has a single key (`internal-ca.crt`), so mounting it
+there replaces the entire directory contents, hiding `ca-certificates.crt` and every other
+system cert the moment `internalCA.enabled` + `existingSecret` are set. That is the exact failure
+the "SSL trust" section (round 1) already fixed once for `SSL_CERT_FILE`
+(`INTERNAL_CA_FILE` was introduced specifically to avoid replacing the system bundle) — the
+default mount path silently reintroduced the same class of bug from the other direction. Changed
+the default to `/etc/lakedeepdiver/certs/internal-ca.crt`, a dedicated directory with no overlap.
+`infra/helm/values/prod.yaml` updated to match.
+
+### Schema gaps let typos and bad types through silently
+
+`worker`, `workerFreshness`, `workerEngine`, `service` and `ingress` had no `values.schema.json`
+coverage at all (only `metrics`/`logging`, among the keys without dedicated Helm templates
+already, had any). Added `properties` for all five (types matching their existing defaults).
+This catches a bad *value* under a correctly-spelled key (e.g. `worker.enabled: "yes"`) but, by
+design, **not** a misspelled top-level key like `workerFrehsness: {...}` — the schema root keeps
+`additionalProperties: true` (unchanged, see round 1) so an operator's own extra values keys
+keep working. Tightening that further is a bigger, separate decision.
+
+### Fail-fast for empty secrets was attempted and reverted
+
+The review flagged that `activeRecordEncryption.existingSecret: ""` and an unconfigured
+`appSecrets` both pass schema validation and only fail at runtime with a hard-to-trace error.
+Adding `minLength: 1` to `activeRecordEncryption.existingSecret` and an `anyOf` requiring
+`appSecrets.create: true` or a non-empty `existingSecret` both **broke `helm lint`/`helm
+template` against the chart's own unmodified `values.yaml`** — this chart's CI
+(`ci.yml`'s `chart` job) renders and validates the defaults with no values file, and both
+fields default to empty. Reverted; noted here so it is not re-attempted the same way. A real fix
+needs either a non-empty conventional default (not viable for a secret name) or accepting that
+this chart's schema cannot make these two fields required without breaking the no-overrides
+render path.
+
+### `resources: {}` on web, inconsistent with every worker
+
+`worker`, `workerFreshness` and `workerEngine` all ship default `requests`/`limits`; `web` — the
+only workload that serves traffic — had none. Added
+`requests: {cpu: 200m, memory: 512Mi}, limits: {cpu: 1000m, memory: 1Gi}`.
+
+### `migrationJob` ignored `nodeSelector`/`tolerations`/`affinity`
+
+Every other workload (web, the three workers) reads these three values; the migration Job read
+none of them. On a cluster with tainted/dedicated node pools, the pre-install/pre-upgrade hook
+would never get scheduled, hanging the entire `helm upgrade` on a Job that can't run. Added the
+same three `{{- with .Values.* }}` blocks already used elsewhere.
+
+### `kubeVersion` added to `Chart.yaml`
+
+`kubeVersion: ">=1.25.0"` — recommended by ArtifactHub, no functional effect (every API used,
+including `deployments/scale`, predates that version by a wide margin).
+
+### Out of scope (deliberate)
+
+- **PodDisruptionBudget / topologySpreadConstraints** — only meaningful with
+  `replicaCount > 1`; the default is `1`. Left for whenever this chart actually needs multiple
+  web replicas, to avoid shipping a value that is always a no-op today.
+- **`appSecrets.create: true` with empty `data.*` renders blank secret values** — already
+  documented as "for simple local experiments only". Enforcing non-empty values conditionally
+  (JSON Schema `if`/`then` per key) is possible but adds meaningful schema complexity for a path
+  the chart already tells the operator not to use in production.

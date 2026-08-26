@@ -131,13 +131,12 @@ ingress:
           pathType: Prefix
   tls: []
 
-resources: {}
-  # limits:
-  #   cpu: 500m
-  #   memory: 512Mi
-  # requests:
-  #   cpu: 250m
-  #   memory: 256Mi
+# web resources. Empty ({}) previously - unlike every worker, which all have
+# defaults - so a plain install ran the pod serving HTTP with no requests or
+# limits at all.
+resources:
+  requests: { cpu: 200m, memory: 512Mi }
+  limits:   { cpu: 1000m, memory: 1Gi }
 
 podSecurityContext: {}
 
