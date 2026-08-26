@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.5](https://github.com/maltzsama/lakedeepdiver/compare/v0.3.4...v0.3.5) (2026-08-26)
+
+
+### Bug Fixes
+
+* **helm:** add a real readinessProbe to the Solid Queue workers ([98e1e98](https://github.com/maltzsama/lakedeepdiver/commit/98e1e9840ac6f39c6d6a5628ed9254fe28fc185e))
+* **helm:** add a real readinessProbe to the Solid Queue workers ([783edde](https://github.com/maltzsama/lakedeepdiver/commit/783edde1eeb4dfc428d20a5045fabecf35313b3a))
+
 ## [0.3.4](https://github.com/maltzsama/lakedeepdiver/compare/v0.3.3...v0.3.4) (2026-08-26)
 
 
