@@ -332,6 +332,23 @@ spec:
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3
+          readinessProbe:
+            # pgrep only proves the process exists in the container, not that
+            # it ever reached a working state - a worker that boots but can
+            # never reach Postgres would still report Ready. SolidQueue::Process
+            # rows are only written after the process registers with the
+            # database and are kept fresh by its own heartbeat, so querying
+            # for one under this hostname is a real "connected and running"
+            # signal. process_alive_threshold is the same tolerance Solid
+            # Queue itself uses to consider a process alive.
+            exec:
+              command:
+                - bin/rails
+                - runner
+                - {{ "exit(SolidQueue::Process.where(hostname: Socket.gethostname).where(\"last_heartbeat_at > ?\", SolidQueue.process_alive_threshold.ago).exists? ? 0 : 1)" | quote }}
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 3
           {{- with default $root.Values.securityContext $vals.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}

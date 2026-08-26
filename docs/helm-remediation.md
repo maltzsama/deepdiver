@@ -637,3 +637,38 @@ including `deployments/scale`, predates that version by a wide margin).
   documented as "for simple local experiments only". Enforcing non-empty values conditionally
   (JSON Schema `if`/`then` per key) is possible but adds meaningful schema complexity for a path
   the chart already tells the operator not to use in production.
+
+## Round 5: a real readinessProbe for the workers
+
+Follow-up review of round 4 confirmed items 5 and 6 were resolved (RBAC's Deployment-patch
+rules now gated on `trino.provisioner != "fake"`; worker rollouts now use
+`maxSurge: 0`/`maxUnavailable: 1`) and flagged item 7 - no `readinessProbe` on the workers - as
+still open: round 4 added a `startupProbe`, but it only gates when liveness/readiness are first
+evaluated, it does not add a "ready to process the queue" signal that was missing independent of
+boot time.
+
+### The workers had no real readiness signal, only `pgrep`
+
+`pgrep -f solid_queue` (the existing `livenessProbe`, and round 4's `startupProbe`) only proves
+the process exists in the container - it says nothing about whether it ever reached a working
+state. A worker that boots but can never reach Postgres would `pgrep` clean forever while doing
+nothing. Verified this empirically: built the image, ran `bin/jobs` against a real Postgres
+container, confirmed `SolidQueue::Process` rows get written with a live heartbeat; then stopped
+Postgres under a running worker and confirmed `pgrep -f solid_queue` still exited `0` while the
+process was in fact unable to do anything.
+
+Added a `readinessProbe` (`lakedeepdiver.workerDeployment` in `_helpers.tpl`) that queries the
+database instead of the process table:
+
+```ruby
+exit(SolidQueue::Process.where(hostname: Socket.gethostname).where("last_heartbeat_at > ?", SolidQueue.process_alive_threshold.ago).exists? ? 0 : 1)
+```
+
+`Socket.gethostname` inside a pod resolves to the pod name, matching what Solid Queue itself
+records as `hostname` when a process registers - so this checks specifically for *this* pod's
+own process, not just any worker anywhere. `SolidQueue.process_alive_threshold` (5 minutes by
+default) is the same tolerance Solid Queue's own process-pruning logic uses to consider a
+process alive, rather than an invented value. Verified against the same live container: the
+check exits `0` (~0.8s) when Postgres is reachable and Solid Queue is registered, and exits
+non-zero within a couple seconds when Postgres is unreachable - the exact failure mode this item
+was about.
