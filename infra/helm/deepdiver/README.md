@@ -60,6 +60,39 @@ unreadable.
   on the Engine config screen if you run a single-node engine.
 - OIDC provider (optional, for SSO)
 
+## Gateway API exposure
+
+The chart can expose the app through Gateway API (`gateway.networking.k8s.io`)
+as an opt-in alternative to `ingress`. Enable at most one of `ingress`,
+`gateway` or `httproute` — the chart does not enforce exclusivity.
+
+**Create your own Gateway** (a GatewayClass must exist in the cluster, e.g.
+Cilium, GKE Gateway, Istio):
+
+```bash
+helm install deepdiver deepdiver/deepdiver \
+  --set gateway.enabled=true \
+  --set gateway.className=cilium
+```
+
+**Attach to an existing (shared) Gateway** — when a platform team owns one
+Gateway per namespace/cluster and app charts should never create their own:
+
+```bash
+helm install deepdiver deepdiver/deepdiver \
+  --set httproute.enabled=true \
+  --set httproute.gatewayName=shared-gateway \
+  --set httproute.gatewayNamespace=istio-system
+```
+
+When `httproute.gatewayName`/`gatewayNamespace` are left empty they resolve to
+the chart's own Gateway (the one created by `gateway.enabled=true`).
+Cross-namespace `parentRefs` additionally require a `ReferenceGrant` in the
+Gateway's namespace.
+
+Per-listener `allowedRoutes`, `hostname` and `tls` are passed through to the
+`Gateway` spec as-is.
+
 ## Generating encryption keys
 
 ```bash
@@ -93,6 +126,14 @@ kubectl create secret generic deepdiver-encryption \
 | `env.trinoNamespace` | `""` | Namespace of the Trino Deployments; empty means the release namespace |
 | `env.allowedHosts` | `[]` | `RAILS_ALLOWED_HOSTS` entries; include the ingress host |
 | `env.logLevel` | `info` | Rails log level |
+| `gateway.enabled` | `false` | Create a `Gateway` via Gateway API. Requires `gateway.className` |
+| `gateway.className` | `""` | **Required when `gateway.enabled` is true.** GatewayClass name, e.g. `cilium` |
+| `gateway.addresses` | `[]` | Optional static Gateway addresses |
+| `gateway.listeners` | `[{name: http, protocol: HTTP, port: 80}]` | Gateway listeners; `allowedRoutes`/`hostname`/`tls` passthrough per listener |
+| `httproute.enabled` | `false` | Attach an `HTTPRoute` to a Gateway |
+| `httproute.gatewayName` | `""` | External Gateway to attach to; empty means the chart's own Gateway |
+| `httproute.gatewayNamespace` | `""` | Namespace of the Gateway; empty means the release namespace |
+| `httproute.hosts` | `[]` | `hostnames` for the `HTTPRoute` |
 | `worker.enabled` | `true` | Deploy the Solid Queue worker. `false` omits the Deployment entirely |
 | `workerFreshness.enabled` | `true` | Deploy the freshness worker. `false` omits the Deployment entirely |
 | `workerEngine.enabled` | `true` | Deploy the engine lifecycle worker. `false` omits the Deployment entirely |

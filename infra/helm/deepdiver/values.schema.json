@@ -188,6 +188,44 @@
         },
         "tls": { "type": "array" }
       }
+    },
+    "gateway": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "className": { "type": "string" },
+        "addresses": { "type": "array" },
+        "listeners": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "protocol", "port"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "protocol": { "type": "string", "enum": ["HTTP", "HTTPS", "TCP", "TLS", "UDP"] },
+              "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+              "hostname": { "type": "string" },
+              "allowedRoutes": { "type": "object" },
+              "tls": { "type": "object" }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["enabled"], "properties": { "enabled": { "const": true } } },
+          "then": { "required": ["className"], "properties": { "className": { "minLength": 1 } } }
+        }
+      ]
+    },
+    "httproute": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "gatewayName": { "type": "string" },
+        "gatewayNamespace": { "type": "string" },
+        "hosts": { "type": "array", "items": { "type": "string" } }
+      }
     }
   }
 }
