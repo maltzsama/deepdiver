@@ -131,6 +131,38 @@ ingress:
           pathType: Prefix
   tls: []
 
+# Gateway API exposure (opt-in alternative to Ingress). Enable gateway.enabled
+# to have the chart create its own Gateway, or httproute.enabled to attach an
+# HTTPRoute to an existing (shared) Gateway. Enable at most one of
+# ingress/gateway/httproute - the chart does not enforce exclusivity.
+gateway:
+  enabled: false
+  # Required when gateway.enabled is true (e.g. "cilium").
+  className: ""
+  # Optional static Gateway addresses (e.g. a reserved LoadBalancer IP).
+  addresses: []
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      # Optional, free-form per-listener fields (allowedRoutes, hostname, tls):
+      # allowedRoutes: {}
+      # hostname: "*.example.com"
+      # tls:
+      #   mode: Terminate
+      #   certificateRefs:
+      #     - name: my-tls-secret
+
+httproute:
+  enabled: false
+  # Empty gatewayName/gatewayNamespace resolve to the chart's own Gateway (the
+  # one created when gateway.enabled is true). Point them at an external
+  # Gateway to share a platform-managed Gateway instead. Cross-namespace
+  # references additionally require a ReferenceGrant.
+  gatewayName: ""
+  gatewayNamespace: ""
+  hosts: []
+
 # web resources. Empty ({}) previously - unlike every worker, which all have
 # defaults - so a plain install ran the pod serving HTTP with no requests or
 # limits at all.
