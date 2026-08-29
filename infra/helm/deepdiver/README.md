@@ -21,6 +21,34 @@ helm install deepdiver deepdiver/deepdiver \
 Without `admin.bootstrap.*` there is no way to sign in after the install: the
 demo admin only exists in development or under `SEED_DEMO`.
 
+## Migrating from the `lakedeepdiver` chart
+
+The project was renamed to `deepdiver` in 0.4.0. The GitHub repository, the
+Helm repository URL and the container image all moved:
+
+| What | Before | After |
+|------|--------|-------|
+| Helm repository | `https://maltzsama.github.io/lakedeepdiver` | `https://maltzsama.github.io/deepdiver` |
+| Chart | `lakedeepdiver/lakedeepdiver` | `deepdiver/deepdiver` |
+| Image | `ghcr.io/maltzsama/lakedeepdiver` | `ghcr.io/maltzsama/deepdiver` |
+
+The old Helm repository URL is gone (GitHub Pages does not redirect renamed
+repositories), and Helm considers the renamed chart a different chart, so an
+in-place `helm upgrade` from an old release is not possible. To migrate:
+
+```bash
+helm repo add deepdiver https://maltzsama.github.io/deepdiver
+helm repo update
+helm uninstall <old-lakedeepdiver-release>
+helm install deepdiver deepdiver/deepdiver --set ...  # same values as before
+```
+
+The application database is untouched by the chart rename: keep pointing
+`DATABASE_URL` at the same PostgreSQL instance and all registered catalogs,
+tables and history remain in place. The Active Record Encryption keys must be
+the same ones used before the rename or catalog credentials become
+unreadable.
+
 ## Prerequisites
 
 - PostgreSQL accessible from the cluster
