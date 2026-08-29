@@ -197,6 +197,7 @@
         "addresses": { "type": "array" },
         "listeners": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "object",
             "required": ["name", "protocol", "port"],
