@@ -8,7 +8,7 @@ image:
   repository: ghcr.io/maltzsama/deepdiver
   pullPolicy: IfNotPresent
   # x.y.z - tag is pinned per environment, never "latest" in production.
-  tag: "0.3.5" # x-release-please-version
+  tag: "0.4.0" # x-release-please-version
 
 # Credentials for a private registry mirror, e.g. [{name: my-registry-creds}].
 imagePullSecrets: []
