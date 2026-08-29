@@ -35,6 +35,6 @@ class AlertSetting < ApplicationRecord
   #
   # @return [String]
   def from_address
-    smtp_from.presence || "alerts@lakedeepdiver.local"
+    smtp_from.presence || "alerts@deepdiver.local"
   end
 end

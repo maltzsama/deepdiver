@@ -31,9 +31,9 @@ production:
     adapter: postgresql
     # The Helm chart always provides DATABASE_URL. The fallback only exists so
     # local tooling (generators, rake tasks) can parse this file.
-    url: <%= ENV.fetch("DATABASE_URL", "postgresql:///lakedeepdiver_production") %>
+    url: <%= ENV.fetch("DATABASE_URL", "postgresql:///deepdiver_production") %>
   queue:
     <<: *default
     adapter: postgresql
-    url: <%= ENV.fetch("DB_QUEUE_URL", "postgresql:///lakedeepdiver_production_queue") %>
+    url: <%= ENV.fetch("DB_QUEUE_URL", "postgresql:///deepdiver_production_queue") %>
     migrations_paths: db/queue_migrate

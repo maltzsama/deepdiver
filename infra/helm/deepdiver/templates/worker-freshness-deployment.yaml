@@ -1,8 +1,8 @@
-{{- include "lakedeepdiver.workerDeployment" (dict
+{{- include "deepdiver.workerDeployment" (dict
   "root" .
   "component" "worker-freshness"
   "valuesKey" "workerFreshness"
-  "selector" "lakedeepdiver.workerFreshnessSelector"
+  "selector" "deepdiver.workerFreshnessSelector"
   "queueConfig" "config/queue-freshness.yml"
   "queueComment" "Freshness only: isolated from long-running engine work."
   "queueEnvName" "SOLID_QUEUE_SKIP_RECURRING"

@@ -1,17 +1,17 @@
-<img src="https://raw.githubusercontent.com/maltzsama/lakedeepdiver/main/public/icon.svg" width="72" height="72" alt="LakeDeepDiver">
+<img src="https://raw.githubusercontent.com/maltzsama/deepdiver/main/public/icon.svg" width="72" height="72" alt="DeepDiver">
 
-# lakedeepdiver
+# deepdiver
 
-LakeDeepDiver — Iceberg maintenance control plane (Rails 8 + Solid Queue).
+DeepDiver — Iceberg maintenance control plane (Rails 8 + Solid Queue).
 
 ## Installation
 
 ```bash
-helm repo add lakedeepdiver https://maltzsama.github.io/lakedeepdiver
+helm repo add deepdiver https://maltzsama.github.io/deepdiver
 helm repo update
-helm install lakedeepdiver lakedeepdiver/lakedeepdiver \
-  --set appSecrets.existingSecret=lakedeepdiver-secrets \
-  --set activeRecordEncryption.existingSecret=lakedeepdiver-encryption \
+helm install deepdiver deepdiver/deepdiver \
+  --set appSecrets.existingSecret=deepdiver-secrets \
+  --set activeRecordEncryption.existingSecret=deepdiver-encryption \
   --set env.trinoUrl=http://trino-coordinator:8080 \
   --set env.trinoDeployment=trino-coordinator \
   --set admin.bootstrap.email=admin@example.com \
@@ -36,7 +36,7 @@ demo admin only exists in development or under `SEED_DEMO`.
 
 ```bash
 bin/rails db:encryption:init
-kubectl create secret generic lakedeepdiver-encryption \
+kubectl create secret generic deepdiver-encryption \
   --from-literal=primary_key=... \
   --from-literal=deterministic_key=... \
   --from-literal=key_derivation_salt=...
@@ -48,14 +48,14 @@ kubectl create secret generic lakedeepdiver-encryption \
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `image.repository` | `ghcr.io/maltzsama/lakedeepdiver` | Docker image repository |
+| `image.repository` | `ghcr.io/maltzsama/deepdiver` | Docker image repository |
 | `image.tag` | see values.yaml | Docker image tag |
 | `imagePullSecrets` | `[]` | e.g. `[{name: my-registry-creds}]`, for a private registry mirror |
 | `activeRecordEncryption.existingSecret` | `""` | **Required.** Secret with `primary_key`, `deterministic_key`, `key_derivation_salt` |
 | `appSecrets.existingSecret` | `""` | Secret with `DATABASE_URL`, `DB_QUEUE_URL`, `RAILS_MASTER_KEY`, `SECRET_KEY_BASE` |
 | `internalCA.enabled` | `false` | Mount an internal CA certificate |
 | `internalCA.existingSecret` | `""` | Secret containing the CA cert |
-| `internalCA.mountFile` | `/etc/lakedeepdiver/certs/internal-ca.crt` | Where the CA cert is mounted. Keep this outside `/etc/ssl/certs`: the mount replaces the whole containing directory, and that path is the system CA bundle |
+| `internalCA.mountFile` | `/etc/deepdiver/certs/internal-ca.crt` | Where the CA cert is mounted. Keep this outside `/etc/ssl/certs`: the mount replaces the whole containing directory, and that path is the system CA bundle |
 | `trino.provisioner` | `chart` | Trino provisioner: `chart`, `baleia`, or `fake`. RBAC to patch/scale the Trino Deployment is granted for `chart`/`baleia`; the Secret rules used by catalog sync are granted regardless |
 | `oidc.issuer` | `""` | OIDC issuer URL (enables SSO). Setting it requires `clientId`, `clientSecret` and `redirectUri` too |
 | `admin.bootstrap.email` / `.password` | `""` | Seeds an admin on first install. Both or neither; the password is rendered into a Secret, not the ConfigMap |

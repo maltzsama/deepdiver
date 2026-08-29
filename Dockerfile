@@ -2,7 +2,7 @@
 # check=error=true
 
 # This Dockerfile is designed for production images shipped with the Helm chart
-# (infra/helm/lakedeepdiver). Build and push are automated by the release
+# (infra/helm/deepdiver). Build and push are automated by the release
 # workflow (.github/workflows/release-chart.yml) on version tags.
 
 # For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html

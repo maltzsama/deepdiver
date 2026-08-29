@@ -2,24 +2,24 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ include "lakedeepdiver.fullname" . }}-trino
+  name: {{ include "deepdiver.fullname" . }}-trino
   labels:
-    {{- include "lakedeepdiver.labels" . | nindent 4 }}
-{{- include "lakedeepdiver.trinoRules" . | nindent 0 }}
+    {{- include "deepdiver.labels" . | nindent 4 }}
+{{- include "deepdiver.trinoRules" . | nindent 0 }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ include "lakedeepdiver.fullname" . }}-trino
+  name: {{ include "deepdiver.fullname" . }}-trino
   labels:
-    {{- include "lakedeepdiver.labels" . | nindent 4 }}
+    {{- include "deepdiver.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ include "lakedeepdiver.fullname" . }}-trino
+  name: {{ include "deepdiver.fullname" . }}-trino
 subjects:
   - kind: ServiceAccount
-    name: {{ include "lakedeepdiver.fullname" . }}
+    name: {{ include "deepdiver.fullname" . }}
     namespace: {{ .Release.Namespace }}
 {{- if ne $trinoNamespace .Release.Namespace }}
 ---
@@ -29,25 +29,25 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ include "lakedeepdiver.fullname" . }}-trino
+  name: {{ include "deepdiver.fullname" . }}-trino
   namespace: {{ $trinoNamespace }}
   labels:
-    {{- include "lakedeepdiver.labels" . | nindent 4 }}
-{{- include "lakedeepdiver.trinoRules" . | nindent 0 }}
+    {{- include "deepdiver.labels" . | nindent 4 }}
+{{- include "deepdiver.trinoRules" . | nindent 0 }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ include "lakedeepdiver.fullname" . }}-trino
+  name: {{ include "deepdiver.fullname" . }}-trino
   namespace: {{ $trinoNamespace }}
   labels:
-    {{- include "lakedeepdiver.labels" . | nindent 4 }}
+    {{- include "deepdiver.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ include "lakedeepdiver.fullname" . }}-trino
+  name: {{ include "deepdiver.fullname" . }}-trino
 subjects:
   - kind: ServiceAccount
-    name: {{ include "lakedeepdiver.fullname" . }}
+    name: {{ include "deepdiver.fullname" . }}
     namespace: {{ .Release.Namespace }}
 {{- end }}

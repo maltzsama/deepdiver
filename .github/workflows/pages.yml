@@ -94,7 +94,7 @@ jobs:
             # `curl -f` plus the explicit test keeps a failed fetch from
             # publishing a truncated index.
             curl -fsSL -o published-index.yaml \
-              https://maltzsama.github.io/lakedeepdiver/index.yaml || true
+              https://maltzsama.github.io/deepdiver/index.yaml || true
             if [ -s published-index.yaml ]; then
               cp published-index.yaml _site/index.yaml
             else

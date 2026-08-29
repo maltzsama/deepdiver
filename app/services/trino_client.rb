@@ -134,7 +134,7 @@ class TrinoClient
   #
   # @return [Hash] the headers
   def headers
-    h = { "X-Trino-User" => "lakedeepdiver", "X-Trino-Source" => "lakedeepdiver-freshness" }
+    h = { "X-Trino-User" => "deepdiver", "X-Trino-Source" => "deepdiver-freshness" }
     h["X-Trino-Catalog"] = @catalog_name if @catalog_name.present?
     h
   end

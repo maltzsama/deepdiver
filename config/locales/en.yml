@@ -10,7 +10,7 @@ en:
       short: "%d %b %Y"
       iso8601: "%Y-%m-%d"
   layout:
-    app_name: "LakeDeepDiver"
+    app_name: "DeepDiver"
     nav:
       monitor: "Monitor"
       overview: "Overview"
@@ -562,7 +562,7 @@ en:
     unauthorized: "You do not have permission to perform that action"
 
   auth:
-    brand: "LakeDeepDiver"
+    brand: "DeepDiver"
     eyebrow: "Iceberg table maintenance"
     tagline: "Schedule, run and track compaction, snapshot expiry and orphan cleanup — with a record of every step."
     version: "v0.3.5" # x-release-please-version
@@ -915,7 +915,7 @@ en:
 
   error_event_mailer:
     assignment:
-      subject: "[LakeDeepDiver] Error assigned to you: %{operation} on %{where}"
+      subject: "[DeepDiver] Error assigned to you: %{operation} on %{where}"
       greeting: "Hello,"
       intro: "%{assigned_by} assigned an error event to you."
       operation: "Operation"

@@ -40,7 +40,7 @@ gem "pg", "~> 1.5", groups: %i[ production ]
 gem "bootsnap", require: false
 
 # Deploy this application as a Docker container consumed by the Helm chart
-# (see infra/helm/lakedeepdiver).
+# (see infra/helm/deepdiver).
 
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
 gem "thruster", require: false

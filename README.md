@@ -1,6 +1,6 @@
-# LakeDeepDiver
+# DeepDiver
 
-[![CI](https://github.com/maltzsama/lakedeepdiver/actions/workflows/ci.yml/badge.svg)](https://github.com/maltzsama/lakedeepdiver/actions/workflows/ci.yml)
+[![CI](https://github.com/maltzsama/deepdiver/actions/workflows/ci.yml/badge.svg)](https://github.com/maltzsama/deepdiver/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-v0.3.5)](#changelog) <!-- x-release-please-version -->
 [![Ruby](https://img.shields.io/badge/ruby-4.0.6-red.svg)](https://www.ruby-lang.org/)
@@ -145,7 +145,7 @@ lists every environment variable the application reads.
 
 ## Deployment (Helm)
 
-The app ships as a Docker image consumed by the Helm chart under `infra/helm/lakedeepdiver`
+The app ships as a Docker image consumed by the Helm chart under `infra/helm/deepdiver`
 (on-prem, no Redis/Kamal). It deploys three workloads plus a migration hook:
 
 - web — Puma (`bin/rails server`)
@@ -168,17 +168,17 @@ Deployment is not wired into CI; publish the image yourself and install the char
 
 ```bash
 # 1. Build and push the image once per release (tag is pinned, never "latest").
-docker build -t registry.example.com/lakedeepdiver:0.1.0 .
-docker push registry.example.com/lakedeepdiver:0.1.0
+docker build -t registry.example.com/deepdiver:0.1.0 .
+docker push registry.example.com/deepdiver:0.1.0
 
 # 2. Render and validate without a cluster.
-helm lint infra/helm/lakedeepdiver
-helm template lakedeepdiver infra/helm/lakedeepdiver \
+helm lint infra/helm/deepdiver
+helm template deepdiver infra/helm/deepdiver \
   --values infra/helm/values/prod.yaml
 
 # 3. Install or upgrade.
-helm upgrade --install lakedeepdiver infra/helm/lakedeepdiver \
-  --namespace lakedeepdiver --create-namespace \
+helm upgrade --install deepdiver infra/helm/deepdiver \
+  --namespace deepdiver --create-namespace \
   --values infra/helm/values/prod.yaml \
   --set image.tag=0.1.0
 ```
@@ -242,9 +242,9 @@ exchange, maintenance runs against Dremio tables are blocked even though sync wo
 ### After install
 
 ```bash
-helm status lakedeepdiver -n lakedeepdiver
-kubectl -n lakedeepdiver get pods    # web, worker, worker-freshness all Running
-kubectl -n lakedeepdiver logs job/lakedeepdiver-migrate   # migration hook output
+helm status deepdiver -n deepdiver
+kubectl -n deepdiver get pods    # web, worker, worker-freshness all Running
+kubectl -n deepdiver logs job/deepdiver-migrate   # migration hook output
 ```
 
 Register a catalog in the UI (admin), then **Sync now** on the Tables screen to import
@@ -253,7 +253,7 @@ and scales it back down. The Activity screen shows the engine lifecycle, the liv
 and a **Hard reset** button to tear a frozen engine down.
 
 Full parameter reference, RBAC details and the internal-CA trust model are in
-`infra/helm/lakedeepdiver/README.md`.
+`infra/helm/deepdiver/README.md`.
 
 ## Generating docs
 
@@ -270,4 +270,4 @@ for mitigations, database role separation, and backup handling.
 
 ## License
 
-LakeDeepDiver is licensed under the [Apache License 2.0](LICENSE).
+DeepDiver is licensed under the [Apache License 2.0](LICENSE).

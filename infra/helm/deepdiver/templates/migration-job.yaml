@@ -2,9 +2,9 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "lakedeepdiver.fullname" . }}-migrate
+  name: {{ include "deepdiver.fullname" . }}-migrate
   labels:
-    {{- include "lakedeepdiver.labels" . | nindent 4 }}
+    {{- include "deepdiver.labels" . | nindent 4 }}
   annotations:
     # Runs before install/upgrade so pods never race against schema changes.
     helm.sh/hook: pre-install,pre-upgrade
@@ -17,15 +17,15 @@ spec:
   template:
     metadata:
       annotations:
-        {{- include "lakedeepdiver.podAnnotations" (dict "root" .) | nindent 8 }}
+        {{- include "deepdiver.podAnnotations" (dict "root" .) | nindent 8 }}
       labels:
-        {{- include "lakedeepdiver.migrateSelector" . | nindent 8 }}
+        {{- include "deepdiver.migrateSelector" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       restartPolicy: Never
-      serviceAccountName: {{ include "lakedeepdiver.fullname" . }}
+      serviceAccountName: {{ include "deepdiver.fullname" . }}
       # db:prepare / db/seeds.rb never talk to the k8s API - unlike web and the
       # workers, this pod has no business holding the ServiceAccount token.
       automountServiceAccountToken: false
@@ -79,7 +79,7 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
           envFrom:
-            {{- include "lakedeepdiver.envFrom" . | nindent 12 }}
+            {{- include "deepdiver.envFrom" . | nindent 12 }}
           {{- with .Values.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}

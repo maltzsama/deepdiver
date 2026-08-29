@@ -44,7 +44,7 @@ class TrinoSecretMaterializer
   # runs (where no chart injects the var) still work.
   def default_secret_name
     ENV["TRINO_CATALOG_SECRET_NAME"].presence ||
-      "#{ENV.fetch("HELM_RELEASE", "lakedeepdiver")}-#{SECRET_NAME_SUFFIX}"
+      "#{ENV.fetch("HELM_RELEASE", "deepdiver")}-#{SECRET_NAME_SUFFIX}"
   end
 
   # Trino's namespace first: the Secret is mounted by the Trino pods, so it has
@@ -85,7 +85,7 @@ class TrinoSecretMaterializer
       metadata: {
         name: secret_name,
         namespace: @namespace,
-        labels: { "app.kubernetes.io/managed-by" => "lakedeepdiver" }
+        labels: { "app.kubernetes.io/managed-by" => "deepdiver" }
       },
       type: "Opaque",
       data: data.transform_values { |v| Base64.strict_encode64(v) }

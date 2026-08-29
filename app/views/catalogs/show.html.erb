@@ -1,4 +1,4 @@
-<% content_for :title, "#{@catalog.name} — LakeDeepDiver" %>
+<% content_for :title, "#{@catalog.name} — DeepDiver" %>
 
 <% if @open_error_count && @open_error_count.positive? %>
   <a href="<%= error_events_path(catalog_id: @catalog.id) %>"

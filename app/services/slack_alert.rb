@@ -44,7 +44,7 @@ class SlackAlert
     uri = URI.parse(url)
     request = Net::HTTP::Post.new(uri)
     request["Content-Type"] = "application/json"
-    payload = { text: "LakeDeepDiver: #{@message}" }
+    payload = { text: "DeepDiver: #{@message}" }
     payload[:channel] = @channel if @channel.present?
     request.body = payload.to_json
     Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https") { |http| http.request(request) }

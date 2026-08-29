@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "lakedeepdiver.fullname" . }}-web
+  name: {{ include "deepdiver.fullname" . }}-web
   labels:
-    {{- include "lakedeepdiver.labels" . | nindent 4 }}
+    {{- include "deepdiver.labels" . | nindent 4 }}
     app.kubernetes.io/component: web
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "lakedeepdiver.webSelector" . | nindent 6 }}
+      {{- include "deepdiver.webSelector" . | nindent 6 }}
   template:
     metadata:
       {{- $metricsAnnotations := dict }}
@@ -17,14 +17,14 @@ spec:
       {{- $metricsAnnotations = dict "prometheus.io/scrape" "true" "prometheus.io/port" (.Values.metrics.port | toString) "prometheus.io/path" .Values.metrics.path }}
       {{- end }}
       annotations:
-        {{- include "lakedeepdiver.podAnnotations" (dict "root" . "extra" $metricsAnnotations) | nindent 8 }}
+        {{- include "deepdiver.podAnnotations" (dict "root" . "extra" $metricsAnnotations) | nindent 8 }}
       labels:
-        {{- include "lakedeepdiver.webSelector" . | nindent 8 }}
+        {{- include "deepdiver.webSelector" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      serviceAccountName: {{ include "lakedeepdiver.fullname" . }}
+      serviceAccountName: {{ include "deepdiver.fullname" . }}
       automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -65,7 +65,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           envFrom:
-            {{- include "lakedeepdiver.envFrom" . | nindent 12 }}
+            {{- include "deepdiver.envFrom" . | nindent 12 }}
           env:
             - name: K8S_NAMESPACE
               valueFrom:

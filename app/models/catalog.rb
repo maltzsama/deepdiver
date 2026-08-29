@@ -110,7 +110,7 @@ class Catalog < ApplicationRecord
       )
       resp = sts_client.assume_role(
         role_arn: s3_role_arn,
-        role_session_name: "lakedeepdiver-#{trino_catalog_name}",
+        role_session_name: "deepdiver-#{trino_catalog_name}",
         external_id: s3_external_id.presence
       )
       {
