@@ -1,8 +1,8 @@
-{{- include "lakedeepdiver.workerDeployment" (dict
+{{- include "deepdiver.workerDeployment" (dict
   "root" .
   "component" "worker-engine"
   "valuesKey" "workerEngine"
-  "selector" "lakedeepdiver.workerEngineSelector"
+  "selector" "deepdiver.workerEngineSelector"
   "queueConfig" "config/queue-engine.yml"
   "queueComment" "Engine lifecycle only — supervise start, drain, watchdog."
   "queueEnvName" "SOLID_QUEUE_SKIP_RECURRING"

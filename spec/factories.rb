@@ -42,7 +42,7 @@ FactoryBot.define do
       s3_authentication_type { "sts" }
       s3_access_key { "AKIAIOSFODNN7EXAMPLE" }
       s3_secret_key { "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" }
-      s3_role_arn { "arn:aws:iam::123456789012:role/lakedeepdiver" }
+      s3_role_arn { "arn:aws:iam::123456789012:role/deepdiver" }
       s3_region { "us-west-2" }
     end
 

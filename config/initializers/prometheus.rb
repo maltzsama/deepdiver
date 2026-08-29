@@ -16,25 +16,25 @@ module PrometheusMetrics
   # --- Application metrics (always on, DB-derived) ---
 
   EXECUTION_STATUS = Prometheus::Client::Gauge.new(
-    :lakedeepdiver_execution_status,
+    :deepdiver_execution_status,
     docstring: "Number of maintenance executions currently in each status",
     labels: [ :status ]
   )
 
   TRINO_ENGINE_STATUS = Prometheus::Client::Gauge.new(
-    :lakedeepdiver_trino_engine_status,
+    :deepdiver_trino_engine_status,
     docstring: "1 when the Trino engine is in the given lifecycle state, otherwise 0",
     labels: [ :status ]
   )
 
   ERROR_EVENTS = Prometheus::Client::Gauge.new(
-    :lakedeepdiver_error_events,
+    :deepdiver_error_events,
     docstring: "Number of error events currently in each status",
     labels: [ :status ]
   )
 
   SOLID_QUEUE_JOBS = Prometheus::Client::Gauge.new(
-    :lakedeepdiver_solid_queue_jobs,
+    :deepdiver_solid_queue_jobs,
     docstring: "Number of Solid Queue jobs by queue and lifecycle state",
     labels: [ :queue_name, :state ]
   )
@@ -42,33 +42,33 @@ module PrometheusMetrics
   # --- Service metrics (opt-in, web pod only) ---
 
   HTTP_REQUESTS_TOTAL = Prometheus::Client::Counter.new(
-    :lakedeepdiver_http_requests_total,
+    :deepdiver_http_requests_total,
     docstring: "HTTP requests handled, by method and status code",
     labels: [ :method, :status ]
   )
 
   HTTP_REQUEST_DURATION = Prometheus::Client::Histogram.new(
-    :lakedeepdiver_http_request_duration_seconds,
+    :deepdiver_http_request_duration_seconds,
     docstring: "HTTP request duration in seconds"
   )
 
   SQL_QUERIES_TOTAL = Prometheus::Client::Counter.new(
-    :lakedeepdiver_sql_queries_total,
+    :deepdiver_sql_queries_total,
     docstring: "SQL queries executed"
   )
 
   SQL_QUERY_DURATION = Prometheus::Client::Histogram.new(
-    :lakedeepdiver_sql_query_duration_seconds,
+    :deepdiver_sql_query_duration_seconds,
     docstring: "SQL query duration in seconds"
   )
 
   PROCESS_CPU_SECONDS = Prometheus::Client::Gauge.new(
-    :lakedeepdiver_process_cpu_seconds,
+    :deepdiver_process_cpu_seconds,
     docstring: "Total user and system CPU time consumed by the process"
   )
 
   PROCESS_RESIDENT_MEMORY = Prometheus::Client::Gauge.new(
-    :lakedeepdiver_process_resident_memory_bytes,
+    :deepdiver_process_resident_memory_bytes,
     docstring: "Resident memory size of the process in bytes"
   )
 

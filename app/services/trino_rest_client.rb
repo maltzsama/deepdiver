@@ -212,9 +212,9 @@ class TrinoRestClient
   # @return [Hash] the headers
   def headers(execution_id)
     {
-      "X-Trino-User" => "lakedeepdiver",
-      "X-Trino-Source" => "lakedeepdiver-maintenance",
-      "X-Trino-Client-Info" => "lakedeepdiver/#{execution_id}"
+      "X-Trino-User" => "deepdiver",
+      "X-Trino-Source" => "deepdiver-maintenance",
+      "X-Trino-Client-Info" => "deepdiver/#{execution_id}"
     }
   end
 end

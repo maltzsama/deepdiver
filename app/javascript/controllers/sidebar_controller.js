@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static STORAGE_KEY = "lakedeepdiver:sidebar-collapsed"
+  static STORAGE_KEY = "deepdiver:sidebar-collapsed"
 
   static targets = ["collapse"]
 

@@ -10,7 +10,7 @@ pt-BR:
       short: "%d de %b de %Y"
       iso8601: "%Y-%m-%d"
   layout:
-    app_name: "LakeDeepDiver"
+    app_name: "DeepDiver"
     nav:
       monitor: "Monitoramento"
       overview: "Visao geral"
@@ -562,7 +562,7 @@ pt-BR:
     unauthorized: "Voce nao tem permissao para realizar esta acao"
 
   auth:
-    brand: "LakeDeepDiver"
+    brand: "DeepDiver"
     eyebrow: "Manutencao de tabelas Iceberg"
     tagline: "Agende, execute e acompanhe compactacao, expiracao de snapshots e limpeza de orfaos - com historico de cada etapa."
     version: "v0.3.5" # x-release-please-version
@@ -914,7 +914,7 @@ pt-BR:
 
   error_event_mailer:
     assignment:
-      subject: "[LakeDeepDiver] Erro atribuido a voce: %{operation} em %{where}"
+      subject: "[DeepDiver] Erro atribuido a voce: %{operation} em %{where}"
       greeting: "Ola,"
       intro: "%{assigned_by} atribuiu um evento de erro a voce."
       operation: "Operacao"

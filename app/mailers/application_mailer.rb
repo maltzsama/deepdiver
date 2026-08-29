@@ -5,7 +5,7 @@
 # admin-configured AlertSetting so email alerts work without touching
 # environment-specific mailer configs.
 class ApplicationMailer < ActionMailer::Base
-  default from: "alerts@lakedeepdiver.local"
+  default from: "alerts@deepdiver.local"
   layout "mailer"
 
   private

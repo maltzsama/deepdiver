@@ -1,8 +1,8 @@
-{{- include "lakedeepdiver.workerDeployment" (dict
+{{- include "deepdiver.workerDeployment" (dict
   "root" .
   "component" "worker"
   "valuesKey" "worker"
-  "selector" "lakedeepdiver.workerSelector"
+  "selector" "deepdiver.workerSelector"
   "queueConfig" "config/queue-worker.yml"
   "queueEnvName" "SOLID_QUEUE_RECURRING_SCHEDULE"
   "queueEnvValue" "config/recurring.yml"

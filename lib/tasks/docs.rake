@@ -30,7 +30,7 @@ namespace :docs do
   task :build do
     excludes = EXCLUDES.map { |path| "--exclude #{path}" }.join(" ")
     sh "bundle exec rdoc --markup markdown --output doc " \
-       "--main #{MAIN_PAGE} --title 'LakeDeepDiver' " \
+       "--main #{MAIN_PAGE} --title 'DeepDiver' " \
        "#{excludes} #{SOURCES.join(' ')}"
     Rake::Task["docs:inject_counter"].invoke
   end

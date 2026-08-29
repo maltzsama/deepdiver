@@ -1,10 +1,10 @@
-# Production overrides for the lakedeepdiver Helm chart.
-# Usage: helm upgrade --install lakedeepdiver infra/helm/lakedeepdiver --values infra/helm/values/prod.yaml
+# Production overrides for the deepdiver Helm chart.
+# Usage: helm upgrade --install deepdiver infra/helm/deepdiver --values infra/helm/values/prod.yaml
 #
 # Replace every CHANGE_ME below with the real value for the target cluster.
 # Do not deploy with the placeholders.
 image:
-  repository: ghcr.io/maltzsama/lakedeepdiver
+  repository: ghcr.io/maltzsama/deepdiver
   # Pin a concrete release; never "latest" in production. Kept in step with the
   # chart by release-please (see release-please-config.json extra-files): this
   # file used to drift, and an install with a stale tag silently ships an image
@@ -22,15 +22,15 @@ activeRecordEncryption:
 appSecrets:
   # Created out-of-band (SealedSecrets / external controller) with DATABASE_URL,
   # DB_QUEUE_URL, RAILS_MASTER_KEY and SECRET_KEY_BASE.
-  existingSecret: lakedeepdiver-secrets
+  existingSecret: deepdiver-secrets
   create: false
 
 internalCA:
   enabled: true
-  mountFile: /etc/lakedeepdiver/certs/internal-ca.crt
+  mountFile: /etc/deepdiver/certs/internal-ca.crt
   # CHANGE_ME: Secret holding the internal CA (key ca.crt) that signs the
   # catalog/Trino TLS certificates.
-  existingSecret: lakedeepdiver-ca
+  existingSecret: deepdiver-ca
   caKey: ca.crt
 
 admin:
@@ -76,7 +76,7 @@ ingress:
   tls:
     - hosts:
         - CHANGE_ME.tls.host
-      secretName: lakedeepdiver-tls
+      secretName: deepdiver-tls
 
 resources:
   requests:

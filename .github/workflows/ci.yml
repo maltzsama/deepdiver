@@ -102,11 +102,11 @@ jobs:
       - name: validate artifacthub metadata
         run: |
           sed "s/REPLACE_ME/test/" infra/helm/artifacthub-repo.yml | grep "repositoryID: test"
-      - run: helm lint infra/helm/lakedeepdiver
+      - run: helm lint infra/helm/deepdiver
       - name: kubeconform
         run: |
           curl -sSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
-          helm template infra/helm/lakedeepdiver | ./kubeconform -strict -summary
+          helm template infra/helm/deepdiver | ./kubeconform -strict -summary
 
   schema-portability:
     runs-on: ubuntu-latest
@@ -143,7 +143,7 @@ jobs:
         with:
           context: .
           push: false
-          tags: lakedeepdiver:ci
+          tags: deepdiver:ci
 
   # The docs build used to pass `--readme`, which RDoc does not have: it was
   # silently ignored ("invalid options are ignored") and the landing page stayed

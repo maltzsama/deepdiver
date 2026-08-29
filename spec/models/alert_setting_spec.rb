@@ -37,7 +37,7 @@ RSpec.describe AlertSetting, type: :model do
 
   describe "#from_address" do
     it "falls back to the default sender" do
-      expect(build(:alert_setting, smtp_from: nil).from_address).to eq("alerts@lakedeepdiver.local")
+      expect(build(:alert_setting, smtp_from: nil).from_address).to eq("alerts@deepdiver.local")
       expect(build(:alert_setting, smtp_from: "ops@example.com").from_address).to eq("ops@example.com")
     end
   end

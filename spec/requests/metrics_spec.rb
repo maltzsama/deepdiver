@@ -6,10 +6,10 @@ RSpec.describe "Metrics", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("text/plain; version=0.0.4")
-    expect(response.body).to include("# TYPE lakedeepdiver_execution_status gauge")
-    expect(response.body).to include("# TYPE lakedeepdiver_trino_engine_status gauge")
-    expect(response.body).to include("# TYPE lakedeepdiver_error_events gauge")
-    expect(response.body).to include("# TYPE lakedeepdiver_solid_queue_jobs gauge")
+    expect(response.body).to include("# TYPE deepdiver_execution_status gauge")
+    expect(response.body).to include("# TYPE deepdiver_trino_engine_status gauge")
+    expect(response.body).to include("# TYPE deepdiver_error_events gauge")
+    expect(response.body).to include("# TYPE deepdiver_solid_queue_jobs gauge")
   end
 
   it "does not require authentication" do
@@ -24,8 +24,8 @@ RSpec.describe "Metrics", type: :request do
 
     get "/metrics"
 
-    expect(response.body).to include('lakedeepdiver_execution_status{status="failed"} 1.0')
-    expect(response.body).to include('lakedeepdiver_execution_status{status="running"} 1.0')
+    expect(response.body).to include('deepdiver_execution_status{status="failed"} 1.0')
+    expect(response.body).to include('deepdiver_execution_status{status="running"} 1.0')
   end
 
   it "derives the engine status gauge from the single engine row" do
@@ -33,7 +33,7 @@ RSpec.describe "Metrics", type: :request do
 
     get "/metrics"
 
-    expect(response.body).to include('lakedeepdiver_trino_engine_status{status="up"} 1.0')
-    expect(response.body).to include('lakedeepdiver_trino_engine_status{status="down"} 0.0')
+    expect(response.body).to include('deepdiver_trino_engine_status{status="up"} 1.0')
+    expect(response.body).to include('deepdiver_trino_engine_status{status="down"} 0.0')
   end
 end

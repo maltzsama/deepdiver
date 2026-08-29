@@ -1,11 +1,11 @@
-# Default values for lakedeepdiver.
+# Default values for deepdiver.
 # This is a YAML-formatted file. Overrides are provided by the consumer, one
 # file per environment (see the chart README for the convention this repo uses).
 
 replicaCount: 1
 
 image:
-  repository: ghcr.io/maltzsama/lakedeepdiver
+  repository: ghcr.io/maltzsama/deepdiver
   pullPolicy: IfNotPresent
   # x.y.z - tag is pinned per environment, never "latest" in production.
   tag: "0.3.5" # x-release-please-version
@@ -38,7 +38,7 @@ internalCA:
   # is the system CA bundle location - mounting there replaces
   # ca-certificates.crt and every other system cert, breaking HTTPS to any
   # public endpoint (e.g. Slack webhooks) the moment internalCA is enabled.
-  mountFile: /etc/lakedeepdiver/certs/internal-ca.crt
+  mountFile: /etc/deepdiver/certs/internal-ca.crt
   existingSecret: ""
   caKey: ca.crt
 
