@@ -565,7 +565,7 @@ pt-BR:
     brand: "DeepDiver"
     eyebrow: "Manutencao de tabelas Iceberg"
     tagline: "Agende, execute e acompanhe compactacao, expiracao de snapshots e limpeza de orfaos - com historico de cada etapa."
-    version: "v0.4.0" # x-release-please-version
+    version: "v0.4.1" # x-release-please-version
     footer: "Licenciado sob a Apache License 2.0."
     facts:
       operations: "Operacoes"

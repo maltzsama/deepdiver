@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.1](https://github.com/maltzsama/deepdiver/compare/v0.4.0...v0.4.1) (2026-08-29)
+
+
+### Bug Fixes
+
+* **helm:** document rename and reinstall path for existing installs ([fda7a8f](https://github.com/maltzsama/deepdiver/commit/fda7a8ff676d10acc0e1ef9cff2d0cef47c5b9ad))
+* **helm:** document rename and reinstall path for existing installs ([df4de27](https://github.com/maltzsama/deepdiver/commit/df4de27a968b812532af946755aded09fe0816d0))
+
 ## [0.4.0](https://github.com/maltzsama/lakedeepdiver/compare/v0.3.5...v0.4.0) (2026-08-29)
 
 
