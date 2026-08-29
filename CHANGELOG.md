@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.0](https://github.com/maltzsama/lakedeepdiver/compare/v0.3.5...v0.4.0) (2026-08-29)
+
+
+### Features
+
+* rename project to DeepDiver ([25cfa0a](https://github.com/maltzsama/lakedeepdiver/commit/25cfa0a1d14693148cb36772d2550d9f30bdbea1))
+* rename project to DeepDiver ([5412dd9](https://github.com/maltzsama/lakedeepdiver/commit/5412dd9b108312d7beaa50265c4b21bd73ed8cf2))
+
 ## [0.3.5](https://github.com/maltzsama/lakedeepdiver/compare/v0.3.4...v0.3.5) (2026-08-26)
 
 
