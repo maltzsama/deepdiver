@@ -4,6 +4,19 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.0](https://github.com/maltzsama/deepdiver/compare/v0.4.1...v0.5.0) (2026-08-29)
+
+
+### Features
+
+* **helm:** add native Gateway API support (Gateway + HTTPRoute) ([05680f3](https://github.com/maltzsama/deepdiver/commit/05680f31cb987bd0a9db1a4fad6006932f078a7b))
+* **helm:** add native Gateway API support (Gateway + HTTPRoute) ([41380f4](https://github.com/maltzsama/deepdiver/commit/41380f46934d6cc0e895c0cac9c8ecbe5d040bb7))
+
+
+### Bug Fixes
+
+* **helm:** require at least one gateway listener ([ddfc9e8](https://github.com/maltzsama/deepdiver/commit/ddfc9e83c9a072e31d753064cad5c07097815385))
+
 ## [0.4.1](https://github.com/maltzsama/deepdiver/compare/v0.4.0...v0.4.1) (2026-08-29)
 
 
