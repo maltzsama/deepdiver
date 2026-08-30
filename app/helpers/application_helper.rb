@@ -1,7 +1,6 @@
 # View helpers shared across the application, covering theme selection,
 # permission checks, badge classes, navigation, and formatting.
 module ApplicationHelper
-  include Pagy::Frontend
   # Selected theme for the <html data-theme> attribute. Dark is the default;
   # the theme toggle (CR-69) persists it on the account. The cookie is kept as
   # a fallback for the anonymous/auth screens, where there is no signed-in user.
@@ -162,13 +161,15 @@ module ApplicationHelper
     content_tag(:nav, class: "pager flex items-center justify-center gap-1 my-4",
                      aria: { label: t("filters.pager") }) do
       safe_join([
-        pager_arrow(pagy_page_path(pagy.prev), "&lsaquo;", enabled: pagy.prev.present?),
-        safe_join(pagy.series.filter_map do |item|
-          # Pagy 9 marks the current page as a String in the series.
+        pager_arrow(pagy_page_path(pagy.previous), "&lsaquo;", enabled: pagy.previous.present?),
+        safe_join(pagy.send(:series).filter_map do |item|
+          # Pagy 43 marks the current page as a String in the series (integers
+          # are links, :gap is the ellipsis). `series` is protected in Pagy 43,
+          # so it is reached via send.
           if item == :gap
             content_tag(:span, "…", class: "pager-gap")
-          elsif item.to_i == pagy.label.to_i
-            content_tag(:span, item.to_s, class: "badge badge-ok pager-page", "aria-current": "page")
+          elsif item.is_a?(String)
+            content_tag(:span, item, class: "badge badge-ok pager-page", "aria-current": "page")
           else
             link_to(item.to_s, pagy_page_path(item), class: "badge badge-mute pager-page")
           end
