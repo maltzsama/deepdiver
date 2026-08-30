@@ -72,7 +72,13 @@ class DataRetentionJob < ApplicationJob
   # @return [ActiveSupport::TimeWithZone] the cutoff instant
   def retention_cutoff(key)
     default_days = DEFAULT_RETENTION.fetch(key) / 1.day
-    ENV.fetch("#{key.to_s.upcase}_RETENTION_DAYS", default_days.to_s).to_i.days.ago
+    raw = ENV["#{key.to_s.upcase}_RETENTION_DAYS"]
+    days = Integer(raw, exception: false) if raw.present?
+    if raw.present? && (days.nil? || days <= 0)
+      Rails.logger.warn("DataRetention: ignoring invalid #{key.to_s.upcase}_RETENTION_DAYS=#{raw.inspect}; using default #{default_days}d")
+      days = nil
+    end
+    (days || default_days).days.ago
   end
 
   def prune_solid_queue

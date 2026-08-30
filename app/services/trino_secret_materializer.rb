@@ -23,14 +23,16 @@ class TrinoSecretMaterializer
   end
 
   # Builds the secret data from all catalogs and upserts the Secret.
+  # Uses TrinoCatalogProjection.sensitive_property_values and .secret_file_name
+  # as the single source of truth — refs in the projection and keys written here
+  # derive from the same methods, so they can never diverge.
   #
   # @param catalogs [Array<Catalog>] catalogs to include
   def materialize!(catalogs)
-    data = {}
-
-    catalogs.each do |catalog|
-      collect_credential_keys(catalog, data)
-      collect_s3_keys(catalog, data)
+    data = catalogs.each_with_object({}) do |catalog, acc|
+      TrinoCatalogProjection.sensitive_property_values(catalog).each do |key, value|
+        acc[TrinoCatalogProjection.secret_file_name(catalog, key)] = value
+      end
     end
 
     upsert_secret!(data)
@@ -51,31 +53,6 @@ class TrinoSecretMaterializer
   # to exist there. Falls back to this pod's namespace when they coincide.
   def default_namespace
     ENV["TRINO_NAMESPACE"].presence || ENV.fetch("K8S_NAMESPACE", "default")
-  end
-
-  # Collects catalog credential secrets (client_secret, bearer token, etc.).
-  def collect_credential_keys(catalog, data)
-    credential = catalog.catalog_credential
-    return unless credential&.secret_set?
-
-    props = credential.properties || {}
-    props.each do |key, value|
-      next unless value.is_a?(String) && value.present?
-
-      safe_key = "catalog-#{catalog.id}-#{key.gsub('.', '_')}"
-      data[safe_key] = value
-    end
-
-    # The credential secret itself
-    data["catalog-#{catalog.id}-credential_secret"] = credential.secret
-  end
-
-  # Collects S3 secrets from the catalog.
-  def collect_s3_keys(catalog, data)
-    return if catalog.s3_authentication_type == "none"
-    return unless catalog.s3_secret_key.present?
-
-    data["catalog-#{catalog.id}-s3_secret_key"] = catalog.s3_secret_key
   end
 
   def upsert_secret!(data)

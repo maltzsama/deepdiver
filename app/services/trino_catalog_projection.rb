@@ -13,6 +13,30 @@ class TrinoCatalogProjection
     s3.session-token
   ].freeze
 
+  # Sensitive {trino_property_key => plaintext_value} for a catalog, BEFORE
+  # masking.  Single source of truth for what goes into the Secret mounted by
+  # baleia: #connector_properties masks each entry as @baleia-secret[file:…]
+  # and TrinoSecretMaterializer writes each entry under #secret_file_name —
+  # refs and Secret keys can no longer diverge.  STS calls AssumeRole here
+  # (session credentials are always fresh).
+  def self.sensitive_property_values(catalog)
+    values = {}
+    credential = catalog.catalog_credential
+    if credential&.oauth2?
+      values["iceberg.rest-catalog.oauth2.credential"] = "#{credential.client_id}:#{credential.secret}"
+    end
+    values.merge!(catalog.resolve_s3_credentials)
+    values.select { |key, value| SENSITIVE_KEYS.include?(key) && value.present? }
+          .transform_values(&:to_s)
+  end
+
+  # File name mounted by baleia — MUST match the ref in #connector_properties
+  # byte-for-byte.  Derived from the same key the ref uses (dot→underscore,
+  # hyphen preserved).
+  def self.secret_file_name(catalog, property_key)
+    "catalog-#{catalog.id}-#{property_key.gsub('.', '_')}"
+  end
+
   # Creates the projection for a cluster name.
   #
   # @param cluster_name [String] the Trino cluster name
@@ -95,17 +119,15 @@ class TrinoCatalogProjection
 
     if credential&.oauth2?
       props["iceberg.rest-catalog.security"] = "OAUTH2"
-      props["iceberg.rest-catalog.oauth2.credential"] =
-        "#{credential.client_id}:#{credential.secret}"
       props["iceberg.rest-catalog.oauth2.scope"] = credential.scope
     end
 
-    props.merge!(catalog.resolve_s3_credentials)
-
-    props.each do |key, value|
-      next unless SENSITIVE_KEYS.include?(key) && value.present?
-
-      props[key] = "@baleia-secret[file:catalog-#{catalog.id}-#{key.gsub('.', '_')}]"
+    # Sensitive values never enter the registry (plain-text JSON column):
+    # each becomes an @baleia-secret[file:…] ref.  Ref name and Secret key
+    # both derive from secret_file_name over the SAME sensitive_property_values
+    # — they cannot drift.
+    self.class.sensitive_property_values(catalog).each_key do |key|
+      props[key] = "@baleia-secret[file:#{self.class.secret_file_name(catalog, key)}]"
     end
 
     props.transform_values(&:to_s)

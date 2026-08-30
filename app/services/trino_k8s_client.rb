@@ -28,6 +28,13 @@ class TrinoK8sClient
     @client.replicas
   end
 
+  # The Trino Deployment's actual running/pending pod count.
+  #
+  # @return [Integer] the status.replicas count
+  def live_replicas
+    @client.live_replicas
+  end
+
   # Whether the Trino Deployment exists.
   #
   # @return [Boolean] true when present

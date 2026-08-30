@@ -30,10 +30,32 @@ RSpec.describe ChartTrinoProvisioner do
   end
 
   it "wait_gone! returns once the deployment is scaled to zero" do
-    allow(k8s).to receive(:replicas).and_return(0)
+    allow(k8s).to receive(:live_replicas).and_return(0)
 
     expect(provisioner.wait_gone!(timeout: 5.seconds)).to be_nil
-    expect(k8s).to have_received(:replicas)
+    expect(k8s).to have_received(:live_replicas)
+  end
+
+  it "wait_gone! polls status.replicas (not spec.replicas) when waiting for pods to terminate" do
+    call_count = 0
+    allow(k8s).to receive(:live_replicas) do
+      call_count += 1
+      call_count <= 2 ? 2 : 0
+    end
+    allow(provisioner).to receive(:sleep)
+
+    provisioner.wait_gone!(timeout: 10.seconds)
+
+    expect(k8s).to have_received(:live_replicas).at_least(:twice)
+  end
+
+  it "wait_gone! returns when the timeout expires even if pods remain" do
+    allow(k8s).to receive(:live_replicas).and_return(2)
+    allow(provisioner).to receive(:sleep)
+
+    provisioner.wait_gone!(timeout: 0.seconds)
+
+    expect(k8s).to have_received(:live_replicas).at_least(:once)
   end
 
   it "reports the desired replica count from the k8s client" do

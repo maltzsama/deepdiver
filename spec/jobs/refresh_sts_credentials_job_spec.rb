@@ -18,8 +18,13 @@ RSpec.describe RefreshStsCredentialsJob, type: :job do
     allow(TrinoCatalogProjection).to receive(:new).and_return(projection)
     allow(projection).to receive(:sync_all!)
 
+    materializer = instance_double(TrinoSecretMaterializer)
+    allow(TrinoSecretMaterializer).to receive(:new).and_return(materializer)
+    allow(materializer).to receive(:materialize!)
+
     described_class.perform_now
 
     expect(projection).to have_received(:sync_all!).once
+    expect(materializer).to have_received(:materialize!).once
   end
 end

@@ -77,4 +77,33 @@ RSpec.describe DataRetentionJob, type: :job do
       expect(ErrorEvent.where(id: records.map(&:id)).count).to eq(0)
     end
   end
+
+  describe "#retention_cutoff" do
+    def stub_retention_env(value)
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("ERROR_EVENTS_RETENTION_DAYS").and_return(value)
+    end
+
+    it "uses the default when env is not set" do
+      cutoff = described_class.new.send(:retention_cutoff, :error_events)
+      expect(cutoff).to be_within(1.day).of(90.days.ago)
+    end
+
+    it "honors a valid numeric override" do
+      stub_retention_env("15")
+      cutoff = described_class.new.send(:retention_cutoff, :error_events)
+      expect(cutoff).to be_within(1.day).of(15.days.ago)
+    end
+
+    it "falls back to default on invalid override and never produces a future cutoff", :aggregate_failures do
+      %w[abc "" 0 -5].each do |bad|
+        stub_retention_env(bad)
+        cutoff = described_class.new.send(:retention_cutoff, :error_events)
+        expect(cutoff).to be_within(1.day).of(90.days.ago),
+          "expected default for #{bad.inspect}"
+        expect(cutoff).to be <= Time.current,
+          "cutoff must not be in the future for #{bad.inspect}"
+      end
+    end
+  end
 end
