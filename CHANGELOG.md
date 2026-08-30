@@ -4,6 +4,18 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.3](https://github.com/maltzsama/deepdiver/compare/v0.5.2...v0.5.3) (2026-08-30)
+
+
+### Bug Fixes
+
+* **alerts:** fail loud when the Slack webhook rejects delivery ([2ae30cd](https://github.com/maltzsama/deepdiver/commit/2ae30cda730006995ce36dbdc8394a0db718a18c))
+* baleia secret parity + backend robustness ([f4cb0ff](https://github.com/maltzsama/deepdiver/commit/f4cb0ff6bc35fa7d9414f476db5b1d95298b7ddd))
+* **catalogs:** keep baleia secret refs and materialized keys in lockstep ([06840e9](https://github.com/maltzsama/deepdiver/commit/06840e937e93aef21308d6955af9397c6fd3dd6a))
+* **engine:** stop marking benign concurrent drain transitions as failed ([9a437a8](https://github.com/maltzsama/deepdiver/commit/9a437a8f3293f55e487405f76d5289628cef0dfd))
+* **engine:** wait for real pod termination in wait_gone! ([9357fbf](https://github.com/maltzsama/deepdiver/commit/9357fbfdde990d6c7111edd0b4bcb63a45012617))
+* **retention:** reject invalid retention overrides instead of wiping history ([a05ff50](https://github.com/maltzsama/deepdiver/commit/a05ff5015963d94bc524742a42a53731b5f8f208))
+
 ## [0.5.2](https://github.com/maltzsama/deepdiver/compare/v0.5.1...v0.5.2) (2026-08-30)
 
 
