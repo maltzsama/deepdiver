@@ -4,6 +4,13 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.2](https://github.com/maltzsama/deepdiver/compare/v0.5.1...v0.5.2) (2026-08-30)
+
+
+### Bug Fixes
+
+* **pagy:** migrate to the Pagy 43 API ([66991aa](https://github.com/maltzsama/deepdiver/commit/66991aaa7c351a445dc0a49f8595e117df7919e7))
+
 ## [0.5.1](https://github.com/maltzsama/deepdiver/compare/v0.5.0...v0.5.1) (2026-08-30)
 
 
