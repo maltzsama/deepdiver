@@ -47,6 +47,10 @@ class SlackAlert
     payload = { text: "DeepDiver: #{@message}" }
     payload[:channel] = @channel if @channel.present?
     request.body = payload.to_json
-    Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https") { |http| http.request(request) }
+    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https") { |http| http.request(request) }
+    unless response.is_a?(Net::HTTPSuccess)
+      raise "Slack webhook returned HTTP #{response.code}: #{response.body.to_s.truncate(200)}"
+    end
+    true
   end
 end
