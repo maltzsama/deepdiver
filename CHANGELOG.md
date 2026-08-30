@@ -4,6 +4,16 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.1](https://github.com/maltzsama/deepdiver/compare/v0.5.0...v0.5.1) (2026-08-30)
+
+
+### Bug Fixes
+
+* **build:** drop curl and sqlite3 from the runtime image ([b9c2a3b](https://github.com/maltzsama/deepdiver/commit/b9c2a3b58dbc8f1fd4eff98b9ce88c96ee0f628c))
+* **build:** harden the container image against CVEs ([99f9253](https://github.com/maltzsama/deepdiver/commit/99f92534236e2a98d883c2922171b87e0ca3ef52))
+* **build:** remove imagemagick from the image ([620593d](https://github.com/maltzsama/deepdiver/commit/620593d8e486ac6ca8f337912a985844263519ea))
+* **build:** upgrade base packages at build time ([cb58d87](https://github.com/maltzsama/deepdiver/commit/cb58d875b6697a5e3944796ac6167ae5a47f4d4f))
+
 ## [0.5.0](https://github.com/maltzsama/deepdiver/compare/v0.4.1...v0.5.0) (2026-08-29)
 
 
