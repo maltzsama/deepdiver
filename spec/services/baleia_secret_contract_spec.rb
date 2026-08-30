@@ -137,4 +137,56 @@ RSpec.describe "Baleia secret contract" do
       expect(materializer).to have_received(:materialize!)
     end
   end
+
+  describe "multi-catalog contract" do
+    it "union of refs across ALL registry rows matches union of Secret keys" do
+      sts_client = instance_double(Aws::STS::Client)
+      allow(Aws::STS::Client).to receive(:new).and_return(sts_client)
+      allow(sts_client).to receive(:assume_role).and_return(
+        double(credentials: double(
+          access_key_id: "ASIA", secret_access_key: "sts-secret", session_token: "sts-token"
+        ))
+      )
+      create(:catalog, :s3_static, name: "static-cat")
+      oauth_catalog = create(:catalog, name: "oauth-cat", catalog_type: "nessie",
+                             endpoint: "http://nessie:19120/api/v1")
+      create(:catalog_credential, catalog: oauth_catalog, auth_method: "oauth2_client_credentials",
+                                  client_id: "svc", secret: "s3cr3t", scope: "PRINCIPAL_ROLE:ALL")
+
+      TrinoCatalogProjection.new.sync_all!
+
+      all_refs = TrinoCatalogRegistry.pluck(:properties).flat_map do |props|
+        props.map { |_k, v| v.to_s.match(%r{\A@baleia-secret\[file:(.+)\]\z})&.[](1) }.compact
+      end
+
+      secret_data = nil
+      allow(k8s_client).to receive(:create_secret) { |payload| secret_data = payload }
+      allow(k8s_client).to receive(:update_secret)
+      TrinoSecretMaterializer.new(k8s_client: k8s_client)
+        .materialize!(Catalog.includes(:catalog_credential))
+
+      expect(all_refs).not_to be_empty
+      expect(all_refs.sort).to eq(secret_data[:data].keys.sort)
+    end
+  end
+
+  describe "update path (Secret already exists)" do
+    it "writes the correct payload via update_secret" do
+      create(:catalog, :s3_static, name: "existing-cat")
+      TrinoCatalogProjection.new.sync_all!
+
+      allow(k8s_client).to receive(:get_secret) do |_name, _ns|
+        { "data" => { "stale" => Base64.strict_encode64("old") } }
+      end
+      update_payload = nil
+      allow(k8s_client).to receive(:update_secret) { |name, payload, _ns| update_payload = payload }
+
+      TrinoSecretMaterializer.new(k8s_client: k8s_client)
+        .materialize!(Catalog.includes(:catalog_credential))
+
+      expect(update_payload).not_to be_nil
+      expect(update_payload[:data]).to have_key("catalog-#{Catalog.first.id}-s3_secret-key")
+      expect(update_payload[:data]).not_to have_key("stale")
+    end
+  end
 end
