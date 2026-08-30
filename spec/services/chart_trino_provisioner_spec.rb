@@ -42,6 +42,7 @@ RSpec.describe ChartTrinoProvisioner do
       call_count += 1
       call_count <= 2 ? 2 : 0
     end
+    allow(provisioner).to receive(:sleep)
 
     provisioner.wait_gone!(timeout: 10.seconds)
 
