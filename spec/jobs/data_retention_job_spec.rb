@@ -77,4 +77,60 @@ RSpec.describe DataRetentionJob, type: :job do
       expect(ErrorEvent.where(id: records.map(&:id)).count).to eq(0)
     end
   end
+
+  describe "#retention_cutoff" do
+    it "uses the default when env is not set" do
+      job = described_class.new
+      cutoff = job.send(:retention_cutoff, :error_events)
+      expect(cutoff).to be_within(1.day).of(90.days.ago)
+    end
+
+    it "honors a valid numeric override" do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("ERROR_EVENTS_RETENTION_DAYS").and_return("15")
+      job = described_class.new
+      cutoff = job.send(:retention_cutoff, :error_events)
+      expect(cutoff).to be_within(1.day).of(15.days.ago)
+    end
+
+    it "falls back to default on non-numeric string" do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("ERROR_EVENTS_RETENTION_DAYS").and_return("abc")
+      job = described_class.new
+      cutoff = job.send(:retention_cutoff, :error_events)
+      expect(cutoff).to be_within(1.day).of(90.days.ago)
+    end
+
+    it "falls back to default on empty string" do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("ERROR_EVENTS_RETENTION_DAYS").and_return("")
+      job = described_class.new
+      cutoff = job.send(:retention_cutoff, :error_events)
+      expect(cutoff).to be_within(1.day).of(90.days.ago)
+    end
+
+    it "falls back to default on zero" do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("ERROR_EVENTS_RETENTION_DAYS").and_return("0")
+      job = described_class.new
+      cutoff = job.send(:retention_cutoff, :error_events)
+      expect(cutoff).to be_within(1.day).of(90.days.ago)
+    end
+
+    it "falls back to default on negative value" do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("ERROR_EVENTS_RETENTION_DAYS").and_return("-5")
+      job = described_class.new
+      cutoff = job.send(:retention_cutoff, :error_events)
+      expect(cutoff).to be_within(1.day).of(90.days.ago)
+    end
+
+    it "never produces a cutoff in the future" do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("ERROR_EVENTS_RETENTION_DAYS").and_return("abc")
+      job = described_class.new
+      cutoff = job.send(:retention_cutoff, :error_events)
+      expect(cutoff).to be <= Time.current
+    end
+  end
 end
