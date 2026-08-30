@@ -9,6 +9,8 @@ class RefreshStsCredentialsJob < ApplicationJob
   def perform
     return unless Catalog.where(s3_authentication_type: "sts").exists?
 
+    catalogs = Catalog.includes(:catalog_credential)
     TrinoCatalogProjection.new.sync_all!
+    TrinoSecretMaterializer.new.materialize!(catalogs)
   end
 end
