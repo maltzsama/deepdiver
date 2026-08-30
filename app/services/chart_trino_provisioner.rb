@@ -117,7 +117,7 @@ class ChartTrinoProvisioner
   # @param timeout [ActiveSupport::Duration] how long to wait
   def wait_gone!(timeout:)
     deadline = Time.current + timeout
-    sleep 1 until wrap_k8s_errors("coordinator") { @k8s.replicas }.zero? || Time.current > deadline
+    sleep 1 until wrap_k8s_errors("coordinator") { @k8s.live_replicas }.zero? || Time.current > deadline
   end
 
   private

@@ -84,6 +84,16 @@ class K8sClient
     @kubeclient.get_deployment(deployment, namespace).spec["replicas"].to_i
   end
 
+  # Pods not yet terminated that the Deployment still reports (status.replicas),
+  # as opposed to #replicas which returns the DESIRED count (spec.replicas).
+  #
+  # @return [Integer] the actual running/pending pod count
+  def live_replicas
+    @kubeclient.get_deployment(deployment, namespace).status["replicas"].to_i
+  rescue Kubeclient::ResourceNotFoundError
+    0
+  end
+
   # Whether the Deployment currently exists.
   #
   # @return [Boolean] true when the Deployment is found
