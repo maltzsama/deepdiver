@@ -24,7 +24,8 @@ RSpec.describe DrainEngineJob, type: :job do
       allow(TrinoProvisioner).to receive(:destroy!)
       allow(TrinoEngineSupervisor).to receive(:finish_stopping!).and_raise(StandardError, "boom")
       allow(ErrorEvent).to receive(:record)
-      fake_state = double("state", id: 1, status: "stopping", with_lock: nil)
+      fake_state = double("state", id: 1, status: "stopping")
+      allow(fake_state).to receive(:with_lock).and_yield
       allow(TrinoEngineSupervisor).to receive(:state).and_return(fake_state)
       allow(TrinoEngineSupervisor).to receive(:transition!)
 
@@ -33,15 +34,18 @@ RSpec.describe DrainEngineJob, type: :job do
       expect(ErrorEvent).to have_received(:record).with(
         hash_including(operation: "engine-drain", source_system: "engine", error_class: "StandardError")
       )
+      expect(TrinoEngineSupervisor).to have_received(:transition!).with(
+        fake_state, "failed", hash_including(last_error: "boom")
+      )
       expect(TrinoEngineSupervisor).to have_received(:broadcast_deferred!)
     end
 
     it "ensures broadcast_deferred! runs even on failure" do
       allow(TrinoProvisioner).to receive(:destroy!).and_raise(StandardError, "boom")
       allow(TrinoEngineSupervisor).to receive(:finish_stopping!)
-      allow(TrinoEngineSupervisor).to receive(:state).and_return(
-        double("state", id: 1, status: "stopping", with_lock: nil)
-      )
+      fake_state = double("state", id: 1, status: "stopping")
+      allow(fake_state).to receive(:with_lock).and_yield
+      allow(TrinoEngineSupervisor).to receive(:state).and_return(fake_state)
       allow(TrinoEngineSupervisor).to receive(:transition!)
       allow(ErrorEvent).to receive(:record)
 
