@@ -17,7 +17,7 @@ WORKDIR /rails
 # Install base packages
 RUN apt-get update -qq && \
     apt-get upgrade -y -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 sqlite3 procps && \
+    apt-get install --no-install-recommends -y libjemalloc2 procps && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
