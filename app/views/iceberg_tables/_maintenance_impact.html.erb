@@ -1,0 +1,19 @@
+<%# Last maintenance impact panel: shows the before/after metadata diff for
+    the most recent successful maintenance run on this table. %>
+<% last_success = @table.execution_histories.success.latest.first %>
+<% if last_success&.metadata_before&.present? && last_success&.metadata_after&.present? %>
+  <section class="panel mb-6">
+    <div class="panel-head">
+      <h2 class="panel-title"><%= t("maintenance.impact.title") %></h2>
+      <span class="panel-note"><%= t("maintenance.impact.subtitle") %></span>
+    </div>
+    <div class="panel-body">
+      <% diff = metadata_diff(last_success) %>
+      <% if diff %>
+        <%= diff %>
+      <% else %>
+        <p class="cell-muted"><%= t("operations.index.no_change") %></p>
+      <% end %>
+    </div>
+  </section>
+<% end %>

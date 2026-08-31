@@ -75,6 +75,25 @@ class MaintenancePoliciesController < ApplicationController
     redirect_to @policy, notice: notice
   end
 
+  # Bulk apply from the tables index: select tables → pick a policy → apply.
+  def bulk_apply
+    authorize MaintenancePolicy, :apply?
+    policy = MaintenancePolicy.find(params[:policy_id])
+    ids = Array(params[:iceberg_table_ids]).reject(&:blank?)
+
+    if ids.empty?
+      redirect_to iceberg_tables_path, alert: t("policies.notices.no_tables_selected")
+      return
+    end
+
+    result = policy.apply_to!(IcebergTable.where(id: ids))
+
+    notice = t("policies.notices.applied", created: result[:created], updated: result[:updated])
+    notice += " #{result[:skipped]} #{t('policies.notices.skipped')}" if result[:skipped].positive?
+
+    redirect_to iceberg_tables_path, notice: notice
+  end
+
   private
 
   # Loads the maintenance policy for the current request.
@@ -102,6 +121,7 @@ class MaintenancePoliciesController < ApplicationController
 
   def policy_params
     params.require(:maintenance_policy)
-          .permit(:name, :description, :cron, steps_config: {})
+          .permit(:name, :description, :cron,
+                  steps_config: %i[file_size_threshold retention_threshold snapshot_ids where])
   end
 end

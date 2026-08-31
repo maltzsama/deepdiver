@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_22_250000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_31_232000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"
@@ -99,6 +99,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_250000) do
     t.integer "iceberg_table_id", null: false
     t.datetime "last_heartbeat_at"
     t.integer "maintenance_plan_id"
+    t.json "metadata_after"
+    t.json "metadata_before"
     t.json "metrics"
     t.integer "retry_count", default: 0, null: false
     t.string "skip_reason"

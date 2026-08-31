@@ -1,18 +1,20 @@
 <%# Engine lifecycle history - rendered last on the activity screen. %>
+<% events = Array(local_assigns[:engine_events]) %>
+<% uptimes = engine_uptimes(events) %>
 <section id="activity-engine-history" class="panel mb-6">
   <div class="panel-head">
     <h2 class="panel-title"><%= t("activity.engine.history_title") %></h2>
   </div>
 
-  <% events = Array(local_assigns[:engine_events]) %>
   <% if events.any? %>
     <div class="data-table-scroll">
       <table class="data-table">
         <thead>
           <tr>
-            <th scope="col" class="w-[34%]"><%= t("activity.engine.col_when") %></th>
-            <th scope="col" class="w-[44%]"><%= t("activity.engine.col_event") %></th>
-            <th scope="col" class="w-[22%]"><%= t("activity.engine.col_gen") %></th>
+            <th scope="col" class="w-[30%]"><%= t("activity.engine.col_when") %></th>
+            <th scope="col" class="w-[35%]"><%= t("activity.engine.col_event") %></th>
+            <th scope="col" class="w-[20%]"><%= t("activity.engine.col_engine") %></th>
+            <th scope="col" class="w-[15%]"><%= t("activity.engine.col_uptime") %></th>
           </tr>
         </thead>
         <tbody>
@@ -26,11 +28,13 @@
                   <span class="badge-dot"></span><%= engine_event_label(event) %>
                 </span>
               </td>
+              <td class="cell-muted">
+                <%= engine_target_label %>
+              </td>
               <td class="cell-num">
-                <% if event.context["generation"] %>
-                  <%= t("activity.engine.gen", gen: event.context["generation"]) %>
-                <% elsif (g = engine_event_generation(event)) %>
-                  <%= t("activity.engine.gen", gen: g) %>
+                <% gen = event.context&.dig("generation") %>
+                <% if gen && uptimes[gen] %>
+                  <%= duration_label(uptimes[gen]) %>
                 <% else %>
                   <span class="cell-muted">—</span>
                 <% end %>

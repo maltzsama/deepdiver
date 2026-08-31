@@ -6,14 +6,14 @@ class ErrorEventsController < ApplicationController
   # Lists error events, filterable by operation, status, and catalog.
   def index
     authorize ErrorEvent
-    scope = ErrorEvent.includes(:catalog).order(occurrence_count: :desc, last_seen_at: :desc)
+    scope = ErrorEvent.includes(:catalog).not_lifecycle.order(occurrence_count: :desc, last_seen_at: :desc)
 
     scope = scope.where(operation: params[:operation]) if params[:operation].present?
     scope = scope.where(status: params[:status]) if params[:status].in?(ErrorEvent::STATUSES)
     scope = scope.catalog_events(Catalog.find(params[:catalog_id])) if params[:catalog_id].present?
     @pagy, @events = pagy(scope)
-    @operations = ErrorEvent.distinct.pluck(:operation).sort
-    @status_counts = ErrorEvent.group(:status).count
+    @operations = ErrorEvent.not_lifecycle.distinct.pluck(:operation).sort
+    @status_counts = ErrorEvent.not_lifecycle.group(:status).count
   end
 
   # Full detail of one failure: message, context, assignment state.

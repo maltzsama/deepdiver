@@ -171,7 +171,8 @@ en:
       gen: "generation %{gen}"
       col_when: "When"
       col_event: "Event"
-      col_gen: "Generation"
+      col_engine: "Engine"
+      col_uptime: "Uptime"
     queries:
       title: "Active queries"
       count: "%{count} query(s)"
@@ -264,6 +265,27 @@ en:
       disabled: "disabled"
       paused: "paused"
       active: "active"
+    new:
+      title: "New plan"
+    form:
+      table: "Table"
+      table_prompt: "Select a table"
+      cron: "Schedule (cron)"
+      cron_hint: "e.g. '0 2 * * *' for daily at 2am"
+      steps_title: "Maintenance steps"
+      enabled: "Enabled"
+      cadence_placeholder: "follows plan"
+      submit: "Create plan"
+      cancel: "Cancel"
+      errors_one: "1 problem to fix"
+      errors_other: "%{count} problems to fix"
+    notices:
+      created: "Plan created."
+      updated: "Plan updated."
+      already_exists: "This table already has a plan."
+      enqueued: "Maintenance enqueued."
+      paused: "Plan paused."
+      resumed: "Plan resumed."
     edit:
       title: "Edit plan"
       subtitle: "Edit the schedule and the chain of maintenance steps."
@@ -392,6 +414,8 @@ en:
     run_maintenance:
       enqueued: "Maintenance enqueued - it will start when the engine comes up."
       already_queued: "Maintenance for this table is already queued or running."
+    sync_table:
+      enqueued: "Table metadata refresh enqueued."
     show:
       eyebrow_prefix: "Table ·"
       new_schedule: "New schedule"
@@ -472,6 +496,7 @@ en:
       synced_ago: "Metadata synced %{time} ago"
       not_synced: "Tables not synced yet"
       sync_now: "Sync now"
+      sync_catalog: "Sync catalog"
       sync_enqueued: "Catalog sync enqueued for all catalogs."
       result: "Result"
       count: "%{count} table(s)"
@@ -492,8 +517,12 @@ en:
       col_plan: "Plan"
       plan_link: "Plan"
       no_plan: "no plan"
+      create_plan: "+ plan"
       no_plan_option: "No plan"
       run: "Run"
+      sync_table: "Refresh"
+      select_policy: "Select a policy..."
+      apply_policy: "Apply policy"
       col_actions: "Actions"
     filter_catalog: "Catalog"
     filter_namespace: "Namespace"
@@ -645,6 +674,7 @@ en:
       legend_skipped: "%{op}: %{reason}"
       legend_waiting_engine: "waiting for engine"
       owner_execution: "execution"
+      no_change: "No metadata changes detected"
       fresh_col_delay: "Delay"
       fresh_col_sla: "SLA (min)"
     filter_operation: "Operation"
@@ -773,6 +803,7 @@ en:
       destroyed: "Policy deleted."
       applied: "%{created} plan(s) created, %{updated} updated."
       skipped: "skipped (already managed by another policy)."
+      no_tables_selected: "No tables selected."
 
   users:
     index:
@@ -943,4 +974,16 @@ en:
             trino_catalog_name_override:
               invalid_format: "must start with a lowercase letter and contain only letters, numbers and _ (max %{max}). Derived: %{derived}"
               reserved: "%{name} is reserved by Trino (%{reserved})"
+  maintenance:
+    metrics:
+      total_data_files: "Data files"
+      total_size_bytes: "Size"
+      position_deletes: "Position deletes"
+      equality_deletes: "Equality deletes"
+      snapshot_count: "Snapshots"
+      oldest_snapshot_at: "Oldest snapshot"
+    impact:
+      title: "Last maintenance impact"
+      subtitle: "before → after"
+      no_data: "No maintenance has run on this table yet."
 

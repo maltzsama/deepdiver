@@ -48,6 +48,10 @@ Rails.application.routes.draw do
   resources :teams
 
   resources :catalogs, only: %i[index show new create edit update destroy] do
+    collection do
+      post :verify_draft
+    end
+
     member do
       post :sync
       post :verify
@@ -62,6 +66,7 @@ Rails.application.routes.draw do
 
     member do
       post :run_maintenance
+      post :sync_table
     end
 
     resource :freshness_sla, only: %i[edit update], controller: "freshness_slas"
@@ -73,7 +78,7 @@ Rails.application.routes.draw do
   end
 
   # Maintenance plans.
-  resources :maintenance_plans, only: %i[index show edit update] do
+  resources :maintenance_plans, only: %i[index show new create edit update] do
     member do
       post :run
       post :pause
@@ -84,6 +89,7 @@ Rails.application.routes.draw do
   # Maintenance policies.
   resources :maintenance_policies do
     member { post :apply }
+    collection { post :bulk_apply }
   end
 
   # User administration (CR-64).

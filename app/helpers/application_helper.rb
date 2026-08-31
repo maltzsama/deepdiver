@@ -354,4 +354,128 @@ module ApplicationHelper
     parts << "#{number_to_human(deletes)} deletes / #{number_to_human(table.total_records)} records" if deletes.positive?
     parts.any? ? parts.join(" · ") : t("health.no_data")
   end
+
+  # Coordinator Deployment identifier for engine-sourced events.
+  # @return [String] e.g. "trino/production-coordinator"
+  def engine_target_label
+    TrinoProvisioner.target
+  rescue StandardError
+    "engine"
+  end
+
+  # Computes uptime durations for paired lifecycle events by generation.
+  # @param events [Array<ErrorEvent>] lifecycle events ordered by last_seen_at
+  # @return [Hash{Integer => Float}] generation → uptime in seconds
+  def engine_uptimes(events)
+    ups = {}
+    result = {}
+
+    events.each do |event|
+      gen = event.context&.dig("generation")
+      state = event.context&.dig("state")
+      next unless gen
+
+      if state == "up"
+        ups[gen] = event.last_seen_at
+      elsif ups[gen] && %w[draining stopping down].include?(state)
+        result[gen] = event.last_seen_at - ups[gen]
+        ups.delete(gen)
+      end
+    end
+
+    # Engines still running: uptime from up-event to now
+    ups.each do |gen, up_at|
+      result[gen] = Time.current - up_at
+    end
+
+    result
+  end
+
+  # Metrics that each operation actually moves, used to scope the diff display.
+  OPERATION_METRICS = {
+    "optimize"          => %w[total_data_files total_size_bytes position_deletes equality_deletes],
+    "expire_snapshots"  => %w[snapshot_count oldest_snapshot_at],
+    "remove_orphan_files" => [],
+    "optimize_manifests" => []
+  }.freeze
+
+  # Renders a before/after metadata diff for a maintenance execution.
+  # Only shows the metrics relevant to the operations that actually ran.
+  # @param execution [ExecutionHistory] the execution with before/after snapshots
+  # @return [ActiveSupport::SafeBuffer, nil] the rendered diff, or nil when not available
+  def metadata_diff(execution)
+    before = execution.metadata_before
+    after  = execution.metadata_after
+    return nil if before.nil? || after.nil?
+
+    operations = execution.execution_steps.pluck(:operation).uniq
+    relevant_keys = operations.flat_map { |op| OPERATION_METRICS[op] }.uniq
+    return nil if relevant_keys.empty?
+
+    rows = relevant_keys.filter_map do |key|
+      old_val = before[key]
+      new_val = after[key]
+      next if old_val == new_val
+
+      label = t("maintenance.metrics.#{key}", default: key.humanize)
+      delta = compute_delta(key, old_val, new_val)
+      next if delta.nil?
+
+      [ label, old_val, new_val, delta ]
+    end
+
+    return nil if rows.empty?
+
+    content_tag(:div, class: "metadata-diff") do
+      rows.map { |label, old_val, new_val, delta|
+        content_tag(:div, class: "metadata-diff-row") do
+          safe_join([
+            content_tag(:span, label, class: "metadata-diff-label"),
+            content_tag(:span, format_metric_value(key_for(label), old_val), class: "metadata-diff-old"),
+            safe_join([ content_tag(:span, "→", class: "metadata-diff-arrow"),
+                        content_tag(:span, format_metric_value(key_for(label), new_val), class: "metadata-diff-new") ]),
+            content_tag(:span, delta, class: "metadata-diff-delta")
+          ].compact)
+        end
+      }.reduce(:+)
+    end
+  end
+
+  # Formats a metric value for display.
+  def format_metric_value(key, value)
+    return "—" if value.nil?
+
+    case key
+    when "total_size_bytes" then number_to_human_size(value)
+    when "oldest_snapshot_at" then value.is_a?(String) ? Time.parse(value).to_fs(:short) : value.to_fs(:short)
+    else number_with_delimiter(value)
+    end
+  end
+
+  private
+
+  # Computes a human-readable delta string for a metric.
+  def compute_delta(key, old_val, new_val)
+    return nil if old_val.nil? && new_val.nil?
+
+    if old_val.nil?
+      "+#{format_metric_value(key, new_val)}"
+    elsif new_val.nil?
+      "-#{format_metric_value(key, old_val)}"
+    else
+      diff = new_val - old_val
+      return nil if diff == 0
+
+      sign = diff.positive? ? "+" : ""
+      case key
+      when "total_size_bytes" then "#{sign}#{number_to_human_size(diff.abs)}"
+      else "#{sign}#{number_with_delimiter(diff)}"
+      end
+    end
+  end
+
+  # Reverse-lookup: label → key for formatting.
+  def key_for(label)
+    OPERATION_METRICS.values.flatten.find { |k| t("maintenance.metrics.#{k}", default: k.humanize) == label }
+  end
 end

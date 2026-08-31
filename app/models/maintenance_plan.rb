@@ -82,6 +82,35 @@ class MaintenancePlan < ApplicationRecord
     durations.sum / durations.size
   end
 
+  # Batched typical durations for multiple plans in a bounded number of queries.
+  # Returns a Hash mapping plan_id to the average duration (Float) or nil.
+  # @param plan_ids [Array<Integer>] the plan ids to compute for
+  # @return [Hash{Integer => Float}]
+  def self.typical_durations_for(plan_ids)
+    return {} if plan_ids.empty?
+
+    rows = ExecutionHistory
+             .where(maintenance_plan_id: plan_ids, status: "success")
+             .where.not(started_at: nil, finished_at: nil)
+             .select(:maintenance_plan_id, :started_at, :finished_at)
+             .order(started_at: :desc)
+
+    # Keep only the 10 most recent per plan
+    counts = Hash.new(0)
+    sums = Hash.new(0.0)
+
+    rows.each do |row|
+      next if counts[row.maintenance_plan_id] >= 10
+
+      counts[row.maintenance_plan_id] += 1
+      sums[row.maintenance_plan_id] += row.finished_at - row.started_at
+    end
+
+    counts.each_with_object({}) do |(plan_id, count), hash|
+      hash[plan_id] = sums[plan_id] / count
+    end
+  end
+
   private
 
   # Validates that cron is a parseable expression, adding an error otherwise.

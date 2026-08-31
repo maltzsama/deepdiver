@@ -62,4 +62,34 @@ RSpec.describe IcebergTable, type: :model do
       expect(build(:iceberg_table, table_uuid: nil)).to be_valid
     end
   end
+
+  describe "#metadata_snapshot" do
+    it "returns a hash of key metadata fields" do
+      table = create(:iceberg_table,
+        total_records: 1000, total_data_files: 50, total_size_bytes: 5_000_000,
+        position_deletes: 10, equality_deletes: 2,
+        snapshot_count: 5, oldest_snapshot_at: 1.day.ago)
+
+      snapshot = table.metadata_snapshot
+
+      expect(snapshot).to include(
+        "total_records" => 1000,
+        "total_data_files" => 50,
+        "total_size_bytes" => 5_000_000,
+        "position_deletes" => 10,
+        "equality_deletes" => 2,
+        "snapshot_count" => 5
+      )
+      expect(snapshot["oldest_snapshot_at"]).to be_present
+    end
+
+    it "returns nil values when fields are blank" do
+      table = create(:iceberg_table)
+
+      snapshot = table.metadata_snapshot
+
+      expect(snapshot["total_records"]).to be_nil
+      expect(snapshot["total_data_files"]).to be_nil
+    end
+  end
 end

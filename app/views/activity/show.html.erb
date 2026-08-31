@@ -13,6 +13,6 @@
 <%= render "engine_strip", engine_state: @engine_state, active_count: @running.size + @queued.size,
            render_actions: true %>
 <%= render "queue", queue: @queue, running: @running, queued: @queued %>
-<%= render "running", running: @running, queued: @queued %>
+<%= render "running", running: @running, queued: @queued, typical_durations: @typical_durations %>
 <%= render "queries", queries: @queries %>
 <%= render "engine_history", engine_events: @engine_events %>

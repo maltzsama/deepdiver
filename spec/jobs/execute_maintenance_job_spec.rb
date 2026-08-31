@@ -142,4 +142,74 @@ RSpec.describe ExecuteMaintenanceJob, type: :job do
     expect(execution.reload.status).to eq("success")
     expect(TableLock.exists?(execution_history_id: execution.id)).to be(false)
   end
+
+  describe "before/after metadata snapshots" do
+    it "captures metadata_before at chain start" do
+      execution = released_execution
+
+      described_class.perform_now(execution.id)
+
+      expect(execution.reload.metadata_before).not_to be_nil
+      expect(execution.metadata_before).to include("total_records", "snapshot_count")
+    end
+
+    it "captures metadata_after at chain end" do
+      execution = released_execution
+      5.times { described_class.perform_now(execution.id) }
+
+      expect(execution.reload.metadata_after).not_to be_nil
+      expect(execution.metadata_after).to include("total_records", "snapshot_count")
+    end
+
+    it "does not overwrite metadata_before on subsequent steps" do
+      execution = released_execution
+      described_class.perform_now(execution.id)
+      before_snapshot = execution.reload.metadata_before
+
+      described_class.perform_now(execution.id)
+
+      expect(execution.reload.metadata_before).to eq(before_snapshot)
+    end
+
+    it "raises ErrorEvent when total_records changes" do
+      execution = released_execution
+      described_class.perform_now(execution.id)
+
+      # Manually set up a before/after mismatch
+      execution.update!(status: :running, metadata_before: { "total_records" => 100 },
+                                        metadata_after: { "total_records" => 200 })
+
+      # Verify the integrity check directly
+      job = described_class.new
+      expect { job.send(:check_records_integrity!, execution) }
+        .to change { ErrorEvent.count }.by(1)
+
+      event = ErrorEvent.last
+      expect(event.operation).to eq("records-integrity")
+      expect(event.severity).to eq("error")
+      expect(event.message).to include("100").and include("200")
+    end
+
+    it "skips integrity check when before total_records is nil" do
+      execution = released_execution
+      described_class.perform_now(execution.id)
+      execution.update!(metadata_before: { "total_records" => nil },
+                        metadata_after: { "total_records" => 200 })
+
+      job = described_class.new
+      expect { job.send(:check_records_integrity!, execution) }
+        .not_to change { ErrorEvent.count }
+    end
+
+    it "skips integrity check when after total_records is nil" do
+      execution = released_execution
+      described_class.perform_now(execution.id)
+      execution.update!(metadata_before: { "total_records" => 100 },
+                        metadata_after: { "total_records" => nil })
+
+      job = described_class.new
+      expect { job.send(:check_records_integrity!, execution) }
+        .not_to change { ErrorEvent.count }
+    end
+  end
 end

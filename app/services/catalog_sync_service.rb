@@ -13,6 +13,27 @@ class CatalogSyncService
     @now = now
   end
 
+  # Refreshes a single table's metadata without re-syncing the whole catalog.
+  #
+  # @param table [IcebergTable] the table to refresh
+  # @return [Hash] { ok: true } or { ok: false, error: message }
+  def sync_table(table)
+    TrinoSecretMaterializer.new.materialize!(Catalog.includes(:catalog_credential))
+    upsert_table(table.namespace, table.name)
+    { ok: true }
+  rescue StandardError => e
+    Rails.logger.warn("Per-table sync failed for #{table.fully_qualified_name}: #{e.message}")
+    { ok: false, error: e.message }
+  end
+
+  # Convenience: refresh a single table by its id.
+  # @param table_id [Integer]
+  # @return [Hash]
+  def self.sync_table(table_id)
+    table = IcebergTable.includes(:catalog).find(table_id)
+    new(table.catalog).sync_table(table)
+  end
+
   # Syncs every namespace/table of the catalog and refreshes local health
   # signals. Tables that no longer exist in the catalog are soft-deleted so
   # their history is kept.

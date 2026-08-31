@@ -16,6 +16,42 @@ class MaintenancePlansController < ApplicationController
     authorize @plan
   end
 
+  # Renders the new plan form with a table selector and default steps.
+  def new
+    authorize MaintenancePlan
+    @plan = MaintenancePlan.new
+    @plan.cron = MaintenancePlan::DEFAULT_CRON
+    MaintenancePlan::CANONICAL_ORDER.each_with_index do |operation, position|
+      @plan.maintenance_steps.build(
+        operation: operation, position: position,
+        enabled: MaintenancePlan::DEFAULT_ENABLED_STEPS.include?(operation)
+      )
+    end
+    @tables = IcebergTable.includes(:catalog).order(:namespace, :name)
+  end
+
+  # Creates a plan for the selected table. If the table already has a plan,
+  # redirects to the existing plan's edit form instead.
+  def create
+    authorize MaintenancePlan
+    table = IcebergTable.find(params[:maintenance_plan][:iceberg_table_id])
+    existing = MaintenancePlan.find_by(iceberg_table: table)
+
+    if existing
+      redirect_to edit_maintenance_plan_path(existing), notice: t("plans.notices.already_exists")
+      return
+    end
+
+    @plan = MaintenancePlan.new(plan_params.merge(iceberg_table: table))
+
+    if @plan.save
+      redirect_to @plan, notice: t("plans.notices.created")
+    else
+      @tables = IcebergTable.includes(:catalog).order(:namespace, :name)
+      render :new, status: :unprocessable_content
+    end
+  end
+
   # Renders the edit form, ensuring every canonical step is present for editing.
   def edit
     authorize @plan
@@ -65,8 +101,11 @@ class MaintenancePlansController < ApplicationController
   # Strong parameters for the plan: the cron and the form's maintenance steps.
   def plan_params
     params.require(:maintenance_plan).permit(
-      :cron,
-      maintenance_steps_attributes: [ :id, :enabled, :cadence_cron, config: {} ]
+      :cron, :iceberg_table_id,
+      maintenance_steps_attributes: [
+        :id, :enabled, :cadence_cron,
+        config: %i[file_size_threshold retention_threshold snapshot_ids where]
+      ]
     )
   end
 

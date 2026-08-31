@@ -9,6 +9,8 @@ class ActivityController < ApplicationController
     @running = ExecutionHistory.includes(:iceberg_table, :execution_steps, maintenance_plan: :maintenance_steps)
                                .where(status: "running")
                                .order(:created_at)
+    plan_ids = @running.map(&:maintenance_plan_id).compact.uniq
+    @typical_durations = MaintenancePlan.typical_durations_for(plan_ids)
     @queued = ExecutionHistory.includes(:iceberg_table)
                               .where(status: "pending")
                               .order(:created_at)

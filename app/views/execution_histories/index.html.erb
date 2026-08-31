@@ -168,6 +168,15 @@
         <% if execution.error_message.present? %>
           <div class="op-error"><span class="op-error-owner"><%= t("operations.index.owner_execution") %> —</span> <%= execution.error_message %></div>
         <% end %>
+
+        <% if execution.status == "success" %>
+          <% diff = metadata_diff(execution) %>
+          <% if diff %>
+            <div class="op-legend op-legend--meta mt-2">
+              <%= diff %>
+            </div>
+          <% end %>
+        <% end %>
       </article>
     <% end %>
     <%== pager_nav(@pagy) %>
