@@ -42,6 +42,21 @@ class IcebergTable < ApplicationRecord
     total_size_bytes / total_data_files
   end
 
+  # Snapshot of key metadata fields for before/after comparison.
+  # Only includes fields that maintenance operations actually move.
+  # @return [Hash] the metadata snapshot
+  def metadata_snapshot
+    {
+      "total_records"    => total_records,
+      "total_data_files" => total_data_files,
+      "total_size_bytes" => total_size_bytes,
+      "position_deletes" => position_deletes,
+      "equality_deletes" => equality_deletes,
+      "snapshot_count"   => snapshot_count,
+      "oldest_snapshot_at" => oldest_snapshot_at&.iso8601
+    }
+  end
+
   # Trino SQL identifier, always exactly three parts: catalog.schema.table.
   # The whole namespace stays inside a single quoted part; the Iceberg
   # connector rebuilds the nested Namespace from its separator. Never split

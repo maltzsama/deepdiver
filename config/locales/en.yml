@@ -674,6 +674,7 @@ en:
       legend_skipped: "%{op}: %{reason}"
       legend_waiting_engine: "waiting for engine"
       owner_execution: "execution"
+      no_change: "No metadata changes detected"
       fresh_col_delay: "Delay"
       fresh_col_sla: "SLA (min)"
     filter_operation: "Operation"
@@ -973,4 +974,16 @@ en:
             trino_catalog_name_override:
               invalid_format: "must start with a lowercase letter and contain only letters, numbers and _ (max %{max}). Derived: %{derived}"
               reserved: "%{name} is reserved by Trino (%{reserved})"
+  maintenance:
+    metrics:
+      total_data_files: "Data files"
+      total_size_bytes: "Size"
+      position_deletes: "Position deletes"
+      equality_deletes: "Equality deletes"
+      snapshot_count: "Snapshots"
+      oldest_snapshot_at: "Oldest snapshot"
+    impact:
+      title: "Last maintenance impact"
+      subtitle: "before → after"
+      no_data: "No maintenance has run on this table yet."
 

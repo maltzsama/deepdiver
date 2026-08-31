@@ -467,6 +467,15 @@
   .dl-desc { @apply mt-1 text-body text-cosmos-fg; }
   .dl-desc-mono{ @apply mt-1 font-mono text-body text-cosmos-fg break-all; }
 
+  /* ---------- metadata diff ---------- */
+  .metadata-diff { @apply flex flex-col gap-2; }
+  .metadata-diff-row { @apply flex items-center gap-3 text-small; }
+  .metadata-diff-label { @apply font-mono text-cosmos-fg-muted w-36 shrink-0; }
+  .metadata-diff-old { @apply font-mono text-cosmos-fg-muted; }
+  .metadata-diff-arrow { @apply text-cosmos-fg-muted; }
+  .metadata-diff-new { @apply font-mono text-cosmos-fg; }
+  .metadata-diff-delta { @apply font-mono text-cosmos-fg-muted ml-auto; }
+
   /* ---------- authentication screen ---------- */
   .auth-shell {
     @apply min-h-screen bg-[#05050A] text-cosmos-fg font-sans lg:grid lg:grid-cols-5 relative overflow-hidden;

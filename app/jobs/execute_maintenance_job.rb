@@ -19,7 +19,9 @@ class ExecuteMaintenanceJob < ApplicationJob
       return
     end
 
-    execution.update!(started_at: Time.current) if execution.started_at.nil?
+    if execution.metadata_before.nil?
+      execution.update!(metadata_before: execution.iceberg_table.metadata_snapshot)
+    end
 
     # retry_count on the execution counts pending-dispatch retries only (step
     # retries live on ExecutionStep). Once the dispatch is visible those are
@@ -148,6 +150,30 @@ class ExecuteMaintenanceJob < ApplicationJob
     TrinoEngineSupervisor.demand_finished!
 
     table = execution.iceberg_table
-    CatalogSyncService.sync_table(table.id) if table
+    if table
+      CatalogSyncService.sync_table(table.id)
+      execution.update!(metadata_after: table.reload.metadata_snapshot)
+      check_records_integrity!(execution)
+    end
+  end
+
+  # Compares total_records before and after maintenance. A mismatch when both
+  # values are present means the chain silently altered the logical row count,
+  # which maintenance must never do. Surfaces as an ErrorEvent.
+  def check_records_integrity!(execution)
+    before = execution.metadata_before&.dig("total_records")
+    after  = execution.metadata_after&.dig("total_records")
+    return if before.nil? || after.nil?
+    return if before == after
+
+    table = execution.iceberg_table
+    ErrorEvent.record(
+      catalog: table.catalog, schema: table.namespace, table: table.name,
+      operation: "records-integrity", source_system: "execution",
+      severity: "error",
+      error_class: "RecordsIntegrityViolation",
+      message: "Maintenance on #{table.fully_qualified_name} changed total_records " \
+               "from #{before} to #{after} (delta: #{after - before})"
+    )
   end
 end
