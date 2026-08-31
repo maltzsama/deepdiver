@@ -95,7 +95,9 @@
                 <% if (plan = table.maintenance_plan) %>
                   <%= link_to t("tables.index.plan_link"), plan, class: "badge badge-neutral" %>
                 <% else %>
-                  <span class="badge badge-warning"><%= t("tables.index.no_plan") %></span>
+                  <%= link_to t("tables.index.create_plan"),
+                              new_maintenance_plan_path(maintenance_plan: { iceberg_table_id: table.id }),
+                              class: "badge badge-warning" %>
                 <% end %>
               </td>
               <td>

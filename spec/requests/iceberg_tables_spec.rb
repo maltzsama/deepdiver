@@ -64,7 +64,7 @@ RSpec.describe "GET /iceberg_tables", type: :request do
   it "flags tables without a plan" do
     get iceberg_tables_path
 
-    expect(response.body).to include("no plan")
+    expect(response.body).to include("+ plan")
   end
 
   it "filters by tables without a plan" do

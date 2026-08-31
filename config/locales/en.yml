@@ -517,6 +517,7 @@ en:
       col_plan: "Plan"
       plan_link: "Plan"
       no_plan: "no plan"
+      create_plan: "+ plan"
       no_plan_option: "No plan"
       run: "Run"
       sync_table: "Refresh"
