@@ -421,7 +421,7 @@ module ApplicationHelper
       delta = compute_delta(key, old_val, new_val)
       next if delta.nil?
 
-      [label, old_val, new_val, delta]
+      [ label, old_val, new_val, delta ]
     end
 
     return nil if rows.empty?
@@ -432,8 +432,8 @@ module ApplicationHelper
           safe_join([
             content_tag(:span, label, class: "metadata-diff-label"),
             content_tag(:span, format_metric_value(key_for(label), old_val), class: "metadata-diff-old"),
-            safe_join([content_tag(:span, "→", class: "metadata-diff-arrow"),
-                       content_tag(:span, format_metric_value(key_for(label), new_val), class: "metadata-diff-new")]),
+            safe_join([ content_tag(:span, "→", class: "metadata-diff-arrow"),
+                        content_tag(:span, format_metric_value(key_for(label), new_val), class: "metadata-diff-new") ]),
             content_tag(:span, delta, class: "metadata-diff-delta")
           ].compact)
         end

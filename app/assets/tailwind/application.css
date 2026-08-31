@@ -470,11 +470,11 @@
   /* ---------- metadata diff ---------- */
   .metadata-diff { @apply flex flex-col gap-2; }
   .metadata-diff-row { @apply flex items-center gap-3 text-small; }
-  .metadata-diff-label { @apply font-mono text-cosmos-fg-muted w-36 shrink-0; }
-  .metadata-diff-old { @apply font-mono text-cosmos-fg-muted; }
-  .metadata-diff-arrow { @apply text-cosmos-fg-muted; }
+  .metadata-diff-label { @apply font-mono text-cosmos-fg-mute w-36 shrink-0; }
+  .metadata-diff-old { @apply font-mono text-cosmos-fg-mute; }
+  .metadata-diff-arrow { @apply text-cosmos-fg-mute; }
   .metadata-diff-new { @apply font-mono text-cosmos-fg; }
-  .metadata-diff-delta { @apply font-mono text-cosmos-fg-muted ml-auto; }
+  .metadata-diff-delta { @apply font-mono text-cosmos-fg-mute ml-auto; }
 
   /* ---------- authentication screen ---------- */
   .auth-shell {
