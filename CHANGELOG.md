@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.4](https://github.com/maltzsama/deepdiver/compare/v0.5.3...v0.5.4) (2026-08-31)
+
+
+### Bug Fixes
+
+* **helm:** raise worker readinessProbe timeout to 30s ([9605efe](https://github.com/maltzsama/deepdiver/commit/9605efe3a3849bfb5243754ec207c9937fed23c5)), closes [#95](https://github.com/maltzsama/deepdiver/issues/95)
+* **helm:** use correct process name in worker startup/liveness probes ([7482768](https://github.com/maltzsama/deepdiver/commit/748276810c80c5eee0f25997e250845b170b50fb)), closes [#94](https://github.com/maltzsama/deepdiver/issues/94)
+
 ## [0.5.3](https://github.com/maltzsama/deepdiver/compare/v0.5.2...v0.5.3) (2026-08-30)
 
 
