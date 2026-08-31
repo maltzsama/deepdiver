@@ -35,10 +35,20 @@ class ChartTrinoProvisioner
     @k8s.deployment_exists?
   end
 
-  # Healthy means HTTP 200 and starting:false on /v1/info.
+  # Healthy means HTTP 200 and starting:false on /v1/info.  In cluster
+  # topology, also verifies that every node (including workers) has finished
+  # starting via /v1/node — a worker can be Kubernetes-Ready while its Trino
+  # JVM is still in its own internal STARTING phase.
   def healthy?
     body = @transport.get("#{@base_url}/v1/info")
-    body["starting"] == false
+    return false unless body["starting"] == false
+
+    if config.cluster?
+      nodes = @transport.get("#{@base_url}/v1/node")
+      return false unless nodes.is_a?(Array) && nodes.all? { |n| n["starting"] == false }
+    end
+
+    true
   rescue StandardError
     false
   end
