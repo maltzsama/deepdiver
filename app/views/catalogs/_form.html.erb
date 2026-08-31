@@ -171,6 +171,10 @@
       <div class="form-actions">
         <%= form.submit t("catalogs.form.submit"), class: "btn btn-primary",
                         data: { turbo_submits_with: t("actions.sending") } %>
+        <%= button_tag t("catalogs.form.test_connection"), type: "submit",
+                       formaction: verify_draft_catalogs_path, formmethod: :post,
+                       class: "btn btn-default",
+                       data: { turbo_submits_with: t("actions.sending") } %>
         <%= link_to t("catalogs.form.cancel"), catalogs_path, class: "link text-body" %>
       </div>
     <% end %>

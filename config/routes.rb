@@ -48,6 +48,10 @@ Rails.application.routes.draw do
   resources :teams
 
   resources :catalogs, only: %i[index show new create edit update destroy] do
+    collection do
+      post :verify_draft
+    end
+
     member do
       post :sync
       post :verify

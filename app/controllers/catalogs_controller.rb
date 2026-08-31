@@ -82,6 +82,21 @@ class CatalogsController < ApplicationController
     end
   end
 
+  # Tests a catalog connection from form params without persisting. Used by
+  # the new/edit form "Test connection" button.
+  def verify_draft
+    authorize Catalog
+    catalog = Catalog.new(catalog_params)
+    catalog.build_catalog_credential(catalog_params[:catalog_credential_attributes]) if catalog_params[:catalog_credential_attributes]
+    result = catalog.verify_connection!
+
+    if result[:ok]
+      redirect_back fallback_location: catalogs_path, notice: t("catalogs.verify.ok", count: result[:namespace_count])
+    else
+      redirect_back fallback_location: catalogs_path, alert: t("catalogs.verify.failed", error: result[:error])
+    end
+  end
+
   private
 
   # Loads the catalog for the current request.
