@@ -64,6 +64,50 @@ RSpec.describe ChartTrinoProvisioner do
     expect(provisioner.replicas).to eq(2)
   end
 
+  describe "#healthy?" do
+    it "checks coordinator starting flag from /v1/info in single topology" do
+      TrinoEngineConfig.instance.update!(topology: "single")
+      allow(transport).to receive(:get).with("http://trino/v1/info").and_return("starting" => false)
+
+      expect(provisioner.healthy?).to be true
+    end
+
+    it "returns false when coordinator is still starting" do
+      TrinoEngineConfig.instance.update!(topology: "single")
+      allow(transport).to receive(:get).with("http://trino/v1/info").and_return("starting" => true)
+
+      expect(provisioner.healthy?).to be false
+    end
+
+    it "checks all nodes via /v1/node in cluster topology" do
+      TrinoEngineConfig.instance.update!(topology: "cluster")
+      allow(transport).to receive(:get).with("http://trino/v1/info").and_return("starting" => false)
+      allow(transport).to receive(:get).with("http://trino/v1/node").and_return([
+        { "starting" => false, "coordinator" => true },
+        { "starting" => false, "coordinator" => false }
+      ])
+
+      expect(provisioner.healthy?).to be true
+    end
+
+    it "returns false in cluster topology when a worker is still starting" do
+      TrinoEngineConfig.instance.update!(topology: "cluster")
+      allow(transport).to receive(:get).with("http://trino/v1/info").and_return("starting" => false)
+      allow(transport).to receive(:get).with("http://trino/v1/node").and_return([
+        { "starting" => false, "coordinator" => true },
+        { "starting" => true, "coordinator" => false }
+      ])
+
+      expect(provisioner.healthy?).to be false
+    end
+
+    it "returns false when /v1/info fails" do
+      allow(transport).to receive(:get).with("http://trino/v1/info").and_raise(StandardError)
+
+      expect(provisioner.healthy?).to be false
+    end
+  end
+
   describe "#create!" do
     before do
       TrinoEngineConfig.instance.update!(topology: "cluster", worker_replicas: 3,

@@ -34,4 +34,36 @@ RSpec.describe K8sClient do
       expect(client.live_replicas).to eq(0)
     end
   end
+
+  describe "#ready?" do
+    it "returns true when readyReplicas >= spec.replicas" do
+      dep = double("deployment",
+        spec: { "replicas" => 2 },
+        status: { "readyReplicas" => 2 }
+      )
+      allow(kubeclient).to receive(:get_deployment).with(deployment, namespace).and_return(dep)
+
+      expect(client.ready?).to be true
+    end
+
+    it "returns false when readyReplicas < spec.replicas" do
+      dep = double("deployment",
+        spec: { "replicas" => 2 },
+        status: { "readyReplicas" => 1 }
+      )
+      allow(kubeclient).to receive(:get_deployment).with(deployment, namespace).and_return(dep)
+
+      expect(client.ready?).to be false
+    end
+
+    it "returns false when readyReplicas is nil" do
+      dep = double("deployment",
+        spec: { "replicas" => 1 },
+        status: { "readyReplicas" => nil }
+      )
+      allow(kubeclient).to receive(:get_deployment).with(deployment, namespace).and_return(dep)
+
+      expect(client.ready?).to be false
+    end
+  end
 end

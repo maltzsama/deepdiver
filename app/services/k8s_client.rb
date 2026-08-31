@@ -69,12 +69,12 @@ class K8sClient
     @kubeclient.patch_deployment(deployment, deep_stringify(patch), namespace)
   end
 
-  # Whether the Deployment has at least one ready replica.
+  # Whether the Deployment has all desired replicas ready.
   #
-  # @return [Boolean] true when ready
+  # @return [Boolean] true when readyReplicas >= spec.replicas
   def ready?
-    status = @kubeclient.get_deployment(deployment, namespace).status
-    status["readyReplicas"].to_i >= 1
+    dep = @kubeclient.get_deployment(deployment, namespace)
+    dep.status["readyReplicas"].to_i >= dep.spec["replicas"].to_i
   end
 
   # The Deployment's desired replica count.
