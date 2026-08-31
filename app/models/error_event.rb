@@ -18,6 +18,7 @@ class ErrorEvent < ApplicationRecord
 
   scope :open, -> { where(status: "open") }
   scope :catalog_events, ->(catalog) { where(catalog_id: catalog.id) }
+  scope :not_lifecycle, -> { where.not(operation: "engine-lifecycle", severity: "info") }
   scope :table_events, ->(table) do
     where(schema: table.namespace, table: table.name)
   end
