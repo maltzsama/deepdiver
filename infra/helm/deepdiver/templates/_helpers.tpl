@@ -322,13 +322,13 @@ spec:
             {{- end }}
           startupProbe:
             exec:
-              command: [ "pgrep", "-f", "solid_queue" ]
+              command: [ "pgrep", "-f", "solid-queue" ]
             periodSeconds: 5
             timeoutSeconds: 5
             failureThreshold: 30
           livenessProbe:
             exec:
-              command: [ "pgrep", "-f", "solid_queue" ]
+              command: [ "pgrep", "-f", "solid-queue" ]
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3
@@ -347,7 +347,7 @@ spec:
                 - runner
                 - {{ "exit(SolidQueue::Process.where(hostname: Socket.gethostname).where(\"last_heartbeat_at > ?\", SolidQueue.process_alive_threshold.ago).exists? ? 0 : 1)" | quote }}
             periodSeconds: 15
-            timeoutSeconds: 10
+            timeoutSeconds: 30
             failureThreshold: 3
           {{- with default $root.Values.securityContext $vals.securityContext }}
           securityContext:
