@@ -322,13 +322,13 @@ spec:
             {{- end }}
           startupProbe:
             exec:
-              command: [ "pgrep", "-f", "solid_queue" ]
+              command: [ "pgrep", "-f", "solid-queue" ]
             periodSeconds: 5
             timeoutSeconds: 5
             failureThreshold: 30
           livenessProbe:
             exec:
-              command: [ "pgrep", "-f", "solid_queue" ]
+              command: [ "pgrep", "-f", "solid-queue" ]
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3
