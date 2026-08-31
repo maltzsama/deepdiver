@@ -9,7 +9,7 @@ image:
   # chart by release-please (see release-please-config.json extra-files): this
   # file used to drift, and an install with a stale tag silently ships an image
   # that predates the chart's assumptions.
-  tag: "0.5.6" # x-release-please-version
+  tag: "0.6.0" # x-release-please-version
   pullPolicy: IfNotPresent
 
 activeRecordEncryption:

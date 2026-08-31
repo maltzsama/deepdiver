@@ -4,6 +4,37 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.0](https://github.com/maltzsama/deepdiver/compare/v0.5.6...v0.6.0) (2026-08-31)
+
+
+### Features
+
+* batch of fixes, features, and maintenance impact tracking ([#106](https://github.com/maltzsama/deepdiver/issues/106)–[#121](https://github.com/maltzsama/deepdiver/issues/121)) ([8d02a41](https://github.com/maltzsama/deepdiver/commit/8d02a419375e6299c8c77c0c742ea1fec3c43ddf))
+* **catalogs:** test connection from new/edit form without saving (closes [#106](https://github.com/maltzsama/deepdiver/issues/106)) ([268695d](https://github.com/maltzsama/deepdiver/commit/268695d110a1ae9b3f7e2e20a37590d6e5e246a9))
+* **maintenance:** capture before/after metadata snapshots on runs (closes [#119](https://github.com/maltzsama/deepdiver/issues/119)) ([b240e66](https://github.com/maltzsama/deepdiver/commit/b240e66f55623a92fb700332cd558c2fc2c824ec))
+* **plans:** new/create routes for maintenance plans (closes [#108](https://github.com/maltzsama/deepdiver/issues/108)) ([bb02745](https://github.com/maltzsama/deepdiver/commit/bb027458a1a1d13f2fb81002e37748437eacd744))
+* **sync:** refresh table metadata after successful maintenance (closes [#110](https://github.com/maltzsama/deepdiver/issues/110)) ([e448074](https://github.com/maltzsama/deepdiver/commit/e448074660228e0116c2cdf8da34b9929f4708c2))
+* **tables:** bulk apply policy from tables index (closes [#109](https://github.com/maltzsama/deepdiver/issues/109)) ([625cbc4](https://github.com/maltzsama/deepdiver/commit/625cbc4a1b23b35ee281e8c51725fcc626e77c10))
+* **tables:** create plan link on tables without a plan (closes [#107](https://github.com/maltzsama/deepdiver/issues/107)) ([d536137](https://github.com/maltzsama/deepdiver/commit/d536137056126d671a86d7443ae1b51f3756b942))
+* **tables:** per-table sync replaces global Sync now on tables screen (closes [#115](https://github.com/maltzsama/deepdiver/issues/115)) ([be013c8](https://github.com/maltzsama/deepdiver/commit/be013c823ea68f40618795b57164d06260649d59))
+* **views:** engine history shows coordinator Deployment and uptime (closes [#112](https://github.com/maltzsama/deepdiver/issues/112)) ([20365a2](https://github.com/maltzsama/deepdiver/commit/20365a2c4090f48e997464f6b08a439ae7904137))
+* **views:** show coordinator Deployment for engine-sourced errors (closes [#113](https://github.com/maltzsama/deepdiver/issues/113)) ([5b68918](https://github.com/maltzsama/deepdiver/commit/5b68918b9df2bdc749a4764f4698d2bb311b55ce))
+
+
+### Bug Fixes
+
+* **activity:** add mb-6 to running grid to space Active queries panel (closes [#121](https://github.com/maltzsama/deepdiver/issues/121)) ([7b349b6](https://github.com/maltzsama/deepdiver/commit/7b349b69e81e4074cf5f77abe14627d0f50e9ab2))
+* **controllers:** compose inactive filter with catalog/namespace/health (closes [#117](https://github.com/maltzsama/deepdiver/issues/117)) ([8752378](https://github.com/maltzsama/deepdiver/commit/8752378413d813e38d12945fd5a2d5f2eb2d2ac8))
+* **models:** validate WHERE predicate and tighten strong params (closes [#116](https://github.com/maltzsama/deepdiver/issues/116)) ([45dc6a7](https://github.com/maltzsama/deepdiver/commit/45dc6a7c445b56afd829fbb5592e1c570c1c2a72))
+* RuboCop array spacing + Tailwind class name (text-cosmos-fg-muted → text-cosmos-fg-mute) ([6cb43df](https://github.com/maltzsama/deepdiver/commit/6cb43dfee4d497a78a49b9fb488279503cbbbcd6))
+* **views:** exclude lifecycle markers from error surface (closes [#114](https://github.com/maltzsama/deepdiver/issues/114)) ([d2a3991](https://github.com/maltzsama/deepdiver/commit/d2a3991718c8860be9ddb5fbbb4a15b2a7cae876))
+* **views:** reorder in-progress column — Queued above Awaiting retry (closes [#111](https://github.com/maltzsama/deepdiver/issues/111)) ([9dff253](https://github.com/maltzsama/deepdiver/commit/9dff2532c9c63e70d18ca548abcc580ef39de8fd))
+
+
+### Performance Improvements
+
+* **views:** batch typical_duration queries to fix N+1 (closes [#118](https://github.com/maltzsama/deepdiver/issues/118)) ([b2d8213](https://github.com/maltzsama/deepdiver/commit/b2d821383d071f3b2f7f9a6f685d32ae590a935a))
+
 ## [0.5.6](https://github.com/maltzsama/deepdiver/compare/v0.5.5...v0.5.6) (2026-08-31)
 
 
