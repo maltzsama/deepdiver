@@ -4,6 +4,16 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.5](https://github.com/maltzsama/deepdiver/compare/v0.5.4...v0.5.5) (2026-08-31)
+
+
+### Bug Fixes
+
+* **catalogs:** include namespace count in verify connection success message ([bf3fd63](https://github.com/maltzsama/deepdiver/commit/bf3fd633ae52dc66f2e84fc8166354e20c018b78)), closes [#98](https://github.com/maltzsama/deepdiver/issues/98)
+* **catalogs:** use correct Trino S3 property names (aws-access-key, aws-secret-key) ([044423b](https://github.com/maltzsama/deepdiver/commit/044423bcfc15269a76db92cc4d8ec5382d3d7ab3)), closes [#100](https://github.com/maltzsama/deepdiver/issues/100)
+* **engine:** document chart provisioner pre-provisioning and add actionable 404 hint ([8a01aa3](https://github.com/maltzsama/deepdiver/commit/8a01aa31cbd58700df4bcd4922dd701ccbe2ae72)), closes [#99](https://github.com/maltzsama/deepdiver/issues/99)
+* S3 property names, verify connection detail, chart provisioner docs (closes [#98](https://github.com/maltzsama/deepdiver/issues/98) [#99](https://github.com/maltzsama/deepdiver/issues/99) [#100](https://github.com/maltzsama/deepdiver/issues/100)) ([ad58306](https://github.com/maltzsama/deepdiver/commit/ad5830656fdd2d99b35f40b823f91c4424231236))
+
 ## [0.5.4](https://github.com/maltzsama/deepdiver/compare/v0.5.3...v0.5.4) (2026-08-31)
 
 
