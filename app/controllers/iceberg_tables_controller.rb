@@ -2,7 +2,7 @@
 # list and per-table detail (schedules, executions, freshness, health), plus a
 # "run now" fallback. Each action authorizes with Pundit.
 class IcebergTablesController < ApplicationController
-  before_action :set_table, only: %i[show run_maintenance]
+  before_action :set_table, only: %i[show run_maintenance sync_table]
 
   # Global view: every table of every catalog, with filters. With 100+
   # tables, browsing catalog by catalog does not scale.
@@ -86,6 +86,13 @@ class IcebergTablesController < ApplicationController
     authorize :catalog, :sync?
     Catalog.find_each { |catalog| MaintenanceOrchestrator.sync_catalog(catalog.id) }
     redirect_to iceberg_tables_path, notice: t("tables.index.sync_enqueued")
+  end
+
+  # Refreshes metadata for a single table without re-syncing the whole catalog.
+  def sync_table
+    authorize @table, :sync_table?
+    CatalogSyncService.sync_table(@table.id)
+    redirect_back fallback_location: iceberg_tables_path, notice: t("tables.sync_table.enqueued")
   end
 
   private

@@ -62,6 +62,7 @@ Rails.application.routes.draw do
 
     member do
       post :run_maintenance
+      post :sync_table
     end
 
     resource :freshness_sla, only: %i[edit update], controller: "freshness_slas"

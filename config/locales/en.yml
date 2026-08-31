@@ -393,6 +393,8 @@ en:
     run_maintenance:
       enqueued: "Maintenance enqueued - it will start when the engine comes up."
       already_queued: "Maintenance for this table is already queued or running."
+    sync_table:
+      enqueued: "Table metadata refresh enqueued."
     show:
       eyebrow_prefix: "Table ·"
       new_schedule: "New schedule"
@@ -473,6 +475,7 @@ en:
       synced_ago: "Metadata synced %{time} ago"
       not_synced: "Tables not synced yet"
       sync_now: "Sync now"
+      sync_catalog: "Sync catalog"
       sync_enqueued: "Catalog sync enqueued for all catalogs."
       result: "Result"
       count: "%{count} table(s)"
@@ -495,6 +498,7 @@ en:
       no_plan: "no plan"
       no_plan_option: "No plan"
       run: "Run"
+      sync_table: "Refresh"
       col_actions: "Actions"
     filter_catalog: "Catalog"
     filter_namespace: "Namespace"
