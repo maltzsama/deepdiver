@@ -12,16 +12,12 @@ class IcebergTablesController < ApplicationController
     @namespaces = IcebergTable.distinct.order(:namespace).pluck(:namespace)
     @last_sync_at = IcebergTable.maximum(:metadata_synced_at)
 
-    @tables = IcebergTable.active
-                          .includes(:catalog, :maintenance_plan, :table_freshness_sla, :latest_freshness_check)
+    base = params[:inactive].present? ? IcebergTable.all : IcebergTable.active
+    @tables = base.includes(:catalog, :maintenance_plan, :table_freshness_sla, :latest_freshness_check)
 
     @tables = @tables.where(catalog_id: params[:catalog_id])       if params[:catalog_id].present?
     @tables = @tables.where(namespace: params[:namespace])         if params[:namespace].present?
     @tables = @tables.where(health_status: params[:health_status]) if params[:health_status].present?
-
-    if params[:inactive].present?
-      @tables = IcebergTable.includes(:catalog, :maintenance_plan, :table_freshness_sla, :latest_freshness_check)
-    end
 
     if params[:no_plan].present?
       @tables = @tables.where.not(id: MaintenancePlan.select(:iceberg_table_id))
