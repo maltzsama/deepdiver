@@ -79,9 +79,9 @@ class Catalog < ApplicationRecord
 
   # Makes a real call and returns what happened, for the "Test" button.
   def verify_connection!
-    CatalogClientFactory.for(self).namespaces
+    namespaces = CatalogClientFactory.for(self).namespaces
     catalog_credential&.update!(verified_at: Time.current, verification_error: nil)
-    { ok: true }
+    { ok: true, namespace_count: namespaces.size }
   rescue StandardError => e
     catalog_credential&.update!(verified_at: Time.current, verification_error: e.message)
     { ok: false, error: e.message }

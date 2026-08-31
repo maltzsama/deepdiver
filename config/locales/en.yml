@@ -378,7 +378,7 @@ en:
       static: "Static credentials"
       sts: "STS AssumeRole (temporary)"
     verify:
-      ok: "Connection verified."
+      ok: "Connection verified. Found %{count} namespace(s)."
       failed: "Connection failed: %{error}"
     edit:
       title: "Edit catalog"

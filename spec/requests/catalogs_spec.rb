@@ -54,11 +54,12 @@ RSpec.describe "Catalog credentials", type: :request do
     sign_in admin
 
     allow(Catalog).to receive(:find).with(catalog.id.to_s).and_return(catalog)
-    expect(catalog).to receive(:verify_connection!).and_return({ ok: true })
+    expect(catalog).to receive(:verify_connection!).and_return({ ok: true, namespace_count: 3 })
 
     post verify_catalog_path(catalog)
 
     expect(response).to redirect_to(catalog_path(catalog))
+    expect(flash[:notice]).to include("3 namespace(s)")
   end
 
   it "rejects sync for a non-admin" do
