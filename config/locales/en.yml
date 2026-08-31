@@ -521,6 +521,8 @@ en:
       no_plan_option: "No plan"
       run: "Run"
       sync_table: "Refresh"
+      select_policy: "Select a policy..."
+      apply_policy: "Apply policy"
       col_actions: "Actions"
     filter_catalog: "Catalog"
     filter_namespace: "Namespace"
@@ -800,6 +802,7 @@ en:
       destroyed: "Policy deleted."
       applied: "%{created} plan(s) created, %{updated} updated."
       skipped: "skipped (already managed by another policy)."
+      no_tables_selected: "No tables selected."
 
   users:
     index:

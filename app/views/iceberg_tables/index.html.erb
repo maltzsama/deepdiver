@@ -52,11 +52,29 @@
       </p>
     </div>
   <% else %>
-    <div class="data-table-scroll">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th scope="col"><%= t("tables.index.col_table") %></th>
+  <% if @tables.any? && can_run_maintenance? %>
+    <div class="panel-body border-b border-cosmos-line">
+      <%= form_with url: bulk_apply_maintenance_policies_path, method: :post, class: "flex items-center gap-3" do |f| %>
+        <%= f.select :policy_id,
+                     MaintenancePolicy.order(:name).map { |p| [p.name, p.id] },
+                     { prompt: t("tables.index.select_policy") },
+                     class: "field-input field-input-sm" %>
+        <button type="submit" class="btn btn-primary btn-sm"><%= t("tables.index.apply_policy") %></button>
+        <span class="text-small cell-muted" id="bulk-count"></span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="data-table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <% if can_run_maintenance? %>
+            <th scope="col" class="w-8">
+              <input type="checkbox" id="select-all" class="field-checkbox">
+            </th>
+          <% end %>
+          <th scope="col"><%= t("tables.index.col_table") %></th>
             <th scope="col"><%= t("tables.index.col_catalog") %></th>
             <th scope="col"><%= t("tables.index.col_health") %></th>
             <th scope="col"><%= t("tables.index.col_files") %></th>
@@ -74,6 +92,12 @@
         <tbody>
           <% @tables.each do |table| %>
             <tr>
+              <% if can_run_maintenance? %>
+                <td class="text-center">
+                  <input type="checkbox" name="iceberg_table_ids[]" value="<%= table.id %>"
+                         class="field-checkbox table-select">
+                </td>
+              <% end %>
               <td>
                 <%= link_to table.fully_qualified_name, table, class: "link-mono" %>
                 <% unless table.active? %>

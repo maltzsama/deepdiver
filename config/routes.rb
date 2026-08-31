@@ -89,6 +89,7 @@ Rails.application.routes.draw do
   # Maintenance policies.
   resources :maintenance_policies do
     member { post :apply }
+    collection { post :bulk_apply }
   end
 
   # User administration (CR-64).
