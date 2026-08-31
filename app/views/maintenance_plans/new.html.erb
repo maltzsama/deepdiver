@@ -1,0 +1,67 @@
+<% content_for :title, "#{t("plans.new.title")} — DeepDiver" %>
+
+<div class="page-head">
+  <div>
+    <p class="page-eyebrow"><%= link_to t("plans.title"), maintenance_plans_path %></p>
+    <h1 class="page-title"><%= t("plans.new.title") %></h1>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-body">
+    <%= form_with model: @plan, class: "form-grid" do |form| %>
+      <% if @plan.errors.any? %>
+        <div class="errors">
+          <p class="errors-title">
+            <%= t("plans.form.errors_#{(@plan.errors.count == 1) ? "one" : "other"}", count: @plan.errors.count) %>
+          </p>
+          <ul class="errors-list">
+            <% @plan.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="field">
+        <%= form.label :iceberg_table_id, t("plans.form.table"), class: "field-label" %>
+        <%= form.collection_select :iceberg_table_id, @tables, :id, :fully_qualified_name,
+                                   { prompt: t("plans.form.table_prompt") },
+                                   class: "field-input" %>
+      </div>
+
+      <div class="field">
+        <%= form.label :cron, t("plans.form.cron"), class: "field-label" %>
+        <p class="field-hint"><%= t("plans.form.cron_hint") %></p>
+        <%= form.text_field :cron, class: "field-input field-input-mono",
+                            placeholder: MaintenancePlan::DEFAULT_CRON %>
+      </div>
+
+      <div class="field-group">
+        <p class="field-group-title"><%= t("plans.form.steps_title") %></p>
+        <%= form.fields_for :maintenance_steps do |sf| %>
+          <div class="flex items-center gap-3 py-2 border-b border-cosmos-line">
+            <%= sf.hidden_field :operation %>
+            <%= sf.hidden_field :position %>
+            <span class="font-mono text-small w-48"><%= sf.object.operation.humanize %></span>
+            <label class="flex items-center gap-1.5">
+              <%= sf.check_box :enabled, class: "field-checkbox" %>
+              <span class="text-small cell-muted"><%= t("plans.form.enabled") %></span>
+            </label>
+            <div class="field ml-auto">
+              <%= sf.text_field :cadence_cron, class: "field-input field-input-sm field-input-mono",
+                                placeholder: t("plans.form.cadence_placeholder"),
+                                title: t("plans.form.cadence_hint") %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="form-actions">
+        <%= form.submit t("plans.form.submit"), class: "btn btn-primary",
+                        data: { turbo_submits_with: t("actions.sending") } %>
+        <%= link_to t("plans.form.cancel"), maintenance_plans_path, class: "link text-body" %>
+      </div>
+    <% end %>
+  </div>
+</section>

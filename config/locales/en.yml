@@ -265,6 +265,27 @@ en:
       disabled: "disabled"
       paused: "paused"
       active: "active"
+    new:
+      title: "New plan"
+    form:
+      table: "Table"
+      table_prompt: "Select a table"
+      cron: "Schedule (cron)"
+      cron_hint: "e.g. '0 2 * * *' for daily at 2am"
+      steps_title: "Maintenance steps"
+      enabled: "Enabled"
+      cadence_placeholder: "follows plan"
+      submit: "Create plan"
+      cancel: "Cancel"
+      errors_one: "1 problem to fix"
+      errors_other: "%{count} problems to fix"
+    notices:
+      created: "Plan created."
+      updated: "Plan updated."
+      already_exists: "This table already has a plan."
+      enqueued: "Maintenance enqueued."
+      paused: "Plan paused."
+      resumed: "Plan resumed."
     edit:
       title: "Edit plan"
       subtitle: "Edit the schedule and the chain of maintenance steps."
