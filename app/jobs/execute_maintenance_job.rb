@@ -133,7 +133,8 @@ class ExecuteMaintenanceJob < ApplicationJob
   end
 
   # Marks the execution successful, resets the plan's failure counter, frees
-  # the per-table lock, and notifies the supervisor that demand has finished.
+  # the per-table lock, notifies the supervisor that demand has finished, and
+  # refreshes the table's metadata so the UI reflects the post-maintenance state.
   # @param execution [ExecutionHistory] the execution that just completed.
   def finish_chain(execution)
     unless execution.status == "running"
@@ -145,5 +146,8 @@ class ExecuteMaintenanceJob < ApplicationJob
     execution.maintenance_plan&.update!(consecutive_failures: 0)
     TableLock.release(execution)
     TrinoEngineSupervisor.demand_finished!
+
+    table = execution.iceberg_table
+    CatalogSyncService.sync_table(table.id) if table
   end
 end
