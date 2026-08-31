@@ -79,9 +79,9 @@ class Catalog < ApplicationRecord
 
   # Makes a real call and returns what happened, for the "Test" button.
   def verify_connection!
-    CatalogClientFactory.for(self).namespaces
+    namespaces = CatalogClientFactory.for(self).namespaces
     catalog_credential&.update!(verified_at: Time.current, verification_error: nil)
-    { ok: true }
+    { ok: true, namespace_count: namespaces.size }
   rescue StandardError => e
     catalog_credential&.update!(verified_at: Time.current, verification_error: e.message)
     { ok: false, error: e.message }
@@ -98,8 +98,8 @@ class Catalog < ApplicationRecord
       {}
     when "static"
       {
-        "s3.access-key" => s3_access_key,
-        "s3.secret-key" => s3_secret_key
+        "s3.aws-access-key" => s3_access_key,
+        "s3.aws-secret-key" => s3_secret_key
       }
     when "sts"
       sts_client = Aws::STS::Client.new(
@@ -114,9 +114,9 @@ class Catalog < ApplicationRecord
         external_id: s3_external_id.presence
       )
       {
-        "s3.access-key" => resp.credentials.access_key_id,
-        "s3.secret-key" => resp.credentials.secret_access_key,
-        "s3.session-token" => resp.credentials.session_token
+        "s3.aws-access-key" => resp.credentials.access_key_id,
+        "s3.aws-secret-key" => resp.credentials.secret_access_key,
+        "s3.aws-session-token" => resp.credentials.session_token
       }
     else
       # s3_authentication_type is validated against S3_AUTH_TYPES with a

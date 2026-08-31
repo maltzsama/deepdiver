@@ -76,7 +76,7 @@ class CatalogsController < ApplicationController
     result = @catalog.verify_connection!
 
     if result[:ok]
-      redirect_to @catalog, notice: t("catalogs.verify.ok")
+      redirect_to @catalog, notice: t("catalogs.verify.ok", count: result[:namespace_count])
     else
       redirect_to @catalog, alert: t("catalogs.verify.failed", error: result[:error])
     end
