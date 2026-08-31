@@ -8,9 +8,9 @@ class TrinoCatalogProjection
 
   SENSITIVE_KEYS = %w[
     iceberg.rest-catalog.oauth2.credential
-    s3.access-key
-    s3.secret-key
-    s3.session-token
+    s3.aws-access-key
+    s3.aws-secret-key
+    s3.aws-session-token
   ].freeze
 
   # Sensitive {trino_property_key => plaintext_value} for a catalog, BEFORE

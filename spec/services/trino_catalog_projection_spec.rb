@@ -94,16 +94,16 @@ RSpec.describe TrinoCatalogProjection do
       described_class.new.sync_all!
 
       props = TrinoCatalogRegistry.last.properties
-      expect(props["s3.access-key"]).to match(/\A@baleia-secret\[file:catalog-\d+-s3_access-key\]\z/)
-      expect(props["s3.secret-key"]).to match(/\A@baleia-secret\[file:catalog-\d+-s3_secret-key\]\z/)
+      expect(props["s3.aws-access-key"]).to match(/\A@baleia-secret\[file:catalog-\d+-s3_aws-access-key\]\z/)
+      expect(props["s3.aws-secret-key"]).to match(/\A@baleia-secret\[file:catalog-\d+-s3_aws-secret-key\]\z/)
     end
 
-    it "does not include s3.access-key when authentication is none" do
+    it "does not include s3.aws-access-key when authentication is none" do
       catalog
       described_class.new.sync_all!
 
       props = TrinoCatalogRegistry.last.properties
-      expect(props).not_to have_key("s3.access-key")
+      expect(props).not_to have_key("s3.aws-access-key")
     end
 
     it "includes s3.region when set" do
@@ -138,9 +138,9 @@ RSpec.describe TrinoCatalogProjection do
       described_class.new.sync_all!
 
       props = TrinoCatalogRegistry.last.properties
-      expect(props["s3.access-key"]).to match(/\A@baleia-secret\[file:catalog-\d+-s3_access-key\]\z/)
-      expect(props["s3.secret-key"]).to match(/\A@baleia-secret\[file:catalog-\d+-s3_secret-key\]\z/)
-      expect(props["s3.session-token"]).to match(/\A@baleia-secret\[file:catalog-\d+-s3_session-token\]\z/)
+      expect(props["s3.aws-access-key"]).to match(/\A@baleia-secret\[file:catalog-\d+-s3_aws-access-key\]\z/)
+      expect(props["s3.aws-secret-key"]).to match(/\A@baleia-secret\[file:catalog-\d+-s3_aws-secret-key\]\z/)
+      expect(props["s3.aws-session-token"]).to match(/\A@baleia-secret\[file:catalog-\d+-s3_aws-session-token\]\z/)
     end
   end
 end

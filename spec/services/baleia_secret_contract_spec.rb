@@ -82,9 +82,9 @@ RSpec.describe "Baleia secret contract" do
       assert_contract_for(catalog_name: "s3_sts")
 
       row = TrinoCatalogRegistry.find_by(catalog_name: "s3_sts")
-      expect(row.properties).to have_key("s3.access-key")
-      expect(row.properties).to have_key("s3.secret-key")
-      expect(row.properties).to have_key("s3.session-token")
+      expect(row.properties).to have_key("s3.aws-access-key")
+      expect(row.properties).to have_key("s3.aws-secret-key")
+      expect(row.properties).to have_key("s3.aws-session-token")
     end
   end
 
@@ -136,7 +136,7 @@ RSpec.describe "Baleia secret contract" do
       payload = materialized_payload
 
       expect(payload).not_to be_nil
-      expect(payload[:data]).to have_key("catalog-#{catalog.id}-s3_secret-key")
+      expect(payload[:data]).to have_key("catalog-#{catalog.id}-s3_aws-secret-key")
       expect(payload[:data]).not_to have_key("stale")
     end
   end
