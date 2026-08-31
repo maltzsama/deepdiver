@@ -54,7 +54,7 @@
         <% @events.each do |event| %>
           <tr data-href="<%= error_event_path(event) %>">
             <td class="whitespace-nowrap">
-              <%= event.catalog&.name || event.source_system %>
+              <%= event.source_system == "engine" ? engine_target_label : (event.catalog&.name || event.source_system) %>
               <span class="cell-meta"><%= [ event.schema, event.table ].reject(&:blank?).join(".") %></span>
             </td>
             <td><span class="badge badge-mute"><%= event.operation %></span></td>

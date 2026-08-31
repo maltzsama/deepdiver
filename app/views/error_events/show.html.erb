@@ -67,7 +67,7 @@
       <div>
         <dt class="dl-term"><%= t("error_events.show.where") %></dt>
         <dd class="dl-desc whitespace-nowrap">
-          <%= @event.catalog&.name || @event.source_system %>
+          <%= @event.source_system == "engine" ? engine_target_label : (@event.catalog&.name || @event.source_system) %>
           <% location = [ @event.schema, @event.table ].reject(&:blank?).join(".") %>
           <% if location.present? %><span class="cell-meta ml-1"><%= location %></span><% end %>
         </dd>
