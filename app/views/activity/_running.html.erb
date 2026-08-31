@@ -1,5 +1,6 @@
 <%# Running and retrying rows. Broadcast replaces #activity-running by preserving
     the per-execution Turbo Frame for action buttons. %>
+<% typical_durations = local_assigns.fetch(:typical_durations, {}) %>
 <div id="activity-running" class="grid gap-6 lg:grid-cols-2">
   <section class="panel">
     <div class="panel-head">
@@ -24,7 +25,7 @@
           <%= render "shared/step_chain", execution: execution %>
           <p class="mt-1 text-small cell-muted">
             <%= t("activity.running.elapsed", time: duration_label(Time.current - execution.current_step_started_at)) if execution.current_step_started_at %>
-            <% if (typical = execution.maintenance_plan&.typical_duration) %>
+            <% if (typical = typical_durations[execution.maintenance_plan_id]) %>
               · <%= t("activity.running.typical", time: duration_label(typical)) %>
             <% end %>
           </p>
