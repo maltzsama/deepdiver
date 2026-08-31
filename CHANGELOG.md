@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.6](https://github.com/maltzsama/deepdiver/compare/v0.5.5...v0.5.6) (2026-08-31)
+
+
+### Bug Fixes
+
+* **engine:** close startup race between K8s readiness and Trino internal state ([bd41f1a](https://github.com/maltzsama/deepdiver/commit/bd41f1ad4ecc65fa08961dc8fc1afda0cba84db1)), closes [#103](https://github.com/maltzsama/deepdiver/issues/103)
+* **engine:** close startup race between K8s readiness and Trino internal state (closes [#103](https://github.com/maltzsama/deepdiver/issues/103)) ([301179a](https://github.com/maltzsama/deepdiver/commit/301179a784de30023b961c8406858f7003fa92d0))
+
 ## [0.5.5](https://github.com/maltzsama/deepdiver/compare/v0.5.4...v0.5.5) (2026-08-31)
 
 
