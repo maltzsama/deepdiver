@@ -1,7 +1,7 @@
 <%# Running and retrying rows. Broadcast replaces #activity-running by preserving
     the per-execution Turbo Frame for action buttons. %>
 <% typical_durations = local_assigns.fetch(:typical_durations, {}) %>
-<div id="activity-running" class="grid gap-6 lg:grid-cols-2">
+<div id="activity-running" class="grid gap-6 lg:grid-cols-2 mb-6">
   <section class="panel">
     <div class="panel-head">
       <h2 class="panel-title"><%= t("activity.running.title") %></h2>
