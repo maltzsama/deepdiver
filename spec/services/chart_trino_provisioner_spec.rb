@@ -140,21 +140,21 @@ RSpec.describe ChartTrinoProvisioner do
       allow(worker_k8s).to receive(:target).and_return("ldd/trino-worker")
     end
 
-    it "wraps a missing coordinator on create! as TrinoProvisioner::Error" do
+    it "wraps a missing coordinator on create! with a pre-provision hint" do
       allow(TrinoEngineConfig).to receive(:instance).and_return(TrinoEngineConfig.new(topology: "single"))
       allow(k8s).to receive(:apply_spec).and_raise(not_found)
 
       expect { provisioner.create! }
-        .to raise_error(TrinoProvisioner::Error, /coordinator .ldd\/trino-coordinator./)
+        .to raise_error(TrinoProvisioner::Error, /coordinator .ldd\/trino-coordinator.*pre-created/)
     end
 
-    it "wraps a missing worker on create! and names the Deployment addressed" do
+    it "wraps a missing worker on create! with a pre-provision hint" do
       allow(TrinoEngineConfig).to receive(:instance).and_return(TrinoEngineConfig.new(topology: "cluster"))
       allow(k8s).to receive(:apply_spec)
       allow(worker_k8s).to receive(:apply_spec).and_raise(not_found)
 
       expect { provisioner.create! }
-        .to raise_error(TrinoProvisioner::Error, /worker .ldd\/trino-worker./)
+        .to raise_error(TrinoProvisioner::Error, /worker .ldd\/trino-worker.*pre-created/)
     end
 
     it "tolerates a missing worker Deployment on destroy!" do

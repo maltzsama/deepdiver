@@ -139,13 +139,19 @@ class ChartTrinoProvisioner
 
   # A message that names the Deployment and namespace actually addressed, so a
   # wrong TRINO_DEPLOYMENT or a missing Role is obvious from the error alone.
+  # A 404 (ResourceNotFoundError) adds an actionable hint about pre-provisioning.
   #
   # @param role [String] "coordinator" or "worker"
   # @param error [Kubeclient::HttpError] the underlying error
   # @return [String] the failure message
   def k8s_message(role, error)
     client = role == "worker" ? @worker_k8s : @k8s
-    "Trino #{role} (#{client.target}): #{error.message}"
+    msg = "Trino #{role} (#{client.target}): #{error.message}"
+    if error.is_a?(Kubeclient::ResourceNotFoundError)
+      msg += " — the chart provisioner requires the Deployment to be pre-created " \
+             "with replicas: 0 (see README § Trino engine — provisioning)"
+    end
+    msg
   end
 
   # The env the coordinator's config.properties resolves via ${ENV:...}:

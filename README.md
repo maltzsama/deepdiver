@@ -105,6 +105,8 @@ lists every environment variable the application reads.
 | `TRINO_WORKER_DEPLOYMENT` | No | `trino-worker` | Worker Deployment name. |
 | `TRINO_RUNTIME` | No | `real` | `real` (kubeclient) or `fake` (dev/test). |
 | `TRINO_PROVISIONER` | No | `chart` | `baleia` (catalog-store plugin), `chart` (Helm-style), or `fake`. |
+
+> **Note:** `TRINO_PROVISIONER=chart` scales an *existing* Deployment (0 ↔ 1+ replicas). The consumer's own Helm chart or manifests must pre-create the coordinator (`trino-coordinator`) and, in cluster topology, worker (`trino-worker`) Deployments with `replicas: 0` before this application can start the engine. A missing Deployment produces a `ResourceNotFoundError` at boot.
 | `TRINO_CLUSTER_NAME` | No | `default` | Baleia catalog-store cluster name. |
 
 ### Trino engine — tuning
