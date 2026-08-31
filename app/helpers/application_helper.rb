@@ -354,4 +354,40 @@ module ApplicationHelper
     parts << "#{number_to_human(deletes)} deletes / #{number_to_human(table.total_records)} records" if deletes.positive?
     parts.any? ? parts.join(" · ") : t("health.no_data")
   end
+
+  # Coordinator Deployment identifier for engine-sourced events.
+  # @return [String] e.g. "trino/production-coordinator"
+  def engine_target_label
+    TrinoProvisioner.target
+  rescue StandardError
+    "engine"
+  end
+
+  # Computes uptime durations for paired lifecycle events by generation.
+  # @param events [Array<ErrorEvent>] lifecycle events ordered by last_seen_at
+  # @return [Hash{Integer => Float}] generation → uptime in seconds
+  def engine_uptimes(events)
+    ups = {}
+    result = {}
+
+    events.each do |event|
+      gen = event.context&.dig("generation")
+      state = event.context&.dig("state")
+      next unless gen
+
+      if state == "up"
+        ups[gen] = event.last_seen_at
+      elsif ups[gen] && %w[draining stopping down].include?(state)
+        result[gen] = event.last_seen_at - ups[gen]
+        ups.delete(gen)
+      end
+    end
+
+    # Engines still running: uptime from up-event to now
+    ups.each do |gen, up_at|
+      result[gen] = Time.current - up_at
+    end
+
+    result
+  end
 end

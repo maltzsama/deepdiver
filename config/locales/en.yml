@@ -171,7 +171,8 @@ en:
       gen: "generation %{gen}"
       col_when: "When"
       col_event: "Event"
-      col_gen: "Generation"
+      col_engine: "Engine"
+      col_uptime: "Uptime"
     queries:
       title: "Active queries"
       count: "%{count} query(s)"
