@@ -32,12 +32,20 @@ class MaintenanceStep < ApplicationRecord
   # integers only - never SQL.
   SNAPSHOT_IDS_PATTERN = /\A\d+(?:\s*,\s*\d+)*\z/
 
+  # WHERE predicates are interpolated verbatim into ALTER TABLE ... EXECUTE
+  # statements. This allows common SQL predicate syntax (comparisons, boolean
+  # operators, parentheses, column refs, string/numeric literals) while
+  # rejecting stacked queries, DDL, and comment-based injection.
+  WHERE_PREDICATE_PATTERN = /\A[\sa-zA-Z0-9_\.'"()<>=!|&%,*:+\/-]+\z/
+  WHERE_SQL_COMMENTS = /(?:--\s|\/\*)/
+
   # Validates that config fields reaching the SQL builder are well formed,
   # rejecting anything that would otherwise be interpolated as raw SQL.
   def config_values_are_well_formed
     validate_threshold("file_size_threshold")
     validate_threshold("retention_threshold")
     validate_snapshot_ids
+    validate_where_predicate
   end
 
   # The column defaults to {}, but a form that submits a blank config sends nil
@@ -60,6 +68,14 @@ class MaintenanceStep < ApplicationRecord
     return if value.to_s.strip.match?(SNAPSHOT_IDS_PATTERN)
 
     errors.add(:config, "snapshot_ids must be a comma-separated list of integers")
+  end
+
+  def validate_where_predicate
+    value = config_hash["where"]
+    return if value.blank?
+    return if value.to_s.strip.match?(WHERE_PREDICATE_PATTERN) && !value.to_s.match?(WHERE_SQL_COMMENTS)
+
+    errors.add(:config, "where must be a valid SQL predicate (no stacked queries, DDL, or comments)")
   end
 
   # Validates that cadence_cron is parseable and that it ever aligns with the

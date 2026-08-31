@@ -102,6 +102,7 @@ class MaintenancePoliciesController < ApplicationController
 
   def policy_params
     params.require(:maintenance_policy)
-          .permit(:name, :description, :cron, steps_config: {})
+          .permit(:name, :description, :cron,
+                  steps_config: %i[file_size_threshold retention_threshold snapshot_ids where])
   end
 end

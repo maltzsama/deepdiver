@@ -72,11 +72,34 @@ RSpec.describe MaintenanceStep do
       expect(step.errors[:config].join).to include("snapshot_ids")
     end
 
-    it "ignores config without the validated keys" do
+    it "accepts a simple valid WHERE predicate" do
       step = build(:maintenance_step, maintenance_plan: plan, operation: "optimize",
                                       position: 0, config: { "where" => "1 = 1" })
 
       expect(step).to be_valid
+    end
+
+    it "accepts a well-formed WHERE predicate" do
+      step = build(:maintenance_step, maintenance_plan: plan, operation: "optimize",
+                                      position: 0, config: { "where" => "partition_date = '2024-01-01'" })
+
+      expect(step).to be_valid
+    end
+
+    it "rejects a WHERE predicate with stacked queries" do
+      step = build(:maintenance_step, maintenance_plan: plan, operation: "optimize",
+                                      position: 0, config: { "where" => "1 = 1; DROP TABLE x" })
+
+      expect(step).not_to be_valid
+      expect(step.errors[:config].join).to include("where")
+    end
+
+    it "rejects a WHERE predicate with comment syntax" do
+      step = build(:maintenance_step, maintenance_plan: plan, operation: "optimize",
+                                      position: 0, config: { "where" => "1 = 1 -- comment" })
+
+      expect(step).not_to be_valid
+      expect(step.errors[:config].join).to include("where")
     end
   end
 

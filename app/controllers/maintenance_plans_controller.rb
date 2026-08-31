@@ -66,7 +66,10 @@ class MaintenancePlansController < ApplicationController
   def plan_params
     params.require(:maintenance_plan).permit(
       :cron,
-      maintenance_steps_attributes: [ :id, :enabled, :cadence_cron, config: {} ]
+      maintenance_steps_attributes: [
+        :id, :enabled, :cadence_cron,
+        config: %i[file_size_threshold retention_threshold snapshot_ids where]
+      ]
     )
   end
 
