@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.9.1](https://github.com/maltzsama/deepdiver/compare/v0.9.0...v0.9.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* **projection:** append /api/catalog for Polaris rest-catalog.uri (closes [#151](https://github.com/maltzsama/deepdiver/issues/151)) ([6c7e9c4](https://github.com/maltzsama/deepdiver/commit/6c7e9c415b937e1e2ff07d480aa96607beebecb2))
+* **projection:** append /api/catalog for Polaris rest-catalog.uri (closes [#151](https://github.com/maltzsama/deepdiver/issues/151)) ([2e9d9c6](https://github.com/maltzsama/deepdiver/commit/2e9d9c6e50c82ceebb9a9bfc597fa257ff1b61f0))
+
 ## [0.9.0](https://github.com/maltzsama/deepdiver/compare/v0.8.0...v0.9.0) (2026-09-01)
 
 
