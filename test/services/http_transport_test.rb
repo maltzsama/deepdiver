@@ -44,4 +44,26 @@ class HttpTransportTest < ActiveSupport::TestCase
   ensure
     ENV["INTERNAL_CA_FILE"] = old
   end
+
+  test "ApiError surfaces the server's error.message from a JSON body" do
+    error = HttpTransport::ApiError.new(
+      500,
+      '{"error":{"message":"No default-warehouse configured","type":"IllegalStateException","code":500}}'
+    )
+
+    assert_equal "HTTP 500 — No default-warehouse configured", error.message
+    assert_equal 500, error.status
+  end
+
+  test "ApiError stays bare when the body is not JSON" do
+    error = HttpTransport::ApiError.new(502, "Bad Gateway")
+
+    assert_equal "HTTP 502", error.message
+  end
+
+  test "ApiError stays bare when the body carries no message" do
+    error = HttpTransport::ApiError.new(404, '{"error":{"code":404}}')
+
+    assert_equal "HTTP 404", error.message
+  end
 end
