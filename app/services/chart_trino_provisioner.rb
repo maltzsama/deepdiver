@@ -76,8 +76,17 @@ class ChartTrinoProvisioner
   end
 
   # No queries running or queued, per GET /v1/query.
+  #
+  # An unreachable coordinator must NOT read as idle: DrainEngineJob uses this
+  # to decide whether it is safe to tear the engine down, and "no data" from an
+  # error is indistinguishable from "nothing running" — killing a busy engine
+  # because the coordinator was briefly unreachable abandons in-flight queries.
   def idle?
     active_queries.none? { |q| %w[RUNNING QUEUED].include?(q["state"]) }
+  rescue StandardError
+    # Coordinator unreachable/erroring: unknown state. Treat as busy so the
+    # engine is never torn down while a query may still be running.
+    false
   end
 
   # The queries currently known to the Trino coordinator, most recent first.
@@ -86,8 +95,6 @@ class ChartTrinoProvisioner
   def active_queries
     body = @transport.get("#{@base_url}/v1/query")
     (body.is_a?(Array) ? body : []).sort_by { |q| q["queryId"].to_s }.reverse
-  rescue StandardError
-    []
   end
 
   # Cancels a running or queued query on the coordinator. Tolerates a query that

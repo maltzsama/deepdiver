@@ -64,6 +64,29 @@ RSpec.describe ChartTrinoProvisioner do
     expect(provisioner.replicas).to eq(2)
   end
 
+  describe "#idle?" do
+    it "returns true when no queries are running or queued" do
+      allow(transport).to receive(:get).with("http://trino/v1/query")
+        .and_return([ { "queryId" => "1", "state" => "FINISHED" } ])
+
+      expect(provisioner.idle?).to be true
+    end
+
+    it "returns false when a query is running" do
+      allow(transport).to receive(:get).with("http://trino/v1/query")
+        .and_return([ { "queryId" => "1", "state" => "RUNNING" } ])
+
+      expect(provisioner.idle?).to be false
+    end
+
+    it "returns false (busy) when the coordinator is unreachable" do
+      allow(transport).to receive(:get).with("http://trino/v1/query")
+        .and_raise(HttpTransport::ApiError.new(500, "coordinator down"))
+
+      expect(provisioner.idle?).to be false
+    end
+  end
+
   describe "#healthy?" do
     it "checks coordinator starting flag from /v1/info in single topology" do
       TrinoEngineConfig.instance.update!(topology: "single")
