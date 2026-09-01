@@ -158,14 +158,15 @@ class ExecuteMaintenanceJob < ApplicationJob
     end
   end
 
-  # Compares total_records before and after maintenance. A mismatch when both
-  # values are present means the chain silently altered the logical row count,
-  # which maintenance must never do. Surfaces as an ErrorEvent.
+  # Compares total_records before and after maintenance. Only a decrease is
+  # flagged as a violation — maintenance never removes logical rows, so a drop
+  # means data was lost. An increase is a concurrent append (normal ingest
+  # during the maintenance window) and is silently ignored.
   def check_records_integrity!(execution)
     before = execution.metadata_before&.dig("total_records")
     after  = execution.metadata_after&.dig("total_records")
     return if before.nil? || after.nil?
-    return if before == after
+    return if after >= before
 
     table = execution.iceberg_table
     ErrorEvent.record(
@@ -173,7 +174,7 @@ class ExecuteMaintenanceJob < ApplicationJob
       operation: "records-integrity", source_system: "execution",
       severity: "error",
       error_class: "RecordsIntegrityViolation",
-      message: "Maintenance on #{table.fully_qualified_name} changed total_records " \
+      message: "Maintenance on #{table.fully_qualified_name} decreased total_records " \
                "from #{before} to #{after} (delta: #{after - before})"
     )
   end
