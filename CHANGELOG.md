@@ -4,6 +4,22 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.11.0](https://github.com/maltzsama/deepdiver/compare/v0.10.1...v0.11.0) (2026-09-01)
+
+
+### Features
+
+* **history:** merge maintenance and freshness into one chronological timeline (closes [#191](https://github.com/maltzsama/deepdiver/issues/191)) ([bc1d5e6](https://github.com/maltzsama/deepdiver/commit/bc1d5e60ec7ceecc49216269212129a52ef4b65a))
+* **history:** render one merged list with per-kind rows (closes [#191](https://github.com/maltzsama/deepdiver/issues/191) view) ([4c4b972](https://github.com/maltzsama/deepdiver/commit/4c4b97272e8c1bf79ffc1b5a9f57ffb62fd2a779))
+
+
+### Bug Fixes
+
+* **history:** paginate the merged timeline via the official pagy helper (closes [#191](https://github.com/maltzsama/deepdiver/issues/191) brakeman) ([03538c1](https://github.com/maltzsama/deepdiver/commit/03538c17a8cf91e5246eca8fe30df473c2624ce2))
+* **history:** stable filter bar with kind as a filter, round-tripped (closes [#192](https://github.com/maltzsama/deepdiver/issues/192)) ([878c10a](https://github.com/maltzsama/deepdiver/commit/878c10a5121098bc22e414e481e4558d3167d2cb))
+* metadata key, impact panel, health scoring, errors→history, UI, merged timeline (closes [#183](https://github.com/maltzsama/deepdiver/issues/183)–[#185](https://github.com/maltzsama/deepdiver/issues/185), [#187](https://github.com/maltzsama/deepdiver/issues/187)–[#189](https://github.com/maltzsama/deepdiver/issues/189), [#191](https://github.com/maltzsama/deepdiver/issues/191), [#192](https://github.com/maltzsama/deepdiver/issues/192)) ([6d42917](https://github.com/maltzsama/deepdiver/commit/6d42917f1646bc2326fe7da2618cd5f6e18d1f38))
+* **readme:** add color and .svg to the version badge (fixes 404) ([c885b29](https://github.com/maltzsama/deepdiver/commit/c885b29a33850a4c9108e0cd97b4f49168a80d89))
+
 ## [0.10.1](https://github.com/maltzsama/deepdiver/compare/v0.10.0...v0.10.1) (2026-09-01)
 
 
