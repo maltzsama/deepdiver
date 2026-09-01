@@ -472,32 +472,32 @@ module ApplicationHelper
     "engine"
   end
 
-  # Computes uptime durations for paired lifecycle events by generation.
-  # @param events [Array<ErrorEvent>] lifecycle events ordered by last_seen_at
-  # @return [Hash{Integer => Float}] generation → uptime in seconds
-  def engine_uptimes(events)
-    ups = {}
-    result = {}
-
-    events.each do |event|
-      gen = event.context&.dig("generation")
-      state = event.context&.dig("state")
-      next unless gen
-
-      if state == "up"
-        ups[gen] = event.last_seen_at
-      elsif ups[gen] && %w[draining stopping down].include?(state)
-        result[gen] = event.last_seen_at - ups[gen]
-        ups.delete(gen)
-      end
+  # One engine session (generation): a single provisioning → ready → drain →
+  # stop cycle. Durations are derived from the lifecycle transition timestamps;
+  # a nil field means the transition fell outside the query window and is
+  # rendered as "—" rather than a fabricated number.
+  EngineSession = Struct.new(:generation, :started_at, :ready_seconds, :uptime_seconds,
+                             :drain_seconds, :attempts, :outcome, keyword_init: true) do
+    # @return [Boolean] whether the session is still running.
+    def running?
+      outcome == :running
     end
+  end
 
-    # Engines still running: uptime from up-event to now
-    ups.each do |gen, up_at|
-      result[gen] = Time.current - up_at
-    end
-
-    result
+  # Groups engine lifecycle transitions into one session per generation, newest
+  # first. A generation IS a session, so this collapses the several raw
+  # transition rows of each start→ready→drain→stop cycle into a single row that
+  # tells the operator the timings that matter.
+  #
+  # @param events [Array<ErrorEvent>] lifecycle events ordered by last_seen_at desc
+  # @return [Array<EngineSession>] the sessions, newest first
+  def engine_sessions(events)
+    events
+      .group_by { |event| event.context&.dig("generation") }
+      .reject { |generation, _| generation.nil? }
+      .map { |generation, group| build_engine_session(generation.to_i, group) }
+      .sort_by { |session| session.started_at || Time.at(0) }
+      .reverse
   end
 
   # Metrics that each operation actually moves, used to scope the diff display.
@@ -588,3 +588,63 @@ module ApplicationHelper
     OPERATION_METRICS.values.flatten.find { |k| t("maintenance.metrics.#{k}", default: k.humanize) == label }
   end
 
+  # Builds the session for one generation from its transition events.
+  #
+  # @param generation [Integer] the generation
+  # @param events [Array<ErrorEvent>] the generation's lifecycle events
+  # @return [EngineSession] the session
+  def build_engine_session(generation, events)
+    ordered = events.sort_by(&:last_seen_at)
+
+    starting = ordered.find { |e| e.context&.dig("state") == "starting" }
+    up       = ordered.find { |e| e.context&.dig("state") == "up" }
+    draining = ordered.find { |e| e.context&.dig("state") == "draining" }
+    terminal = ordered.reverse.find { |e| %w[down stopping].include?(e.context&.dig("state")) }
+
+    started_at = starting&.last_seen_at || ordered.first&.last_seen_at
+
+    # A phase missing from the window must stay nil (shown as "—"), never be
+    # fabricated from what happens to be present.
+    uptime_end = [ draining&.last_seen_at, terminal&.last_seen_at ].compact.min
+    uptime_seconds =
+      if up && uptime_end && uptime_end >= up.last_seen_at
+        uptime_end - up.last_seen_at
+      elsif up
+        Time.current - up.last_seen_at
+      end
+
+    EngineSession.new(
+      generation: generation,
+      started_at: started_at,
+      ready_seconds: duration_between(up&.last_seen_at, starting&.last_seen_at),
+      uptime_seconds: uptime_seconds,
+      drain_seconds: duration_between(terminal&.last_seen_at, draining&.last_seen_at),
+      attempts: ordered.filter_map { |e| e.context&.dig("attempts") }.map(&:to_i).max || 0,
+      outcome: session_outcome(up, terminal)
+    )
+  end
+
+  # The session outcome: running while no terminal transition exists, failed when
+  # a start never reached up, clean otherwise.
+  #
+  # @param up [ErrorEvent, nil] the generation's up event
+  # @param terminal [ErrorEvent, nil] the generation's down/stopping event
+  # @return [Symbol] :running, :failed or :clean
+  def session_outcome(up, terminal)
+    return :running if terminal.nil?
+    return :failed if up.nil?
+
+    :clean
+  end
+
+  # The positive duration between two timestamps, or nil when either is missing.
+  #
+  # @param a [Time, nil] the later timestamp
+  # @param b [Time, nil] the earlier timestamp
+  # @return [Float, nil]
+  def duration_between(a, b)
+    return nil if a.nil? || b.nil?
+
+    (a - b).positive? ? a - b : nil
+  end
+end

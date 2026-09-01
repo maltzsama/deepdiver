@@ -89,3 +89,81 @@ RSpec.describe ApplicationHelper, "#engine_phase_time", type: :helper do
     expect(helper.engine_phase_time(TrinoEngineState.new(status: "down"))).to be_nil
   end
 end
+
+RSpec.describe ApplicationHelper, "#engine_sessions", type: :helper do
+  def lifecycle_event(gen, state, at, attempts: 0)
+    create(:error_event, context: { "generation" => gen, "state" => state, "attempts" => attempts },
+                         last_seen_at: at)
+  end
+
+  it "collapses a generation's transitions into a single session" do
+    t = Time.zone.parse("2026-09-01 10:00:00")
+    events = [
+      lifecycle_event(1, "starting", t),
+      lifecycle_event(1, "up", t + 34.seconds),
+      lifecycle_event(1, "draining", t + 15.minutes),
+      lifecycle_event(1, "down", t + 15.minutes + 3.seconds)
+    ]
+
+    sessions = helper.engine_sessions(events)
+
+    expect(sessions.size).to eq(1)
+    session = sessions.first
+    expect(session.generation).to eq(1)
+    expect(session.started_at).to eq(t)
+    expect(session.ready_seconds).to eq(34)
+    expect(session.uptime_seconds).to eq(866)
+    expect(session.drain_seconds).to eq(3)
+    expect(session.outcome).to eq(:clean)
+    expect(session).not_to be_running
+  end
+
+  it "labels a still-running session and sorts it to the top" do
+    t = Time.zone.parse("2026-09-01 10:00:00")
+    events = [
+      lifecycle_event(2, "starting", t - 1.hour),
+      lifecycle_event(2, "up", t - 1.hour + 30.seconds),
+      lifecycle_event(1, "starting", t - 3.hours),
+      lifecycle_event(1, "up", t - 3.hours + 40.seconds),
+      lifecycle_event(1, "draining", t - 2.hours),
+      lifecycle_event(1, "down", t - 2.hours + 5.seconds)
+    ]
+
+    sessions = helper.engine_sessions(events)
+
+    expect(sessions.size).to eq(2)
+    expect(sessions.first.generation).to eq(2)
+    expect(sessions.first.outcome).to eq(:running)
+    expect(sessions.first).to be_running
+    expect(sessions.first.uptime_seconds).to be_within(5).of(Time.current - (t - 1.hour + 30.seconds))
+  end
+
+  it "labels a failed start when a generation never reached up" do
+    t = Time.zone.parse("2026-09-01 10:00:00")
+    events = [
+      lifecycle_event(3, "starting", t, attempts: 3),
+      lifecycle_event(3, "down", t + 1.minute, attempts: 3)
+    ]
+
+    session = helper.engine_sessions(events).first
+
+    expect(session.outcome).to eq(:failed)
+    expect(session.attempts).to eq(3)
+    expect(session.uptime_seconds).to be_nil
+  end
+
+  it "keeps nil durations for phases that fell outside the event window" do
+    t = Time.zone.parse("2026-09-01 10:00:00")
+    events = [
+      lifecycle_event(4, "up", t),
+      lifecycle_event(4, "down", t + 30.minutes)
+    ]
+
+    session = helper.engine_sessions(events).first
+
+    expect(session.started_at).to eq(t)
+    expect(session.ready_seconds).to be_nil
+    expect(session.drain_seconds).to be_nil
+    expect(session.outcome).to eq(:clean)
+  end
+end
