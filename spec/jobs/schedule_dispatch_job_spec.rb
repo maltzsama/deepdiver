@@ -1,6 +1,10 @@
 require "rails_helper"
 
 RSpec.describe ScheduleDispatchJob, type: :job do
+  it "runs on its own dispatch queue, separate from maintenance" do
+    expect(described_class.queue_name).to eq("dispatch")
+  end
+
   it "isolates a failing plan from the rest" do
     first = create(:maintenance_plan, cron: "* * * * *")
     second = create(:maintenance_plan, cron: "* * * * *")
