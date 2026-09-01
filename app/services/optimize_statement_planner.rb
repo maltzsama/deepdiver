@@ -82,17 +82,31 @@ class OptimizeStatementPlanner
 
   # Distinct partition values for the column, via $partitions.
   #
+  # Trino's Iceberg $partitions metadata table exposes the partition fields
+  # nested under a `partition` row/struct column - `SELECT DISTINCT
+  # "ingestion_date"` fails with "Column cannot be resolved". The column must
+  # be referenced as partition.<name>; `partition` is quoted because it is a
+  # reserved word in SQL.
+  #
   # @param column [String] the partition column name
   # @param execution_id [Integer] the execution id for header tagging
   # @return [Array] the distinct values
   def distinct_partition_values(column, execution_id)
-    sql = %(SELECT DISTINCT #{quote_ident(column)} FROM #{@table.trino_metadata_table("partitions")})
+    sql = %(SELECT DISTINCT "partition".#{quote_ident(column)} FROM #{@table.trino_metadata_table("partitions")})
     @runtime.query_rows(sql, execution_id: execution_id).map { |row| row.first }
   rescue StandardError => e
     # Partition discovery is best-effort: if it fails we fall back to the single
-    # unbatched OPTIMIZE rather than failing the whole execution.
+    # unbatched OPTIMIZE rather than failing the whole execution. But that
+    # degraded path is exactly the "Exceeded limit of N open writers" failure
+    # batching exists to prevent, so it must be visible to the operator - a bare
+    # warn line would make "batching silently didn't happen" indistinguishable
+    # from "batching wasn't needed".
     Rails.logger.warn("OptimizeStatementPlanner: partition discovery failed for " \
                       "#{@table.fully_qualified_name}: #{e.message}")
+    ErrorEvent.record(catalog: @table.catalog, schema: @table.namespace, table: @table.name,
+                      operation: "optimize-partition-discovery", source_system: "execution",
+                      error_class: e.class.name, message: e.message,
+                      context: { fallback: "single unbatched OPTIMIZE" })
     []
   end
 
