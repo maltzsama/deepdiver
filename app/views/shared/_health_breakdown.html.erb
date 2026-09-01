@@ -14,6 +14,11 @@
         <span class="badge <%= health_badge_class(evaluation[:status]) %>">
           <span class="badge-dot"></span><%= t("health.status.#{evaluation[:status]}") %>
         </span>
+        <% if evaluation[:worst_component] && evaluation[:worst_ratio].to_f < 0.5 %>
+          <span class="text-small text-cosmos-fg-mute">
+            <%= t("health.worst", component: t("health.component_labels.#{evaluation[:worst_component]}")) %>
+          </span>
+        <% end %>
       <% else %>
         <span class="font-display text-2xl text-cosmos-fg-mute"><%= t("health.no_score") %></span>
       <% end %>

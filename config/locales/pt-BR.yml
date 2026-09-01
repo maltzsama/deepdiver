@@ -538,6 +538,7 @@ pt-BR:
     title: "Saude da manutencao"
     coverage: "%{coverage}% dos criterios cobertos"
     no_score: "dados insuficientes para pontuar"
+    worst: "pior: %{component}"
     status:
       healthy: "saudavel"
       warning: "atencao"

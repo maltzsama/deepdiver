@@ -581,6 +581,7 @@ en:
     title: "Maintenance health"
     coverage: "%{coverage}% of criteria covered"
     no_score: "not enough data to score"
+    worst: "worst: %{component}"
     status:
       healthy: "healthy"
       warning: "warning"

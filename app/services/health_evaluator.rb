@@ -46,7 +46,12 @@ class HealthEvaluator
 
   # Computes the weighted health score and status from the available components.
   #
-  # @return [Hash] the score, status, components and coverage
+  # The composite is diluted: a severe problem in one dimension is averaged
+  # against health in the others (a table 1000x off target can still score
+  # 60/warning). The result therefore also carries the worst component, so the
+  # UI can lead with it instead of the reassuring average.
+  #
+  # @return [Hash] the score, status, components, coverage and worst_component
   def call
     components = {
       fragmentation:    fragmentation,
@@ -56,14 +61,19 @@ class HealthEvaluator
     }
 
     available = components.reject { |_key, value| value.nil? }
-    return { score: nil, status: :unknown, components: components } if available.empty?
+    return { score: nil, status: :unknown, components: components, worst_component: nil } if available.empty?
 
     total_weight = available.keys.sum { |key| WEIGHTS[key] }
     earned = available.sum { |key, ratio| WEIGHTS[key] * ratio }
     score = ((earned / total_weight.to_f) * 100).round
 
+    # The worst available component: the one whose ratio is lowest. This is
+    # what actually needs attention — the composite can hide it.
+    worst_key, worst_ratio = available.min_by { |_key, ratio| ratio }
+
     { score: score, status: status_for(score), components: components,
-      coverage: (total_weight / WEIGHTS.values.sum.to_f * 100).round }
+      coverage: (total_weight / WEIGHTS.values.sum.to_f * 100).round,
+      worst_component: worst_key, worst_ratio: worst_ratio }
   end
 
   private
