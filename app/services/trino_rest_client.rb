@@ -34,6 +34,18 @@ class TrinoRestClient
       .merge("execution_history_id" => execution_id, "query_id" => first["id"])
   end
 
+  # Executes SQL and returns the actual data rows, for helper queries where the
+  # values matter (e.g. reading distinct partition values before batching an
+  # OPTIMIZE). Unlike #execute it does not strip the rows into a count.
+  #
+  # @param sql [String] the query
+  # @param execution_id [Integer] the execution id for headers
+  # @return [Array<Array>] the data rows
+  def query_rows(sql, execution_id:)
+    first = statement(sql, execution_id: execution_id)
+    poll_rows(first, execution_id: execution_id)
+  end
+
   private
 
   # Submits a statement and returns the initial response, raising on rejection.
@@ -50,6 +62,33 @@ class TrinoRestClient
                     headers: headers(execution_id))
   rescue HttpTransport::ApiError => e
     raise Error, "Trino statement rejected: #{e.message}"
+  end
+
+  # Follows nextUri until the query finishes, collecting every data row.
+  #
+  # @param response [Hash] the initial statement response
+  # @param execution_id [Integer] the execution id for headers
+  # @return [Array<Array>] the collected data rows
+  def poll_rows(response, execution_id:)
+    deadline = Time.current + MAX_POLL_SECONDS
+    current = response
+    collected = []
+
+    loop do
+      collected.concat(rows(current))
+
+      raise Error, error_message(current) if current["error"]
+      break unless current["nextUri"]
+
+      if Time.current > deadline
+        raise Error, "Trino query exceeded #{MAX_POLL_SECONDS}s without finishing"
+      end
+
+      sleep POLL_INTERVAL
+      current = @transport.get(uri(current["nextUri"]), headers: headers(execution_id))
+    end
+
+    collected
   end
 
   # Follows nextUri until the query finishes, touching heartbeats and persisting

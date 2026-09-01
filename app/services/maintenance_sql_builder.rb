@@ -10,18 +10,22 @@ class MaintenanceSqlBuilder
   #
   # @param table [IcebergTable] the target table
   # @param step [MaintenanceStep] the step describing the operation
+  # @param where [String, nil] an explicit WHERE predicate that overrides the
+  #   step's configured one (used by partition-batched OPTIMIZE)
   # @return [String] the ALTER TABLE ... EXECUTE statement
-  def self.build(table, step)
-    new(table, step).build
+  def self.build(table, step, where: nil)
+    new(table, step, where: where).build
   end
 
   # Creates the builder for a table and step.
   #
   # @param table [IcebergTable] the target table
   # @param step [MaintenanceStep] the step describing the operation
-  def initialize(table, step)
+  # @param where [String, nil] an explicit WHERE predicate
+  def initialize(table, step, where: nil)
     @table = table
     @step = step
+    @where = where
   end
 
   # Builds the full ALTER TABLE statement including its arguments.
@@ -73,7 +77,8 @@ class MaintenanceSqlBuilder
   def optimize_arguments
     threshold = config["file_size_threshold"].presence || FILE_SIZE_THRESHOLD_DEFAULT
     sql = "(file_size_threshold => '#{threshold}')"
-    sql += " WHERE #{config["where"]}" if config["where"].present?
+    where_clause = @where.presence || config["where"]
+    sql += " WHERE #{where_clause}" if where_clause.present?
     sql
   end
 

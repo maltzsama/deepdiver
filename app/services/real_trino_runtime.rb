@@ -37,4 +37,13 @@ class RealTrinoRuntime
   def execute(sql, execution_id:, execution: nil, step: nil)
     @rest.execute(sql, execution_id: execution_id, execution: execution, step: step)
   end
+
+  # Runs a helper SQL query and returns the actual data rows.
+  #
+  # @param sql [String] the query
+  # @param execution_id [Integer] the execution id for headers
+  # @return [Array<Array>] the data rows
+  def query_rows(sql, execution_id:)
+    @rest.query_rows(sql, execution_id: execution_id)
+  end
 end
