@@ -267,15 +267,15 @@ module ApplicationHelper
   # @return [Array, nil] the label and badge class, or nil when no SLA applies.
   def freshness_label(table)
     sla = table.table_freshness_sla
-    return [ t("tables.index.fresh_no_sla"), "badge-mute" ] if sla.nil? || !sla.enabled
+    return [ t("tables.fresh_no_sla"), "badge-mute" ] if sla.nil? || !sla.enabled
 
     delay = freshness_delay_label(table.latest_freshness_check&.delay_seconds)
     case sla.status
     when "ok"      then [ delay || "ok", "badge-ok" ]
     when "warning" then [ delay || "warning", "badge-warn" ]
-    when "late"    then [ t("tables.index.fresh_late", delay: delay || "?"), "badge-err" ]
-    when "error"   then [ t("tables.index.fresh_error"), "badge-err" ]
-    when "no_data" then [ t("tables.index.fresh_no_data"), "badge-mute" ]
+    when "late"    then [ t("tables.fresh_late", delay: delay || "?"), "badge-err" ]
+    when "error"   then [ t("tables.fresh_error"), "badge-err" ]
+    when "no_data" then [ t("tables.fresh_no_data"), "badge-mute" ]
     else [ "—", "badge-mute" ]
     end
   end
