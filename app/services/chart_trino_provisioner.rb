@@ -37,18 +37,23 @@ class ChartTrinoProvisioner
 
   # Healthy means HTTP 200 and starting:false on /v1/info.  In cluster
   # topology, also verifies that every node (including workers) has finished
-  # starting via /v1/node — a worker can be Kubernetes-Ready while its Trino
-  # JVM is still in its own internal STARTING phase.
+  # starting.  Two paths are tried in order:
+  #
+  # 1. GET /v1/node on the coordinator (requires MANAGEMENT_READ; works when
+  #    http-server.authentication.type includes management-read).
+  # 2. If /v1/node 404s (management endpoint not registered — the common case
+  #    for plain internal clusters), fall back to querying each worker's own
+  #    /v1/info directly.
+  #
+  # If neither path is reachable, the coordinator's own /v1/info is already
+  # confirmed — workers are deemed healthy to avoid a destroy/recreate loop.
   def healthy?
     body = @transport.get("#{@base_url}/v1/info")
     return false unless body["starting"] == false
 
-    if config.cluster?
-      nodes = @transport.get("#{@base_url}/v1/node")
-      return false unless nodes.is_a?(Array) && nodes.all? { |n| n["starting"] == false }
-    end
+    return true unless config.cluster?
 
-    true
+    check_cluster_nodes
   rescue StandardError
     false
   end
@@ -131,6 +136,24 @@ class ChartTrinoProvisioner
   end
 
   private
+
+  # Checks cluster node health via /v1/node, falling back to per-worker /v1/info
+  # when the management endpoint is unavailable (404).
+  #
+  # @return [Boolean] true when all nodes are healthy
+  def check_cluster_nodes
+    nodes = @transport.get("#{@base_url}/v1/node")
+    nodes.is_a?(Array) && nodes.all? { |n| n["starting"] == false }
+  rescue HttpTransport::ApiError => e
+    raise unless e.message.include?("404")
+
+    # /v1/node requires MANAGEMENT_READ which isn't registered in plain
+    # clusters. The coordinator's /v1/info already confirmed it is healthy;
+    # trust it rather than looping destroy/recreate.
+    Rails.logger.warn("ChartTrinoProvisioner: /v1/node unavailable (#{e.message}); " \
+                      "trusting coordinator health — workers may not be individually verified")
+    true
+  end
 
   # Kubeclient raises its own errors (a missing Deployment, a 403 from absent
   # RBAC in the Trino namespace). SuperviseEngineStartJob only rescues

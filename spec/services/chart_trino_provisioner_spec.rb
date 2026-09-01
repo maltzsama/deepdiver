@@ -106,6 +106,24 @@ RSpec.describe ChartTrinoProvisioner do
 
       expect(provisioner.healthy?).to be false
     end
+
+    it "trusts coordinator health when /v1/node 404s (management endpoint not registered)" do
+      TrinoEngineConfig.instance.update!(topology: "cluster")
+      allow(transport).to receive(:get).with("http://trino/v1/info").and_return("starting" => false)
+      allow(transport).to receive(:get).with("http://trino/v1/node")
+        .and_raise(HttpTransport::ApiError.new(404, "Not Found"))
+
+      expect(provisioner.healthy?).to be true
+    end
+
+    it "returns false when /v1/node fails with a non-404 error" do
+      TrinoEngineConfig.instance.update!(topology: "cluster")
+      allow(transport).to receive(:get).with("http://trino/v1/info").and_return("starting" => false)
+      allow(transport).to receive(:get).with("http://trino/v1/node")
+        .and_raise(HttpTransport::ApiError.new(500, "Internal Server Error"))
+
+      expect(provisioner.healthy?).to be false
+    end
   end
 
   describe "#create!" do
