@@ -139,12 +139,18 @@ FactoryBot.define do
   end
 
   factory :alert_setting do
+    singleton_key { 1 }
     smtp_address { "smtp.example.com" }
     smtp_port { 587 }
     smtp_user_name { "alerts" }
     smtp_password { "secret" }
     smtp_from { "alerts@example.com" }
     slack_webhook_url { "https://hooks.slack.com/services/T000/B000/XXXX" }
+
+    # AlertSetting is a singleton (unique singleton_key): creating a second
+    # row is a constraint violation. Reuse/update the existing row instead so
+    # specs stay valid even when the shared test DB already holds the row.
+    initialize_with { AlertSetting.find_or_initialize_by(singleton_key: 1) }
   end
 
   factory :error_event do
