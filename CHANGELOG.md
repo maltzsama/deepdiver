@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.1](https://github.com/maltzsama/deepdiver/compare/v0.6.0...v0.6.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* **provisioner:** trust coordinator health when /v1/node 404s (closes [#123](https://github.com/maltzsama/deepdiver/issues/123)) ([11c7ce2](https://github.com/maltzsama/deepdiver/commit/11c7ce21d3d0f0433ccb2520cc4ec0031ecc1d7f))
+* **provisioner:** trust coordinator health when /v1/node 404s (closes [#123](https://github.com/maltzsama/deepdiver/issues/123)) ([f1ad2da](https://github.com/maltzsama/deepdiver/commit/f1ad2da3fa8561ed219c4ee3d4dbf0ec8f104dd7))
+
 ## [0.6.0](https://github.com/maltzsama/deepdiver/compare/v0.5.6...v0.6.0) (2026-08-31)
 
 
