@@ -63,7 +63,7 @@ RSpec.describe "Dashboard needs-action feed", type: :request do
 
     get root_path
 
-    expect(response.body).to include(execution_histories_path(tab: "freshness"))
+    expect(response.body).to include(execution_histories_path(kind: "freshness"))
     expect(response.body).to include("Freshness SLA breached")
   end
 
@@ -105,7 +105,7 @@ RSpec.describe "Dashboard renders the demo chain", type: :request do
     get root_path
 
     expect(response.body).to include("Freshness SLA breached")
-    expect(response.body).to include(execution_histories_path(tab: "freshness"))
+    expect(response.body).to include(execution_histories_path(kind: "freshness"))
     expect(response.body).to include(iceberg_table_path(table))
     expect(response.body).not_to include("Nothing needs attention")
   end

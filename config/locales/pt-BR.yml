@@ -659,6 +659,7 @@ pt-BR:
       fresh_col_sla: "SLA (min)"
     filter_operation: "Operacao"
     filter_status: "Status"
+    filter_kind: "Tipo"
     kind_maintenance: "manutencao"
     kind_freshness: "frescor"
     freshness_sla: "SLA %{sla}min"

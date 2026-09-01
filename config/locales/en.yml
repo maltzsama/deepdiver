@@ -704,6 +704,7 @@ en:
       fresh_col_sla: "SLA (min)"
     filter_operation: "Operation"
     filter_status: "Status"
+    filter_kind: "Kind"
     kind_maintenance: "maintenance"
     kind_freshness: "freshness"
     freshness_sla: "SLA %{sla}min"

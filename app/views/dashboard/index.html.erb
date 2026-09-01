@@ -1,7 +1,7 @@
 <% content_for :title, "#{t("dashboard.index.title")} — #{t("layout.app_name")}" %>
 
 <% if @open_error_count && @open_error_count.positive? %>
-  <a href="<%= execution_histories_path(tab: "freshness") %>"
+  <a href="<%= execution_histories_path(kind: "freshness") %>"
      class="flash flash-alert mb-5 no-underline block">
     <%= t("error_events.overview_banner", count: @open_error_count) %>
   </a>
@@ -87,10 +87,10 @@
               <%= t("dashboard.index.section_errors") %>
               <span class="badge badge-err ml-2"><span class="badge-dot"></span><%= @action_errors.size %></span>
             </h3>
-            <%= link_to t("dashboard.index.see_all"), execution_histories_path(tab: "freshness"), class: "link text-small" %>
+            <%= link_to t("dashboard.index.see_all"), execution_histories_path(kind: "freshness"), class: "link text-small" %>
           </div>
           <% @action_errors.each do |error| %>
-            <a href="<%= execution_histories_path(tab: "freshness") %>" class="flex items-center gap-3 px-4 py-2.5 no-underline hover:bg-cosmos-soft group">
+            <a href="<%= execution_histories_path(kind: "freshness") %>" class="flex items-center gap-3 px-4 py-2.5 no-underline hover:bg-cosmos-soft group">
               <span class="badge <%= {"open" => "badge-err", "acknowledged" => "badge-warn"}[error.status] %> flex-none">
                 <span class="badge-dot"></span><%= t("error_events.status_#{error.status}") %>
               </span>
