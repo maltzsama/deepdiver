@@ -47,11 +47,11 @@ class CatalogSyncService
     catalog_name = table.catalog.trino_catalog_name
     client = TrinoClient.new(catalog_name: catalog_name)
 
-    files_sql = %(SELECT SUM(file_size_in_bytes) AS total FROM #{table.trino_identifier}$files)
+    files_sql = %(SELECT SUM(file_size_in_bytes) AS total FROM #{table.trino_metadata_table("files")})
     total_size = client.query_scalar(files_sql, "total")
     table.update_column(:total_size_bytes, total_size.to_i) if total_size
 
-    manifests_sql = %(SELECT COUNT(*) AS n FROM #{table.trino_identifier}$manifests)
+    manifests_sql = %(SELECT COUNT(*) AS n FROM #{table.trino_metadata_table("manifests")})
     manifest_count = client.query_scalar(manifests_sql, "n")
     table.update_column(:manifest_count, manifest_count.to_i) if manifest_count
 

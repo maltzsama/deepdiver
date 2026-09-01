@@ -92,4 +92,43 @@ RSpec.describe IcebergTable, type: :model do
       expect(snapshot["total_data_files"]).to be_nil
     end
   end
+
+  describe "#trino_identifier" do
+    it "returns a three-part quoted identifier" do
+      catalog = create(:catalog, name: "my_catalog")
+      table = create(:iceberg_table, catalog:, namespace: "silver", name: "orders")
+
+      expect(table.trino_identifier).to eq('"my_catalog"."silver"."orders"')
+    end
+
+    it "keeps dotted namespaces in a single quoted part" do
+      catalog = create(:catalog, name: "cat")
+      table = create(:iceberg_table, catalog:, namespace: "ns1.ns2.ns3", name: "t")
+
+      expect(table.trino_identifier).to eq('"cat"."ns1.ns2.ns3"."t"')
+    end
+  end
+
+  describe "#trino_metadata_table" do
+    it "places the suffix inside the table quotes" do
+      catalog = create(:catalog, name: "my_catalog")
+      table = create(:iceberg_table, catalog:, namespace: "silver", name: "order_changes")
+
+      expect(table.trino_metadata_table("files")).to eq('"my_catalog"."silver"."order_changes$files"')
+    end
+
+    it "works with manifests suffix" do
+      catalog = create(:catalog, name: "cat")
+      table = create(:iceberg_table, catalog:, namespace: "bronze", name: "users")
+
+      expect(table.trino_metadata_table("manifests")).to eq('"cat"."bronze"."users$manifests"')
+    end
+
+    it "escapes double quotes in table name" do
+      catalog = create(:catalog, name: "cat")
+      table = create(:iceberg_table, catalog:, namespace: "ns", name: 'weird"name')
+
+      expect(table.trino_metadata_table("files")).to eq('"cat"."ns"."weird""name$files"')
+    end
+  end
 end
