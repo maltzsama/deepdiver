@@ -685,6 +685,8 @@ en:
       col_chain: "Detail"
       col_duration: "Duration"
       col_query_id: "Trino query id"
+      col_triage: "Triage"
+      triage_unassigned: "unassigned"
       filter_stopped_at: "Stopped at step"
       retries: "%{count} retries"
       tab_maintenance: "Maintenance"

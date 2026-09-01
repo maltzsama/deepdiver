@@ -641,6 +641,8 @@ pt-BR:
       col_chain: "Detalhe"
       col_duration: "Duracao"
       col_query_id: "ID da consulta Trino"
+      col_triage: "Triagem"
+      triage_unassigned: "nao atribuido"
       filter_stopped_at: "Parou na etapa"
       retries: "%{count} tentativas"
       tab_maintenance: "Manutencao"
