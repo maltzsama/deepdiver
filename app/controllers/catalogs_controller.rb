@@ -110,6 +110,7 @@ class CatalogsController < ApplicationController
   def catalog_params
     permitted = params.require(:catalog).permit(
       :name, :catalog_type, :endpoint, :trino_catalog_name_override, :nessie_ref,
+      :nessie_api_mode, :nessie_warehouse,
       :s3_authentication_type, :s3_endpoint, :s3_access_key, :s3_secret_key,
       :s3_role_arn, :s3_external_id, :s3_region,
       catalog_credential_attributes: [
