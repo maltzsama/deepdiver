@@ -188,8 +188,11 @@ class ExecuteMaintenanceJob < ApplicationJob
     execution.update!(status: :success, current_step: "done", finished_at: Time.current)
     execution.maintenance_plan&.update!(consecutive_failures: 0)
     TableLock.release(execution)
-    TrinoEngineSupervisor.demand_finished!
 
+    # Metadata refresh and Trino enrichment run BEFORE demand_finished! — the
+    # engine must still be up for the $files/$manifests queries. Draining first
+    # would tear the engine down and the enrichment would fail (and be silently
+    # swallowed), leaving size/manifest data unpopulated.
     table = execution.iceberg_table
     if table
       CatalogSyncService.sync_table(table.id)
@@ -197,6 +200,8 @@ class ExecuteMaintenanceJob < ApplicationJob
       execution.update!(metadata_after: table.reload.metadata_snapshot)
       check_records_integrity!(execution)
     end
+
+    TrinoEngineSupervisor.demand_finished!
   end
 
   # Compares total_records before and after maintenance. Only a decrease is
