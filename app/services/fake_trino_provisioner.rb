@@ -38,6 +38,11 @@ class FakeTrinoProvisioner
   # @return [Array] always empty
   def active_queries = []
 
+  # Best-effort alias for the display path — same empty list on the fake.
+  #
+  # @return [Array] always empty
+  def safe_active_queries = []
+
   # Cancelling on the fake engine is always a no-op success.
   #
   # @param query_id [String] ignored

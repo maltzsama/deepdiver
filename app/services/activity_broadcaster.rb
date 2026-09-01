@@ -17,7 +17,7 @@ module ActivityBroadcaster
                               .order(:created_at)
     plan_ids = running.map(&:maintenance_plan_id).compact.uniq
     typical_durations = MaintenancePlan.typical_durations_for(plan_ids)
-    queries = TrinoProvisioner.active_queries
+    queries = TrinoProvisioner.safe_active_queries
     active_count = running.size + queued.size
     engine_events = ErrorEvent.where(source_system: "engine", operation: "engine-lifecycle")
                               .order(last_seen_at: :desc)

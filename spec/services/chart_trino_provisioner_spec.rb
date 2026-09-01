@@ -29,6 +29,34 @@ RSpec.describe ChartTrinoProvisioner do
     expect(provisioner.active_queries.size).to eq(1)
   end
 
+  it "sends the X-Trino-User header with the /v1/query call" do
+    allow(transport).to receive(:get).and_return([])
+
+    provisioner.active_queries
+
+    expect(transport).to have_received(:get).with(
+      "http://trino/v1/query",
+      headers: hash_including("X-Trino-User" => "deepdiver")
+    )
+  end
+
+  describe "#safe_active_queries" do
+    it "returns the queries when the coordinator is reachable" do
+      allow(transport).to receive(:get).and_return(
+        [ { "queryId" => "1", "state" => "RUNNING" } ]
+      )
+
+      expect(provisioner.safe_active_queries.size).to eq(1)
+    end
+
+    it "returns an empty list when the coordinator raises, without propagating" do
+      allow(transport).to receive(:get).and_raise(HttpTransport::ApiError.new(401, "Unauthorized"))
+      allow(Rails.logger).to receive(:warn)
+
+      expect(provisioner.safe_active_queries).to eq([])
+    end
+  end
+
   it "wait_gone! returns once the deployment is scaled to zero" do
     allow(k8s).to receive(:live_replicas).and_return(0)
 
@@ -66,21 +94,21 @@ RSpec.describe ChartTrinoProvisioner do
 
   describe "#idle?" do
     it "returns true when no queries are running or queued" do
-      allow(transport).to receive(:get).with("http://trino/v1/query")
+      allow(transport).to receive(:get).with("http://trino/v1/query", headers: anything)
         .and_return([ { "queryId" => "1", "state" => "FINISHED" } ])
 
       expect(provisioner.idle?).to be true
     end
 
     it "returns false when a query is running" do
-      allow(transport).to receive(:get).with("http://trino/v1/query")
+      allow(transport).to receive(:get).with("http://trino/v1/query", headers: anything)
         .and_return([ { "queryId" => "1", "state" => "RUNNING" } ])
 
       expect(provisioner.idle?).to be false
     end
 
     it "returns false (busy) when the coordinator is unreachable" do
-      allow(transport).to receive(:get).with("http://trino/v1/query")
+      allow(transport).to receive(:get).with("http://trino/v1/query", headers: anything)
         .and_raise(HttpTransport::ApiError.new(500, "coordinator down"))
 
       expect(provisioner.idle?).to be false
