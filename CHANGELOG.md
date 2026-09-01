@@ -4,6 +4,21 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.9.0](https://github.com/maltzsama/deepdiver/compare/v0.8.0...v0.9.0) (2026-09-01)
+
+
+### Features
+
+* **activity:** collapse engine history transitions into sessions ([28e0428](https://github.com/maltzsama/deepdiver/commit/28e042827bffb8160800003646f2e85c8fe8e909)), closes [#148](https://github.com/maltzsama/deepdiver/issues/148)
+* **activity:** connector-as-progress stepper layout, full-width ([1b22728](https://github.com/maltzsama/deepdiver/commit/1b227288a06f1334fa0206e5724a1b5f67603b68)), closes [#147](https://github.com/maltzsama/deepdiver/issues/147)
+* **activity:** move engine admin actions into the panel header ([cd024c1](https://github.com/maltzsama/deepdiver/commit/cd024c118604b07f72c9c6e0f7082504a426c18a)), closes [#149](https://github.com/maltzsama/deepdiver/issues/149)
+
+
+### Bug Fixes
+
+* **optimize:** reference partition column under partition.&lt;name&gt; in $partitions ([6ce5116](https://github.com/maltzsama/deepdiver/commit/6ce5116a0653d4617607ebda85ef444a33281ec4)), closes [#145](https://github.com/maltzsama/deepdiver/issues/145)
+* partition discovery, engine stepper, history sessions, header actions ([#145](https://github.com/maltzsama/deepdiver/issues/145) [#147](https://github.com/maltzsama/deepdiver/issues/147) [#148](https://github.com/maltzsama/deepdiver/issues/148) [#149](https://github.com/maltzsama/deepdiver/issues/149)) ([384c611](https://github.com/maltzsama/deepdiver/commit/384c611c18d2281404919ae9a01a4e1d1fd7ed87))
+
 ## [0.8.0](https://github.com/maltzsama/deepdiver/compare/v0.7.1...v0.8.0) (2026-09-01)
 
 
