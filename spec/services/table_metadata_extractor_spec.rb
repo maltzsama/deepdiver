@@ -35,5 +35,24 @@ RSpec.describe TableMetadataExtractor, type: :service do
       expect(extractor.total_records).to be_nil
       expect(extractor.position_deletes).to be_nil
     end
+
+    it "keeps metrics when snapshot_count is zero" do
+      zero = create(:iceberg_table, snapshot_count: 0, total_records: 500,
+                                    total_data_files: 10, total_size_bytes: 1_000)
+      extractor = described_class.from_persisted(zero)
+
+      expect(extractor.total_records).to eq(500)
+      expect(extractor.total_size_bytes).to eq(1_000)
+      expect(extractor.average_file_size).to eq(100)
+    end
+
+    it "keeps metrics when snapshot_count is nil" do
+      nil_count = create(:iceberg_table, snapshot_count: nil, total_records: 500,
+                                         total_data_files: 10, total_size_bytes: 1_000)
+      extractor = described_class.from_persisted(nil_count)
+
+      expect(extractor.total_records).to eq(500)
+      expect(extractor.total_size_bytes).to eq(1_000)
+    end
   end
 end
