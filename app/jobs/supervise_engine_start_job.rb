@@ -67,11 +67,18 @@ class SuperviseEngineStartJob < ApplicationJob
       TrinoProvisioner.destroy! rescue nil
       MaintenanceOrchestrator.supervise_engine_start
     else
-      state.update!(status: "failed", last_error: error.message, status_changed_at: Time.current)
+      # Go through transition! so the CAS guard holds, generation bumps, and the
+      # lifecycle event is recorded. A plain update! would silently clobber a
+      # concurrent transition and leave the failure invisible on the timeline.
+      TrinoEngineSupervisor.transition!(state, "failed", last_error: error.message)
       ErrorEvent.record(catalog: nil, schema: "engine", operation: "engine-start",
                         source_system: "engine", error_class: error.class.name, message: error.message)
       fail_pending_executions!(error.message)
     end
+  rescue TrinoEngineSupervisor::ConcurrentTransitionError
+    # A concurrent transition won (e.g. the engine actually came up): nothing
+    # to do - do not record the failure over the winning transition.
+    nil
   end
 
   # Fails every pending execution with the given message and signals the
