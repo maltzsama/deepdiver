@@ -35,6 +35,16 @@ class OperationTimeline
     execute(sql).first["n"].to_i
   end
 
+  # A paginable collection exposing the Pagy helper's expected interface
+  # (count, offset, limit). Using the official `pagy` helper keeps the pager
+  # on the framework's own (Brakeman-recognised) path instead of a hand-built
+  # Pagy::Offset carrying request parameters.
+  #
+  # @return [OperationTimeline::Collection] the paginable wrapper
+  def collection
+    Collection.new(self)
+  end
+
   # The rows for one page, newest first, each a hash of the shared shape.
   #
   # @param limit [Integer] the page size
@@ -163,5 +173,39 @@ class OperationTimeline
   # @return [Array<Hash>] the result rows
   def execute(sql)
     ActiveRecord::Base.connection.select_all(sql).to_a
+  end
+
+  # Adapter between the timeline and Pagy's `pagy` helper. Pagy calls `count`
+  # then `offset(n).limit(n)`; we return the already-paginated rows from the
+  # UNION query.
+  class Collection
+    # Creates the adapter for a timeline.
+    #
+    # @param timeline [OperationTimeline] the query to paginate
+    def initialize(timeline)
+      @timeline = timeline
+    end
+
+    # @return [Integer] the merged row count
+    def count
+      @timeline.count
+    end
+
+    # Returns self with a pending offset (Pagy chains offset → limit).
+    #
+    # @param offset [Integer] the page offset
+    # @return [OperationTimeline::Collection] self
+    def offset(offset)
+      @offset = offset
+      self
+    end
+
+    # Fetches the page rows.
+    #
+    # @param limit [Integer] the page size
+    # @return [Array<Hash>] the paginated rows
+    def limit(limit)
+      @timeline.rows(limit: limit, offset: @offset.to_i)
+    end
   end
 end

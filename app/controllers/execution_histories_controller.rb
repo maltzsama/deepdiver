@@ -12,17 +12,17 @@ class ExecutionHistoriesController < ApplicationController
   def index
     authorize ExecutionHistory
     @catalogs = Catalog.order(:name)
+    filters = params.permit(:kind, :catalog_id, :status, :operation, :stopped_at_step, :page)
     timeline = OperationTimeline.new(
-      kind: params[:kind],
-      catalog_id: params[:catalog_id],
-      status: params[:status],
-      operation: params[:operation],
-      stopped_at_step: params[:stopped_at_step]
+      kind: filters[:kind].to_s.presence,
+      catalog_id: filters[:catalog_id].to_s.presence,
+      status: filters[:status].to_s.presence,
+      operation: filters[:operation].to_s.presence,
+      stopped_at_step: filters[:stopped_at_step].to_s.presence
     )
 
-    page = params[:page].to_i.positive? ? params[:page].to_i : 1
-    @pagy = Pagy::Offset.new(count: timeline.count, page: page, limit: PAGE_SIZE)
-    @rows = timeline.rows(limit: PAGE_SIZE, offset: @pagy.offset)
+    @pagy, @rows = pagy(timeline.collection, limit: PAGE_SIZE)
+    @rows = @rows.map(&:symbolize_keys)
 
     load_records(@rows)
     assignable_users # warm the memo for the triage select
