@@ -38,6 +38,19 @@ class OptimizeStatementPlanner
   def statements(execution_id:)
     return [ single_statement ] unless batchable?
 
+    batched_statements(execution_id)
+  end
+
+  private
+
+  # Builds the batched statements for a batchable table. If anything in the
+  # partition discovery OR literal rendering raises — a string identity partition
+  # value is a known case — we fall back to the single unbatched OPTIMIZE rather
+  # than failing the whole execution.
+  #
+  # @param execution_id [Integer] the execution id for header tagging
+  # @return [Array<String>] one or more ALTER TABLE ... EXECUTE statements
+  def batched_statements(execution_id)
     partition_column = identity_partition_column
     values = distinct_partition_values(partition_column, execution_id)
     return [ single_statement ] if values.empty?
@@ -46,9 +59,18 @@ class OptimizeStatementPlanner
     chunks.map do |chunk|
       MaintenanceSqlBuilder.build(@table, @step, where: "#{quote_ident(partition_column)} IN (#{chunk.map { |v| sql_literal(v) }.join(", ")})")
     end
+  rescue ArgumentError => e
+    # A value we cannot render as a safe SQL literal (e.g. a long identity
+    # string partition). Same degraded path as a discovery failure: single
+    # unbatched OPTIMIZE, surfaced to the operator.
+    Rails.logger.warn("OptimizeStatementPlanner: cannot batch partition values for " \
+                      "#{@table.fully_qualified_name}: #{e.message}")
+    ErrorEvent.record(catalog: @table.catalog, schema: @table.namespace, table: @table.name,
+                      operation: "optimize-partition-discovery", source_system: "execution",
+                      error_class: e.class.name, message: e.message,
+                      context: { fallback: "single unbatched OPTIMIZE" })
+    [ single_statement ]
   end
-
-  private
 
   # Whether this step qualifies for partition batching.
   #

@@ -128,5 +128,17 @@ RSpec.describe OptimizeStatementPlanner do
       expect(sqls.size).to eq(2)
       expect(sqls.first).to include("DATE '2026-01-01'").and include("DATE '2026-01-02'")
     end
+
+    it "falls back to the single statement when a partition value cannot be rendered as a literal" do
+      allow(runtime).to receive(:query_rows).and_return([ [ "BR" ], [ "US" ] ])
+      plan_with_partition([ { "spec-id" => 0, "fields" => [ { "name" => "country", "transform" => "identity" } ] } ])
+
+      sqls = described_class.new(table, optimize_step, runtime: runtime).statements(execution_id: 1)
+
+      expect(sqls.size).to eq(1)
+      expect(sqls.first).not_to include("WHERE")
+      expect(ErrorEvent.last.operation).to eq("optimize-partition-discovery")
+      expect(ErrorEvent.last.message).to include("unsupported partition value")
+    end
   end
 end
