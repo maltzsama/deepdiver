@@ -344,23 +344,21 @@ module ApplicationHelper
   # Ordered lifecycle stages for the engine stepper.
   ENGINE_LIFECYCLE_STAGES = %w[down starting up draining stopping].freeze
 
-  # Renders the lifecycle stepper: a row of stage labels with separators.
-  # The current stage is highlighted; past stages are muted; future stages are muted.
+  # Renders the lifecycle stepper: a row of stage labels with CSS connectors.
+  # The current stage is highlighted; past stages are muted; future stages are
+  # muted. Uses its own .step--<status> modifiers so the stepper is independent
+  # of the badge system, and draws the connectors with ::after instead of an
+  # empty presentational span.
   # @param status [String] the current engine status.
   # @return [String] HTML-safe stepper markup.
   def engine_lifecycle_stepper(status)
-    badge_class = engine_status_badge_class(status)
     capture do
       ENGINE_LIFECYCLE_STAGES.each_with_index do |stage, i|
         active = stage == status
         css = [ "step" ]
         css << "active" if active
-        css << badge_class if active
+        css << "step--#{stage}" if active
         concat content_tag(:span, t("activity.engine.stage_#{stage}"), class: css.join(" "))
-        if i < ENGINE_LIFECYCLE_STAGES.length - 1
-          sep_active = active
-          concat content_tag(:span, "", class: [ "step-sep", ("active" if sep_active) ].compact.join(" "))
-        end
       end
     end
   end
