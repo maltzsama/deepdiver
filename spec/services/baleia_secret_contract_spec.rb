@@ -33,7 +33,7 @@ RSpec.describe "Baleia secret contract" do
   def materialized_payload
     payload = nil
     allow(k8s_client).to receive(:create_secret) { |p| payload = p }
-    allow(k8s_client).to receive(:update_secret) { |_name, p, _ns| payload = p }
+    allow(k8s_client).to receive(:update_secret) { |p| payload = p }
     TrinoSecretMaterializer.new(k8s_client: k8s_client)
       .materialize!(Catalog.includes(:catalog_credential))
     payload

@@ -94,8 +94,7 @@ class ExecuteMaintenanceJob < ApplicationJob
     result_row.update!(status: "running", started_at: Time.current)
     execution.update!(current_step: result_row.operation)
 
-    sql = MaintenanceSqlBuilder.build(execution.iceberg_table, maintenance_step)
-    metrics = TrinoRuntime.execute(sql, execution_id: execution.id, execution: execution, step: result_row)
+    metrics = execute_step(execution, maintenance_step, result_row)
 
     result_row.update!(status: "succeeded", finished_at: Time.current,
                        metrics: metrics, trino_query_id: metrics["query_id"].presence || result_row.trino_query_id)
@@ -114,6 +113,48 @@ class ExecuteMaintenanceJob < ApplicationJob
     # The handler marked the execution failed, so demand may have dropped to
     # zero - let the supervisor evaluate whether the engine can drain.
     TrinoEngineSupervisor.demand_finished!
+  end
+
+  # Executes the SQL for a step. OPTIMIZE on a many-partition table is split by
+  # OptimizeStatementPlanner into one statement per bounded partition group so
+  # no single query exceeds the connector's open-writers limit; every other
+  # step runs its single statement.
+  #
+  # @param execution [ExecutionHistory] the execution owning the step
+  # @param maintenance_step [MaintenanceStep] the step being run
+  # @param result_row [ExecutionStep] the step record
+  # @return [Hash] the aggregated metrics
+  def execute_step(execution, maintenance_step, result_row)
+    sqls = OptimizeStatementPlanner.new(execution.iceberg_table, maintenance_step).statements(execution_id: execution.id)
+
+    return run_sql(sqls.first, execution, result_row) if sqls.size == 1
+
+    aggregate_metrics(sqls.map do |sql|
+      run_sql(sql, execution, result_row)
+    end)
+  end
+
+  # Runs one SQL statement through the runtime and returns its metrics.
+  #
+  # @param sql [String] the statement
+  # @param execution [ExecutionHistory] the execution for heartbeats
+  # @param result_row [ExecutionStep] the step for query id/progress
+  # @return [Hash] the metrics payload
+  def run_sql(sql, execution, result_row)
+    TrinoRuntime.execute(sql, execution_id: execution.id, execution: execution, step: result_row)
+  end
+
+  # Merges the metrics of multiple statements into one result, summing row
+  # counts and keeping the last query id.
+  #
+  # @param metrics [Array<Hash>] the per-statement metrics
+  # @return [Hash] the aggregated metrics
+  def aggregate_metrics(metrics)
+    {
+      "rows" => metrics.sum { |m| m["rows"].to_i },
+      "query_id" => metrics.map { |m| m["query_id"] }.compact.last,
+      "batched_statements" => metrics.size
+    }.compact
   end
 
   # Handles a Trino commit conflict on a step: fails it after the retry limit,

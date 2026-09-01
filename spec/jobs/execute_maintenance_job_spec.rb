@@ -222,4 +222,49 @@ RSpec.describe ExecuteMaintenanceJob, type: :job do
         .not_to change { ErrorEvent.count }
     end
   end
+
+  describe "partition-batched OPTIMIZE" do
+    let(:table) { plan.iceberg_table }
+
+    it "runs one statement per partition group and marks the step succeeded" do
+      table.update!(partition_json: [ { "spec-id" => 0, "fields" => [ { "name" => "ingestion_date", "transform" => "identity" } ] } ])
+      optimize = plan.maintenance_steps.find_by!(operation: "optimize")
+      optimize.update!(config: { "partitions_per_query" => 2 })
+      values = (1..5).map { |d| [ format("2026-01-%02d", d) ] }
+      allow(TrinoRuntime).to receive(:query_rows).and_return(values)
+      executed = []
+      allow(TrinoRuntime).to receive(:execute) do |sql, **_kw|
+        executed << sql
+        { "query_id" => "q#{executed.size}", "rows" => 0 }
+      end
+      execution = released_execution
+
+      described_class.perform_now(execution.id)
+
+      step = execution.execution_steps.find_by!(operation: "optimize")
+      expect(step.status).to eq("succeeded")
+      expect(step.metrics["batched_statements"]).to eq(3)
+      expect(executed.size).to eq(3)
+      expect(executed.all? { |sql| sql.include?("WHERE \"ingestion_date\" IN") }).to be true
+    end
+
+    it "falls back to a single OPTIMIZE when the table is not batchable" do
+      table.update!(partition_json: [])
+      allow(TrinoRuntime).to receive(:query_rows)
+      executed = []
+      allow(TrinoRuntime).to receive(:execute) do |sql, **_kw|
+        executed << sql
+        { "query_id" => "q", "rows" => 0 }
+      end
+      execution = released_execution
+
+      described_class.perform_now(execution.id)
+
+      step = execution.execution_steps.find_by!(operation: "optimize")
+      expect(step.status).to eq("succeeded")
+      expect(step.metrics["batched_statements"]).to be_nil
+      expect(executed.size).to eq(1)
+      expect(executed.first).not_to include("WHERE")
+    end
+  end
 end

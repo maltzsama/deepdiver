@@ -139,10 +139,12 @@
               <td><%= timestamp(table.last_data_update) %></td>
               <% if can_run_maintenance? %>
                 <td class="text-right whitespace-nowrap">
-                  <%= button_to t("tables.index.sync_table"), sync_table_iceberg_table_path(table),
-                                method: :post, class: "btn btn-default btn-sm" %>
-                  <%= button_to t("tables.index.run"), run_maintenance_iceberg_table_path(table),
-                                method: :post, class: "btn btn-primary btn-sm" %>
+                  <span class="inline-flex items-center gap-2">
+                    <%= button_to t("tables.index.sync_table"), sync_table_iceberg_table_path(table),
+                                  method: :post, class: "btn btn-default btn-sm" %>
+                    <%= button_to t("tables.index.run"), run_maintenance_iceberg_table_path(table),
+                                  method: :post, class: "btn btn-primary btn-sm" %>
+                  </span>
                 </td>
               <% end %>
             </tr>

@@ -668,14 +668,18 @@
 }
 
 .engine-stepper .step.active { color: var(--fg); }
-.engine-stepper .step.badge-healthy { color: var(--ok); }
-.engine-stepper .step.badge-warning { color: var(--warn); }
-.engine-stepper .step.badge-running { color: var(--ok); }
-.engine-stepper .step.badge-warn { color: var(--warn); }
-.engine-stepper .step.badge-critical { color: var(--red); }
-.engine-stepper .step.badge-neutral { color: var(--fg-mute); }
+.engine-stepper .step.step--starting { color: var(--warn); }
+.engine-stepper .step.step--up { color: var(--ok); }
+.engine-stepper .step.step--draining { color: var(--ok); }
+.engine-stepper .step.step--stopping { color: var(--warn); }
+.engine-stepper .step.step--failed { color: var(--red); }
+.engine-stepper .step.step--down { color: var(--fg-mute); }
 
-.engine-stepper .step-sep {
+/* CSS connector between stages - replaces the old empty .step-sep span so a
+   stale stylesheet can never render a stray box. The active stage's connector
+   glows, so the separator right after the highlighted label stands out. */
+.engine-stepper .step:not(:last-child)::after {
+  content: "";
   width: 12px;
   height: 1px;
   background: var(--line);
@@ -683,7 +687,7 @@
   flex-shrink: 0;
 }
 
-.engine-stepper .step-sep.active {
+.engine-stepper .step.active:not(:last-child)::after {
   background: var(--fg-soft);
 }
 

@@ -70,7 +70,11 @@ class TrinoSecretMaterializer
 
     begin
       @k8s_client.get_secret(secret_name, @namespace)
-      @k8s_client.update_secret(secret_name, secret_metadata, @namespace)
+      # update_* methods on Kubeclient take the full entity hash (which already
+      # carries metadata.name/namespace), not the get_* signature of
+      # (name, namespace). Passing 3 args raised ArgumentError here, which
+      # propagated up and silently aborted the whole metadata refresh.
+      @k8s_client.update_secret(secret_metadata)
     rescue Kubeclient::ResourceNotFoundError
       @k8s_client.create_secret(secret_metadata)
     end

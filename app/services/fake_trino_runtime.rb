@@ -31,4 +31,14 @@ class FakeTrinoRuntime
       "affected_rows" => 0
     }
   end
+
+  # Returns canned partition values so the planner can be exercised end-to-end.
+  # Overridable in specs via expect(...).to receive(:query_rows).
+  #
+  # @param _sql [String] the query (unused)
+  # @param execution_id [Integer] the execution id (unused)
+  # @return [Array<Array>] a small set of distinct partition values
+  def query_rows(_sql, execution_id:)
+    [ [ "2026-01-01" ], [ "2026-01-02" ] ]
+  end
 end

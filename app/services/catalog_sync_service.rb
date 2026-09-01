@@ -23,6 +23,9 @@ class CatalogSyncService
     { ok: true }
   rescue StandardError => e
     Rails.logger.warn("Per-table sync failed for #{table.fully_qualified_name}: #{e.message}")
+    ErrorEvent.record(catalog: table.catalog, schema: table.namespace, table: table.name,
+                      operation: "sync-table", source_system: "catalog",
+                      error_class: e.class.name, message: e.message)
     { ok: false, error: e.message }
   end
 

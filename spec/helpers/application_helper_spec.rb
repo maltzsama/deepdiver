@@ -25,3 +25,20 @@ RSpec.describe ApplicationHelper, "#pager_nav", type: :helper do
     expect(helper.pager_nav(Pagy::Offset.new(count: 10, limit: 50))).to be_nil
   end
 end
+
+RSpec.describe ApplicationHelper, "#engine_lifecycle_stepper", type: :helper do
+  it "highlights the active stage with its own step-- modifier, not a badge class" do
+    html = helper.engine_lifecycle_stepper("starting")
+
+    expect(html).to include("step active step--starting")
+    expect(html).not_to include("badge-")
+    expect(html).not_to include("step-sep")
+  end
+
+  it "renders the same number of stage labels with no empty separator spans" do
+    html = helper.engine_lifecycle_stepper("up")
+
+    expect(html.scan('class="step').size).to eq(5)
+    expect(html).not_to include('class="step-sep')
+  end
+end
