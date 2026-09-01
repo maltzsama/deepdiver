@@ -191,6 +191,15 @@ RSpec.describe ChartTrinoProvisioner do
       expect(k8s).to have_received(:scale).with(0)
       expect(worker_k8s).to have_received(:scale).with(0)
     end
+
+    it "still scales workers down when the coordinator scale-down raises" do
+      allow(k8s).to receive(:scale).and_raise(Kubeclient::HttpError.new(500, "coordinator gone", {}))
+      allow(k8s).to receive(:target).and_return("coordinator/deploy")
+      allow(worker_k8s).to receive(:scale)
+
+      expect { provisioner.destroy! }.to raise_error(TrinoProvisioner::Error)
+      expect(worker_k8s).to have_received(:scale).with(0)
+    end
   end
 
   describe "#rollout_complete?" do

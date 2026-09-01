@@ -120,15 +120,30 @@ class ChartTrinoProvisioner
   #
   # The worker Deployment may legitimately not exist in single topology, so a
   # missing one is not a failure here - there is nothing to scale down.
+  #
+  # Both scale-downs are always attempted: a coordinator failure must not leak
+  # worker pods that stay up holding their CPU/memory reservations. The first
+  # error is collected and re-raised after the workers were handled.
   def destroy!
-    wrap_k8s_errors("coordinator") { @k8s.scale(0) }
+    first_error = nil
+
+    begin
+      wrap_k8s_errors("coordinator") { @k8s.scale(0) }
+    rescue TrinoProvisioner::Error => e
+      first_error = e
+      Rails.logger.warn("Trino coordinator scale-down failed: #{e.message}")
+    end
+
     begin
       @worker_k8s.scale(0)
     rescue Kubeclient::ResourceNotFoundError
       Rails.logger.info("Trino worker Deployment absent; nothing to scale down")
     rescue Kubeclient::HttpError => e
-      raise TrinoProvisioner::Error, k8s_message("worker", e)
+      first_error ||= TrinoProvisioner::Error.new(k8s_message("worker", e))
+      Rails.logger.warn("Trino worker scale-down failed: #{k8s_message("worker", e)}")
     end
+
+    raise first_error if first_error
   end
 
   # Blocks until the coordinator is scaled down or the timeout elapses.
