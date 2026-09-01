@@ -8,7 +8,7 @@
     <% end %>
   </div>
   <div class="panel-body">
-    <div class="mb-4 flex items-baseline gap-3">
+    <div class="mb-4 flex items-center gap-3">
       <% if evaluation[:score] %>
         <span class="font-display text-4xl font-bold text-cosmos-fg"><%= evaluation[:score] %></span>
         <span class="badge <%= health_badge_class(evaluation[:status]) %>">
