@@ -18,6 +18,7 @@ class ExecutionHistoriesController < ApplicationController
     if @tab == "freshness"
       @pagy, @checks = pagy(freshness_scope, limit: 50)
       @freshness_events = freshness_events_for(@checks)
+      assignable_users # warm the memo for the triage select
     else
       @pagy, @executions = pagy(maintenance_scope, limit: 50)
     end
