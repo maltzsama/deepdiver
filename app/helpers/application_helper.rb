@@ -344,22 +344,54 @@ module ApplicationHelper
   # Ordered lifecycle stages for the engine stepper.
   ENGINE_LIFECYCLE_STAGES = %w[down starting up draining stopping].freeze
 
-  # Renders the lifecycle stepper: a row of stage labels with CSS connectors.
-  # The current stage is highlighted; past stages are muted; future stages are
-  # muted. Uses its own .step--<status> modifiers so the stepper is independent
-  # of the badge system, and draws the connectors with ::after instead of an
-  # empty presentational span.
+  # Renders the lifecycle stepper: stage nodes (dot + label) joined by
+  # full-width connectors. The active stage carries a colored, haloed dot;
+  # past stages and their connectors read as done. For the timed states the
+  # active→next connector becomes the countdown progress bar, filled via the
+  # --engine-progress custom property driven by the engine-timer controller.
   # @param status [String] the current engine status.
+  # @param timer [Boolean] whether to wire the progress connector to the timer.
   # @return [String] HTML-safe stepper markup.
-  def engine_lifecycle_stepper(status)
+  def engine_lifecycle_stepper(status, timer: false)
+    stages = ENGINE_LIFECYCLE_STAGES
+    active_index = stages.index(status) || 0
+    countdown = %w[starting draining stopping].include?(status)
+
     capture do
-      ENGINE_LIFECYCLE_STAGES.each_with_index do |stage, i|
-        active = stage == status
-        css = [ "step" ]
-        css << "active" if active
-        css << "step--#{stage}" if active
-        concat content_tag(:span, t("activity.engine.stage_#{stage}"), class: css.join(" "))
+      stages.each_with_index do |stage, i|
+        step = [ "step", "step--#{stage}" ]
+        step << "done"   if i < active_index
+        step << "active" if i == active_index
+        concat content_tag(:span, safe_join([
+          content_tag(:span, "", class: "step-dot"),
+          content_tag(:span, t("activity.engine.stage_#{stage}"))
+        ]), class: step.join(" "))
+        next if i == stages.length - 1
+
+        link = [ "step-link" ]
+        if i < active_index
+          link << "done"
+        elsif i == active_index && countdown
+          link << "progress"
+          link << "bar-warn"      if status == "draining"
+          link << "indeterminate" if status == "stopping"
+        end
+        options = { class: link.join(" ") }
+        options[:data] = { engine_timer_target: "bar" } if link.include?("progress") && timer
+        concat content_tag(:span, "", options)
       end
+    end
+  end
+
+  # The phase time for the engine detail row: remaining time for the timed
+  # states, uptime for the up state, nothing otherwise.
+  # @param state [TrinoEngineState] the current engine state.
+  # @return [String, nil] the translated time text.
+  def engine_phase_time(state)
+    case state.status
+    when "up"       then t("activity.engine.uptime", time: time_ago_in_words(state.status_changed_at))
+    when "starting" then t("activity.engine.time_before_timeout", time: distance_of_time_in_words_to_now(state.status_changed_at + TrinoEngineSupervisor::READY_TIMEOUT))
+    when "draining" then t("activity.engine.stops_in", time: distance_of_time_in_words_to_now(state.drain_started_at + TrinoEngineSupervisor::DRAIN_GRACE))
     end
   end
 
@@ -406,18 +438,6 @@ module ApplicationHelper
     when "starting", "draining" then "countdown"
     when "up"                   then "uptime"
     else                             "none"
-    end
-  end
-
-  # Bar CSS class modifier based on engine status.
-  # @param status [String] the current engine status.
-  # @return [String] the bar-fill class.
-  def engine_bar_class(status)
-    case status
-    when "starting" then "bar-warn"
-    when "draining" then ""
-    when "stopping" then "indeterminate"
-    else                 ""
     end
   end
 
@@ -567,4 +587,4 @@ module ApplicationHelper
   def key_for(label)
     OPERATION_METRICS.values.flatten.find { |k| t("maintenance.metrics.#{k}", default: k.humanize) == label }
   end
-end
+

@@ -4,7 +4,6 @@
      broadcast_replace updates (which have no current_user). %>
 <%
   status       = engine_state.status
-  badge_class  = engine_status_badge_class(status)
   timer_mode   = engine_timer_mode(status)
   deadline     = engine_deadline(engine_state)
   queries      = local_assigns.fetch(:queries, 0)
@@ -24,49 +23,22 @@
     <span class="panel-note"><%= t("activity.engine.active_count", count: local_assigns[:active_count]) %></span>
   </div>
   <div class="panel-body">
-    <%# Lifecycle stepper %>
+    <%# Lifecycle stepper: the active→next connector doubles as the countdown
+        progress bar, filled via --engine-progress by the engine-timer controller. %>
     <div class="engine-stepper mb-3">
-      <%= engine_lifecycle_stepper(status) %>
+      <%= engine_lifecycle_stepper(status, timer: local_assigns[:engine_timer]) %>
     </div>
 
-    <%# Phase detail + optional progress bar %>
-    <div class="flex items-center gap-3 mb-1">
+    <%# Phase detail: description on the left, time on the right. %>
+    <div class="flex items-baseline justify-between gap-3">
       <span class="font-mono text-small text-cosmos-fg-soft">
         <%= engine_phase_detail(engine_state, queries: queries) %>
       </span>
-
-      <% if timer_mode == "countdown" && deadline %>
-        <div class="engine-bar-track">
-          <div class="engine-bar-fill <%= engine_bar_class(status) %>"
-               <% if local_assigns[:engine_timer] %>
-               data-engine-timer-target="bar"
-               <% end %>>
-          </div>
-        </div>
-        <span class="font-mono text-micro text-cosmos-fg-mute"
-             <% if local_assigns[:engine_timer] %>
-             data-engine-timer-target="label"
-             data-expired="<%= t("activity.engine.time_before_timeout", time: "0s") %>"
-             <% end %>>
-          <% if status == "draining" %>
-            <%= t("activity.engine.stops_in", time: distance_of_time_in_words_to_now(engine_state.drain_started_at + TrinoEngineSupervisor::DRAIN_GRACE)) %>
-          <% elsif status == "starting" %>
-            <%= t("activity.engine.time_before_timeout", time: distance_of_time_in_words_to_now(engine_state.status_changed_at + TrinoEngineSupervisor::READY_TIMEOUT)) %>
-          <% end %>
-        </span>
-      <% elsif status == "up" %>
-        <span class="font-mono text-micro text-cosmos-fg-mute"
-             <% if local_assigns[:engine_timer] %>
-             data-engine-timer-target="timer"
-             data-expired=""
-             <% end %>>
-          <%= t("activity.engine.uptime", time: time_ago_in_words(engine_state.status_changed_at)) %>
-        </span>
-      <% elsif status == "stopping" %>
-        <div class="engine-bar-track">
-          <div class="engine-bar-fill indeterminate"></div>
-        </div>
-      <% end %>
+      <span class="font-mono text-micro text-cosmos-fg-mute"
+            <% if timer_mode != "none" %>data-engine-timer-target="label"<% end %>
+            <% if timer_mode == "countdown" %>data-expired="<%= t("activity.engine.time_before_timeout", time: "0s") %>"<% end %>>
+        <%= engine_phase_time(engine_state) %>
+      </span>
     </div>
 
     <%# Error line for failed state %>

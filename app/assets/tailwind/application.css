@@ -652,75 +652,92 @@
 .engine-stepper {
   display: flex;
   align-items: center;
+  width: 100%;
   gap: 0;
 }
 
 .engine-stepper .step {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  gap: 7px;
+  flex: none;
   font-family: var(--font-mono);
   font-size: var(--text-micro);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  white-space: nowrap;
   color: var(--fg-mute);
   transition: color 0.2s;
 }
 
+.engine-stepper .step .step-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+  transition: box-shadow 0.2s, width 0.2s, height 0.2s;
+}
+
+.engine-stepper .step.done   { color: var(--fg-soft); }
 .engine-stepper .step.active { color: var(--fg); }
-.engine-stepper .step.step--starting { color: var(--warn); }
-.engine-stepper .step.step--up { color: var(--ok); }
-.engine-stepper .step.step--draining { color: var(--ok); }
-.engine-stepper .step.step--stopping { color: var(--warn); }
-.engine-stepper .step.step--failed { color: var(--red); }
-.engine-stepper .step.step--down { color: var(--fg-mute); }
+.engine-stepper .step.active .step-dot { width: 9px; height: 9px; }
 
-/* CSS connector between stages - replaces the old empty .step-sep span so a
-   stale stylesheet can never render a stray box. The active stage's connector
-   glows, so the separator right after the highlighted label stands out. */
-.engine-stepper .step:not(:last-child)::after {
-  content: "";
-  width: 12px;
-  height: 1px;
-  background: var(--line);
-  margin: 0 4px;
-  flex-shrink: 0;
-}
+/* phase colours (decoupled from the badge system) */
+.engine-stepper .step--starting.active { color: var(--accent); }
+.engine-stepper .step--starting.active .step-dot { box-shadow: 0 0 0 3px var(--accent-soft); }
+.engine-stepper .step--up.active       { color: var(--ok); }
+.engine-stepper .step--up.active .step-dot       { box-shadow: 0 0 0 3px var(--ok-soft); }
+.engine-stepper .step--draining.active { color: var(--warn); }
+.engine-stepper .step--draining.active .step-dot { box-shadow: 0 0 0 3px var(--warn-soft); }
+.engine-stepper .step--stopping.active { color: var(--fg-soft); }
+.engine-stepper .step--failed.active   { color: var(--red); }
 
-.engine-stepper .step.active:not(:last-child)::after {
-  background: var(--fg-soft);
-}
-
-/* progress bar */
-.engine-bar-track {
+/* connector: flex:1 so the row spans the full panel width */
+.engine-stepper .step-link {
+  flex: 1 1 auto;
+  min-width: 24px;
   height: 3px;
+  margin: 0 8px;
   border-radius: 2px;
-  background: var(--soft);
+  background: var(--sunk);
   overflow: hidden;
-  flex: 1;
-  min-width: 60px;
-  max-width: 180px;
+  position: relative;
 }
 
-.engine-bar-fill {
-  height: 100%;
+.engine-stepper .step-link.done { background: var(--line-bold); }
+
+/* active → next connector carries the countdown fill */
+.engine-stepper .step-link.progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
   border-radius: 2px;
-  background: var(--ok);
+  width: var(--engine-progress, 0%);
+  background: var(--accent);
   transition: width 1s linear;
-  width: 0%;
 }
 
-.engine-bar-fill.bar-warn { background: var(--warn); }
-.engine-bar-fill.bar-err { background: var(--red); }
+.engine-stepper .step-link.progress.bar-warn::after { background: var(--warn); }
 
-.engine-bar-fill.indeterminate {
-  width: 30%;
-  animation: indeterminate-slide 1.5s ease-in-out infinite;
+.engine-stepper .step-link.progress.indeterminate::after {
+  width: 35%;
+  left: -35%;
+  background: var(--fg-mute);
+  animation: engine-indeterminate 1.4s ease-in-out infinite;
 }
 
-@keyframes indeterminate-slide {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(433%); }
+@keyframes engine-indeterminate {
+  to { left: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .engine-stepper .step-link.progress.indeterminate::after {
+    animation: none;
+    width: 100%;
+    left: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
