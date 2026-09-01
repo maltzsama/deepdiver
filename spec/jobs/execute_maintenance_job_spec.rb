@@ -171,15 +171,13 @@ RSpec.describe ExecuteMaintenanceJob, type: :job do
       expect(execution.reload.metadata_before).to eq(before_snapshot)
     end
 
-    it "raises ErrorEvent when total_records changes" do
+    it "raises ErrorEvent when total_records decreases" do
       execution = released_execution
       described_class.perform_now(execution.id)
 
-      # Manually set up a before/after mismatch
-      execution.update!(status: :running, metadata_before: { "total_records" => 100 },
-                                        metadata_after: { "total_records" => 200 })
+      execution.update!(status: :running, metadata_before: { "total_records" => 200 },
+                                        metadata_after: { "total_records" => 100 })
 
-      # Verify the integrity check directly
       job = described_class.new
       expect { job.send(:check_records_integrity!, execution) }
         .to change { ErrorEvent.count }.by(1)
@@ -187,7 +185,19 @@ RSpec.describe ExecuteMaintenanceJob, type: :job do
       event = ErrorEvent.last
       expect(event.operation).to eq("records-integrity")
       expect(event.severity).to eq("error")
-      expect(event.message).to include("100").and include("200")
+      expect(event.message).to include("200").and include("100").and include("decreased")
+    end
+
+    it "ignores an increase in total_records (concurrent append)" do
+      execution = released_execution
+      described_class.perform_now(execution.id)
+
+      execution.update!(status: :running, metadata_before: { "total_records" => 100 },
+                                        metadata_after: { "total_records" => 200 })
+
+      job = described_class.new
+      expect { job.send(:check_records_integrity!, execution) }
+        .not_to change { ErrorEvent.count }
     end
 
     it "skips integrity check when before total_records is nil" do

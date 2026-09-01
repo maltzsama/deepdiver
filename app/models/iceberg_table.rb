@@ -66,6 +66,18 @@ class IcebergTable < ApplicationRecord
     [ catalog.trino_catalog_name, namespace, name ].map { |part| quote_identifier(part) }.join(".")
   end
 
+  # Trino SQL identifier for an Iceberg metadata table ($files, $manifests,
+  # $snapshots, $partitions). The suffix is part of the table name and must
+  # be inside the quotes:
+  #   "catalog"."ns"."table$files"
+  #
+  # @param suffix [String] the metadata table suffix (e.g. "files", "manifests")
+  # @return [String] the quoted three-part identifier
+  def trino_metadata_table(suffix)
+    [ catalog.trino_catalog_name, namespace, "#{name}$#{suffix}" ]
+      .map { |part| quote_identifier(part) }.join(".")
+  end
+
   private
 
   # Quotes an identifier for use inside a Trino SQL statement, escaping any
