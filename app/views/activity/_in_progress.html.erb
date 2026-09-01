@@ -1,0 +1,127 @@
+<%# Merged view of everything in flight: running, retrying and queued maintenance
+    executions plus active Trino queries, in one data-table. Each execution row
+    keeps its shared/_step_chain (shows where the run stopped) and the per-row
+    cancel turbo frame. %>
+<% typical_durations = local_assigns.fetch(:typical_durations, {}) %>
+<section id="activity-in-progress" class="panel mb-6">
+  <div class="panel-head">
+    <h2 class="panel-title"><%= t("activity.in_progress.title") %></h2>
+    <span class="panel-note"><%= t("activity.in_progress.count", count: running.size + queued.size + queries.size) %></span>
+  </div>
+
+  <% if running.empty? && queued.empty? && queries.empty? %>
+    <div class="empty">
+      <p class="empty-title"><%= t("activity.in_progress.empty") %></p>
+    </div>
+  <% else %>
+    <div class="data-table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col"><%= t("activity.in_progress.col_name") %></th>
+            <th scope="col"><%= t("activity.in_progress.col_type") %></th>
+            <th scope="col"><%= t("activity.in_progress.col_status") %></th>
+            <th scope="col"><%= t("activity.in_progress.col_progress") %></th>
+            <th scope="col"><%= t("activity.in_progress.col_time") %></th>
+            <th scope="col"><span class="sr-only"><%= t("activity.in_progress.col_actions") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% running.select { |e| !e.retrying? }.each do |execution| %>
+            <tr>
+              <td class="cell-id">
+                <%= link_to execution.iceberg_table.fully_qualified_name, execution.iceberg_table, class: "link-mono" %>
+              </td>
+              <td><span class="badge badge-neutral"><%= t("activity.in_progress.type_execution") %></span></td>
+              <td>
+                <span class="badge <%= execution_status_badge_class(execution.status) %>">
+                  <span class="badge-dot"></span><%= execution.current_step %>
+                </span>
+              </td>
+              <td>
+                <%= render "shared/step_chain", execution: execution %>
+                <% if (typical = typical_durations[execution.maintenance_plan_id]) %>
+                  <span class="cell-muted text-small">· <%= t("activity.in_progress.typical", time: duration_label(typical)) %></span>
+                <% end %>
+              </td>
+              <td class="cell-num">
+                <%= duration_label(Time.current - execution.current_step_started_at) if execution.current_step_started_at %>
+              </td>
+              <td class="text-right whitespace-nowrap">
+                <%= turbo_frame_tag "cancel_#{execution.id}" do %>
+                  <% if can_cancel_query? %>
+                    <%= button_to t("activity.in_progress.cancel_execution"), cancel_execution_history_path(execution),
+                                  method: :post, class: "btn btn-danger btn-sm",
+                                  data: { turbo_confirm: t("activity.in_progress.cancel_execution_confirm") } %>
+                  <% end %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+
+          <% running.select(&:retrying?).each do |execution| %>
+            <tr>
+              <td class="cell-id">
+                <%= link_to execution.iceberg_table.fully_qualified_name, execution.iceberg_table, class: "link-mono" %>
+              </td>
+              <td><span class="badge badge-neutral"><%= t("activity.in_progress.type_execution") %></span></td>
+              <td>
+                <span class="badge badge-warn"><%= t("activity.in_progress.next_attempt", time: duration_label(ExecuteMaintenanceJob::RETRY_WAIT)) %></span>
+              </td>
+              <td><%= render "shared/step_chain", execution: execution %></td>
+              <td class="cell-num">
+                <%= duration_label(Time.current - execution.current_step_started_at) if execution.current_step_started_at %>
+              </td>
+              <td></td>
+            </tr>
+          <% end %>
+
+          <% queued.each_with_index do |execution, index| %>
+            <tr>
+              <td class="cell-id">
+                <%= link_to execution.iceberg_table.fully_qualified_name, execution.iceberg_table, class: "link-mono" %>
+              </td>
+              <td><span class="badge badge-neutral"><%= t("activity.in_progress.type_execution") %></span></td>
+              <td>
+                <span class="badge badge-pending"><%= t("activity.in_progress.status_queued") %></span>
+              </td>
+              <td class="cell-muted text-small">
+                <%= index + 1 %> · <%= t("activity.in_progress.waiting_#{execution.waiting_reason}") %>
+              </td>
+              <td><span class="cell-muted">—</span></td>
+              <td class="text-right whitespace-nowrap">
+                <% if local_assigns.fetch(:show_actions, true) && can_cancel_query? %>
+                  <%= button_to t("activity.in_progress.cancel_queued"), cancel_execution_history_path(execution),
+                                method: :post, class: "btn btn-danger btn-sm",
+                                data: { turbo_confirm: t("activity.in_progress.cancel_queued_confirm") } %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+
+          <% queries.each do |query| %>
+            <tr>
+              <td class="cell-id font-mono"><%= query["queryId"] %></td>
+              <td><span class="badge badge-neutral"><%= t("activity.in_progress.type_query") %></span></td>
+              <td>
+                <span class="badge <%= query_state_badge_class(query["state"]) %>">
+                  <span class="badge-dot"></span><%= query["state"] %>
+                </span>
+              </td>
+              <td class="cell-muted font-mono text-small break-all"><%= truncate(query["query"].to_s, length: 120) %></td>
+              <td><span class="cell-muted">—</span></td>
+              <td class="text-right whitespace-nowrap">
+                <% if %w[RUNNING QUEUED].include?(query["state"]) && local_assigns.fetch(:show_actions, true) && can_cancel_query? %>
+                  <%= button_to t("activity.in_progress.cancel_query"),
+                                cancel_trino_query_activity_path(query_id: query["queryId"]),
+                                method: :post, class: "btn btn-danger btn-sm",
+                                data: { turbo_confirm: t("activity.in_progress.cancel_query_confirm") } %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</section>
