@@ -8,6 +8,18 @@
   </div>
 </div>
 
+<% if @plan.maintenance_policy %>
+  <section class="panel mb-6">
+    <div class="panel-body">
+      <p class="field-hint">
+        <%= t("plans.edit.policy_inherit",
+              policy: link_to(@plan.maintenance_policy.name, maintenance_policy_path(@plan.maintenance_policy),
+                              class: "link text-body")) %>
+      </p>
+    </div>
+  </section>
+<% end %>
+
 <% if @plan.needs_review || @plan.paused? %>
   <section class="panel mb-6">
     <div class="panel-body">

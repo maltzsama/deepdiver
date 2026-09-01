@@ -20,7 +20,7 @@ pt-BR:
       catalogs: "Catalogos"
       operations: "Operacoes"
       plans: "Planos"
-      policies: "Politicas"
+      policies: "Padroes de manutencao"
       history: "Historico"
       errors: "Erros"
       security: "Seguranca"
@@ -269,6 +269,7 @@ pt-BR:
       subtitle: "Edite o agendamento e a cadeia de etapas de manutencao."
       paused_hint: "Este plano esta pausado. Alteracoes nao serao executadas ate ser retomado."
       review_hint: "Este plano teve %{failures} falhas consecutivas e precisa de revisao antes de voltar a funcionar."
+      policy_inherit: "Este plano e derivado da politica %{policy} - editar aqui faz ele parar de seguir os padroes da cadeia definidos na politica."
       errors:
         one: "1 problema para corrigir"
         other: "%{count} problemas para corrigir"
@@ -855,6 +856,8 @@ pt-BR:
     eyebrow: "Infraestrutura"
     title: "Motor Trino"
     subtitle: "Como o motor Trino efemero e materializado quando a manutencao roda."
+    chain_note: "Retencao e configuracao por etapa (o que roda em cada tabela) ficam nas Politicas de manutencao: %{link}."
+    chain_link: "definir padroes da cadeia aqui"
     topologies:
       single: "No unico (coordenador tambem executa tarefas)"
       cluster: "Coordenador + workers separados"

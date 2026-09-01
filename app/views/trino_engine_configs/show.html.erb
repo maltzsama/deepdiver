@@ -10,6 +10,12 @@
 
 <section class="panel">
   <div class="panel-body">
+    <p class="mb-4 text-body text-cosmos-fg-soft">
+      <%= t("trino_engine_config.chain_note",
+            link: link_to(t("trino_engine_config.chain_link"), maintenance_policies_path,
+                          class: "link text-body")) %>
+    </p>
+
     <%= form_with model: @config, url: trino_engine_config_path, class: "form-grid" do |form| %>
       <% if @config.errors.any? %>
         <div class="errors">
