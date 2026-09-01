@@ -32,6 +32,31 @@ RSpec.describe "GET /activity", type: :request do
     expect(response.body.scan("id=\"cancel_#{execution.id}\"").size).to eq(1)
   end
 
+  it "renders engine admin actions in the panel header, inside their own frame" do
+    sign_in create(:user, :admin)
+    TrinoEngineSupervisor.state.update!(status: "up", status_changed_at: Time.current)
+
+    get activity_path
+
+    # The action frame must sit in the header (before the body), right-aligned
+    # next to the active-execution count, not at the bottom of the panel body.
+    body_start = response.body.index("panel-body")
+    header = response.body.slice(0, body_start)
+    expect(header).to include("id=\"activity-engine-actions\"")
+    expect(header).to include("Retry start")
+    expect(header).to include("Hard reset")
+    expect(response.body.scan("id=\"activity-engine-actions\"").size).to eq(1)
+  end
+
+  it "hides engine admin actions from non-admins" do
+    sign_in create(:user, :operator)
+    TrinoEngineSupervisor.state.update!(status: "up", status_changed_at: Time.current)
+
+    get activity_path
+
+    expect(response.body).not_to include("Hard reset")
+  end
+
   it "lists queued executions with their wait reason" do
     plan = create(:maintenance_plan, :with_all_steps)
     create(:execution_history, maintenance_plan: plan, iceberg_table: plan.iceberg_table, status: :pending)

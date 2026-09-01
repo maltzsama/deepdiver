@@ -242,7 +242,7 @@
     background: var(--surface);
     box-shadow: var(--shadow-panel);
   }
-  .panel-head { @apply flex items-center justify-between px-4 h-11 border-b border-cosmos-line bg-cosmos-soft/40; }
+  .panel-head { @apply flex flex-wrap items-center justify-between gap-y-2 px-4 min-h-11 border-b border-cosmos-line bg-cosmos-soft/40; }
   .panel-title { @apply font-mono text-micro font-bold uppercase tracking-[0.15em] text-cosmos-fg-soft; }
   .panel-meta { @apply font-mono text-small text-cosmos-fg-mute; }
   .panel-note { @apply font-mono text-small text-cosmos-fg-mute; }

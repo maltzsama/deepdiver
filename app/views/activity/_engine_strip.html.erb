@@ -20,7 +20,21 @@
       <h2 class="panel-title"><%= t("activity.engine.title") %></h2>
       <span class="panel-note"><%= engine_coordinator_target %></span>
     </div>
-    <span class="panel-note"><%= t("activity.engine.active_count", count: local_assigns[:active_count]) %></span>
+    <div class="flex items-center gap-3">
+      <span class="panel-note"><%= t("activity.engine.active_count", count: local_assigns[:active_count]) %></span>
+      <%# Admin actions (preserved in turbo_frame so they survive broadcast_replace) %>
+      <%= turbo_frame_tag "activity-engine-actions" do %>
+        <% if local_assigns.fetch(:render_actions, false) && current_user&.admin? %>
+          <div class="flex items-center gap-2">
+            <%= button_to t("activity.engine.retry"), restart_activity_path, method: :post,
+                          class: "btn btn-default btn-sm" %>
+            <%= button_to t("activity.engine.hard_reset"), hard_reset_activity_path, method: :post,
+                          class: "btn btn-danger btn-sm",
+                          data: { turbo_confirm: t("activity.engine.hard_reset_confirm") } %>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
   </div>
   <div class="panel-body">
     <%# Lifecycle stepper: the active→next connector doubles as the countdown
@@ -46,19 +60,6 @@
       <div class="mt-2">
         <span class="cell-muted font-mono text-small"><%= engine_state.last_error %></span>
       </div>
-    <% end %>
-
-    <%# Admin actions (preserved in turbo_frame) %>
-    <%= turbo_frame_tag "activity-engine-actions" do %>
-      <% if local_assigns.fetch(:render_actions, false) && current_user&.admin? %>
-        <div class="mt-3 flex items-center gap-2">
-          <%= button_to t("activity.engine.retry"), restart_activity_path, method: :post,
-                        class: "btn btn-default btn-sm" %>
-          <%= button_to t("activity.engine.hard_reset"), hard_reset_activity_path, method: :post,
-                        class: "btn btn-danger btn-sm",
-                        data: { turbo_confirm: t("activity.engine.hard_reset_confirm") } %>
-        </div>
-      <% end %>
     <% end %>
   </div>
 </section>
