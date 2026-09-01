@@ -68,7 +68,7 @@ RSpec.describe CatalogSyncService do
       "snapshots" => Array.new(snapshots) do |i|
         { "snapshot-id" => i + 1, "timestamp-ms" => oldest_ms + (i * 86_400_000),
           "summary" => { "total-records" => "1000", "total-data-files" => data_files.to_s,
-                         "total-files-size-in-bytes" => size_bytes.to_s } }
+                         "total-files-size" => size_bytes.to_s } }
       end
     } }
   end

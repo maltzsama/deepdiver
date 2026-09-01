@@ -182,7 +182,6 @@ class CatalogSyncService
       storage_location: extractor.storage_location,
       total_records: extractor.total_records,
       total_data_files: extractor.total_data_files,
-      total_size_bytes: extractor.total_size_bytes,
       position_deletes: extractor.position_deletes,
       equality_deletes: extractor.equality_deletes,
       snapshot_count: extractor.snapshot_count,
@@ -194,6 +193,10 @@ class CatalogSyncService
       properties_json: extractor.properties,
       snapshots_json: extractor.snapshots
     }
+    # A nil size from the catalog must never clear a value the Trino
+    # enrichment already measured — the two sources have different
+    # availability. Only write size when the catalog actually carried it.
+    attributes[:total_size_bytes] = extractor.total_size_bytes if extractor.total_size_bytes
     if health[:score]
       attributes[:health_score] = health[:score]
       attributes[:health_status] = health[:status].to_s

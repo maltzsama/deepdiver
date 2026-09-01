@@ -18,7 +18,7 @@ class TableMetadataExtractor
     summary = {}
     summary["total-records"] = table.total_records if table.total_records
     summary["total-data-files"] = table.total_data_files if table.total_data_files
-    summary["total-files-size-in-bytes"] = table.total_size_bytes if table.total_size_bytes
+    summary["total-files-size"] = table.total_size_bytes if table.total_size_bytes
     summary["total-position-deletes"] = table.position_deletes if table.position_deletes
     summary["total-equality-deletes"] = table.equality_deletes if table.equality_deletes
 
@@ -97,8 +97,12 @@ class TableMetadataExtractor
   def total_data_files = summary_int("total-data-files")
   # Total size of data files in bytes, nil when absent - NOT zero.
   #
+  # Iceberg writes this key as total-files-size (bytes), not the
+  # total-files-size-in-bytes spelling this code historically read — the wrong
+  # key made size and average_file_size nil after every catalog sync.
+  #
   # @return [Integer, nil] the size
-  def total_size_bytes = summary_int("total-files-size-in-bytes")
+  def total_size_bytes = summary_int("total-files-size")
   # Total position-delete count, nil when absent - NOT zero.
   #
   # @return [Integer, nil] the count

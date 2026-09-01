@@ -39,7 +39,7 @@ class ErrorEventMailer < ApplicationMailer
       #{t("error_event_mailer.assignment.error_class")}: #{@event.error_class}
       #{t("error_event_mailer.assignment.occurrences")}: #{@event.occurrence_count}
 
-      #{error_event_url(@event)}
+      #{execution_histories_url(kind: "freshness")}
     TEXT
   end
 

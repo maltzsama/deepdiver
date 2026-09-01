@@ -20,7 +20,7 @@ pt-BR:
       catalogs: "Catalogos"
       operations: "Operacoes"
       plans: "Planos"
-      policies: "Politicas"
+      policies: "Padroes de manutencao"
       history: "Historico"
       errors: "Erros"
       security: "Seguranca"
@@ -269,6 +269,7 @@ pt-BR:
       subtitle: "Edite o agendamento e a cadeia de etapas de manutencao."
       paused_hint: "Este plano esta pausado. Alteracoes nao serao executadas ate ser retomado."
       review_hint: "Este plano teve %{failures} falhas consecutivas e precisa de revisao antes de voltar a funcionar."
+      policy_inherit: "Este plano e derivado da politica %{policy} - editar aqui faz ele parar de seguir os padroes da cadeia definidos na politica."
       errors:
         one: "1 problema para corrigir"
         other: "%{count} problemas para corrigir"
@@ -538,6 +539,7 @@ pt-BR:
     title: "Saude da manutencao"
     coverage: "%{coverage}% dos criterios cobertos"
     no_score: "dados insuficientes para pontuar"
+    worst: "pior: %{component}"
     status:
       healthy: "saudavel"
       warning: "atencao"
@@ -639,6 +641,8 @@ pt-BR:
       col_chain: "Detalhe"
       col_duration: "Duracao"
       col_query_id: "ID da consulta Trino"
+      col_triage: "Triagem"
+      triage_unassigned: "nao atribuido"
       filter_stopped_at: "Parou na etapa"
       retries: "%{count} tentativas"
       tab_maintenance: "Manutencao"
@@ -655,6 +659,7 @@ pt-BR:
       fresh_col_sla: "SLA (min)"
     filter_operation: "Operacao"
     filter_status: "Status"
+    filter_kind: "Tipo"
     kind_maintenance: "manutencao"
     kind_freshness: "frescor"
     freshness_sla: "SLA %{sla}min"
@@ -854,6 +859,8 @@ pt-BR:
     eyebrow: "Infraestrutura"
     title: "Motor Trino"
     subtitle: "Como o motor Trino efemero e materializado quando a manutencao roda."
+    chain_note: "Retencao e configuracao por etapa (o que roda em cada tabela) ficam nas Politicas de manutencao: %{link}."
+    chain_link: "definir padroes da cadeia aqui"
     topologies:
       single: "No unico (coordenador tambem executa tarefas)"
       cluster: "Coordenador + workers separados"
@@ -929,6 +936,23 @@ pt-BR:
       message: "Mensagem"
       error_class: "Classe do erro"
       occurrences: "Ocorrencias"
+
+  maintenance:
+    metrics:
+      total_data_files: "Arquivos de dados"
+      total_size_bytes: "Tamanho"
+      position_deletes: "Deletes por posicao"
+      equality_deletes: "Deletes por igualdade"
+      snapshot_count: "Snapshots"
+      oldest_snapshot_at: "Snapshot mais antigo"
+      manifest_count: "Manifestos"
+    step_metrics:
+      processed: "%{count} processados"
+      statements: "%{count} statements"
+    impact:
+      title: "Ultimo impacto da manutencao"
+      subtitle: "antes → depois"
+      no_data: "Nenhuma manutencao rodou nesta tabela ainda."
 
   activerecord:
     errors:

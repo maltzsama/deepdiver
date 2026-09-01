@@ -20,7 +20,7 @@ en:
       catalogs: "Catalogs"
       operations: "Operations"
       plans: "Plans"
-      policies: "Policies"
+      policies: "Maintenance defaults"
       history: "History"
       errors: "Errors"
       security: "Security"
@@ -304,6 +304,7 @@ en:
       subtitle: "Edit the schedule and the chain of maintenance steps."
       paused_hint: "This plan is paused. Changes will not run until it resumes."
       review_hint: "This plan took %{failures} consecutive failures and needs review before it resumes working."
+      policy_inherit: "This plan is derived from the policy %{policy} — editing it here stops it from following the policy's chain-wide defaults."
       errors:
         one: "1 problem to fix"
         other: "%{count} problems to fix"
@@ -581,6 +582,7 @@ en:
     title: "Maintenance health"
     coverage: "%{coverage}% of criteria covered"
     no_score: "not enough data to score"
+    worst: "worst: %{component}"
     status:
       healthy: "healthy"
       warning: "warning"
@@ -683,6 +685,8 @@ en:
       col_chain: "Detail"
       col_duration: "Duration"
       col_query_id: "Trino query id"
+      col_triage: "Triage"
+      triage_unassigned: "unassigned"
       filter_stopped_at: "Stopped at step"
       retries: "%{count} retries"
       tab_maintenance: "Maintenance"
@@ -700,6 +704,7 @@ en:
       fresh_col_sla: "SLA (min)"
     filter_operation: "Operation"
     filter_status: "Status"
+    filter_kind: "Kind"
     kind_maintenance: "maintenance"
     kind_freshness: "freshness"
     freshness_sla: "SLA %{sla}min"
@@ -900,6 +905,8 @@ en:
     eyebrow: "Infrastructure"
     title: "Trino engine"
     subtitle: "How the ephemeral Trino engine is materialised when maintenance runs."
+    chain_note: "Retention and per-step configuration (what runs on each table) live in Maintenance Policies: %{link}."
+    chain_link: "set chain-wide defaults here"
     topologies:
       single: "Single node (coordinator also runs tasks)"
       cluster: "Coordinator + separate workers"
@@ -1008,6 +1015,10 @@ en:
       equality_deletes: "Equality deletes"
       snapshot_count: "Snapshots"
       oldest_snapshot_at: "Oldest snapshot"
+      manifest_count: "Manifests"
+    step_metrics:
+      processed: "%{count} processed"
+      statements: "%{count} statements"
     impact:
       title: "Last maintenance impact"
       subtitle: "before → after"

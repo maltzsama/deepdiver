@@ -1,24 +1,31 @@
 # Global log of operations. The per-table history stays in iceberg_tables#show;
-# this screen answers "what ran on the lake today". Maintenance and freshness
-# are separate tabs with separate schemas - never interleaved, each paginated
-# on its own source (the old merge of two limit(200) dropped the tail).
+# this screen answers "what happened recently" — maintenance executions and
+# freshness checks interleaved chronologically in ONE merged list. The kind of
+# event is a filter, not a tab: every filter only subtracts from the merged set.
 class ExecutionHistoriesController < ApplicationController
   before_action :set_execution, only: %i[cancel]
+  before_action :set_freshness_event, only: %i[acknowledge assign resolve]
 
-  TABS = %w[maintenance freshness].freeze
+  PAGE_SIZE = 50
 
-  # Lists executions as one block per run (timeline bar + legend) for the
-  # maintenance tab, or a simple scan list for the freshness tab.
+  # Lists the merged timeline of executions and freshness checks, newest first.
   def index
     authorize ExecutionHistory
     @catalogs = Catalog.order(:name)
-    @tab = TABS.include?(params[:tab]) ? params[:tab] : "maintenance"
+    filters = params.permit(:kind, :catalog_id, :status, :operation, :stopped_at_step, :page)
+    timeline = OperationTimeline.new(
+      kind: filters[:kind].to_s.presence,
+      catalog_id: filters[:catalog_id].to_s.presence,
+      status: filters[:status].to_s.presence,
+      operation: filters[:operation].to_s.presence,
+      stopped_at_step: filters[:stopped_at_step].to_s.presence
+    )
 
-    if @tab == "freshness"
-      @pagy, @checks = pagy(freshness_scope, limit: 50)
-    else
-      @pagy, @executions = pagy(maintenance_scope, limit: 50)
-    end
+    @pagy, @rows = pagy(timeline.collection, limit: PAGE_SIZE)
+    @rows = @rows.map(&:symbolize_keys)
+
+    load_records(@rows)
+    assignable_users # warm the memo for the triage select
   end
 
   # Operator cancellation of an execution: mark it failed (running) or skipped
@@ -33,42 +40,112 @@ class ExecutionHistoriesController < ApplicationController
     redirect_to activity_path, notice: t("activity.notices.cancelled")
   end
 
+  # Triage actions for freshness events, on the merged History list. Freshness
+  # is the only assignable error class — a breached SLA is work for a person;
+  # engine/catalog diagnostics are surfaced in context instead.
+  def acknowledge
+    authorize @event, :acknowledge?
+    @event.acknowledge!(user: current_user)
+    redirect_to execution_histories_path, notice: t("error_events.notices.acknowledged_one")
+  end
+
+  def assign
+    authorize @event, :assign?
+    target = assign_target
+    return redirect_with_invalid_target unless target
+
+    assignees = @event.assign_to!(target, by: current_user)
+    notify_assignees(assignees)
+    redirect_to execution_histories_path, notice: t("error_events.notices.assigned", count: assignees.size)
+  rescue ArgumentError
+    redirect_with_invalid_target
+  end
+
+  def resolve
+    authorize @event, :resolve?
+    @event.resolve!
+    redirect_to execution_histories_path, notice: t("error_events.notices.resolved_one")
+  end
+
   private
+
+  # Loads the executions and checks referenced by the timeline rows, and the
+  # freshness triage events for the checks, so the view renders without N+1.
+  #
+  # @param rows [Array<Hash>] the timeline rows
+  def load_records(rows)
+    execution_ids = rows.filter_map { |r| r[:record_id] if r[:kind] == "maintenance" }
+    check_ids     = rows.filter_map { |r| r[:record_id] if r[:kind] == "freshness" }
+
+    @executions = ExecutionHistory.where(id: execution_ids)
+                                  .includes(iceberg_table: :catalog, execution_steps: :maintenance_step)
+                                  .index_by(&:id)
+    @checks = FreshnessCheck.where(id: check_ids)
+                            .includes(iceberg_table: :catalog)
+                            .index_by(&:id)
+    @freshness_events = freshness_events_for(@checks.values)
+  end
+
+  # Loads the freshness event for triage actions.
+  def set_freshness_event
+    @event = ErrorEvent.find(params[:id])
+  end
+
+  # Resolves the assignment target from type/id form params.
+  # @return [User, Team, nil]
+  def assign_target
+    case params[:target_type]
+    when "user" then User.find_by(id: params[:target_id], role: %i[admin operator], status: "active")
+    when "team" then Team.find_by(id: params[:target_id])
+    end
+  end
+
+  # Flashes an error when the requested target does not exist or is not
+  # assignable.
+  def redirect_with_invalid_target
+    redirect_to execution_histories_path, alert: t("error_events.notices.invalid_target")
+  end
+
+  # Emails every assignee; delivery problems never block the assignment.
+  # @param assignees [Array<User>]
+  def notify_assignees(assignees)
+    assignees.each do |user|
+      ErrorEventMailer.assignment_notification(to: user.email, event: @event, assigned_by: current_user)
+                      .deliver_now
+    rescue StandardError => e
+      Rails.logger.warn("Assignment email to #{user.email} failed: #{e.message}")
+    end
+  end
 
   # Loads the execution for the current request.
   def set_execution
     @execution = ExecutionHistory.find(params[:id])
   end
 
-  # Maintenance executions with catalog/status/operation/stopped-at filters.
-  def maintenance_scope
-    scope = ExecutionHistory.includes(iceberg_table: :catalog, execution_steps: :maintenance_step)
-    scope = scope.joins(:iceberg_table).where(iceberg_tables: { catalog_id: params[:catalog_id] }) if params[:catalog_id].present?
-    scope = scope.where(status: params[:status]) if params[:status].present?
-    if params[:operation].present?
-      scope = scope.where(id: ExecutionHistory.joins(:execution_steps)
-                        .where(execution_steps: { operation: params[:operation] }).select(:id))
-    end
-    if params[:stopped_at_step].present?
-      scope = scope.where(id: ExecutionHistory.joins(:execution_steps)
-                        .where(execution_steps: { operation: params[:stopped_at_step], status: "failed" }).select(:id))
+  # The open/acknowledged freshness error events for the given checks, keyed by
+  # (catalog_id, namespace, table) so the view can annotate each row's triage
+  # state without N+1 queries.
+  #
+  # @param checks [Array<FreshnessCheck>] the checks on the page
+  # @return [Hash{Array => ErrorEvent}] events keyed by [catalog_id, namespace, table]
+  def freshness_events_for(checks)
+    events = ErrorEvent.where(operation: ErrorEvent::FRESHNESS_OPERATION,
+                              status: %w[open acknowledged])
+    unless checks.empty?
+      events = events.where(
+        checks.map do |check|
+          table = check.iceberg_table
+          { catalog_id: table.catalog_id, schema: table.namespace, table: table.name }
+        end
+      )
     end
 
-    scope.latest
+    events.index_by { |e| [ e.catalog_id, e.schema, e.table ] }
   end
 
-  # Freshness scans with catalog filter; the status filter speaks maintenance,
-  # so map it onto the closest freshness meaning.
-  def freshness_scope
-    scope = FreshnessCheck.includes(iceberg_table: :catalog)
-    scope = scope.joins(:iceberg_table).where(iceberg_tables: { catalog_id: params[:catalog_id] }) if params[:catalog_id].present?
-    scope = scope.where(status: freshness_status_filter) if params[:status].present?
-
-    scope.latest
-  end
-
-  # Maps maintenance statuses onto freshness ones ("failed"->"error").
-  def freshness_status_filter
-    { "failed" => "error", "success" => "ok" }.fetch(params[:status], params[:status])
+  # The assignable users for a freshness triage action.
+  # @return [Array<User>] active admins/operators ordered by email
+  def assignable_users
+    @assignable_users ||= User.active.where(role: %i[admin operator]).order(:email)
   end
 end

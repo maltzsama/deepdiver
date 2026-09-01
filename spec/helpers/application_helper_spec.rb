@@ -207,3 +207,60 @@ RSpec.describe ApplicationHelper, "#engine_sessions", type: :helper do
     expect(sessions.last.outcome).to eq(:clean)
   end
 end
+
+RSpec.describe ApplicationHelper, "#metadata_diff", type: :helper do
+  let(:table) { create(:iceberg_table) }
+  let(:execution) { create(:execution_history, iceberg_table: table) }
+
+  it "renders a before/after row when a table metric moved" do
+    execution.update!(
+      metadata_before: { "total_data_files" => 10, "snapshot_count" => 5 },
+      metadata_after:  { "total_data_files" => 8, "snapshot_count" => 5 }
+    )
+    create(:execution_step, execution_history: execution, operation: "optimize")
+
+    html = helper.metadata_diff(execution)
+
+    expect(html).to include("Data files")
+    expect(html).to include("10")
+    expect(html).to include("8")
+  end
+
+  it "shows manifest_count for optimize_manifests" do
+    execution.update!(
+      metadata_before: { "manifest_count" => 20 },
+      metadata_after:  { "manifest_count" => 1 }
+    )
+    create(:execution_step, execution_history: execution, operation: "optimize_manifests")
+
+    html = helper.metadata_diff(execution)
+
+    expect(html).to include("Manifests")
+    expect(html).to include("20")
+    expect(html).to include("1")
+  end
+
+  it "falls back to step metrics when no table metric moved" do
+    execution.update!(
+      metadata_before: { "total_data_files" => 10, "snapshot_count" => 5 },
+      metadata_after:  { "total_data_files" => 10, "snapshot_count" => 5 }
+    )
+    create(:execution_step, execution_history: execution, operation: "remove_orphan_files",
+                            metrics: { "rows" => 5 })
+
+    html = helper.metadata_diff(execution)
+
+    expect(html).to include("5 processed")
+  end
+
+  it "returns nil when there is nothing to show" do
+    execution.update!(
+      metadata_before: { "total_data_files" => 10 },
+      metadata_after:  { "total_data_files" => 10 }
+    )
+    create(:execution_step, execution_history: execution, operation: "remove_orphan_files",
+                            metrics: { "rows" => 0 })
+
+    expect(helper.metadata_diff(execution)).to be_nil
+  end
+end

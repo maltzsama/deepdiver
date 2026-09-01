@@ -47,6 +47,27 @@ RSpec.describe HealthEvaluator do
     expect(result[:components][:fragmentation]).to be > 0.9
   end
 
+  it "reports the worst component even when the composite is diluted" do
+    # The exact shape from #185: severe fragmentation (60 KB vs 64 MB target)
+    # diluted by healthy snapshot/delete/manifest signals still scores ~60.
+    result = described_class.evaluate(
+      extractor(
+        average_file_size: 60 * 1024, snapshot_count: 5, total_records: 10_000_000,
+        position_deletes: 0, equality_deletes: 0, properties: { "write.target-file-size-bytes" => (64 * 1024 * 1024).to_s },
+        oldest_snapshot_at: 7.days.ago, last_snapshot_at: Time.current
+      ),
+      manifest_count: 3
+    )
+
+    expect(result[:score]).to be >= 55
+    expect(result[:worst_component]).to eq(:fragmentation)
+    expect(result[:worst_ratio]).to be < 0.01
+  end
+
+  it "leaves worst_component nil when nothing is measurable" do
+    expect(described_class.evaluate(extractor)[:worst_component]).to be_nil
+  end
+
   describe "snapshot_buildup budget" do
     let(:plan) { create(:maintenance_plan, :with_all_steps) }
 

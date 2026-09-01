@@ -530,11 +530,16 @@ def engine_sessions(events)
     "optimize"          => %w[total_data_files total_size_bytes position_deletes equality_deletes],
     "expire_snapshots"  => %w[snapshot_count oldest_snapshot_at],
     "remove_orphan_files" => [],
-    "optimize_manifests" => []
+    "optimize_manifests" => %w[manifest_count]
   }.freeze
 
   # Renders a before/after metadata diff for a maintenance execution.
-  # Only shows the metrics relevant to the operations that actually ran.
+  #
+  # Two layers: the table-level metric diff first; when none of the tracked
+  # metrics moved, fall back to what the steps themselves reported (row counts,
+  # batched statements, elapsed time) so a successful run that did real work is
+  # never presented as "no metadata changes detected".
+  #
   # @param execution [ExecutionHistory] the execution with before/after snapshots
   # @return [ActiveSupport::SafeBuffer, nil] the rendered diff, or nil when not available
   def metadata_diff(execution)
@@ -543,10 +548,54 @@ def engine_sessions(events)
     return nil if before.nil? || after.nil?
 
     operations = execution.execution_steps.pluck(:operation).uniq
-    relevant_keys = operations.flat_map { |op| OPERATION_METRICS[op] }.uniq
-    return nil if relevant_keys.empty?
+    rows = table_metric_rows(operations, before, after)
+    rows = step_metric_rows(execution) if rows.empty?
 
-    rows = relevant_keys.filter_map do |key|
+    return nil if rows.empty?
+
+    content_tag(:div, class: "metadata-diff") do
+      rows.map { |row| render_diff_row(row) }.reduce(:+)
+    end
+  end
+
+  # Renders one diff row. A step-metric fallback row (old == nil, summary in
+  # the new slot) renders as a plain "label — summary" line; a table-metric row
+  # renders the before → after arrow layout.
+  #
+  # @param row [Array] [label, old, new, delta]
+  # @return [ActiveSupport::SafeBuffer] the row
+  def render_diff_row(row)
+    label, old_val, new_val, delta = row
+
+    content_tag(:div, class: "metadata-diff-row") do
+      if old_val.nil? && new_val.is_a?(String)
+        safe_join([
+          content_tag(:span, label, class: "metadata-diff-label"),
+          content_tag(:span, new_val, class: "metadata-diff-new")
+        ])
+      else
+        safe_join([
+          content_tag(:span, label, class: "metadata-diff-label"),
+          content_tag(:span, format_metric_value(key_for(label), old_val), class: "metadata-diff-old"),
+          safe_join([ content_tag(:span, "→", class: "metadata-diff-arrow"),
+                      content_tag(:span, format_metric_value(key_for(label), new_val), class: "metadata-diff-new") ]),
+          content_tag(:span, delta, class: "metadata-diff-delta")
+        ].compact)
+      end
+    end
+  end
+
+  # The before/after rows for the operations' table-level metrics.
+  #
+  # @param operations [Array<String>] the operations that ran
+  # @param before [Hash] the pre-maintenance metadata snapshot
+  # @param after [Hash] the post-maintenance metadata snapshot
+  # @return [Array<Array>] [label, old, new, delta] rows
+  def table_metric_rows(operations, before, after)
+    relevant_keys = operations.flat_map { |op| OPERATION_METRICS[op] }.uniq
+    return [] if relevant_keys.empty?
+
+    relevant_keys.filter_map do |key|
       old_val = before[key]
       new_val = after[key]
       next if old_val == new_val
@@ -557,21 +606,30 @@ def engine_sessions(events)
 
       [ label, old_val, new_val, delta ]
     end
+  end
 
-    return nil if rows.empty?
+  # Fallback rows built from what the steps themselves reported. The step
+  # metrics carry the work done that no table-level metric reflects: row counts
+  # (orphans removed, snapshots expired), batched statements, elapsed time.
+  #
+  # @param execution [ExecutionHistory] the execution with step metrics
+  # @return [Array<Array>] [label, old, new, delta] rows
+  def step_metric_rows(execution)
+    execution.execution_steps.order(:id).filter_map do |step|
+      metrics = step.metrics || {}
+      next if metrics.empty?
 
-    content_tag(:div, class: "metadata-diff") do
-      rows.map { |label, old_val, new_val, delta|
-        content_tag(:div, class: "metadata-diff-row") do
-          safe_join([
-            content_tag(:span, label, class: "metadata-diff-label"),
-            content_tag(:span, format_metric_value(key_for(label), old_val), class: "metadata-diff-old"),
-            safe_join([ content_tag(:span, "→", class: "metadata-diff-arrow"),
-                        content_tag(:span, format_metric_value(key_for(label), new_val), class: "metadata-diff-new") ]),
-            content_tag(:span, delta, class: "metadata-diff-delta")
-          ].compact)
-        end
-      }.reduce(:+)
+      rows = metrics["rows"].to_i
+      statements = metrics["batched_statements"].to_i
+      next if rows.zero? && statements.zero?
+
+      op_label = t("operations.index.owner_execution", default: step.operation).capitalize
+      summary = []
+      summary << t("maintenance.step_metrics.processed", count: rows) if rows.positive?
+      summary << t("maintenance.step_metrics.statements", count: statements) if statements.positive?
+      next if summary.empty?
+
+      [ op_label, nil, summary.join(" · "), nil ]
     end
   end
 

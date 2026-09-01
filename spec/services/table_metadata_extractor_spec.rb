@@ -55,4 +55,29 @@ RSpec.describe TableMetadataExtractor, type: :service do
       expect(extractor.total_size_bytes).to eq(1_000)
     end
   end
+
+  describe "#total_size_bytes" do
+    it "reads the Iceberg total-files-size key from a raw summary" do
+      extractor = described_class.new(
+        "current-snapshot-id" => 1,
+        "snapshots" => [
+          { "snapshot-id" => 1, "timestamp-ms" => 1_700_000_000_000,
+            "summary" => { "total-records" => "13484606", "total-data-files" => "4689",
+                           "total-files-size" => "288843674" } }
+        ]
+      )
+
+      expect(extractor.total_size_bytes).to eq(288_843_674)
+      expect(extractor.average_file_size).to eq(61_600)
+    end
+
+    it "returns nil when the summary lacks total-files-size" do
+      extractor = described_class.new(
+        "current-snapshot-id" => 1,
+        "snapshots" => [ { "snapshot-id" => 1, "summary" => { "total-records" => "5" } } ]
+      )
+
+      expect(extractor.total_size_bytes).to be_nil
+    end
+  end
 end

@@ -1,135 +1,108 @@
 require "rails_helper"
 
-RSpec.describe "GET /execution_histories", type: :request do
-  let(:user)    { create(:user) }
-  let(:catalog) { create(:catalog) }
-  let(:other)   { create(:catalog, name: "legacy") }
-
-  let(:table)        { create(:iceberg_table, catalog:, name: "sales") }
-  let(:other_table)  { create(:iceberg_table, catalog: other, name: "orders") }
-
-  let(:plan)      { create(:maintenance_plan, iceberg_table: table) }
-  let(:other_plan) { create(:maintenance_plan, iceberg_table: other_table) }
-  let(:foreign_plan) { create(:maintenance_plan, iceberg_table: other_table) }
-
-  let!(:failed_execution) do
-    create(:execution_history, maintenance_plan: plan, iceberg_table: table,
-                              status: :failed, current_step: :done, error_message: "commit conflict")
-  end
-  let!(:success_execution) do
-    create(:execution_history, maintenance_plan: plan, iceberg_table: table,
-                              status: :success, current_step: :done)
-  end
-  let!(:foreign_execution) do
-    create(:execution_history, maintenance_plan: foreign_plan, iceberg_table: other_table,
-                              status: :success, current_step: :done)
+RSpec.describe "Execution histories freshness triage", type: :request do
+  let(:admin) { create(:user, :admin) }
+  let(:table) { create(:iceberg_table) }
+  let(:check) do
+    create(:freshness_check, iceberg_table: table, status: "late",
+                             delay_seconds: 300, checked_at: Time.current)
   end
 
-  before do
-    failed_execution.execution_steps.create!(operation: "optimize", status: "failed",
-                                             error_message: "commit conflict")
-    success_execution.execution_steps.create!(operation: "expire_snapshots", status: "succeeded")
-    sign_in user
+  before { sign_in admin }
+
+  def freshness_event
+    ErrorEvent.record_freshness_late!(table: table, context: { delay: "5 min", sla_minutes: 1 })
   end
 
-  it "lists executions, most recent first" do
+  it "lists open freshness breaches with triage state in the merged list" do
+    check
+    freshness_event
+
     get execution_histories_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("sales")
+    expect(response.body).to include("unassigned")
+    expect(response.body).to include(">Open<")
   end
 
-  it "filters by status" do
-    get execution_histories_path, params: { status: "failed" }
+  it "acknowledges a freshness event from the merged history" do
+    event = freshness_event
 
-    expect(response.body).to include("commit conflict")
-    expect(response.body).not_to include("orders")
+    patch acknowledge_execution_history_path(event.id)
+
+    expect(event.reload.status).to eq("acknowledged")
+    expect(response).to redirect_to(execution_histories_path)
   end
 
-  it "filters by chain step operation" do
-    get execution_histories_path, params: { operation: "expire_snapshots" }
+  it "assigns a freshness event to a user" do
+    event = freshness_event
+    operator = create(:user, :operator)
 
-    expect(response.body).to include("sales")
-    expect(response.body).not_to include("commit conflict")
+    patch assign_execution_history_path(event.id), params: { target_type: "user", target_id: operator.id }
+
+    expect(event.reload.assigned_to).to eq(operator)
   end
 
-  it "filters by catalog" do
-    get execution_histories_path, params: { catalog_id: other.id }
+  it "resolves an acknowledged freshness event" do
+    event = freshness_event
+    event.update!(status: "acknowledged", acknowledged_at: Time.current)
 
-    expect(response.body).to include("orders")
-    expect(response.body).not_to include("sales")
+    patch resolve_execution_history_path(event.id)
+
+    expect(event.reload).to be_resolved
   end
 
-  it "filters by the step where the execution stopped" do
-    get execution_histories_path, params: { stopped_at_step: "optimize" }
+  it "does not expose the triage actions to viewers" do
+    viewer = create(:user)
+    sign_in viewer
+    event = freshness_event
 
-    expect(response.body).to include("commit conflict")
-    expect(response.body).not_to include("orders")
-  end
+    patch acknowledge_execution_history_path(event.id)
 
-  it "shows the full error message, not truncated" do
-    get execution_histories_path
-
-    expect(response.body).to include("commit conflict")
+    expect(response).to redirect_to(root_path)
+    expect(event.reload.status).to eq("open")
   end
 end
 
-RSpec.describe "GET /execution_histories (tabs)", type: :request do
-  let(:user)   { create(:user) }
-  let(:table)  { create(:iceberg_table) }
-
+RSpec.describe "Execution histories merged timeline", type: :request do
+  let(:user) { create(:user) }
   before { sign_in user }
 
-  it "defaults to the maintenance tab and never interleaves freshness" do
-    plan = create(:maintenance_plan, iceberg_table: table)
-    create(:execution_history, maintenance_plan: plan, iceberg_table: table,
-                               started_at: 2.hours.ago, status: :success)
-    create(:freshness_check, iceberg_table: table, checked_at: 1.hour.ago, status: "late")
+  it "interleaves maintenance and freshness rows chronologically in one list" do
+    create(:execution_history, iceberg_table: create(:iceberg_table), status: "success",
+                               started_at: 2.hours.ago)
+    create(:freshness_check, iceberg_table: create(:iceberg_table), status: "late",
+                             checked_at: 1.hour.ago)
 
     get execution_histories_path
 
-    expect(assigns(:tab)).to eq("maintenance")
-    expect(assigns(:executions).map(&:status)).to eq([ "success" ])
-    expect(assigns(:checks)).to be_nil
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("maintenance")
+    expect(response.body).to include("freshness")
   end
 
-  it "serves freshness from its own tab and its own pagination" do
-    create(:freshness_check, iceberg_table: table, checked_at: 30.minutes.ago, status: "ok")
+  it "filters the merged list by kind" do
+    create(:execution_history, iceberg_table: create(:iceberg_table), status: "success",
+                               started_at: 2.hours.ago)
+    create(:freshness_check, iceberg_table: create(:iceberg_table), status: "late",
+                             checked_at: 1.hour.ago)
 
-    get execution_histories_path, params: { tab: "freshness" }
+    get execution_histories_path(kind: "maintenance")
 
-    expect(assigns(:tab)).to eq("freshness")
-    expect(assigns(:checks).map(&:status)).to eq([ "ok" ])
-    expect(response.body).to include("ok")
+    expect(response.body).to include("maintenance")
+    # The freshness check article carries the freshness kind badge; filtered
+    # out, it must not render.
+    expect(response.body).not_to include("op-run\">\n      <span class=\"badge badge-mute flex-none\">freshness")
   end
 
-  it "maps a maintenance status filter onto the closest freshness status" do
-    create(:freshness_check, iceberg_table: table, status: "error")
-    create(:freshness_check, iceberg_table: table, status: "ok")
+  it "round-trips the kind filter on submit" do
+    create(:freshness_check, iceberg_table: create(:iceberg_table), status: "late",
+                             checked_at: 1.hour.ago)
 
-    get execution_histories_path, params: { tab: "freshness", status: "failed" }
+    get execution_histories_path, params: { kind: "freshness", status: "late" }
 
-    expect(assigns(:checks).map(&:status)).to eq([ "error" ])
-  end
-
-  it "renders the timeline bar with wait and step legend for a finished run" do
-    started = 37.minutes.ago
-    plan = create(:maintenance_plan, iceberg_table: table)
-    execution = create(:execution_history, maintenance_plan: plan, iceberg_table: table,
-                                           started_at: started, finished_at: 5.minutes.ago,
-                                           status: :failed, error_message: "worker nodes gone",
-                                           current_step: :optimize)
-    create(:execution_step, execution_history: execution, operation: "optimize", status: :failed,
-                            started_at: started + 30.seconds, finished_at: 5.minutes.ago - 10.seconds,
-                            error_message: "Insufficient active worker nodes",
-                            metrics: { "stats" => { "processedBytes" => 2048 } })
-
-    get execution_histories_path
-
-    expect(response.body).to include("op-seg--wait")
-    expect(response.body).to include("op-seg--failed")
-    # Error attribution: owner is named on both levels.
-    expect(response.body).to include("optimize —</span> Insufficient active worker nodes")
-    expect(response.body).to include("execução —</span> worker nodes gone").or include("execution —</span> worker nodes gone")
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("selected")
+    expect(response.body).to include("freshness")
   end
 end

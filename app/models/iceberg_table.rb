@@ -53,6 +53,7 @@ class IcebergTable < ApplicationRecord
       "position_deletes" => position_deletes,
       "equality_deletes" => equality_deletes,
       "snapshot_count"   => snapshot_count,
+      "manifest_count"   => manifest_count,
       "oldest_snapshot_at" => oldest_snapshot_at&.iso8601
     }
   end

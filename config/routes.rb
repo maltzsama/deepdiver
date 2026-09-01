@@ -35,9 +35,12 @@ Rails.application.routes.draw do
     post "trino_queries/:query_id/cancel", action: :cancel_query, as: :cancel_trino_query
   end
 
-  # Error surface (CR-72): list, detail, assign/acknowledge/resolve workflow.
-  resources :error_events, only: %i[index show] do
+  # Global log of operations.
+  resources :execution_histories, only: %i[index] do
     member do
+      post :cancel
+      # Freshness triage: acknowledge / assign / resolve a breached-SLA event
+      # directly from the History freshness tab.
       patch :acknowledge
       patch :assign
       patch :resolve
@@ -70,11 +73,6 @@ Rails.application.routes.draw do
     end
 
     resource :freshness_sla, only: %i[edit update], controller: "freshness_slas"
-  end
-
-  # Global log of operations.
-  resources :execution_histories, only: %i[index] do
-    member { post :cancel }
   end
 
   # Maintenance plans.
