@@ -473,6 +473,7 @@ en:
       col_id: "Snapshot id"
       col_time: "Time"
       col_operation: "Operation"
+      col_size: "Size"
       val_yes: "yes"
       val_no: "no"
       spec_prefix: "spec"

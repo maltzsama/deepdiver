@@ -152,6 +152,7 @@ class ExecuteMaintenanceJob < ApplicationJob
     table = execution.iceberg_table
     if table
       CatalogSyncService.sync_table(table.id)
+      CatalogSyncService.enrich_from_trino!(table.reload)
       execution.update!(metadata_after: table.reload.metadata_snapshot)
       check_records_integrity!(execution)
     end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_31_232000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_01_090000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "slack_webhook_url"
@@ -178,6 +178,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_31_232000) do
     t.string "health_status", default: "unknown", null: false
     t.datetime "health_status_changed_at"
     t.datetime "last_data_update"
+    t.integer "manifest_count"
     t.datetime "metadata_synced_at"
     t.string "name", null: false
     t.string "namespace", null: false

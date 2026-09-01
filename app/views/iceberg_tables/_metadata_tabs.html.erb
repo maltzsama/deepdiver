@@ -94,6 +94,7 @@
                 <th scope="col"><%= t("tables.metadata.col_id") %></th>
                 <th scope="col"><%= t("tables.metadata.col_time") %></th>
                 <th scope="col"><%= t("tables.metadata.col_operation") %></th>
+                <th scope="col"><%= t("tables.metadata.col_size") %></th>
               </tr>
             </thead>
             <tbody>
@@ -102,6 +103,9 @@
                   <td class="cell-id"><%= snap["snapshot-id"] || snap["snapshot_id"] %></td>
                   <td><%= timestamp(Time.at((snap["timestamp-ms"] || snap["timestamp_ms"]).to_f / 1000.0)) %></td>
                   <td class="cell-muted"><%= snap.dig("summary", "operation") || "—" %></td>
+                  <td class="cell-muted font-mono text-small">
+                    <%= (size = snap.dig("summary", "total-files-size-in-bytes")) ? number_to_human_size(size) : "—" %>
+                  </td>
                 </tr>
               <% end %>
             </tbody>

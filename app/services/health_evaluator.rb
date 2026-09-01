@@ -22,9 +22,10 @@ class HealthEvaluator
   # @param extractor [TableMetadataExtractor] the table metadata source
   # @param plan [MaintenancePlan, nil] the maintenance plan for context
   # @param now [Time] the reference clock
+  # @param manifest_count [Integer, nil] manifest count from Trino (post-maintenance)
   # @return [Hash] the health score, status, components and coverage
-  def self.evaluate(extractor, plan: nil, now: Time.current)
-    new(extractor, plan: plan, now: now).call
+  def self.evaluate(extractor, plan: nil, now: Time.current, manifest_count: nil)
+    new(extractor, plan: plan, now: now, manifest_count: manifest_count).call
   end
 
   # Creates the evaluator with the extractor, plan and clock.
@@ -32,10 +33,12 @@ class HealthEvaluator
   # @param extractor [TableMetadataExtractor] the table metadata source
   # @param plan [MaintenancePlan, nil] the maintenance plan for context
   # @param now [Time] the reference clock
-  def initialize(extractor, plan: nil, now: Time.current)
+  # @param manifest_count [Integer, nil] manifest count from Trino (post-maintenance)
+  def initialize(extractor, plan: nil, now: Time.current, manifest_count: nil)
     @extractor = extractor
     @plan = plan
     @now = now
+    @manifest_count = manifest_count
   end
 
   # Computes the weighted health score and status from the available components.
@@ -93,8 +96,20 @@ class HealthEvaluator
     (1.0 - (deletes.to_f / records) * 10).clamp(0.0, 1.0)
   end
 
-  # No data source yet - see the note below.
-  def manifest_buildup = nil
+  # Scores the manifest count against the expected budget.
+  #
+  # The budget is proportional to the snapshot budget (manifests tend to
+  # accumulate alongside snapshots). When manifest_count is nil (engine
+  # was down / never measured), the component is excluded.
+  #
+  # @return [Float, nil] 0.0-1.0, or nil when there is no manifest data
+  def manifest_buildup
+    count = @manifest_count
+    return nil if count.nil?
+
+    budget = expected_manifest_budget
+    (1.0 - ((count - budget).to_f / budget)).clamp(0.0, 1.0)
+  end
 
   # The configured target file size, falling back to the default.
   #
@@ -112,6 +127,16 @@ class HealthEvaluator
     days = @plan.maintenance_steps.find_by(operation: "expire_snapshots")
                 &.config&.dig("retention_threshold").to_s[/\d+/]&.to_i || 7
     [ days * 10, 10 ].max
+  end
+
+  # The expected manifest budget: proportional to the snapshot budget since
+  # manifests accumulate alongside snapshots. Half the snapshot budget is a
+  # reasonable starting point — an optimize that compacts manifests should
+  # bring the count within this range.
+  #
+  # @return [Integer] the manifest budget
+  def expected_manifest_budget
+    [ expected_snapshot_budget / 2, 5 ].max
   end
 
   # Maps a score to a health status.
