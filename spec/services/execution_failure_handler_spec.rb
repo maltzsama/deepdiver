@@ -21,6 +21,7 @@ RSpec.describe ExecutionFailureHandler do
 
     execution.reload
     expect(execution.status).to eq("failed")
+    expect(execution.finished_at).to be_present
     expect(execution.execution_steps.where(status: "pending")).to be_empty
 
     blocked = execution.execution_steps.where(status: "blocked").order(:id)

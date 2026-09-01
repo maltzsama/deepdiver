@@ -45,7 +45,10 @@ class ExecutionFailureHandler
   def fail_execution
     return if TERMINAL_STATUSES.include?(@execution.status)
 
-    @execution.update!(status: :failed, error_message: @error_message)
+    # finished_at is what makes duration computable and the timeline bar stop
+    # growing. Every other terminal write sets it; a failed execution without
+    # it would be treated as still running forever.
+    @execution.update!(status: :failed, finished_at: Time.current, error_message: @error_message)
     block_pending_steps!
 
     ErrorEvent.record(catalog: @table&.catalog, schema: @table&.namespace,
