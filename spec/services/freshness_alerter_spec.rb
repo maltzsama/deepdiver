@@ -84,6 +84,43 @@ RSpec.describe FreshnessAlerter, type: :service do
     end
   end
 
+  describe "hysteresis across transient probe errors" do
+    it "keeps breached_since across an error probe mid-episode" do
+      described_class.new(sla, result_for(3.hours)).call
+      breached = sla.reload.breached_since
+
+      described_class.new(sla.reload, result_for(3.hours, status: "error")).call
+
+      expect(sla.reload.breached_since).to eq(breached)
+    end
+
+    it "does not re-page when an error probe interrupts a late episode" do
+      described_class.new(sla, result_for(3.hours)).call
+      described_class.new(sla.reload, result_for(3.hours, status: "error")).call
+      described_class.new(sla.reload, result_for(4.hours)).call
+
+      # Late entry alert + ... the error probe must not be treated as recovery,
+      # and the return to late must not page again.
+      expect(sla.reload.breached_since).to be_present
+    end
+
+    it "clears breached_since only on a real recovery (ok)" do
+      described_class.new(sla, result_for(3.hours)).call
+      described_class.new(sla.reload, result_for(10, status: "ok")).call
+
+      expect(sla.reload.breached_since).to be_nil
+    end
+  end
+
+  describe "healthy tables never page" do
+    it "does not page a recovered alert for a table that was never late" do
+      sla.update!(status: "ok", severity: "critical")
+      described_class.new(sla, result_for(10, status: "ok")).call
+
+      expect(AlertNotifier).not_to have_received(:notify)
+    end
+  end
+
   describe "error surface integration" do
     it "records one freshness event when a table enters late" do
       expect { described_class.new(sla, result_for(3.hours)).call }
