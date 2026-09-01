@@ -133,15 +133,22 @@ class TrinoCatalogProjection
     props.transform_values(&:to_s)
   end
 
-  # Base URI Trino's REST client talks to. Nessie mounts the Iceberg surface
-  # at /iceberg (empirical, 0.108.4); Polaris at /api/catalog. The prefix
-  # itself is discovered by each client's own /v1/config call.
+  # Base URI Trino's Iceberg REST connector talks to. Unlike the app's own
+  # Ruby-side REST client (which appends its mount prefix itself via
+  # CatalogClient#base_url / mount_prefix), Trino uses iceberg.rest-catalog.uri
+  # as the literal REST root — it never discovers a prefix via /v1/config.
+  # So the mount path must already be in the URI:
+  #   Nessie  → /iceberg     (empirical, 0.108.4)
+  #   Polaris → /api/catalog (mirrors PolarisCatalogClient#mount_prefix)
   #
   # @param catalog [Catalog] the catalog being projected
   # @return [String] the REST base URI without trailing slash
   def rest_catalog_uri(catalog)
     uri = catalog.endpoint.chomp("/")
-    uri = "#{uri}/iceberg" if catalog.catalog_type == "nessie"
-    uri
+    case catalog.catalog_type
+    when "nessie"  then uri.end_with?("/iceberg") ? uri : "#{uri}/iceberg"
+    when "polaris" then uri.end_with?("/api/catalog") ? uri : "#{uri}/api/catalog"
+    else                uri
+    end
   end
 end

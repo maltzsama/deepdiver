@@ -41,6 +41,33 @@ RSpec.describe TrinoCatalogProjection do
     expect(row.properties["iceberg.rest-catalog.warehouse"]).to eq("Polaris Prod")
   end
 
+  describe "iceberg.rest-catalog.uri" do
+    it "appends /api/catalog for Polaris catalogs" do
+      polaris = create(:polaris_catalog, name: "Polaris Prod")
+      described_class.new.sync_all!
+
+      row = TrinoCatalogRegistry.find_by(catalog_name: "polaris_prod")
+      expect(row.properties["iceberg.rest-catalog.uri"]).to eq("http://polaris:8181/api/catalog")
+    end
+
+    it "does not double-append the Polaris prefix when endpoint already carries it" do
+      polaris = create(:polaris_catalog, name: "Polaris Prod",
+                       endpoint: "http://polaris:8181/api/catalog")
+      described_class.new.sync_all!
+
+      row = TrinoCatalogRegistry.find_by(catalog_name: "polaris_prod")
+      expect(row.properties["iceberg.rest-catalog.uri"]).to eq("http://polaris:8181/api/catalog")
+    end
+
+    it "appends /iceberg for Nessie catalogs" do
+      nessie = create(:catalog, name: "Nessie Prod")
+      described_class.new.sync_all!
+
+      row = TrinoCatalogRegistry.find_by(catalog_name: "nessie_prod")
+      expect(row.properties["iceberg.rest-catalog.uri"]).to eq("#{nessie.endpoint.chomp('/')}/iceberg")
+    end
+  end
+
   it "writes properties as a flat string map" do
     create(:catalog_credential, catalog:, auth_method: "oauth2_client_credentials",
                                 client_id: "svc", secret: "s3cr3t", scope: "PRINCIPAL_ROLE:ALL")
