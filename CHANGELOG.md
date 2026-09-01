@@ -4,6 +4,46 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.10.0](https://github.com/maltzsama/deepdiver/compare/v0.9.1...v0.10.0) (2026-09-01)
+
+
+### Features
+
+* **catalog:** add nessie_api_mode and nessie_warehouse fields (closes [#179](https://github.com/maltzsama/deepdiver/issues/179) part 1) ([fb4c129](https://github.com/maltzsama/deepdiver/commit/fb4c12953e7db9f71333c8981830895de1ccd2cb))
+* **client:** add NessieNativeCatalogClient for the /api/v2 read path (closes [#179](https://github.com/maltzsama/deepdiver/issues/179) part 2) ([0137a97](https://github.com/maltzsama/deepdiver/commit/0137a97b88cfc80740984227630725fc0c70e1b8))
+* **projection:** emit native Nessie connector properties for Trino (closes [#179](https://github.com/maltzsama/deepdiver/issues/179) part 3) ([338753a](https://github.com/maltzsama/deepdiver/commit/338753aea08b0cc79ee976d8d272ee3a3cbe834e))
+* **projection:** merge operator catalog properties into connector props (closes [#176](https://github.com/maltzsama/deepdiver/issues/176)) ([1579691](https://github.com/maltzsama/deepdiver/commit/157969191db8852c7cdec9c190653f5a68531682))
+* **transport:** surface the server's error.message in ApiError (closes [#179](https://github.com/maltzsama/deepdiver/issues/179) part 4) ([48873c0](https://github.com/maltzsama/deepdiver/commit/48873c0fcf1b1f01ab70e9e7503a88ea0a368d1a))
+* **ui:** expose Nessie API mode and native warehouse in the catalog form (closes [#179](https://github.com/maltzsama/deepdiver/issues/179) part 5) ([7c452ec](https://github.com/maltzsama/deepdiver/commit/7c452ec9d2264d8c85d5d351e21ad58543308ce6))
+
+
+### Bug Fixes
+
+* 25-issue sweep — correctness, security, UX, queueing & native Nessie (closes [#154](https://github.com/maltzsama/deepdiver/issues/154)–[#176](https://github.com/maltzsama/deepdiver/issues/176), [#179](https://github.com/maltzsama/deepdiver/issues/179)) ([a68fae4](https://github.com/maltzsama/deepdiver/commit/a68fae42db034b6ccef02bfb757ddaaa4bf9bf7a))
+* **activity:** group engine lifecycle into sessions, not generations (closes [#155](https://github.com/maltzsama/deepdiver/issues/155)) ([bfc15b6](https://github.com/maltzsama/deepdiver/commit/bfc15b6e5da8459cd13b1d1b5a34894692efc89a))
+* **chain:** enrich from Trino before draining the engine (closes [#154](https://github.com/maltzsama/deepdiver/issues/154)) ([afcf5dd](https://github.com/maltzsama/deepdiver/commit/afcf5dde45b879937880e462b1b5aa7e1a129a4c))
+* **db:** enforce singleton-row contract with a unique index (closes [#175](https://github.com/maltzsama/deepdiver/issues/175)) ([6c56114](https://github.com/maltzsama/deepdiver/commit/6c561149d77e21977482e960ab6fc5c0862a81b5))
+* **executions:** failed executions get finished_at so duration is computable (closes [#160](https://github.com/maltzsama/deepdiver/issues/160)) ([6da01ef](https://github.com/maltzsama/deepdiver/commit/6da01ef3002b4dddc984267a807bf4318701e511))
+* **freshness:** keep breached_since across transient probe errors; never page healthy tables (closes [#170](https://github.com/maltzsama/deepdiver/issues/170)) ([c86e564](https://github.com/maltzsama/deepdiver/commit/c86e564cb70feb58c4a92e9df6aedb3e6537181a))
+* **health:** derive snapshot_buildup budget from real commit rate (closes [#156](https://github.com/maltzsama/deepdiver/issues/156)) ([f228cac](https://github.com/maltzsama/deepdiver/commit/f228caca7537d2b2c94eee5f8fb141d4fdb00219))
+* **health:** detail page evaluates health with the persisted manifest_count (closes [#165](https://github.com/maltzsama/deepdiver/issues/165)) ([6b31690](https://github.com/maltzsama/deepdiver/commit/6b31690119150aa4e448021b33fdba3b221230f0))
+* **health:** from_persisted keeps metrics when snapshot_count is 0/nil (closes [#166](https://github.com/maltzsama/deepdiver/issues/166)) ([11ace66](https://github.com/maltzsama/deepdiver/commit/11ace667078f34f2bc18249fd51bce7aa6c0e42f))
+* **i18n:** reference freshness keys at tables.fresh_*, not tables.index.fresh_* (closes [#164](https://github.com/maltzsama/deepdiver/issues/164)) ([e6396cc](https://github.com/maltzsama/deepdiver/commit/e6396ccfedcc7209c5cd821405f7a2ba76a02d25))
+* **maintenance:** keep a succeeded step succeeded after post-success bookkeeping fails (closes [#161](https://github.com/maltzsama/deepdiver/issues/161)) ([dcc22d8](https://github.com/maltzsama/deepdiver/commit/dcc22d8b8f25ec651ba63db2e629d9b3c9e6f5b4))
+* **optimize:** fall back to single OPTIMIZE when a partition value can't be rendered (closes [#163](https://github.com/maltzsama/deepdiver/issues/163)) ([519a2eb](https://github.com/maltzsama/deepdiver/commit/519a2ebd9824b1d203a5505988afea880ddc86bd))
+* **provisioner:** always scale workers down on destroy! even if coordinator fails (closes [#172](https://github.com/maltzsama/deepdiver/issues/172)) ([8600351](https://github.com/maltzsama/deepdiver/commit/8600351d2a315a2a0e2847b33a37b6ba9443dd15))
+* **provisioner:** idle? never reads an unreachable coordinator as idle (closes [#171](https://github.com/maltzsama/deepdiver/issues/171)) ([90cec09](https://github.com/maltzsama/deepdiver/commit/90cec09b13c7fa63cb0b57045a302b38b4965919))
+* **queue:** give ScheduleDispatchJob its own dispatch queue (closes [#174](https://github.com/maltzsama/deepdiver/issues/174)) ([cd3a498](https://github.com/maltzsama/deepdiver/commit/cd3a498910e9f426f5e7a232321c9520989df4d9))
+* **security:** filter slack_webhook_url from request logs (closes [#168](https://github.com/maltzsama/deepdiver/issues/168)) ([05eae00](https://github.com/maltzsama/deepdiver/commit/05eae0018495f5a467818a06c04370d71c87288d))
+* **security:** forbid an admin from demoting their own account (closes [#167](https://github.com/maltzsama/deepdiver/issues/167)) ([44b1e39](https://github.com/maltzsama/deepdiver/commit/44b1e39fb0b4210dcc2ab3dead1d8b81a9d62686))
+* **security:** refuse to resurrect suspended accounts; require IdP email verification (closes [#173](https://github.com/maltzsama/deepdiver/issues/173)) ([1e53179](https://github.com/maltzsama/deepdiver/commit/1e53179c1d58f373173eec592328bf0ef6837092))
+* **security:** SlackAlert#call raises on a failed send instead of swallowing it (closes [#169](https://github.com/maltzsama/deepdiver/issues/169)) ([b522e57](https://github.com/maltzsama/deepdiver/commit/b522e5722ee17661314db24241fca6b45adf09dd))
+* **specs:** make singleton factories/specs resilient to a pre-populated test DB (closes [#175](https://github.com/maltzsama/deepdiver/issues/175) CI regression) ([ff2fcc0](https://github.com/maltzsama/deepdiver/commit/ff2fcc047fa226673f2f7a8e9446846b57be71b3))
+* **start:** route handle_start_failure through transition! (closes [#159](https://github.com/maltzsama/deepdiver/issues/159)) ([a21681e](https://github.com/maltzsama/deepdiver/commit/a21681e27ed06c0add570b0a4efd2df8ecc9ff21))
+* **sync:** follow Iceberg REST pagination in listings (closes [#162](https://github.com/maltzsama/deepdiver/issues/162)) ([67569ee](https://github.com/maltzsama/deepdiver/commit/67569eeab8f5771ea38820e3985b173e577affdb))
+* **sync:** materialize the shared Secret with all catalogs on per-table sync (closes [#157](https://github.com/maltzsama/deepdiver/issues/157)) ([9eff35d](https://github.com/maltzsama/deepdiver/commit/9eff35d66f136fc6e00cb9da6c089c5c2d2703a3))
+* **watchdog:** scale stuck window by MAX_START_ATTEMPTS (closes [#158](https://github.com/maltzsama/deepdiver/issues/158)) ([643b960](https://github.com/maltzsama/deepdiver/commit/643b960f911441278daaed28bc3d088c8b9822c6))
+
 ## [0.9.1](https://github.com/maltzsama/deepdiver/compare/v0.9.0...v0.9.1) (2026-09-01)
 
 
