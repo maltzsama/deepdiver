@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_01_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_01_110000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "singleton_key", default: 1, null: false
@@ -49,7 +49,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_100000) do
     t.string "endpoint", null: false
     t.integer "iceberg_tables_count", default: 0, null: false
     t.string "name", null: false
+    t.string "nessie_api_mode", default: "rest", null: false
     t.string "nessie_ref"
+    t.string "nessie_warehouse"
     t.json "properties", default: {}
     t.string "s3_access_key"
     t.string "s3_authentication_type", default: "none", null: false
