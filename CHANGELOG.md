@@ -4,6 +4,16 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.1](https://github.com/maltzsama/deepdiver/compare/v0.7.0...v0.7.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* **integrity:** only flag record decreases, not concurrent appends (closes [#134](https://github.com/maltzsama/deepdiver/issues/134) part 2) ([eaaef0b](https://github.com/maltzsama/deepdiver/commit/eaaef0bdc3060935d8fe4ddcfc9b6da778fe8db7))
+* **metadata:** place / suffix inside quoted identifier (closes [#134](https://github.com/maltzsama/deepdiver/issues/134) part 1) ([0dfc7ab](https://github.com/maltzsama/deepdiver/commit/0dfc7abd9b9bc652b364957f66e72606c654f107))
+* sweep findings — metadata-table ref, integrity guard, secret scoping (closes [#134](https://github.com/maltzsama/deepdiver/issues/134)) ([a05601d](https://github.com/maltzsama/deepdiver/commit/a05601d2bd02b4108444cfbb0989711eea3870f2))
+* **sync:** scope secret materialization to table's catalog only (closes [#134](https://github.com/maltzsama/deepdiver/issues/134) part 3) ([9c35393](https://github.com/maltzsama/deepdiver/commit/9c35393e7a2e36221c26e78deb8f5d4ec9201829))
+
 ## [0.7.0](https://github.com/maltzsama/deepdiver/compare/v0.6.1...v0.7.0) (2026-09-01)
 
 
