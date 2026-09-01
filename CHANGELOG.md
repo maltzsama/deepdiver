@@ -4,6 +4,15 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.0](https://github.com/maltzsama/deepdiver/compare/v0.6.1...v0.7.0) (2026-09-01)
+
+
+### Features
+
+* **activity:** lifecycle stepper with deadline-aware progress for engine strip (closes [#126](https://github.com/maltzsama/deepdiver/issues/126)) ([2e9226d](https://github.com/maltzsama/deepdiver/commit/2e9226d15007bb84bcdd3cafee58365cd081da54))
+* engine lifecycle stepper, metadata & health fixes, locale sync (closes [#126](https://github.com/maltzsama/deepdiver/issues/126), [#128](https://github.com/maltzsama/deepdiver/issues/128)) ([40fca68](https://github.com/maltzsama/deepdiver/commit/40fca68ac18dda86bfeca61831041fc04ba5e1ed))
+* **health:** query Trino for size/manifests on post-maintenance resync (closes [#128](https://github.com/maltzsama/deepdiver/issues/128)) ([daeeecb](https://github.com/maltzsama/deepdiver/commit/daeeecb9505b7fd039042f7614398d15ceee60a1))
+
 ## [0.6.1](https://github.com/maltzsama/deepdiver/compare/v0.6.0...v0.6.1) (2026-09-01)
 
 
