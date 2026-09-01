@@ -94,9 +94,17 @@ class User < ApplicationRecord
     email = auth.info.email
     return nil if email.blank?
 
-    # Link to a pre-existing local account with the same email instead of
-    # creating a duplicate.
-    user = find_or_initialize_by(email: email)
+    # Only link a pre-existing local account by email when the IdP verified the
+    # email. An unverified identity claiming someone else's address must not
+    # silently take over an existing account.
+    existing = find_by(email: email)
+    if existing && !omniauth_email_verified?(auth)
+      Rails.logger.warn("from_omniauth: refusing to link #{email} to account #{existing.id} " \
+                        "— IdP did not verify the email")
+      return nil
+    end
+
+    user = existing || User.new(email: email)
     user.provider = auth.provider
     user.uid      = auth.uid
     user.password = Devise.friendly_token(32) if user.new_record?
@@ -105,5 +113,20 @@ class User < ApplicationRecord
     user.status = "active" if user.invited?
     user.save!
     user
+  end
+
+  # Whether the IdP asserted the email address is verified. Accepts the common
+  # conventions: info.verified, info.email_verified, or raw_info.email_verified
+  # (booleans or "true"/"false" strings). When the IdP sends no verification
+  # flag we assume NOT verified — linking an existing account by email is only
+  # safe on an explicit assertion.
+  #
+  # @param auth [OmniAuth::AuthHash] the IdP response
+  # @return [Boolean]
+  def self.omniauth_email_verified?(auth)
+    info = auth.info || {}
+    raw  = auth.dig("extra", "raw_info") || {}
+    [ info["verified"], info["email_verified"], raw["email_verified"] ]
+      .any? { |v| v == true || v == "true" }
   end
 end

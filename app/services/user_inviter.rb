@@ -34,6 +34,11 @@ class UserInviter
 
     user = User.find_by(email: @email)
     return [ user, "This user is already active" ] if user&.active?
+    # A suspended account must be reactivated through the admin action
+    # (UserPolicy#reactivate?), not silently resurrected with a new role and
+    # no audit trail. Refusing keeps the suspension effective and the change
+    # visible on the error/role surfaces.
+    return [ user, "This user is suspended; reactivate them instead" ] if user&.suspended?
 
     user ||= User.new(email: @email)
     user.role = @role

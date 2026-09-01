@@ -5,7 +5,7 @@ RSpec.describe User do
     let(:auth) do
       OmniAuth::AuthHash.new(
         provider: "openid_connect", uid: "abc-123",
-        info: { email: "employee@company.com" }
+        info: { email: "employee@company.com", email_verified: true }
       )
     end
 
@@ -50,6 +50,28 @@ RSpec.describe User do
       create(:user, email: "employee@company.com", status: "invited")
 
       expect(described_class.from_omniauth(auth).status).to eq("active")
+    end
+
+    it "refuses to link by email when the IdP did not verify the email" do
+      create(:user, email: "employee@company.com", role: "admin")
+      unverified = OmniAuth::AuthHash.new(
+        provider: "openid_connect", uid: "abc-123",
+        info: { email: "employee@company.com" }
+      )
+
+      expect(described_class.from_omniauth(unverified)).to be_nil
+    end
+
+    it "still creates a brand-new account when the email is unverified" do
+      unverified = OmniAuth::AuthHash.new(
+        provider: "openid_connect", uid: "new-1",
+        info: { email: "nobody@company.com" }
+      )
+
+      user = described_class.from_omniauth(unverified)
+
+      expect(user).to be_persisted
+      expect(user.email).to eq("nobody@company.com")
     end
   end
 
