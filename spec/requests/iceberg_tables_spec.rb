@@ -67,6 +67,13 @@ RSpec.describe "GET /iceberg_tables", type: :request do
     expect(response.body).to include("+ plan")
   end
 
+  it "wraps the action buttons in a flex container so they align side by side" do
+    sign_in create(:user, :admin)
+    get iceberg_tables_path
+
+    expect(response.body).to match(%r{<span class="inline-flex items-center gap-2">})
+  end
+
   it "filters by tables without a plan" do
     create(:maintenance_plan, :with_all_steps, iceberg_table: critical_table)
 
