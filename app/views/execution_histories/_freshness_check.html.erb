@@ -1,0 +1,65 @@
+<%# One freshness check in the merged History timeline, with its triage state
+    and (for admins/operators) the acknowledge / assign / resolve actions.
+    Freshness is the only assignable error class. %>
+<% check ||= nil %>
+<% if check %>
+  <article class="op-run">
+    <div class="op-head">
+      <span class="badge badge-mute flex-none"><%= t("operations.kind_freshness") %></span>
+      <span class="badge <%= freshness_badge_class(check.status) %>"><%= check.status %></span>
+      <span class="op-name cell-id">
+        <%= link_to check.iceberg_table.fully_qualified_name, check.iceberg_table, class: "link-mono" %>
+        <span class="cell-meta ml-2"><%= check.iceberg_table.catalog.name %></span>
+      </span>
+      <span class="op-total"><%= freshness_delay_label(check.delay_seconds) || "—" %></span>
+      <span class="op-at"><%= timestamp(check.checked_at) %></span>
+    </div>
+
+    <% if check.error_message.present? %>
+      <div class="op-error"><span class="op-error-owner"><%= t("operations.kind_freshness") %> —</span> <%= check.error_message %></div>
+    <% end %>
+
+    <p class="op-legend">
+      <%= t("operations.freshness_sla", sla: check.sla_minutes) %>
+    </p>
+
+    <% if event %>
+      <div class="mt-1">
+        <% if event.assigned_to %>
+          <span class="cell-meta text-small"><%= t("error_events.show.assigned_to") %> <%= event.assigned_to.email %></span>
+        <% elsif event.context["assigned_team"].present? %>
+          <span class="cell-meta text-small"><%= t("error_events.show.assigned_team") %> <%= event.context["assigned_team"] %></span>
+        <% else %>
+          <span class="cell-meta text-small"><%= t("operations.index.triage_unassigned") %></span>
+        <% end %>
+        <span class="badge <%= event.status == "acknowledged" ? "badge-warn" : "badge-err" %>"><%= t("error_events.status_#{event.status}") %></span>
+
+        <div class="mt-1 flex flex-wrap items-center gap-1">
+          <% if policy(event).assign? && !event.resolved? %>
+            <%= form_with url: assign_execution_history_path(event.id), method: :patch,
+                          class: "flex items-center gap-1" do |f| %>
+              <%= select_tag :target_type,
+                    options_for_select([[ t("error_events.show.user"), "user" ], [ t("error_events.show.team"), "team" ]], "user"),
+                    class: "field-input field-input-sm",
+                    aria_label: t("error_events.show.target_type") %>
+              <%= select_tag :target_id,
+                    options_from_collection_for_select(@assignable_users, :id, :email),
+                    class: "field-input field-input-sm",
+                    aria_label: t("error_events.show.user") %>
+              <%= button_tag t("error_events.actions.assign"), class: "btn btn-default btn-sm" %>
+            <% end %>
+          <% end %>
+          <% if policy(event).acknowledge? && event.status == "open" %>
+            <%= button_to t("error_events.actions.acknowledge"), acknowledge_execution_history_path(event.id),
+                          method: :patch, class: "btn btn-primary btn-sm" %>
+          <% end %>
+          <% if policy(event).resolve? && event.status == "acknowledged" %>
+            <%= button_to t("error_events.actions.resolve"), resolve_execution_history_path(event.id),
+                          method: :patch, class: "btn btn-primary btn-sm",
+                          data: { turbo_confirm: t("actions.confirm") } %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </article>
+<% end %>

@@ -1,0 +1,91 @@
+<%# One maintenance execution in the merged History timeline: timeline bar,
+    step legend, Trino metrics, failures and before/after metadata. %>
+<% execution ||= nil %>
+<% if execution %>
+  <% timeline = ExecutionTimeline.new(execution) %>
+  <article class="op-run <%= "op-run--failed" if execution.status == "failed" %>">
+    <div class="op-head">
+      <span class="badge badge-mute flex-none"><%= t("operations.kind_maintenance") %></span>
+      <span class="badge <%= execution_status_badge_class(execution.status) %>">
+        <span class="badge-dot"></span><%= execution.status %>
+      </span>
+      <span class="op-name cell-id">
+        <%= link_to execution.iceberg_table.fully_qualified_name, execution.iceberg_table, class: "link-mono" %>
+        <span class="cell-meta ml-2"><%= execution.iceberg_table.catalog.name %></span>
+      </span>
+      <span class="op-total"><%= duration_label(execution.duration) || "—" %></span>
+      <span class="op-at"><%= timestamp(execution.started_at || execution.created_at) %></span>
+    </div>
+
+    <% if timeline.total_seconds.positive? && timeline.segments.any? %>
+      <div class="op-bar" role="img"
+           aria-label="<%= t("operations.index.col_duration") %>: <%= duration_label(timeline.total_seconds) %>">
+        <% timeline.segments.each do |seg| %>
+          <div class="op-seg op-seg--<%= seg.kind %> <%= "op-seg--open" if seg.kind == :open %>"
+               style="left: <%= seg.offset_pct %>%; width: <%= seg.width_pct %>%;"
+               title="<%= seg.label %>"></div>
+        <% end %>
+        <% never_ran = execution.execution_steps.where(started_at: nil) %>
+        <% if never_ran.any? && !timeline.running? %>
+          <div class="op-tick" style="left: calc(100% - 2px);"></div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <p class="op-legend">
+      <% legend_parts = [] %>
+      <% if timeline.wait_seconds.nil? && execution.status == "pending" %>
+        <% legend_parts << t("operations.index.legend_waiting_engine") %>
+      <% elsif timeline.wait_seconds.to_f.positive? %>
+        <% legend_parts << t("operations.index.legend_wait", dur: duration_label(timeline.wait_seconds)) %>
+      <% end %>
+      <% execution.execution_steps.order(:id).each do |step| %>
+        <% if step.started_at.present? %>
+          <% dur = duration_label(step.duration) || "—" %>
+          <% legend_parts <<
+               case step.status
+               when "failed"     then t("operations.index.legend_failed", op: step.operation, dur: dur)
+               when "running"    then t("operations.index.legend_open", op: step.operation, dur: dur)
+               else t("operations.index.legend_ok", op: step.operation, dur: dur)
+               end %>
+        <% elsif step.blocked? %>
+          <% legend_parts << t("operations.index.legend_blocked", op: step.operation) %>
+        <% elsif step.skipped? && step.skip_reason.present? %>
+          <% legend_parts << t("operations.index.legend_skipped", op: step.operation, reason: step.skip_reason) %>
+        <% elsif step.pending? %>
+          <% legend_parts << t("operations.index.legend_blocked", op: step.operation) %>
+        <% end %>
+      <% end %>
+      <%= safe_join(legend_parts, content_tag(:span, " · ", class: "opacity-50")) %>
+    </p>
+
+    <% meta_lines = execution.execution_steps.order(:id).filter_map do |step|
+         next if step.trino_query_id.blank? && step.metrics.blank?
+         stats = step.metrics&.dig("stats") || {}
+         parts = []
+         parts << "#{number_with_delimiter(stats['elapsedTimeMillis'])} #{t('operations.metrics_ms')}" if stats["elapsedTimeMillis"]
+         parts << "#{number_to_human_size(stats['processedBytes'])} #{t('operations.metrics_processed')} → #{number_to_human_size(stats['physicalWrittenBytes'] || 0)} #{t('operations.metrics_written')}" if stats["processedBytes"]
+         parts << content_tag(:span, step.trino_query_id, title: t("operations.index.col_query_id")) if step.trino_query_id.present?
+         parts.empty? ? nil : safe_join(parts, content_tag(:span, " · ", class: "opacity-50"))
+       end %>
+    <% if meta_lines.any? %>
+      <p class="op-legend op-legend--meta"><%= safe_join(meta_lines, content_tag(:br)) %></p>
+    <% end %>
+
+    <% execution.execution_steps.where(status: "failed").where.not(error_message: nil).each do |step| %>
+      <div class="op-error"><span class="op-error-owner"><%= step.operation %> —</span> <%= step.error_message %></div>
+    <% end %>
+    <% if execution.error_message.present? %>
+      <div class="op-error"><span class="op-error-owner"><%= t("operations.index.owner_execution") %> —</span> <%= execution.error_message %></div>
+    <% end %>
+
+    <% if execution.status == "success" %>
+      <% diff = metadata_diff(execution) %>
+      <% if diff %>
+        <div class="op-legend op-legend--meta mt-2">
+          <%= diff %>
+        </div>
+      <% end %>
+    <% end %>
+  </article>
+<% end %>
