@@ -27,11 +27,17 @@ class TrinoSecretMaterializer
   # as the single source of truth — refs in the projection and keys written here
   # derive from the same methods, so they can never diverge.
   #
+  # The existing Secret is MERGED, not replaced: a per-table sync that passes a
+  # single catalog must not delete the S3/OAuth2 credentials of every other
+  # catalog. Keys from the given catalogs overwrite their previous values; keys
+  # not in this call (other catalogs) are preserved.
+  #
   # @param catalogs [Array<Catalog>] catalogs to include
   def materialize!(catalogs)
-    data = catalogs.each_with_object({}) do |catalog, acc|
+    data = existing_secret_data
+    catalogs.each do |catalog|
       TrinoCatalogProjection.sensitive_property_values(catalog).each do |key, value|
-        acc[TrinoCatalogProjection.secret_file_name(catalog, key)] = value
+        data[TrinoCatalogProjection.secret_file_name(catalog, key)] = value
       end
     end
 
@@ -39,6 +45,27 @@ class TrinoSecretMaterializer
   end
 
   private
+
+  # The Secret's current data keys (base64-decoded values), or {} when the
+  # Secret does not exist yet. Keys from catalogs no longer present in this
+  # materialization are preserved so a single-catalog sync never wipes them.
+  #
+  # @return [Hash{String=>String}] the existing plaintext secret data
+  def existing_secret_data
+    current = @k8s_client.get_secret(secret_name, @namespace)
+    data = current.respond_to?(:data) ? current.data : current["data"]
+    (data || {}).transform_values do |b64|
+      Base64.strict_decode64(b64.to_s)
+    end
+  rescue Kubeclient::ResourceNotFoundError
+    {}
+  rescue Kubeclient::HttpError, Errno::ECONNREFUSED, OpenSSL::SSL::SSLError => e
+    # Reading is best-effort: fail the sync loudly rather than silently
+    # rewriting a partial Secret over the existing one.
+    Rails.logger.error("TrinoSecretMaterializer: could not read Secret " \
+                       "#{@namespace}/#{secret_name} (#{e.class}): #{e.message}")
+    raise
+  end
 
   attr_reader :secret_name
 

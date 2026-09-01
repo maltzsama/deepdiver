@@ -64,15 +64,37 @@ RSpec.describe TrinoSecretMaterializer do
     end
 
     it "updates the Secret with the full entity when it already exists" do
+      allow(k8s_client).to receive(:get_secret).and_return({ "data" => {} })
       materializer = described_class.new(secret_name: "s", namespace: "ns", k8s_client: k8s_client)
 
       materializer.materialize!([ catalog ])
 
-      expect(k8s_client).to have_received(:get_secret).with("s", "ns")
+      expect(k8s_client).to have_received(:get_secret).with("s", "ns").at_least(:once)
       expect(k8s_client).to have_received(:update_secret).with(
         hash_including(kind: "Secret", metadata: hash_including(name: "s", namespace: "ns"))
       )
       expect(k8s_client).not_to have_received(:create_secret)
+    end
+
+    it "preserves existing keys from other catalogs when materializing a single catalog" do
+      allow(k8s_client).to receive(:get_secret).and_return(
+        { "data" => { "catalog-9-s3_aws-access-key" => Base64.strict_encode64("OLDKEY") } }
+      )
+      allow(catalog).to receive(:id).and_return(42)
+      allow(TrinoCatalogProjection).to receive(:sensitive_property_values).and_return(
+        { "s3.aws-access-key" => "NEWKEY" }
+      )
+      materializer = described_class.new(secret_name: "s", namespace: "ns", k8s_client: k8s_client)
+
+      materializer.materialize!([ catalog ])
+
+      captured = nil
+      expect(k8s_client).to have_received(:update_secret) do |entity|
+        captured = entity
+      end
+      # The single-catalog call must NOT delete the other catalog's key.
+      expect(captured[:data]["catalog-9-s3_aws-access-key"]).to eq(Base64.strict_encode64("OLDKEY"))
+      expect(captured[:data]["catalog-42-s3_aws-access-key"]).to eq(Base64.strict_encode64("NEWKEY"))
     end
 
     it "creates the Secret when it does not exist yet" do
