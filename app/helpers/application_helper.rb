@@ -484,20 +484,45 @@ module ApplicationHelper
     end
   end
 
-  # Groups engine lifecycle transitions into one session per generation, newest
-  # first. A generation IS a session, so this collapses the several raw
-  # transition rows of each start→ready→drain→stop cycle into a single row that
-  # tells the operator the timings that matter.
+  # Groups engine lifecycle transitions into one session per engine run, newest
+# first. A session is delimited by its "starting" transition — the generation
+# counter is bumped on EVERY transition (it is the CAS guard's predicate), so
+# grouping by generation would split one start→ready→drain→stop cycle into four
+# one-event sessions and show clean shutdowns as failed.
+#
+# @param events [Array<ErrorEvent>] lifecycle events ordered by last_seen_at desc
+# @return [Array<EngineSession>] the sessions, newest first
+def engine_sessions(events)
+  ordered = events.sort_by(&:last_seen_at)
+
+  groups = []
+  current = nil
+  ordered.each do |event|
+    if event.context&.dig("state") == "starting"
+      groups << current if current
+      current = [ event ]
+    elsif current
+      current << event
+    else
+      # The window opened mid-session (no starting transition in the slice).
+      current = [ event ]
+    end
+  end
+  groups << current if current
+
+  groups
+    .map { |group| build_engine_session(session_generation(group), group) }
+    .sort_by { |session| session.started_at || Time.at(0) }
+    .reverse
+  end
+
+  # The generation label of a session: the generation of its starting transition,
+  # falling back to the oldest event when the slice lacks one.
   #
-  # @param events [Array<ErrorEvent>] lifecycle events ordered by last_seen_at desc
-  # @return [Array<EngineSession>] the sessions, newest first
-  def engine_sessions(events)
-    events
-      .group_by { |event| event.context&.dig("generation") }
-      .reject { |generation, _| generation.nil? }
-      .map { |generation, group| build_engine_session(generation.to_i, group) }
-      .sort_by { |session| session.started_at || Time.at(0) }
-      .reverse
+  # @param events [Array<ErrorEvent>] the session's events
+  # @return [Integer] the session generation
+  def session_generation(events)
+    events.map { |e| e.context&.dig("generation").to_i }.reject(&:zero?).min || 0
   end
 
   # Metrics that each operation actually moves, used to scope the diff display.
