@@ -3,7 +3,12 @@
 class EngineWatchdogJob < ApplicationJob
   queue_as :engine
 
-  START_STUCK_AFTER = TrinoEngineSupervisor::READY_TIMEOUT + 2.minutes
+  # The retry path (SuperviseEngineStartJob#handle_start_failure) re-enqueues
+  # supervision up to MAX_START_ATTEMPTS times WITHOUT renewing status_changed_at
+  # (it only bumps start_attempts). Each attempt gets its own READY_TIMEOUT, so
+  # the legitimate start window spans ALL attempts — a single-attempt window
+  # would let the watchdog fail a start that is still legitimately retrying.
+  START_STUCK_AFTER = (TrinoEngineSupervisor::READY_TIMEOUT * TrinoEngineSupervisor::MAX_START_ATTEMPTS) + 2.minutes
   DRAIN_STUCK_AFTER = TrinoEngineSupervisor::DRAIN_GRACE + 10.minutes
 
   def perform
