@@ -51,9 +51,13 @@ class IcebergTablesController < ApplicationController
     @freshness_checks = @table.freshness_checks.latest.limit(30)
 
     # Rebuilds the decomposition from the stored metadata (CR-42 columns) so the
-    # score can explain itself without a new catalog round-trip.
+    # score can explain itself without a new catalog round-trip. manifest_count
+    # is a persisted Trino-enriched column — it must reach the evaluator or the
+    # Manifests component is silently excluded and this score differs from the
+    # badge beside it (which was persisted by the sync with the count fed in).
     @extractor = TableMetadataExtractor.from_persisted(@table)
-    @evaluation = HealthEvaluator.evaluate(@extractor, plan: @table.maintenance_plan)
+    @evaluation = HealthEvaluator.evaluate(@extractor, plan: @table.maintenance_plan,
+                                            manifest_count: @table.manifest_count)
   end
 
   # Fallback for the table-level "run now": ensures a dispatchable plan exists
