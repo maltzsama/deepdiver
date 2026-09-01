@@ -4,6 +4,21 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.8.0](https://github.com/maltzsama/deepdiver/compare/v0.7.1...v0.8.0) (2026-09-01)
+
+
+### Features
+
+* **activity:** merge in-progress panels into one status table ([a9bb05f](https://github.com/maltzsama/deepdiver/commit/a9bb05f084a1a1a331bb028eb428e5a466237c14)), closes [#142](https://github.com/maltzsama/deepdiver/issues/142)
+* **optimize:** batch OPTIMIZE by partition group ([89a3d16](https://github.com/maltzsama/deepdiver/commit/89a3d1662ce06d2fcd431a45eb3dc35a930886e9)), closes [#137](https://github.com/maltzsama/deepdiver/issues/137)
+
+
+### Bug Fixes
+
+* **secret:** pass full entity to kubeclient update_secret ([f5453b9](https://github.com/maltzsama/deepdiver/commit/f5453b947454dc19e1b59651bd8c8607284c9d1e)), closes [#138](https://github.com/maltzsama/deepdiver/issues/138)
+* **ui:** align tables action buttons in a flex wrapper ([0ed8189](https://github.com/maltzsama/deepdiver/commit/0ed8189b4400bdc2001c27d280a02aec2567f191)), closes [#141](https://github.com/maltzsama/deepdiver/issues/141)
+* **ui:** decouple engine stepper from the badge system ([d4143da](https://github.com/maltzsama/deepdiver/commit/d4143da4325d9f5b9dc3f675682e5d0b7229e5c7))
+
 ## [0.7.1](https://github.com/maltzsama/deepdiver/compare/v0.7.0...v0.7.1) (2026-09-01)
 
 
