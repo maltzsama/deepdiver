@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_01_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_01_100000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.integer "singleton_key", default: 1, null: false
     t.string "slack_webhook_url"
     t.string "smtp_address"
     t.string "smtp_from"
@@ -20,6 +21,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_090000) do
     t.integer "smtp_port"
     t.string "smtp_user_name"
     t.datetime "updated_at", null: false
+    t.index ["singleton_key"], name: "alert_settings_singleton", unique: true
   end
 
   create_table "catalog_credentials", force: :cascade do |t|
@@ -338,11 +340,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_090000) do
     t.string "coordinator_cpu", default: "2", null: false
     t.string "coordinator_memory", default: "2Gi", null: false
     t.datetime "created_at", null: false
+    t.integer "singleton_key", default: 1, null: false
     t.string "topology", default: "cluster", null: false
     t.datetime "updated_at", null: false
     t.string "worker_cpu", default: "1", null: false
     t.string "worker_memory", default: "2Gi", null: false
     t.integer "worker_replicas", default: 2, null: false
+    t.index ["singleton_key"], name: "trino_engine_configs_singleton", unique: true
   end
 
   create_table "trino_engine_states", force: :cascade do |t|
@@ -350,10 +354,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_090000) do
     t.datetime "drain_started_at"
     t.bigint "generation", default: 0, null: false
     t.text "last_error"
+    t.integer "singleton_key", default: 1, null: false
     t.integer "start_attempts", default: 0, null: false
     t.string "status", default: "down", null: false
     t.datetime "status_changed_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["singleton_key"], name: "trino_engine_states_singleton", unique: true
   end
 
   create_table "users", force: :cascade do |t|

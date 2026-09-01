@@ -1,6 +1,8 @@
 # The single source of truth for the Trino engine's current lifecycle state,
 # written by the engine controller as it boots and drains.
 class TrinoEngineState < ApplicationRecord
+  include SingletonModel
+
   STATUSES = %w[down starting up draining stopping failed].freeze
 
   validates :status, inclusion: { in: STATUSES }

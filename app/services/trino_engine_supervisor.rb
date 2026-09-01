@@ -18,7 +18,7 @@ module TrinoEngineSupervisor
   # Returns the single engine-state row, creating it on first use.
   #
   # @return [TrinoEngineState] the state row
-  def state = TrinoEngineState.first_or_create!(status: "down", status_changed_at: Time.current)
+  def state = TrinoEngineState.instance(status: "down", status_changed_at: Time.current)
 
   # Single entry point for ANY demand source. Maintenance and freshness call
   # the same method - there is no parallel path that could diverge.
