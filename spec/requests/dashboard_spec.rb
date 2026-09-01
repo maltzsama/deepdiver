@@ -55,15 +55,16 @@ RSpec.describe "Dashboard needs-action feed", type: :request do
 
   before { sign_in user }
 
-  it "lists open errors with links to their detail pages" do
-    error = ErrorEvent.record(catalog: nil, schema: "reporting", table: "pedidos",
-                              operation: "sync-table", source_system: "catalog",
-                              message: "connection timed out")
+  it "lists open freshness breaches linking to the History freshness tab" do
+    table = create(:iceberg_table)
+    error = ErrorEvent.record(catalog: table.catalog, schema: table.namespace, table: table.name,
+                              operation: ErrorEvent::FRESHNESS_OPERATION, source_system: "freshness",
+                              message: "Freshness SLA breached")
 
     get root_path
 
-    expect(response.body).to include(error_event_path(error))
-    expect(response.body).to include("connection timed out")
+    expect(response.body).to include(execution_histories_path(tab: "freshness"))
+    expect(response.body).to include("Freshness SLA breached")
   end
 
   it "lists paused plans linking to the plan" do
@@ -74,14 +75,16 @@ RSpec.describe "Dashboard needs-action feed", type: :request do
     expect(response.body).to include(maintenance_plan_path(plan))
   end
 
-  it "keeps the empty state only when errors, triage and paused plans are all empty" do
-    ErrorEvent.record(catalog: nil, schema: "s", operation: "op",
-                      source_system: "catalog", message: "boom")
+  it "keeps the empty state only when freshness triage and paused plans are all empty" do
+    table = create(:iceberg_table)
+    ErrorEvent.record(catalog: table.catalog, schema: table.namespace, table: table.name,
+                      operation: ErrorEvent::FRESHNESS_OPERATION, source_system: "freshness",
+                      message: "Freshness SLA breached")
 
     get root_path
 
     expect(response.body).not_to include("Nothing needs attention")
-    expect(response.body).to include("boom")
+    expect(response.body).to include("Freshness SLA breached")
   end
 end
 
@@ -95,13 +98,14 @@ RSpec.describe "Dashboard renders the demo chain", type: :request do
     create(:table_freshness_sla, iceberg_table: table, status: "late",
                                  breached_since: 2.hours.ago, sla_minutes: 5,
                                  timestamp_column: "ts", timestamp_type: "timestamp_tz")
-    error = ErrorEvent.record(catalog: nil, schema: "s", operation: "op",
-                              source_system: "catalog", message: "boom")
+    error = ErrorEvent.record(catalog: table.catalog, schema: table.namespace, table: table.name,
+                              operation: ErrorEvent::FRESHNESS_OPERATION, source_system: "freshness",
+                              message: "Freshness SLA breached")
 
     get root_path
 
-    expect(response.body).to include("boom")
-    expect(response.body).to include(error_event_path(error))
+    expect(response.body).to include("Freshness SLA breached")
+    expect(response.body).to include(execution_histories_path(tab: "freshness"))
     expect(response.body).to include(iceberg_table_path(table))
     expect(response.body).not_to include("Nothing needs attention")
   end

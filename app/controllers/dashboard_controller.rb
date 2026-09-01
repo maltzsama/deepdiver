@@ -17,11 +17,12 @@ class DashboardController < ApplicationController
     @freshness_counts = TableFreshnessSla.enabled.joins(:iceberg_table)
                                          .where(iceberg_tables: { active: true })
                                          .group(:status).count
-    @open_error_count = ErrorEvent.open.count
+    @open_error_count = ErrorEvent.open.where(operation: ErrorEvent::FRESHNESS_OPERATION).count
 
-    # Needs-action feed: the newest open/acknowledged errors, each row linking
-    # straight to its detail page.
-    @action_errors = ErrorEvent.where(status: %w[open acknowledged])
+    # Needs-action feed: the newest open freshness breaches, each row linking
+    # to the History freshness tab (the triage surface for freshness now).
+    @action_errors = ErrorEvent.where(status: %w[open acknowledged],
+                                      operation: ErrorEvent::FRESHNESS_OPERATION)
                                .order(last_seen_at: :desc).limit(5)
 
     # Without a sync there is no fresh data: the UI must say how old it is.

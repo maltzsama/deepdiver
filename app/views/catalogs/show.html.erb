@@ -1,7 +1,7 @@
 <% content_for :title, "#{@catalog.name} — DeepDiver" %>
 
 <% if @open_error_count && @open_error_count.positive? %>
-  <a href="<%= error_events_path(catalog_id: @catalog.id) %>"
+  <a href="<%= execution_histories_path(tab: "freshness") %>"
      class="flash flash-alert mb-5 no-underline block">
     <%= t("error_events.catalog_banner", count: @open_error_count, catalog: @catalog.name) %>
   </a>
