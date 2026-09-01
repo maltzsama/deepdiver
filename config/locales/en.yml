@@ -1008,6 +1008,10 @@ en:
       equality_deletes: "Equality deletes"
       snapshot_count: "Snapshots"
       oldest_snapshot_at: "Oldest snapshot"
+      manifest_count: "Manifests"
+    step_metrics:
+      processed: "%{count} processed"
+      statements: "%{count} statements"
     impact:
       title: "Last maintenance impact"
       subtitle: "before → after"

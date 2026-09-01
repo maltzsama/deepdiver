@@ -930,6 +930,23 @@ pt-BR:
       error_class: "Classe do erro"
       occurrences: "Ocorrencias"
 
+  maintenance:
+    metrics:
+      total_data_files: "Arquivos de dados"
+      total_size_bytes: "Tamanho"
+      position_deletes: "Deletes por posicao"
+      equality_deletes: "Deletes por igualdade"
+      snapshot_count: "Snapshots"
+      oldest_snapshot_at: "Snapshot mais antigo"
+      manifest_count: "Manifestos"
+    step_metrics:
+      processed: "%{count} processados"
+      statements: "%{count} statements"
+    impact:
+      title: "Ultimo impacto da manutencao"
+      subtitle: "antes → depois"
+      no_data: "Nenhuma manutencao rodou nesta tabela ainda."
+
   activerecord:
     errors:
       models:
