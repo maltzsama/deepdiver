@@ -96,13 +96,13 @@ class ExecuteMaintenanceJob < ApplicationJob
 
     metrics = execute_step(execution, maintenance_step, result_row)
 
+    # Once the SQL succeeded on Trino, the step is succeeded. The post-success
+    # bookkeeping below is best-effort: an infrastructure hiccup in a broadcast
+    # or an enqueue must NOT rewrite a completed step to failed.
     result_row.update!(status: "succeeded", finished_at: Time.current,
                        metrics: metrics, trino_query_id: metrics["query_id"].presence || result_row.trino_query_id)
     maintenance_step&.update_column(:last_run_at, Time.current)
-    ActivityBroadcaster.broadcast!
-
-    # Next link in the chain.
-    MaintenanceOrchestrator.execute_maintenance(execution.id)
+    complete_step_bookkeeping(execution)
   rescue TrinoRuntime::CommitConflict => e
     handle_commit_conflict(execution, result_row, e)
   rescue StandardError => e
@@ -113,6 +113,20 @@ class ExecuteMaintenanceJob < ApplicationJob
     # The handler marked the execution failed, so demand may have dropped to
     # zero - let the supervisor evaluate whether the engine can drain.
     TrinoEngineSupervisor.demand_finished!
+  end
+
+  # Post-success bookkeeping for a completed step: broadcasts the activity and
+  # enqueues the next chain link. Best-effort — a failure here is logged, not
+  # propagated, so a succeeded step is never rewritten to failed.
+  #
+  # @param execution [ExecutionHistory] the execution owning the step.
+  def complete_step_bookkeeping(execution)
+    ActivityBroadcaster.broadcast!
+    MaintenanceOrchestrator.execute_maintenance(execution.id)
+  rescue StandardError => e
+    # The step already succeeded on Trino; the chain advance can be re-driven by
+    # a later sweep. Log it rather than failing the whole execution.
+    Rails.logger.warn("Post-success bookkeeping failed for execution #{execution.id}: #{e.message}")
   end
 
   # Executes the SQL for a step. OPTIMIZE on a many-partition table is split by

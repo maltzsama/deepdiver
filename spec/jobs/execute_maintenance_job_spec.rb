@@ -267,4 +267,35 @@ RSpec.describe ExecuteMaintenanceJob, type: :job do
       expect(executed.first).not_to include("WHERE")
     end
   end
+
+  describe "post-success bookkeeping" do
+    it "keeps a step succeeded when the broadcast raises" do
+      allow(TrinoRuntime).to receive(:execute).and_return({ "query_id" => "q", "rows" => 0 })
+      fail_broadcast = false
+      allow(ActivityBroadcaster).to receive(:broadcast!).and_wrap_original do |original|
+        original.call
+        raise StandardError, "broadcast boom" if fail_broadcast
+      end
+      execution = released_execution
+      fail_broadcast = true
+
+      described_class.perform_now(execution.id)
+
+      step = execution.execution_steps.find_by!(operation: "optimize")
+      expect(step.status).to eq("succeeded")
+      expect(execution.reload.status).to eq("running")
+    end
+
+    it "keeps a step succeeded when the next-chain enqueue raises" do
+      allow(TrinoRuntime).to receive(:execute).and_return({ "query_id" => "q", "rows" => 0 })
+      allow(MaintenanceOrchestrator).to receive(:execute_maintenance).and_raise(StandardError, "enqueue boom")
+      execution = released_execution
+
+      described_class.perform_now(execution.id)
+
+      step = execution.execution_steps.find_by!(operation: "optimize")
+      expect(step.status).to eq("succeeded")
+      expect(execution.reload.status).to eq("running")
+    end
+  end
 end
