@@ -91,10 +91,35 @@ class ChartTrinoProvisioner
 
   # The queries currently known to the Trino coordinator, most recent first.
   #
+  # Trino's /v1/query requires an authenticated principal: without the
+  # X-Trino-User header the coordinator answers 401 and every listing (and,
+  # through it, idle?) is dead. Same header TrinoRestClient sends for query
+  # submission, so the value is consistent.
+  #
   # @return [Array<Hash>] the raw /v1/query entries
   def active_queries
-    body = @transport.get("#{@base_url}/v1/query")
+    body = @transport.get("#{@base_url}/v1/query", headers: { "X-Trino-User" => trino_user })
     (body.is_a?(Array) ? body : []).sort_by { |q| q["queryId"].to_s }.reverse
+  end
+
+  # Best-effort query listing for DISPLAY. Never raises: an unreachable or
+  # erroring coordinator renders as an empty list — it must not take down the
+  # Activity page. The drain decision (idle?) deliberately uses the raising
+  # active_queries so it can still fail closed.
+  #
+  # @return [Array<Hash>] the queries, or [] when the coordinator is unreachable
+  def safe_active_queries
+    active_queries
+  rescue StandardError => e
+    Rails.logger.warn("active_queries unavailable: #{e.message}")
+    []
+  end
+
+  # The Trino principal sent with coordinator calls, defaulting to "deepdiver".
+  #
+  # @return [String] the X-Trino-User value
+  def trino_user
+    ENV.fetch("TRINO_USER", "deepdiver")
   end
 
   # Cancels a running or queued query on the coordinator. Tolerates a query that

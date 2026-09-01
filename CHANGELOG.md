@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.10.1](https://github.com/maltzsama/deepdiver/compare/v0.10.0...v0.10.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* **activity:** safe query listing for display + send X-Trino-User header (closes [#182](https://github.com/maltzsama/deepdiver/issues/182)) ([c4ca437](https://github.com/maltzsama/deepdiver/commit/c4ca437d5bc4efdd577476c29da4752425e87efd))
+* **activity:** safe query listing for display + send X-Trino-User header (closes [#182](https://github.com/maltzsama/deepdiver/issues/182)) ([690853d](https://github.com/maltzsama/deepdiver/commit/690853dd4bc01589efe6169f54bdcb8bef54ceaa))
+
 ## [0.10.0](https://github.com/maltzsama/deepdiver/compare/v0.9.1...v0.10.0) (2026-09-01)
 
 

@@ -14,7 +14,7 @@ class ActivityController < ApplicationController
     @queued = ExecutionHistory.includes(:iceberg_table)
                               .where(status: "pending")
                               .order(:created_at)
-    @queries = TrinoProvisioner.active_queries
+    @queries = TrinoProvisioner.safe_active_queries
     @queue = QueueSummary.new.call
     @engine_events = ErrorEvent.where(source_system: "engine", operation: "engine-lifecycle")
                                .order(last_seen_at: :desc)
