@@ -33,6 +33,25 @@ RSpec.describe CatalogSyncService do
     expect(catalog.iceberg_tables.exists?(namespace: "bronze", name: "bad")).to be false
   end
 
+  it "materializes the shared Secret with ALL catalogs on a per-table sync" do
+    catalog_a = create(:catalog)
+    catalog_b = create(:catalog)
+    table = create(:iceberg_table, catalog: catalog_a, namespace: "bronze", name: "t",
+                                   total_records: 5, snapshot_count: 1)
+
+    materializer = instance_double(TrinoSecretMaterializer)
+    allow(TrinoSecretMaterializer).to receive(:new).and_return(materializer)
+    allow(materializer).to receive(:materialize!)
+
+    service = CatalogSyncService.new(catalog_a)
+    allow(service).to receive(:upsert_table).and_return(table)
+    service.sync_table(table)
+
+    expect(materializer).to have_received(:materialize!) do |catalogs|
+      expect(catalogs.pluck(:id)).to include(catalog_a.id, catalog_b.id)
+    end
+  end
+
   class HealthStampClient
     attr_accessor :payload
 
@@ -41,13 +60,13 @@ RSpec.describe CatalogSyncService do
     def table_metadata(_namespace, _table) = payload
   end
 
-  def health_payload(size_bytes:, data_files: 100, snapshots: 1)
+  def health_payload(size_bytes:, data_files: 100, snapshots: 1, oldest_ms: 1_700_000_000_000)
     { "metadata" => {
       "table-uuid" => "uuid",
       "location" => "s3://bucket/logs",
-      "current-snapshot-id" => 1,
-      "snapshots" => Array.new(snapshots) do
-        { "snapshot-id" => 1, "timestamp-ms" => 1_700_000_000_000,
+      "current-snapshot-id" => snapshots,
+      "snapshots" => Array.new(snapshots) do |i|
+        { "snapshot-id" => i + 1, "timestamp-ms" => oldest_ms + (i * 86_400_000),
           "summary" => { "total-records" => "1000", "total-data-files" => data_files.to_s,
                          "total-files-size-in-bytes" => size_bytes.to_s } }
       end
@@ -58,8 +77,11 @@ RSpec.describe CatalogSyncService do
     catalog = create(:catalog)
     client = HealthStampClient.new
 
-    # Critical: tiny average file size against the 128MB target.
-    client.payload = health_payload(size_bytes: 100, data_files: 100, snapshots: 60)
+    # Critical: tiny average file size against the 128MB target. Snapshots span
+    # 60 days (1/day), so the rate-based snapshot budget is 7 → snapshot_buildup
+    # is 0 and the tiny files push the table to critical.
+    client.payload = health_payload(size_bytes: 100, data_files: 100, snapshots: 60,
+                                    oldest_ms: 60.days.ago.to_i * 1000)
     CatalogSyncService.new(catalog, client: client).sync
     table = catalog.iceberg_tables.find_by!(name: "t")
     first_stamp = table.health_status_changed_at

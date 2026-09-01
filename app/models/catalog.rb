@@ -6,6 +6,11 @@ require "aws-sdk-sts"
 class Catalog < ApplicationRecord
   CATALOG_TYPES = %w[polaris nessie].freeze
   S3_AUTH_TYPES = %w[none static sts].freeze
+  # How a Nessie catalog is addressed. "rest" uses Nessie's Iceberg REST
+  # surface (/iceberg/v1, server-side default warehouse); "native" uses the
+  # native /api/v2 API with a client-supplied warehouse and authentication.type
+  # — the model Iceberg's own NessieCatalog implements.
+  NESSIE_API_MODES = %w[rest native].freeze
 
   # Mirrors CatalogRow.java v0.2.1 and the trino_catalog_registry CHECK. Any
   # drift here makes the INSERT fail with a constraint violation whose message
@@ -25,6 +30,7 @@ class Catalog < ApplicationRecord
   validates :catalog_type, presence: true, inclusion: { in: CATALOG_TYPES }
   validates :endpoint, presence: true, format: { with: /\Ahttps?:\/\/\S+\z/i, message: :must_be_http }
   validates :s3_authentication_type, presence: true, inclusion: { in: S3_AUTH_TYPES }
+  validate :nessie_api_mode_is_valid
   validate :trino_catalog_name_is_valid
   validate :endpoint_not_internal
   validate :properties_carry_no_secrets
@@ -167,6 +173,23 @@ class Catalog < ApplicationRecord
     elsif nessie_ref !~ NESSIE_REF_PATTERN
       errors.add(:nessie_ref, :invalid_format)
     end
+  end
+
+  # nessie_api_mode / nessie_warehouse: "native" is Nessie-only and requires a
+  # warehouse. The "rest" default is valid on any catalog type (it is just the
+  # Iceberg REST surface, which Polaris also uses).
+  def nessie_api_mode_is_valid
+    return unless nessie_api_mode.present?
+
+    if nessie_api_mode == "native" && catalog_type != "nessie"
+      errors.add(:nessie_api_mode, :only_for_nessie)
+    elsif !NESSIE_API_MODES.include?(nessie_api_mode)
+      errors.add(:nessie_api_mode, :invalid_format)
+    end
+
+    return unless nessie_api_mode == "native" && nessie_warehouse.blank?
+
+    errors.add(:nessie_warehouse, :required)
   end
 
   def endpoint_not_internal

@@ -76,8 +76,17 @@ class ChartTrinoProvisioner
   end
 
   # No queries running or queued, per GET /v1/query.
+  #
+  # An unreachable coordinator must NOT read as idle: DrainEngineJob uses this
+  # to decide whether it is safe to tear the engine down, and "no data" from an
+  # error is indistinguishable from "nothing running" — killing a busy engine
+  # because the coordinator was briefly unreachable abandons in-flight queries.
   def idle?
     active_queries.none? { |q| %w[RUNNING QUEUED].include?(q["state"]) }
+  rescue StandardError
+    # Coordinator unreachable/erroring: unknown state. Treat as busy so the
+    # engine is never torn down while a query may still be running.
+    false
   end
 
   # The queries currently known to the Trino coordinator, most recent first.
@@ -86,8 +95,6 @@ class ChartTrinoProvisioner
   def active_queries
     body = @transport.get("#{@base_url}/v1/query")
     (body.is_a?(Array) ? body : []).sort_by { |q| q["queryId"].to_s }.reverse
-  rescue StandardError
-    []
   end
 
   # Cancels a running or queued query on the coordinator. Tolerates a query that
@@ -113,15 +120,30 @@ class ChartTrinoProvisioner
   #
   # The worker Deployment may legitimately not exist in single topology, so a
   # missing one is not a failure here - there is nothing to scale down.
+  #
+  # Both scale-downs are always attempted: a coordinator failure must not leak
+  # worker pods that stay up holding their CPU/memory reservations. The first
+  # error is collected and re-raised after the workers were handled.
   def destroy!
-    wrap_k8s_errors("coordinator") { @k8s.scale(0) }
+    first_error = nil
+
+    begin
+      wrap_k8s_errors("coordinator") { @k8s.scale(0) }
+    rescue TrinoProvisioner::Error => e
+      first_error = e
+      Rails.logger.warn("Trino coordinator scale-down failed: #{e.message}")
+    end
+
     begin
       @worker_k8s.scale(0)
     rescue Kubeclient::ResourceNotFoundError
       Rails.logger.info("Trino worker Deployment absent; nothing to scale down")
     rescue Kubeclient::HttpError => e
-      raise TrinoProvisioner::Error, k8s_message("worker", e)
+      first_error ||= TrinoProvisioner::Error.new(k8s_message("worker", e))
+      Rails.logger.warn("Trino worker scale-down failed: #{k8s_message("worker", e)}")
     end
+
+    raise first_error if first_error
   end
 
   # Blocks until the coordinator is scaled down or the timeout elapses.

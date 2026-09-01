@@ -22,9 +22,22 @@ class TableMetadataExtractor
     summary["total-position-deletes"] = table.position_deletes if table.position_deletes
     summary["total-equality-deletes"] = table.equality_deletes if table.equality_deletes
 
+    # A snapshot must carry the summary. When snapshot_count is 0/nil the old
+    # code produced an empty list and the summary was discarded, so every metric
+    # read back nil even though the columns hold measured values. Pad to one
+    # synthetic snapshot only when there IS a metric to surface — a table with
+    # nothing synced stays unknown rather than scoring from a phantom snapshot.
     count = table.snapshot_count || 0
+    count = 1 if summary.any? && count.zero?
     snapshots = Array.new(count) { {} }
-    snapshots.last["summary"] = summary if snapshots.any?
+
+    # Preserve the observed snapshot window so the health evaluator can derive
+    # the real commit rate (snapshots/day) instead of assuming a fixed one.
+    if count.positive?
+      snapshots.first["timestamp-ms"] = (table.oldest_snapshot_at.to_f * 1000).to_i if table.oldest_snapshot_at
+      snapshots.last["timestamp-ms"] = (table.last_data_update.to_f * 1000).to_i if table.last_data_update
+      snapshots.last["summary"] = summary if summary.any?
+    end
 
     new(
       "properties" => table.properties_json || {},

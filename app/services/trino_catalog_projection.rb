@@ -99,6 +99,49 @@ class TrinoCatalogProjection
   def connector_properties(catalog)
     credential = catalog.catalog_credential
 
+    props = if native_nessie?(catalog)
+              native_nessie_properties(catalog)
+    else
+              rest_catalog_properties(catalog)
+    end
+
+    # The operator's catalog-level Iceberg connector properties (the stored
+    # properties JSON, already validated to carry no secrets) are merged over
+    # the computed defaults. This is the only way to set connector properties
+    # the projection does not hardcode — e.g. iceberg.expire-snapshots.min-retention
+    # and iceberg.remove-orphan-files.min-retention below 7d. Catalog values win
+    # over the fixed defaults, but never over the sensitive refs below.
+    props.merge!(catalog.properties.stringify_keys.transform_values(&:to_s))
+
+    props["s3.region"] = catalog.s3_region if catalog.s3_region.present?
+
+    # Sensitive values never enter the registry (plain-text JSON column):
+    # each becomes an @baleia-secret[file:…] ref.  Ref name and Secret key
+    # both derive from secret_file_name over the SAME sensitive_property_values
+    # — they cannot drift.
+    self.class.sensitive_property_values(catalog).each_key do |key|
+      props[key] = "@baleia-secret[file:#{self.class.secret_file_name(catalog, key)}]"
+    end
+
+    props.transform_values(&:to_s)
+  end
+
+  # Whether this Nessie catalog uses the native /api/v2 access model.
+  #
+  # @param catalog [Catalog] the catalog being projected
+  # @return [Boolean]
+  def native_nessie?(catalog)
+    catalog.catalog_type == "nessie" && catalog.nessie_api_mode == "native"
+  end
+
+  # Connector properties for the Iceberg REST surface (Polaris, Nessie-rest,
+  # and any future REST-backed catalog).
+  #
+  # @param catalog [Catalog] the catalog being projected
+  # @return [Hash{String => String}] the REST properties
+  def rest_catalog_properties(catalog)
+    credential = catalog.catalog_credential
+
     props = {
       "iceberg.catalog.type" => "rest",
       "iceberg.rest-catalog.uri" => rest_catalog_uri(catalog),
@@ -115,22 +158,31 @@ class TrinoCatalogProjection
     # never send one — the configured default answers.
     props["iceberg.rest-catalog.warehouse"] = catalog.name if catalog.catalog_type == "polaris"
 
-    props["s3.region"] = catalog.s3_region if catalog.s3_region.present?
-
     if credential&.oauth2?
       props["iceberg.rest-catalog.security"] = "OAUTH2"
       props["iceberg.rest-catalog.oauth2.scope"] = credential.scope
     end
 
-    # Sensitive values never enter the registry (plain-text JSON column):
-    # each becomes an @baleia-secret[file:…] ref.  Ref name and Secret key
-    # both derive from secret_file_name over the SAME sensitive_property_values
-    # — they cannot drift.
-    self.class.sensitive_property_values(catalog).each_key do |key|
-      props[key] = "@baleia-secret[file:#{self.class.secret_file_name(catalog, key)}]"
-    end
+    props
+  end
 
-    props.transform_values(&:to_s)
+  # Connector properties for the native Nessie model: Trino's Iceberg connector
+  # supports Nessie directly via iceberg.catalog.type=nessie with the uri, ref,
+  # warehouse and authentication.type — the model NessieCatalog itself uses.
+  #
+  # @param catalog [Catalog] the catalog being projected
+  # @return [Hash{String => String}] the native Nessie properties
+  def native_nessie_properties(catalog)
+    {
+      "iceberg.catalog.type" => "nessie",
+      "iceberg.nessie-catalog.uri" => "#{catalog.endpoint.chomp("/")}/api/v2",
+      "iceberg.nessie-catalog.ref" => catalog.nessie_ref.presence || "main",
+      "iceberg.nessie-catalog.default-warehouse-dir" => catalog.nessie_warehouse,
+      "iceberg.nessie-catalog.authentication.type" => "NONE",
+      "fs.native-s3.enabled" => "true",
+      "s3.endpoint" => catalog.s3_endpoint.presence || ENV.fetch("CEPH_ENDPOINT", "http://ceph.local"),
+      "s3.path-style-access" => "true"
+    }
   end
 
   # Base URI Trino's Iceberg REST connector talks to. Unlike the app's own

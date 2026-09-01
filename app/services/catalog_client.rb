@@ -30,8 +30,10 @@ class CatalogClient
   # @param namespace [String] the dotted namespace path
   # @return [Array<String>] table names in the namespace
   def tables_in(namespace)
-    body = get("#{base_url}/namespaces/#{encode_namespace(namespace)}/tables")
-    (body["identifiers"] || body["tables"] || []).map { |entry| table_name(entry) }
+    path = "/namespaces/#{encode_namespace(namespace)}/tables"
+    paginated_get(path).flat_map do |body|
+      (body["identifiers"] || body["tables"] || []).map { |entry| table_name(entry) }
+    end
   end
 
   # Fetches the Iceberg REST TableMetadata for a table.
@@ -59,6 +61,31 @@ class CatalogClient
 
   private
 
+  # GETs a path following Iceberg REST pagination: sends pageToken when present
+  # and follows next-page-token in the response until the last page. Without
+  # this, a truncated listing would silently deactivate every table beyond the
+  # first page (deactivate_unseen treats a complete namespace as fully synced).
+  #
+  # @param path [String] the path under base_url (query string optional)
+  # @return [Array<Hash>] every response body across all pages
+  def paginated_get(path)
+    pages = []
+    token = nil
+
+    loop do
+      url = +path
+      separator = url.include?("?") ? "&" : "?"
+      url << "#{separator}pageToken=#{ERB::Util.url_encode(token)}" if token
+
+      body = get("#{base_url}#{url}")
+      pages << body
+      token = body["next-page-token"]
+      break if token.nil? || token.empty?
+    end
+
+    pages
+  end
+
   # Recursively collects every namespace under a parent, stopping at the max depth.
   #
   # @param parent [String, nil] the parent namespace, or nil for the root
@@ -67,10 +94,12 @@ class CatalogClient
   def collect_namespaces(parent, depth)
     return [] if depth >= MAX_NAMESPACE_DEPTH
 
-    url = "#{base_url}/namespaces"
-    url += "?parent=#{encode_namespace(parent)}" if parent.present?
+    path = +"/namespaces"
+    path << "?parent=#{encode_namespace(parent)}" if parent.present?
 
-    children = (get(url)["namespaces"] || []).map { |entry| namespace_to_dotted_string(entry) }
+    children = paginated_get(path).flat_map do |body|
+      (body["namespaces"] || []).map { |entry| namespace_to_dotted_string(entry) }
+    end
 
     children.flat_map { |child| [ child ] + collect_namespaces(child, depth + 1) }
   rescue HttpTransport::ApiError => e

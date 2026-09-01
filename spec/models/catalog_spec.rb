@@ -107,6 +107,39 @@ RSpec.describe "Catalog nessie_ref", type: :model do
   end
 end
 
+RSpec.describe "Catalog nessie_api_mode", type: :model do
+  it "defaults to rest mode" do
+    expect(create(:catalog, catalog_type: "nessie").nessie_api_mode).to eq("rest")
+  end
+
+  it "allows native mode on a nessie catalog with a warehouse" do
+    expect(build(:catalog, catalog_type: "nessie", nessie_api_mode: "native",
+                           nessie_warehouse: "s3://bucket/")).to be_valid
+  end
+
+  it "requires a warehouse in native mode" do
+    catalog = build(:catalog, catalog_type: "nessie", nessie_api_mode: "native")
+
+    expect(catalog).not_to be_valid
+    expect(catalog.errors[:nessie_warehouse]).to be_present
+  end
+
+  it "rejects native mode on non-nessie catalogs" do
+    catalog = build(:polaris_catalog, nessie_api_mode: "native", nessie_warehouse: "s3://b/")
+
+    expect(catalog).not_to be_valid
+    expect(catalog.errors[:nessie_api_mode]).to be_present
+  end
+
+  it "rejects an unknown mode value" do
+    expect(build(:catalog, catalog_type: "nessie", nessie_api_mode: "v1")).not_to be_valid
+  end
+
+  it "allows the rest default on any catalog type" do
+    expect(build(:polaris_catalog, nessie_api_mode: "rest")).to be_valid
+  end
+end
+
 RSpec.describe "Catalog S3 config", type: :model do
   it "allows none without credentials" do
     expect(build(:catalog, s3_authentication_type: "none")).to be_valid

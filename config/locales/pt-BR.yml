@@ -361,6 +361,10 @@ pt-BR:
       client_id_placeholder: "dremio-catalog-cli"
       nessie_ref: "Ref do Nessie"
       nessie_ref_hint: "Branch ou tag para leitura (ex: main, etl_dev). Vazio = padrao do servidor. Trino deve ler a mesma ref - veja o runbook."
+      nessie_api_mode: "Modo de API do Nessie"
+      nessie_api_mode_hint: "'rest' usa a superficie Iceberg REST do Nessie (/iceberg, requer warehouse padrao no servidor). 'native' usa /api/v2 com warehouse no cliente - o modelo usado pelo NessieCatalog do Iceberg."
+      nessie_warehouse: "Warehouse nativo"
+      nessie_warehouse_hint: "Localizacao do warehouse no lado do cliente para o modo nativo (ex: s3://bucket/). Obrigatorio quando o modo de API e native."
       s3_storage: "Armazenamento S3"
       s3_auth_type: "Autenticacao do armazenamento"
       s3_access_key: "ID da chave de acesso"
@@ -387,6 +391,9 @@ pt-BR:
       none: "Nenhum (anonimo)"
       static: "Credenciais estaticas"
       sts: "STS AssumeRole (temporario)"
+    nessie_api_modes:
+      rest: "Superficie Iceberg REST (/iceberg)"
+      native: "API nativa /api/v2"
 
   tables:
     run_maintenance:
@@ -937,6 +944,11 @@ pt-BR:
             nessie_ref:
               only_for_nessie: "so se aplica a catalogos Nessie"
               invalid_format: "use letras, numeros, ponto, traco ou underscore"
+            nessie_api_mode:
+              only_for_nessie: "so se aplica a catalogos Nessie"
+              invalid_format: "precisa ser 'rest' ou 'native'"
+            nessie_warehouse:
+              required: "e obrigatorio no modo nativo"
             properties:
               must_not_hold_secrets: "nao pode conter valores secretos - segredos pertencem ao campo criptografado da credencial"
             trino_catalog_name_override:

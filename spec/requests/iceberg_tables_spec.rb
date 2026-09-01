@@ -136,6 +136,19 @@ RSpec.describe "GET /iceberg_tables/:id", type: :request do
 
     expect(response.body).to include("not enough data to score")
   end
+
+  it "evaluates health with the persisted manifest_count so Manifests is covered" do
+    table = create(:iceberg_table, catalog:, snapshot_count: 30,
+                   total_size_bytes: 2_000_000_000, total_data_files: 200,
+                   total_records: 10_000_000, manifest_count: 15,
+                   health_score: 62, health_status: "warning")
+
+    get iceberg_table_path(table)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Manifests")
+    expect(response.body).not_to include("needs the manifest_buildup metric")
+  end
 end
 
 RSpec.describe "POST /iceberg_tables/:id/run_maintenance", type: :request do

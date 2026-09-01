@@ -15,10 +15,14 @@ class CatalogSyncService
 
   # Refreshes a single table's metadata without re-syncing the whole catalog.
   #
+  # The Trino catalog Secret is materialized for ALL catalogs: it is a single
+  # shared Secret built as a full replacement, so passing only this table's
+  # catalog would delete every other catalog's S3/OAuth2 credentials.
+  #
   # @param table [IcebergTable] the table to refresh
   # @return [Hash] { ok: true } or { ok: false, error: message }
   def sync_table(table)
-    TrinoSecretMaterializer.new.materialize!(Catalog.where(id: table.catalog_id).includes(:catalog_credential))
+    TrinoSecretMaterializer.new.materialize!(Catalog.includes(:catalog_credential))
     upsert_table(table.namespace, table.name)
     { ok: true }
   rescue StandardError => e

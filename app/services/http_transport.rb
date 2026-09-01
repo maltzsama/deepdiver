@@ -9,14 +9,35 @@ class HttpTransport
   class ApiError < StandardError
     attr_reader :status, :response_body
 
-    # Creates the error with the HTTP status and response body.
+    # Creates the error with the HTTP status and response body. The message
+    # surfaces the server's own error.message when the body is JSON — e.g. a
+    # Nessie "No default-warehouse configured" that a bare "HTTP 500" would
+    # otherwise hide.
     #
     # @param status [Integer] the HTTP status code
     # @param response_body [String, nil] the response body
     def initialize(status, response_body)
       @status = status
       @response_body = response_body
-      super("HTTP #{status}")
+      super("HTTP #{status}#{server_message(response_body)}")
+    end
+
+    private
+
+    # The server's error.message from a JSON error body, or nil.
+    #
+    # @param body [String, nil] the raw response body
+    # @return [String, nil] " — <message>" when the body carries one
+    def server_message(body)
+      return nil if body.nil? || body.empty?
+
+      parsed = JSON.parse(body)
+      message = parsed["error"]&.is_a?(Hash) ? parsed.dig("error", "message") : parsed["message"]
+      return nil if message.nil? || message.to_s.empty?
+
+      " — #{message}"
+    rescue JSON::ParserError
+      nil
     end
   end
 

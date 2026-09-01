@@ -47,13 +47,14 @@ RSpec.describe "Users", type: :request do
       expect(response).to have_http_status(:unprocessable_content)
     end
 
-    it "re-invites a suspended user without duplicating the account" do
+    it "refuses to re-invite a suspended user, requiring reactivation" do
       existing = create(:user, email: "old@example.com", status: "suspended")
 
       post users_path, params: { user: { email: "old@example.com", role: "viewer" } }
 
       expect(User.where(email: "old@example.com").count).to eq(1)
-      expect(existing.reload).to be_invited
+      expect(existing.reload).to be_suspended
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 

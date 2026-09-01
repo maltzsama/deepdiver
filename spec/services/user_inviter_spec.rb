@@ -41,15 +41,16 @@ RSpec.describe UserInviter do
       expect(error).to eq("This user is already active")
     end
 
-    it "re-invites a suspended user without resetting their audit trail" do
+    it "refuses to re-invite a suspended user, requiring reactivation instead" do
       user = create(:user, email: "old@example.com", status: "suspended")
       user.update!(suspended_at: 1.week.ago)
 
-      described_class.call(email: user.email, role: "operator", invited_by: admin)
+      invited, error = described_class.call(email: user.email, role: "operator", invited_by: admin)
 
-      expect(user.reload).to be_invited
-      expect(user.role).to eq("operator")
-      expect(user.suspended_at).to be_present
+      expect(invited).to eq(user)
+      expect(error).to eq("This user is suspended; reactivate them instead")
+      expect(user.reload).to be_suspended
+      expect(user.role).not_to eq("operator")
     end
   end
 end

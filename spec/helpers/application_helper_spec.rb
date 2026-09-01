@@ -166,4 +166,44 @@ RSpec.describe ApplicationHelper, "#engine_sessions", type: :helper do
     expect(session.drain_seconds).to be_nil
     expect(session.outcome).to eq(:clean)
   end
+
+  it "groups transitions with different generations into one session" do
+    t = Time.zone.parse("2026-09-01 10:00:00")
+    # Realistic: transition! bumps generation on EVERY transition (the CAS
+    # guard's predicate), so a single engine run spans several generations.
+    events = [
+      lifecycle_event(10, "starting", t),
+      lifecycle_event(11, "up", t + 34.seconds),
+      lifecycle_event(12, "draining", t + 15.minutes),
+      lifecycle_event(13, "down", t + 15.minutes + 3.seconds)
+    ]
+
+    sessions = helper.engine_sessions(events)
+
+    expect(sessions.size).to eq(1)
+    session = sessions.first
+    expect(session.generation).to eq(10)
+    expect(session.ready_seconds).to eq(34)
+    expect(session.uptime_seconds).to eq(866)
+    expect(session.drain_seconds).to eq(3)
+    expect(session.outcome).to eq(:clean)
+  end
+
+  it "keeps two consecutive engine runs as two sessions" do
+    t = Time.zone.parse("2026-09-01 10:00:00")
+    events = [
+      lifecycle_event(1, "starting", t - 2.hours),
+      lifecycle_event(2, "up", t - 2.hours + 20.seconds),
+      lifecycle_event(3, "down", t - 2.hours + 5.minutes),
+      lifecycle_event(4, "starting", t),
+      lifecycle_event(5, "up", t + 15.seconds)
+    ]
+
+    sessions = helper.engine_sessions(events)
+
+    expect(sessions.size).to eq(2)
+    expect(sessions.map(&:generation)).to contain_exactly(1, 4)
+    expect(sessions.first.outcome).to eq(:running)
+    expect(sessions.last.outcome).to eq(:clean)
+  end
 end

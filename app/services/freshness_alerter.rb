@@ -21,11 +21,23 @@ class FreshnessAlerter
     changed = current != previous_status
     severity = severity_for(@result.delay_seconds)
 
+    # breached_since marks the START of a late episode. It must survive
+    # transient error/no_data probes mid-episode (those are NOT recoveries);
+    # only a real recovery (ok) clears it.
+    new_breached_since =
+      if current == "late"
+        @sla.breached_since || Time.current
+      elsif current == "ok"
+        nil
+      else
+        @sla.breached_since
+      end
+
     @sla.update!(
       status: current,
       severity: severity,
       status_changed_at: changed ? Time.current : @sla.status_changed_at,
-      breached_since: current == "late" ? (@sla.breached_since || Time.current) : nil
+      breached_since: new_breached_since
     )
 
     # Error surface integration: one event per late episode, auto-resolved on
@@ -53,7 +65,9 @@ class FreshnessAlerter
   end
 
   # Whether the transition warrants an alert: late entry, recovery, or an
-  # escalation to a higher severity level.
+  # escalation to a higher severity level while still late. The severity clause
+  # is gated on current == "late": a healthy (ok) reading must never page a
+  # "recovered"/severity alert for a table that was never in a late episode.
   #
   # @param current [String] the new SLA status
   # @param severity [String, nil] the new progressive severity
@@ -63,7 +77,7 @@ class FreshnessAlerter
   def should_notify?(current, severity, previous_status, previous_severity)
     return true if current == "late" && previous_status != "late"
     return true if current == "ok" && previous_status == "late"
-    return true if severity && severity_level(severity) > severity_level(previous_severity)
+    return true if current == "late" && severity && severity_level(severity) > severity_level(previous_severity)
 
     false
   end

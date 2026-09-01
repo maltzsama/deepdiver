@@ -4,6 +4,8 @@
 # (coordinator also runs tasks) or a coordinator + separate workers, with the
 # CPU/memory of each node.
 class TrinoEngineConfig < ApplicationRecord
+  include SingletonModel
+
   TOPOLOGIES = %w[single cluster].freeze
 
   validates :topology, inclusion: { in: TOPOLOGIES }
@@ -14,7 +16,7 @@ class TrinoEngineConfig < ApplicationRecord
   #
   # @return [TrinoEngineConfig] the config row
   def self.instance
-    first_or_create!(defaults)
+    super(defaults)
   end
 
   # The defaults used when the row does not exist yet.

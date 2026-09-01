@@ -23,6 +23,11 @@ class SlackAlert
   end
 
   # Posts the alert, skipping with a log when no webhook is configured.
+  #
+  # A failed send RAISES so the caller can distinguish a delivered alert from a
+  # rejected one — swallowing the error here made AlertNotifier report the send
+  # as successful, stamp last_alert_at, and then permanently suppress further
+  # alerts for the table while the webhook was dead.
   def call
     url = @webhook.presence || ENV["SLACK_WEBHOOK_URL"]
     unless url
@@ -33,6 +38,7 @@ class SlackAlert
     post(url)
   rescue StandardError => e
     Rails.logger.warn("Failed to send Slack alert: #{e.message}")
+    raise
   end
 
   private

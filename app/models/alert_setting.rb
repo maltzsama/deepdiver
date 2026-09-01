@@ -2,11 +2,13 @@
 # sender) used for Email channels and the single Slack webhook URL. Editing it
 # in the admin panel updates how every channel delivers.
 class AlertSetting < ApplicationRecord
+  include SingletonModel
+
   # Returns the singleton settings row, creating it on first access.
   #
   # @return [AlertSetting] the global settings record
   def self.instance
-    first_or_create!
+    super
   end
 
   # The Slack webhook URL, or nil when not configured.

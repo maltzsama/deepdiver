@@ -9,6 +9,9 @@ default: &default
     - queues: maintenance
       threads: 1
       polling_interval: 1
+    - queues: dispatch
+      threads: 1
+      polling_interval: 1
     - queues: default
       threads: 2
       polling_interval: 2

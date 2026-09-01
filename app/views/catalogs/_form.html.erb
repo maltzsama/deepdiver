@@ -34,6 +34,20 @@
                             placeholder: "main" %>
       </div>
 
+      <div class="field hidden" data-catalog-type-target="field" data-type-show="nessie">
+        <%= form.label :nessie_api_mode, t("catalogs.form.nessie_api_mode"), class: "field-label" %>
+        <p class="field-hint"><%= t("catalogs.form.nessie_api_mode_hint") %></p>
+        <%= form.select :nessie_api_mode, Catalog::NESSIE_API_MODES.map { |m| [ t("catalogs.nessie_api_modes.#{m}"), m ] },
+                        {}, class: "field-input" %>
+      </div>
+
+      <div class="field hidden" data-catalog-type-target="field" data-type-show="nessie">
+        <%= form.label :nessie_warehouse, t("catalogs.form.nessie_warehouse"), class: "field-label" %>
+        <p class="field-hint"><%= t("catalogs.form.nessie_warehouse_hint") %></p>
+        <%= form.text_field :nessie_warehouse, class: "field-input field-input-mono",
+                            placeholder: "s3://bucket/" %>
+      </div>
+
       <div class="field">
         <%= form.label :endpoint, t("catalogs.form.endpoint"), class: "field-label" %>
         <p class="field-hint"><%= t("catalogs.form.endpoint_hint") %></p>

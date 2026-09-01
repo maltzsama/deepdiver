@@ -28,9 +28,9 @@
              { name: :no_plan, label: t("tables.filter_no_plan"),
                options: [ [ t("tables.index.no_plan_option"), "1" ] ] },
              { name: :freshness, label: t("tables.filter_freshness"),
-               options: [ [ t("tables.index.fresh_late_filter"), "late" ],
-                          [ t("tables.index.fresh_no_sla_filter"), "no_sla" ],
-                          [ t("tables.index.fresh_error_filter"), "error" ] ] }
+               options: [ [ t("tables.fresh_late_filter"), "late" ],
+                          [ t("tables.fresh_no_sla_filter"), "no_sla" ],
+                          [ t("tables.fresh_error_filter"), "error" ] ] }
            ],
            checkbox: { name: :inactive, label: t("tables.index.include_inactive") } %>
 
@@ -129,7 +129,7 @@
                 <% if table.table_freshness_sla.nil? || !table.table_freshness_sla.enabled %>
                   <%= link_to edit_iceberg_table_freshness_sla_path(table),
                               class: "badge badge-mute no-underline hover:text-cosmos-fg",
-                              title: t("tables.index.fresh_configure_title") do %>
+                              title: t("tables.fresh_configure_title") do %>
                     <span class="badge-dot"></span><%= freshness[0] %>
                   <% end %>
                 <% else %>

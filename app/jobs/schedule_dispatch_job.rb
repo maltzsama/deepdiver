@@ -1,7 +1,11 @@
 # Dispatches maintenance runs by checking every active, non-paused plan against
 # the current minute and enqueuing a run when its cron schedule matches.
 class ScheduleDispatchJob < ApplicationJob
-  queue_as :maintenance
+  # On its OWN queue: the maintenance queue is single-threaded and shared with
+  # ExecuteMaintenanceJob, whose long SQL steps would block this every-minute
+  # dispatcher for their entire duration — dropping every cron occurrence that
+  # fell inside the window (plans do not run late, they do not run at all).
+  queue_as :dispatch
 
   # The heavyweight twin of the catalog recurring sync: checks every active,
   # non-paused maintenance plan against the current minute and enqueues a run

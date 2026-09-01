@@ -29,7 +29,8 @@ RSpec.describe "Metrics", type: :request do
   end
 
   it "derives the engine status gauge from the single engine row" do
-    TrinoEngineState.create!(status: "up", status_changed_at: Time.current)
+    TrinoEngineState.instance(status: "down", status_changed_at: Time.current)
+                       .update!(status: "up", status_changed_at: Time.current)
 
     get "/metrics"
 

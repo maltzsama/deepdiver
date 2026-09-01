@@ -107,6 +107,55 @@ RSpec.describe TrinoCatalogProjection do
     expect(record.errors[:catalog_name]).to be_present
   end
 
+  it "merges operator catalog properties over the computed defaults" do
+    create(:catalog, name: "props-cat",
+           properties: { "iceberg.expire-snapshots.min-retention" => "2d",
+                         "custom.prop" => "true" })
+    described_class.new.sync_all!
+
+    props = TrinoCatalogRegistry.find_by(catalog_name: "props_cat").properties
+    expect(props["iceberg.expire-snapshots.min-retention"]).to eq("2d")
+    expect(props["custom.prop"]).to eq("true")
+    # The fixed defaults still apply where the operator did not override.
+    expect(props["iceberg.catalog.type"]).to eq("rest")
+  end
+
+  describe "native Nessie mode" do
+    it "emits the native Nessie connector properties" do
+      create(:catalog, catalog_type: "nessie", name: "native-nessie",
+             nessie_api_mode: "native", nessie_ref: "etl_dev",
+             nessie_warehouse: "s3://bucket/", endpoint: "http://nessie:19120")
+      described_class.new.sync_all!
+
+      props = TrinoCatalogRegistry.find_by(catalog_name: "native_nessie").properties
+      expect(props["iceberg.catalog.type"]).to eq("nessie")
+      expect(props["iceberg.nessie-catalog.uri"]).to eq("http://nessie:19120/api/v2")
+      expect(props["iceberg.nessie-catalog.ref"]).to eq("etl_dev")
+      expect(props["iceberg.nessie-catalog.default-warehouse-dir"]).to eq("s3://bucket/")
+      expect(props["iceberg.nessie-catalog.authentication.type"]).to eq("NONE")
+    end
+
+    it "defaults the ref to main when blank" do
+      create(:catalog, catalog_type: "nessie", name: "native-nessie2",
+             nessie_api_mode: "native", nessie_warehouse: "s3://bucket/",
+             endpoint: "http://nessie:19120")
+      described_class.new.sync_all!
+
+      props = TrinoCatalogRegistry.find_by(catalog_name: "native_nessie2").properties
+      expect(props["iceberg.nessie-catalog.ref"]).to eq("main")
+    end
+
+    it "keeps using the REST surface when nessie_api_mode is rest" do
+      create(:catalog, catalog_type: "nessie", name: "rest-nessie",
+             nessie_api_mode: "rest", endpoint: "http://nessie:19120")
+      described_class.new.sync_all!
+
+      props = TrinoCatalogRegistry.find_by(catalog_name: "rest_nessie").properties
+      expect(props["iceberg.catalog.type"]).to eq("rest")
+      expect(props["iceberg.rest-catalog.uri"]).to eq("http://nessie:19120/iceberg")
+    end
+  end
+
   describe "S3 storage properties" do
     it "uses the CEPH_ENDPOINT env var for the default s3.endpoint" do
       catalog

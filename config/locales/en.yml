@@ -386,6 +386,10 @@ en:
       client_id_placeholder: "dremio-catalog-cli"
       nessie_ref: "Nessie ref"
       nessie_ref_hint: "Branch or tag to read (e.g. main, etl_dev). Blank = server default. Trino must read the same ref - see the runbook."
+      nessie_api_mode: "Nessie API mode"
+      nessie_api_mode_hint: "'rest' uses Nessie's Iceberg REST surface (/iceberg, requires a server-side default warehouse). 'native' uses /api/v2 with a client-side warehouse — the model Iceberg's NessieCatalog uses."
+      nessie_warehouse: "Native warehouse"
+      nessie_warehouse_hint: "Client-side warehouse location for native mode (e.g. s3://bucket/). Required when the API mode is native."
       secret_set_at: "Secret set %{when} · ends in %{hint}"
       secret_keep: "Leave blank to keep the current secret"
       secret_hint: "The secret is stored encrypted and is never shown again."
@@ -412,6 +416,9 @@ en:
       none: "None (anonymous)"
       static: "Static credentials"
       sts: "STS AssumeRole (temporary)"
+    nessie_api_modes:
+      rest: "Iceberg REST surface (/iceberg)"
+      native: "Native /api/v2"
     verify:
       ok: "Connection verified. Found %{count} namespace(s)."
       failed: "Connection failed: %{error}"
@@ -983,6 +990,11 @@ en:
             nessie_ref:
               only_for_nessie: "only applies to Nessie catalogs"
               invalid_format: "use letters, numbers, dot, dash or underscore"
+            nessie_api_mode:
+              only_for_nessie: "only applies to Nessie catalogs"
+              invalid_format: "must be 'rest' or 'native'"
+            nessie_warehouse:
+              required: "is required in native mode"
             properties:
               must_not_hold_secrets: "must not contain secret values - secrets belong to the encrypted credential field"
             trino_catalog_name_override:
