@@ -344,22 +344,54 @@ module ApplicationHelper
   # Ordered lifecycle stages for the engine stepper.
   ENGINE_LIFECYCLE_STAGES = %w[down starting up draining stopping].freeze
 
-  # Renders the lifecycle stepper: a row of stage labels with CSS connectors.
-  # The current stage is highlighted; past stages are muted; future stages are
-  # muted. Uses its own .step--<status> modifiers so the stepper is independent
-  # of the badge system, and draws the connectors with ::after instead of an
-  # empty presentational span.
+  # Renders the lifecycle stepper: stage nodes (dot + label) joined by
+  # full-width connectors. The active stage carries a colored, haloed dot;
+  # past stages and their connectors read as done. For the timed states the
+  # active→next connector becomes the countdown progress bar, filled via the
+  # --engine-progress custom property driven by the engine-timer controller.
   # @param status [String] the current engine status.
+  # @param timer [Boolean] whether to wire the progress connector to the timer.
   # @return [String] HTML-safe stepper markup.
-  def engine_lifecycle_stepper(status)
+  def engine_lifecycle_stepper(status, timer: false)
+    stages = ENGINE_LIFECYCLE_STAGES
+    active_index = stages.index(status) || 0
+    countdown = %w[starting draining stopping].include?(status)
+
     capture do
-      ENGINE_LIFECYCLE_STAGES.each_with_index do |stage, i|
-        active = stage == status
-        css = [ "step" ]
-        css << "active" if active
-        css << "step--#{stage}" if active
-        concat content_tag(:span, t("activity.engine.stage_#{stage}"), class: css.join(" "))
+      stages.each_with_index do |stage, i|
+        step = [ "step", "step--#{stage}" ]
+        step << "done"   if i < active_index
+        step << "active" if i == active_index
+        concat content_tag(:span, safe_join([
+          content_tag(:span, "", class: "step-dot"),
+          content_tag(:span, t("activity.engine.stage_#{stage}"))
+        ]), class: step.join(" "))
+        next if i == stages.length - 1
+
+        link = [ "step-link" ]
+        if i < active_index
+          link << "done"
+        elsif i == active_index && countdown
+          link << "progress"
+          link << "bar-warn"      if status == "draining"
+          link << "indeterminate" if status == "stopping"
+        end
+        options = { class: link.join(" ") }
+        options[:data] = { engine_timer_target: "bar" } if link.include?("progress") && timer
+        concat content_tag(:span, "", options)
       end
+    end
+  end
+
+  # The phase time for the engine detail row: remaining time for the timed
+  # states, uptime for the up state, nothing otherwise.
+  # @param state [TrinoEngineState] the current engine state.
+  # @return [String, nil] the translated time text.
+  def engine_phase_time(state)
+    case state.status
+    when "up"       then t("activity.engine.uptime", time: time_ago_in_words(state.status_changed_at))
+    when "starting" then t("activity.engine.time_before_timeout", time: distance_of_time_in_words_to_now(state.status_changed_at + TrinoEngineSupervisor::READY_TIMEOUT))
+    when "draining" then t("activity.engine.stops_in", time: distance_of_time_in_words_to_now(state.drain_started_at + TrinoEngineSupervisor::DRAIN_GRACE))
     end
   end
 
@@ -409,18 +441,6 @@ module ApplicationHelper
     end
   end
 
-  # Bar CSS class modifier based on engine status.
-  # @param status [String] the current engine status.
-  # @return [String] the bar-fill class.
-  def engine_bar_class(status)
-    case status
-    when "starting" then "bar-warn"
-    when "draining" then ""
-    when "stopping" then "indeterminate"
-    else                 ""
-    end
-  end
-
   # Coordinator Deployment target (namespace/name) for the engine strip subtitle.
   # Safe to call in broadcast context (no current_user) and in test env.
   # @return [String] the deployment target or a fallback label.
@@ -452,32 +472,32 @@ module ApplicationHelper
     "engine"
   end
 
-  # Computes uptime durations for paired lifecycle events by generation.
-  # @param events [Array<ErrorEvent>] lifecycle events ordered by last_seen_at
-  # @return [Hash{Integer => Float}] generation → uptime in seconds
-  def engine_uptimes(events)
-    ups = {}
-    result = {}
-
-    events.each do |event|
-      gen = event.context&.dig("generation")
-      state = event.context&.dig("state")
-      next unless gen
-
-      if state == "up"
-        ups[gen] = event.last_seen_at
-      elsif ups[gen] && %w[draining stopping down].include?(state)
-        result[gen] = event.last_seen_at - ups[gen]
-        ups.delete(gen)
-      end
+  # One engine session (generation): a single provisioning → ready → drain →
+  # stop cycle. Durations are derived from the lifecycle transition timestamps;
+  # a nil field means the transition fell outside the query window and is
+  # rendered as "—" rather than a fabricated number.
+  EngineSession = Struct.new(:generation, :started_at, :ready_seconds, :uptime_seconds,
+                             :drain_seconds, :attempts, :outcome, keyword_init: true) do
+    # @return [Boolean] whether the session is still running.
+    def running?
+      outcome == :running
     end
+  end
 
-    # Engines still running: uptime from up-event to now
-    ups.each do |gen, up_at|
-      result[gen] = Time.current - up_at
-    end
-
-    result
+  # Groups engine lifecycle transitions into one session per generation, newest
+  # first. A generation IS a session, so this collapses the several raw
+  # transition rows of each start→ready→drain→stop cycle into a single row that
+  # tells the operator the timings that matter.
+  #
+  # @param events [Array<ErrorEvent>] lifecycle events ordered by last_seen_at desc
+  # @return [Array<EngineSession>] the sessions, newest first
+  def engine_sessions(events)
+    events
+      .group_by { |event| event.context&.dig("generation") }
+      .reject { |generation, _| generation.nil? }
+      .map { |generation, group| build_engine_session(generation.to_i, group) }
+      .sort_by { |session| session.started_at || Time.at(0) }
+      .reverse
   end
 
   # Metrics that each operation actually moves, used to scope the diff display.
@@ -566,5 +586,65 @@ module ApplicationHelper
   # Reverse-lookup: label → key for formatting.
   def key_for(label)
     OPERATION_METRICS.values.flatten.find { |k| t("maintenance.metrics.#{k}", default: k.humanize) == label }
+  end
+
+  # Builds the session for one generation from its transition events.
+  #
+  # @param generation [Integer] the generation
+  # @param events [Array<ErrorEvent>] the generation's lifecycle events
+  # @return [EngineSession] the session
+  def build_engine_session(generation, events)
+    ordered = events.sort_by(&:last_seen_at)
+
+    starting = ordered.find { |e| e.context&.dig("state") == "starting" }
+    up       = ordered.find { |e| e.context&.dig("state") == "up" }
+    draining = ordered.find { |e| e.context&.dig("state") == "draining" }
+    terminal = ordered.reverse.find { |e| %w[down stopping].include?(e.context&.dig("state")) }
+
+    started_at = starting&.last_seen_at || ordered.first&.last_seen_at
+
+    # A phase missing from the window must stay nil (shown as "—"), never be
+    # fabricated from what happens to be present.
+    uptime_end = [ draining&.last_seen_at, terminal&.last_seen_at ].compact.min
+    uptime_seconds =
+      if up && uptime_end && uptime_end >= up.last_seen_at
+        uptime_end - up.last_seen_at
+      elsif up
+        Time.current - up.last_seen_at
+      end
+
+    EngineSession.new(
+      generation: generation,
+      started_at: started_at,
+      ready_seconds: duration_between(up&.last_seen_at, starting&.last_seen_at),
+      uptime_seconds: uptime_seconds,
+      drain_seconds: duration_between(terminal&.last_seen_at, draining&.last_seen_at),
+      attempts: ordered.filter_map { |e| e.context&.dig("attempts") }.map(&:to_i).max || 0,
+      outcome: session_outcome(up, terminal)
+    )
+  end
+
+  # The session outcome: running while no terminal transition exists, failed when
+  # a start never reached up, clean otherwise.
+  #
+  # @param up [ErrorEvent, nil] the generation's up event
+  # @param terminal [ErrorEvent, nil] the generation's down/stopping event
+  # @return [Symbol] :running, :failed or :clean
+  def session_outcome(up, terminal)
+    return :running if terminal.nil?
+    return :failed if up.nil?
+
+    :clean
+  end
+
+  # The positive duration between two timestamps, or nil when either is missing.
+  #
+  # @param a [Time, nil] the later timestamp
+  # @param b [Time, nil] the earlier timestamp
+  # @return [Float, nil]
+  def duration_between(a, b)
+    return nil if a.nil? || b.nil?
+
+    (a - b).positive? ? a - b : nil
   end
 end

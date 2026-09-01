@@ -89,10 +89,11 @@ RSpec.describe OptimizeStatementPlanner do
       expect(sqls.each_slice(1).size).to eq(3)
     end
 
-    it "queries the $partitions metadata table" do
+    it "queries the $partitions metadata table referencing the column under partition.<name>" do
       described_class.new(table, optimize_step, runtime: runtime).statements(execution_id: 42)
 
       expect(runtime).to have_received(:query_rows) do |sql, execution_id:|
+        expect(sql).to include('"partition"."ingestion_date"')
         expect(sql).to match(/\$partitions/)
         expect(execution_id).to eq(42)
       end
@@ -107,13 +108,16 @@ RSpec.describe OptimizeStatementPlanner do
       expect(sqls.first).not_to include("WHERE")
     end
 
-    it "falls back to the single statement when discovery raises" do
+    it "falls back to the single statement when discovery raises, surfacing an ErrorEvent" do
       allow(runtime).to receive(:query_rows).and_raise("boom")
 
       sqls = described_class.new(table, optimize_step, runtime: runtime).statements(execution_id: 1)
 
       expect(sqls.size).to eq(1)
       expect(sqls.first).not_to include("WHERE")
+      expect(ErrorEvent.last.operation).to eq("optimize-partition-discovery")
+      expect(ErrorEvent.last.message).to include("boom")
+      expect(ErrorEvent.last.table).to eq(table.name)
     end
 
     it "uses the configured partitions-per-query when present" do

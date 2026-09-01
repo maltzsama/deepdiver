@@ -52,13 +52,13 @@ export default class extends Controller {
     const remainingMs = deadlineTime - now
 
     if (remainingMs <= 0) {
-      this.barTarget.style.width = "100%"
+      this.barTarget.style.setProperty("--engine-progress", "100%")
       this.labelTarget.textContent = this.labelTarget.dataset.expired || ""
       return
     }
 
     const pct = totalMs > 0 ? Math.min(100, (elapsedMs / totalMs) * 100) : 0
-    this.barTarget.style.width = pct.toFixed(1) + "%"
+    this.barTarget.style.setProperty("--engine-progress", pct.toFixed(1) + "%")
     this.labelTarget.textContent = this.formatRemaining(remainingMs)
   }
 

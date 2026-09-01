@@ -27,18 +27,143 @@ RSpec.describe ApplicationHelper, "#pager_nav", type: :helper do
 end
 
 RSpec.describe ApplicationHelper, "#engine_lifecycle_stepper", type: :helper do
-  it "highlights the active stage with its own step-- modifier, not a badge class" do
+  it "emits stage nodes joined by connectors, with its own step-- modifiers" do
     html = helper.engine_lifecycle_stepper("starting")
 
-    expect(html).to include("step active step--starting")
+    expect(html.scan(%r{class="step step--}).size).to eq(5)
+    expect(html.scan("step-link").size).to eq(4)
+    expect(html).to include("step-dot")
+    expect(html).to include("step step--starting active")
     expect(html).not_to include("badge-")
     expect(html).not_to include("step-sep")
   end
 
-  it "renders the same number of stage labels with no empty separator spans" do
+  it "marks past stages done and future ones plain" do
     html = helper.engine_lifecycle_stepper("up")
 
-    expect(html.scan('class="step').size).to eq(5)
-    expect(html).not_to include('class="step-sep')
+    expect(html).to include("step step--down done")
+    expect(html).not_to include("step step--down active")
+    expect(html).to include("step step--up active")
+  end
+
+  it "wires the active→next connector as the progress bar for timed states" do
+    html = helper.engine_lifecycle_stepper("draining", timer: true)
+
+    expect(html).to include("step-link progress bar-warn")
+    expect(html).to include('data-engine-timer-target="bar"')
+  end
+
+  it "does not wire the timer when timer: false" do
+    html = helper.engine_lifecycle_stepper("draining")
+
+    expect(html).to include("step-link progress bar-warn")
+    expect(html).not_to include("data-engine-timer-target")
+  end
+
+  it "highlights stopping as the final active stage (no connector after it)" do
+    html = helper.engine_lifecycle_stepper("stopping")
+
+    expect(html).to include("step step--stopping active")
+    # stopping is the last stage, so every connector before it is done and
+    # there is no progress connector after the final node.
+    expect(html.scan("step-link progress").size).to eq(0)
+  end
+end
+
+RSpec.describe ApplicationHelper, "#engine_phase_time", type: :helper do
+  it "shows the remaining time for a starting engine" do
+    state = TrinoEngineState.new(status: "starting", status_changed_at: Time.current)
+    allow(helper).to receive(:distance_of_time_in_words_to_now).and_return("5 min")
+
+    expect(helper.engine_phase_time(state)).to include("5 min before timeout")
+  end
+
+  it "shows the uptime for an up engine" do
+    state = TrinoEngineState.new(status: "up", status_changed_at: 10.minutes.ago)
+    allow(helper).to receive(:time_ago_in_words).and_return("10 minutes")
+
+    expect(helper.engine_phase_time(state)).to eq("Up for 10 minutes")
+  end
+
+  it "returns nil for a down engine" do
+    expect(helper.engine_phase_time(TrinoEngineState.new(status: "down"))).to be_nil
+  end
+end
+
+RSpec.describe ApplicationHelper, "#engine_sessions", type: :helper do
+  def lifecycle_event(gen, state, at, attempts: 0)
+    create(:error_event, context: { "generation" => gen, "state" => state, "attempts" => attempts },
+                         last_seen_at: at)
+  end
+
+  it "collapses a generation's transitions into a single session" do
+    t = Time.zone.parse("2026-09-01 10:00:00")
+    events = [
+      lifecycle_event(1, "starting", t),
+      lifecycle_event(1, "up", t + 34.seconds),
+      lifecycle_event(1, "draining", t + 15.minutes),
+      lifecycle_event(1, "down", t + 15.minutes + 3.seconds)
+    ]
+
+    sessions = helper.engine_sessions(events)
+
+    expect(sessions.size).to eq(1)
+    session = sessions.first
+    expect(session.generation).to eq(1)
+    expect(session.started_at).to eq(t)
+    expect(session.ready_seconds).to eq(34)
+    expect(session.uptime_seconds).to eq(866)
+    expect(session.drain_seconds).to eq(3)
+    expect(session.outcome).to eq(:clean)
+    expect(session).not_to be_running
+  end
+
+  it "labels a still-running session and sorts it to the top" do
+    t = Time.zone.parse("2026-09-01 10:00:00")
+    events = [
+      lifecycle_event(2, "starting", t - 1.hour),
+      lifecycle_event(2, "up", t - 1.hour + 30.seconds),
+      lifecycle_event(1, "starting", t - 3.hours),
+      lifecycle_event(1, "up", t - 3.hours + 40.seconds),
+      lifecycle_event(1, "draining", t - 2.hours),
+      lifecycle_event(1, "down", t - 2.hours + 5.seconds)
+    ]
+
+    sessions = helper.engine_sessions(events)
+
+    expect(sessions.size).to eq(2)
+    expect(sessions.first.generation).to eq(2)
+    expect(sessions.first.outcome).to eq(:running)
+    expect(sessions.first).to be_running
+    expect(sessions.first.uptime_seconds).to be_within(5).of(Time.current - (t - 1.hour + 30.seconds))
+  end
+
+  it "labels a failed start when a generation never reached up" do
+    t = Time.zone.parse("2026-09-01 10:00:00")
+    events = [
+      lifecycle_event(3, "starting", t, attempts: 3),
+      lifecycle_event(3, "down", t + 1.minute, attempts: 3)
+    ]
+
+    session = helper.engine_sessions(events).first
+
+    expect(session.outcome).to eq(:failed)
+    expect(session.attempts).to eq(3)
+    expect(session.uptime_seconds).to be_nil
+  end
+
+  it "keeps nil durations for phases that fell outside the event window" do
+    t = Time.zone.parse("2026-09-01 10:00:00")
+    events = [
+      lifecycle_event(4, "up", t),
+      lifecycle_event(4, "down", t + 30.minutes)
+    ]
+
+    session = helper.engine_sessions(events).first
+
+    expect(session.started_at).to eq(t)
+    expect(session.ready_seconds).to be_nil
+    expect(session.drain_seconds).to be_nil
+    expect(session.outcome).to eq(:clean)
   end
 end
