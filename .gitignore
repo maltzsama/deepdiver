@@ -44,3 +44,6 @@
 !/app/assets/builds/.keep
 dump.sh
 *.txt
+
+# Claude Code — no claude on repo
+.claude/
