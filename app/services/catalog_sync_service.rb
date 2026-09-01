@@ -34,6 +34,38 @@ class CatalogSyncService
     new(table.catalog).sync_table(table)
   end
 
+  # Enriches a table with metrics that require a Trino query (engine must be
+  # up). Called on the post-maintenance resync path when the engine is already
+  # running. Never forces an engine start.
+  #
+  # Queries $files for total size and $manifests for manifest count, updating
+  # the table's persisted columns so health evaluation can use them.
+  #
+  # @param table [IcebergTable] the table to enrich
+  # @return [void]
+  def self.enrich_from_trino!(table)
+    catalog_name = table.catalog.trino_catalog_name
+    client = TrinoClient.new(catalog_name: catalog_name)
+
+    files_sql = %(SELECT SUM(file_size_in_bytes) AS total FROM #{table.trino_identifier}$files)
+    total_size = client.query_scalar(files_sql, "total")
+    table.update_column(:total_size_bytes, total_size.to_i) if total_size
+
+    manifests_sql = %(SELECT COUNT(*) AS n FROM #{table.trino_identifier}$manifests)
+    manifest_count = client.query_scalar(manifests_sql, "n")
+    table.update_column(:manifest_count, manifest_count.to_i) if manifest_count
+
+    # Re-evaluate health with the newly available Trino data.
+    extractor = TableMetadataExtractor.from_persisted(table)
+    health = HealthEvaluator.evaluate(extractor, plan: table.maintenance_plan,
+                                          manifest_count: manifest_count&.to_i)
+    if health[:score]
+      table.update_columns(health_score: health[:score], health_status: health[:status].to_s)
+    end
+  rescue StandardError => e
+    Rails.logger.warn("enrich_from_trino! failed for #{table.fully_qualified_name}: #{e.message}")
+  end
+
   # Syncs every namespace/table of the catalog and refreshes local health
   # signals. Tables that no longer exist in the catalog are soft-deleted so
   # their history is kept.
