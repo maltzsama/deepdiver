@@ -107,6 +107,19 @@ RSpec.describe TrinoCatalogProjection do
     expect(record.errors[:catalog_name]).to be_present
   end
 
+  it "merges operator catalog properties over the computed defaults" do
+    create(:catalog, name: "props-cat",
+           properties: { "iceberg.expire-snapshots.min-retention" => "2d",
+                         "custom.prop" => "true" })
+    described_class.new.sync_all!
+
+    props = TrinoCatalogRegistry.find_by(catalog_name: "props_cat").properties
+    expect(props["iceberg.expire-snapshots.min-retention"]).to eq("2d")
+    expect(props["custom.prop"]).to eq("true")
+    # The fixed defaults still apply where the operator did not override.
+    expect(props["iceberg.catalog.type"]).to eq("rest")
+  end
+
   describe "S3 storage properties" do
     it "uses the CEPH_ENDPOINT env var for the default s3.endpoint" do
       catalog

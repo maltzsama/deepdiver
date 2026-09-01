@@ -110,6 +110,14 @@ class TrinoCatalogProjection
       "s3.path-style-access" => "true"
     }
 
+    # The operator's catalog-level Iceberg connector properties (the stored
+    # properties JSON, already validated to carry no secrets) are merged over
+    # the computed defaults. This is the only way to set connector properties
+    # the projection does not hardcode — e.g. iceberg.expire-snapshots.min-retention
+    # and iceberg.remove-orphan-files.min-retention below 7d. Catalog values win
+    # over the fixed defaults, but never over the sensitive refs below.
+    props.merge!(catalog.properties.stringify_keys.transform_values(&:to_s))
+
     # Polaris requires the warehouse (its catalog name) in the REST path.
     # Nessie defines warehouses server-side and rejects unknown names, so
     # never send one — the configured default answers.

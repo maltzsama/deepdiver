@@ -33,6 +33,25 @@ RSpec.describe CatalogSyncService do
     expect(catalog.iceberg_tables.exists?(namespace: "bronze", name: "bad")).to be false
   end
 
+  it "materializes the shared Secret with ALL catalogs on a per-table sync" do
+    catalog_a = create(:catalog)
+    catalog_b = create(:catalog)
+    table = create(:iceberg_table, catalog: catalog_a, namespace: "bronze", name: "t",
+                                   total_records: 5, snapshot_count: 1)
+
+    materializer = instance_double(TrinoSecretMaterializer)
+    allow(TrinoSecretMaterializer).to receive(:new).and_return(materializer)
+    allow(materializer).to receive(:materialize!)
+
+    service = CatalogSyncService.new(catalog_a)
+    allow(service).to receive(:upsert_table).and_return(table)
+    service.sync_table(table)
+
+    expect(materializer).to have_received(:materialize!) do |catalogs|
+      expect(catalogs.pluck(:id)).to include(catalog_a.id, catalog_b.id)
+    end
+  end
+
   class HealthStampClient
     attr_accessor :payload
 

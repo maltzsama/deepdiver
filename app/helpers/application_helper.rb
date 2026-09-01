@@ -484,7 +484,7 @@ module ApplicationHelper
     end
   end
 
-  # Groups engine lifecycle transitions into one session per engine run, newest
+# Groups engine lifecycle transitions into one session per engine run, newest
 # first. A session is delimited by its "starting" transition — the generation
 # counter is bumped on EVERY transition (it is the CAS guard's predicate), so
 # grouping by generation would split one start→ready→drain→stop cycle into four
