@@ -18,7 +18,7 @@ class CatalogSyncService
   # @param table [IcebergTable] the table to refresh
   # @return [Hash] { ok: true } or { ok: false, error: message }
   def sync_table(table)
-    TrinoSecretMaterializer.new.materialize!(Catalog.includes(:catalog_credential))
+    TrinoSecretMaterializer.new.materialize!(Catalog.where(id: table.catalog_id).includes(:catalog_credential))
     upsert_table(table.namespace, table.name)
     { ok: true }
   rescue StandardError => e
