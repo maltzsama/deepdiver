@@ -341,6 +341,97 @@ module ApplicationHelper
     end
   end
 
+  # Ordered lifecycle stages for the engine stepper.
+  ENGINE_LIFECYCLE_STAGES = %w[down starting up draining stopping].freeze
+
+  # Renders the lifecycle stepper: a row of stage labels with separators.
+  # The current stage is highlighted; past stages are muted; future stages are muted.
+  # @param status [String] the current engine status.
+  # @return [String] HTML-safe stepper markup.
+  def engine_lifecycle_stepper(status)
+    badge_class = engine_status_badge_class(status)
+    capture do
+      ENGINE_LIFECYCLE_STAGES.each_with_index do |stage, i|
+        active = stage == status
+        css = [ "step" ]
+        css << "active" if active
+        css << badge_class if active
+        concat content_tag(:span, t("activity.engine.stage_#{stage}"), class: css.join(" "))
+        if i < ENGINE_LIFECYCLE_STAGES.length - 1
+          sep_active = active
+          concat content_tag(:span, "", class: [ "step-sep", ("active" if sep_active) ].compact.join(" "))
+        end
+      end
+    end
+  end
+
+  # Phase detail line below the stepper.
+  # @param state [TrinoEngineState] the current engine state.
+  # @param queries [Integer] the number of active queries on the cluster.
+  # @return [String] the translated detail text.
+  def engine_phase_detail(state, queries: 0)
+    case state.status
+    when "up"
+      t("activity.engine.up_detail", queries: queries)
+    when "starting"
+      attempt = [ state.start_attempts, 1 ].max
+      t("activity.engine.starting_detail", attempt: attempt, max: TrinoEngineSupervisor::MAX_START_ATTEMPTS)
+    when "draining"
+      t("activity.engine.draining_detail")
+    when "stopping"
+      t("activity.engine.stopping_detail")
+    when "failed"
+      t("activity.engine.failed_detail", error: state.last_error.presence || "unknown")
+    else
+      t("activity.engine.down")
+    end
+  end
+
+  # Returns the deadline ISO8601 timestamp for the current engine phase,
+  # or nil when no deadline exists (steady states like up/down).
+  # @param state [TrinoEngineState] the current engine state.
+  # @return [String, nil] ISO8601 timestamp or nil.
+  def engine_deadline(state)
+    case state.status
+    when "starting"
+      (state.status_changed_at + TrinoEngineSupervisor::READY_TIMEOUT).iso8601
+    when "draining"
+      (state.drain_started_at + TrinoEngineSupervisor::DRAIN_GRACE).iso8601
+    end
+  end
+
+  # Timer mode for the Stimulus controller based on engine status.
+  # @param status [String] the current engine status.
+  # @return [String] "countdown", "uptime", or "none".
+  def engine_timer_mode(status)
+    case status
+    when "starting", "draining" then "countdown"
+    when "up"                   then "uptime"
+    else                             "none"
+    end
+  end
+
+  # Bar CSS class modifier based on engine status.
+  # @param status [String] the current engine status.
+  # @return [String] the bar-fill class.
+  def engine_bar_class(status)
+    case status
+    when "starting" then "bar-warn"
+    when "draining" then ""
+    when "stopping" then "indeterminate"
+    else                 ""
+    end
+  end
+
+  # Coordinator Deployment target (namespace/name) for the engine strip subtitle.
+  # Safe to call in broadcast context (no current_user) and in test env.
+  # @return [String] the deployment target or a fallback label.
+  def engine_coordinator_target
+    TrinoK8sClient.new.target
+  rescue StandardError
+    t("activity.engine.title")
+  end
+
   # Concise composition summary for the health tooltip in the tables list.
   # @param table [IcebergTable] the table whose composition is summarised.
   # @return [String] the tooltip text, or a "no data" translation when empty.
