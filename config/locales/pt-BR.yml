@@ -383,7 +383,7 @@ pt-BR:
       s3_endpoint: "Endpoint S3"
       s3_endpoint_hint: "Padrao da env var CEPH_ENDPOINT ou http://ceph.local. Configure para AWS S3: https://s3.{region}.amazonaws.com"
     verify:
-      ok: "Conexao verificada. %{count} namespace(s) encontrado(s)."
+      ok: "Conexao verificada. %{count} namespace(s) e %{tables} tabela(s) encontrada(s)."
       failed: "Conexao falhou: %{error}"
     edit:
       title: "Editar catalogo"

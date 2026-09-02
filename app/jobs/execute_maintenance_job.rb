@@ -108,7 +108,9 @@ class ExecuteMaintenanceJob < ApplicationJob
   rescue StandardError => e
     result_row&.update!(status: "failed", finished_at: Time.current, error_message: e.message)
     table = execution.iceberg_table
-    context = "#{result_row.operation} on #{table.fully_qualified_name} (#{table.catalog&.name})"
+    # fully_qualified_name now carries the catalog, so appending it separately
+    # would name the catalog twice.
+    context = "#{result_row.operation} on #{table.fully_qualified_name}"
     ExecutionFailureHandler.handle(execution, "#{context}: #{e.message}")
     # The handler marked the execution failed, so demand may have dropped to
     # zero - let the supervisor evaluate whether the engine can drain.

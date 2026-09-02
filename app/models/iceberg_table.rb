@@ -1,6 +1,12 @@
 # A table in a catalog discovered or registered by the application. Tracks the
 # table's health, freshness history, maintenance schedules, and executions.
 class IcebergTable < ApplicationRecord
+  # Raised when a SQL identifier is requested for a table that has no schema
+  # to address - a table at the repository root. Trino's identifier model is
+  # catalog.schema.table with no two-part form, so such a table cannot be
+  # named in a statement at all.
+  class RootTableNotAddressable < StandardError; end
+
   HEALTH_STATUSES = %w[unknown healthy warning critical].freeze
 
   belongs_to :catalog, counter_cache: true
@@ -13,7 +19,11 @@ class IcebergTable < ApplicationRecord
 
   enum :health_status, HEALTH_STATUSES.to_h { |s| [ s, s ] }
 
-  validates :namespace, :name, presence: true
+  validates :name, presence: true
+  # A blank namespace is legitimate: Nessie (and Iceberg generally) permits
+  # tables at the repository root. The column stays NOT NULL - "" is the root,
+  # nil is missing data - so presence cannot be asserted here.
+  validates :namespace, exclusion: { in: [ nil ] }
   validates :name, uniqueness: { scope: %i[catalog_id namespace],
                                  conditions: -> { where(active: true) } }
   validates :table_uuid, uniqueness: { scope: :catalog_id }, if: :table_uuid
@@ -83,10 +93,22 @@ class IcebergTable < ApplicationRecord
     }
   end
 
-  # Namespace and table name joined with a dot.
+  # The three-part identifier: catalog.namespace.table.
+  #
+  # Uses trino_catalog_name rather than the catalog's display name, because
+  # trino_catalog_name_override means the two can differ and only the former
+  # resolves in Trino - the value is presented as an identifier, so it should
+  # be the resolvable one.
+  #
+  # A table at the repository root has a blank namespace and renders as
+  # catalog.table, without the empty middle part that a plain join produces.
+  #
+  # Display only. trino_identifier / trino_metadata_table build their own
+  # quoted identifiers for SQL and never call this.
+  #
   # @return [String]
   def fully_qualified_name
-    "#{namespace}.#{name}"
+    [ catalog&.trino_catalog_name, namespace.presence, name ].compact.join(".")
   end
 
   # Average size of the table's data files, or nil when the stats are unknown.
@@ -114,11 +136,22 @@ class IcebergTable < ApplicationRecord
   end
 
   # Trino SQL identifier, always exactly three parts: catalog.schema.table.
-  # The whole namespace stays inside a single quoted part; the Iceberg
-  # connector rebuilds the nested Namespace from its separator. Never split
-  # a dotted namespace into multiple identifier parts.
+  #
+  # A dotted namespace stays inside ONE quoted part. Trino's identifier model
+  # is strictly three levels, and the Iceberg connector represents a nested
+  # namespace as a single dotted schema name, splitting it internally on its
+  # separator. Emitting "cat"."a"."b"."tbl" would be a four-part reference the
+  # grammar does not accept - it must not be "corrected" into one (see #227).
   #   "catalog"."ns1.ns2.ns3"."table"
+  #
+  # A table at the repository root has no schema to address, so there is no
+  # valid three-part identifier for it: an empty middle part ("cat".""."tbl")
+  # names a schema that cannot exist. Raise rather than emit SQL that fails
+  # later with an opaque resolution error.
+  #
+  # @raise [RootTableNotAddressable] when the table has no namespace
   def trino_identifier
+    ensure_addressable!
     [ catalog.trino_catalog_name, namespace, name ].map { |part| quote_identifier(part) }.join(".")
   end
 
@@ -130,6 +163,7 @@ class IcebergTable < ApplicationRecord
   # @param suffix [String] the metadata table suffix (e.g. "files", "manifests")
   # @return [String] the quoted three-part identifier
   def trino_metadata_table(suffix)
+    ensure_addressable!
     [ catalog.trino_catalog_name, namespace, "#{name}$#{suffix}" ]
       .map { |part| quote_identifier(part) }.join(".")
   end
@@ -151,6 +185,16 @@ class IcebergTable < ApplicationRecord
       "worst_ratio" => health[:worst_ratio],
       "details" => (health[:details] || {}).transform_keys(&:to_s)
     }
+  end
+
+  # Guards identifier construction for a table with no namespace.
+  #
+  # @raise [RootTableNotAddressable] when the namespace is blank
+  def ensure_addressable!
+    return if namespace.present?
+
+    raise RootTableNotAddressable,
+          "#{fully_qualified_name} lives at the catalog root and has no schema to address in Trino"
   end
 
   # Quotes an identifier for use inside a Trino SQL statement, escaping any
