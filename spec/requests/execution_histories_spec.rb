@@ -105,4 +105,16 @@ RSpec.describe "Execution histories merged timeline", type: :request do
     expect(response.body).to include("selected")
     expect(response.body).to include("freshness")
   end
+
+  it "filters the merged list to one table" do
+    target = create(:iceberg_table)
+    other  = create(:iceberg_table)
+    create(:execution_history, iceberg_table: target, status: "success", started_at: 1.hour.ago)
+    create(:execution_history, iceberg_table: other, status: "success", started_at: 1.hour.ago)
+
+    get execution_histories_path(table_id: target.id)
+
+    expect(response.body).to include(target.fully_qualified_name)
+    expect(response.body).not_to include(other.fully_qualified_name)
+  end
 end

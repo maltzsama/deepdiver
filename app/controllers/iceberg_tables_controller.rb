@@ -2,7 +2,7 @@
 # list and per-table detail (schedules, executions, freshness, health), plus a
 # "run now" fallback. Each action authorizes with Pundit.
 class IcebergTablesController < ApplicationController
-  before_action :set_table, only: %i[show run_maintenance sync_table]
+  before_action :set_table, only: %i[show run_maintenance sync_table dismiss_errors]
 
   # Global view: every table of every catalog, with filters. With 100+
   # tables, browsing catalog by catalog does not scale.
@@ -45,7 +45,11 @@ class IcebergTablesController < ApplicationController
   # freshness SLA/checks, and a health evaluation rebuilt from stored metadata.
   def show
     authorize @table
-    @open_error_count = ErrorEvent.open.table_events(@table).count
+    @open_errors = ErrorEvent.open.table_events(@table).order(last_seen_at: :desc)
+    @open_error_count = @open_errors.size
+    # The banner names the dominant open error kind so the operator can decide
+    # whether to follow the (table-scoped, kind-agnostic) History link.
+    @open_error_groups = @open_errors.group_by(&:operation).transform_values(&:size)
     @executions = @table.execution_histories.latest.limit(20)
     @freshness_sla = @table.table_freshness_sla
     @freshness_checks = @table.freshness_checks.latest.limit(30)
@@ -58,6 +62,15 @@ class IcebergTablesController < ApplicationController
     @extractor = TableMetadataExtractor.from_persisted(@table)
     @evaluation = HealthEvaluator.evaluate(@extractor, plan: @table.maintenance_plan,
                                             manifest_count: @table.manifest_count)
+  end
+
+  # Remembers that the operator dismissed the open-errors banner for this table
+  # (session-scoped; a notice, not state).
+  def dismiss_errors
+    authorize @table
+    session[:dismissed_error_banners] ||= []
+    session[:dismissed_error_banners] << @table.id unless session[:dismissed_error_banners].include?(@table.id)
+    redirect_to @table, notice: t("tables.banner_dismissed")
   end
 
   # Fallback for the table-level "run now": ensures a dispatchable plan exists

@@ -115,6 +115,9 @@ pt-BR:
     overview_banner: "%{count} erro(s) aberto(s) - inspecione a superficie de erros."
     catalog_banner: "%{catalog} tem %{count} erro(s) aberto(s)."
     table_banner: "Esta tabela tem %{count} erro(s) aberto(s)."
+    table_banner_kind: "%{count} %{operation}"
+    table_banner_link: "Ver no Historico"
+    table_banner_dismiss: "Dispensar"
 
   teams:
     index:
@@ -400,6 +403,7 @@ pt-BR:
     run_maintenance:
       enqueued: "Manutencao enfileirada - iniciara quando o motor subir."
       already_queued: "Manutencao para esta tabela ja esta na fila ou em execucao."
+    banner_dismissed: "Banner de erros dispensado para esta tabela."
     show:
       eyebrow_prefix: "Tabela ·"
       new_schedule: "Novo agendamento"

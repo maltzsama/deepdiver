@@ -115,6 +115,9 @@ en:
     overview_banner: "%{count} open error(s) — inspect the error surface."
     catalog_banner: "%{catalog} has %{count} open error(s)."
     table_banner: "This table has %{count} open error(s)."
+    table_banner_kind: "%{count} %{operation}"
+    table_banner_link: "See them in History"
+    table_banner_dismiss: "Dismiss"
 
   teams:
     index:
@@ -437,6 +440,7 @@ en:
       already_queued: "Maintenance for this table is already queued or running."
     sync_table:
       enqueued: "Table metadata refresh enqueued."
+    banner_dismissed: "Error banner dismissed for this table."
     show:
       eyebrow_prefix: "Table ·"
       new_schedule: "New schedule"
