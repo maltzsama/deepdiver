@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.12.3](https://github.com/maltzsama/deepdiver/compare/v0.12.2...v0.12.3) (2026-09-02)
+
+
+### Bug Fixes
+
+* **catalog:** omit the Nessie security property when unauthenticated, and use fs.s3.enabled (closes [#234](https://github.com/maltzsama/deepdiver/issues/234), closes [#235](https://github.com/maltzsama/deepdiver/issues/235)) ([3262611](https://github.com/maltzsama/deepdiver/commit/3262611dea241f5d38a0f191cd49ca3bac2dfd98))
+* omit the Nessie security property when unauthenticated, and use fs.s3.enabled ([#234](https://github.com/maltzsama/deepdiver/issues/234), [#235](https://github.com/maltzsama/deepdiver/issues/235)) ([53d473c](https://github.com/maltzsama/deepdiver/commit/53d473cb94b40b53fa3c8c0ca17dec76a72aa812))
+
 ## [0.12.2](https://github.com/maltzsama/deepdiver/compare/v0.12.1...v0.12.2) (2026-09-02)
 
 
