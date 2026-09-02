@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.12.4](https://github.com/maltzsama/deepdiver/compare/v0.12.3...v0.12.4) (2026-09-02)
+
+
+### Bug Fixes
+
+* nested namespaces are unaddressable on native-Nessie catalogs ([#238](https://github.com/maltzsama/deepdiver/issues/238)) ([2f64069](https://github.com/maltzsama/deepdiver/commit/2f64069fb14ff1c810b6f62dae981ec305bb9079))
+* **tables:** treat nested namespaces as unaddressable on native-Nessie catalogs (closes [#238](https://github.com/maltzsama/deepdiver/issues/238)) ([952cb29](https://github.com/maltzsama/deepdiver/commit/952cb2994d8287184e259663123562bb758f57f8))
+
 ## [0.12.3](https://github.com/maltzsama/deepdiver/compare/v0.12.2...v0.12.3) (2026-09-02)
 
 
