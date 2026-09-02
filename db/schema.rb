@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_02_020000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_02_030000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "singleton_key", default: 1, null: false
@@ -180,6 +180,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_02_020000) do
     t.datetime "created_at", null: false
     t.datetime "deactivated_at"
     t.bigint "equality_deletes"
+    t.json "health_components"
+    t.datetime "health_evaluated_at"
     t.integer "health_score"
     t.string "health_status", default: "unknown", null: false
     t.datetime "health_status_changed_at"

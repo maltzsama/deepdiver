@@ -61,7 +61,10 @@ class HealthEvaluator
     }
 
     available = components.reject { |_key, value| value.nil? }
-    return { score: nil, status: :unknown, components: components, worst_component: nil } if available.empty?
+    if available.empty?
+      return { score: nil, status: :unknown, components: components,
+               worst_component: nil, details: measured_values }
+    end
 
     total_weight = available.keys.sum { |key| WEIGHTS[key] }
     earned = available.sum { |key, ratio| WEIGHTS[key] * ratio }
@@ -73,10 +76,47 @@ class HealthEvaluator
 
     { score: score, status: status_for(score), components: components,
       coverage: (total_weight / WEIGHTS.values.sum.to_f * 100).round,
-      worst_component: worst_key, worst_ratio: worst_ratio }
+      worst_component: worst_key, worst_ratio: worst_ratio,
+      details: measured_values }
   end
 
   private
+
+  # The raw numbers behind each ratio, and the budget each was measured
+  # against. The evaluator normalises to 0..1 and loses the unit, so a caller
+  # that only has the result cannot rebuild "182 snapshots, budget 40" - and
+  # the breakdown panel needs exactly that. Emitting them here lets the values
+  # be persisted with the score, so the panel renders from a read.
+  #
+  # @return [Hash] the measured values keyed by component
+  def measured_values
+    {
+      average_file_size: @extractor.average_file_size,
+      target_file_size: target_file_size,
+      snapshot_count: @extractor.snapshot_count,
+      snapshot_budget: snapshot_budget_for_display,
+      manifest_count: @manifest_count || @extractor.manifest_count,
+      manifest_budget: manifest_budget_for_display,
+      total_records: @extractor.total_records,
+      delete_count: [ @extractor.position_deletes, @extractor.equality_deletes ].compact.sum
+    }
+  end
+
+  # The snapshot budget, or nil when there is nothing to measure against.
+  # @return [Integer, nil]
+  def snapshot_budget_for_display
+    return nil if @extractor.snapshot_count.nil? || @extractor.snapshot_count.zero?
+
+    expected_snapshot_budget
+  end
+
+  # The manifest budget, or nil when no manifest count is available.
+  # @return [Integer, nil]
+  def manifest_budget_for_display
+    return nil if (@manifest_count || @extractor.manifest_count).nil?
+
+    expected_manifest_budget
+  end
 
   # Each component returns 0.0 (worst) to 1.0 (best), or nil when there is no
   # data.
