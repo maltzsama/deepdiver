@@ -8,7 +8,7 @@ class TrinoCatalogProjection
 
   SENSITIVE_KEYS = %w[
     iceberg.rest-catalog.oauth2.credential
-    iceberg.nessie-catalog.authentication.token
+    iceberg.rest-catalog.oauth2.token
     s3.aws-access-key
     s3.aws-secret-key
     s3.aws-session-token
@@ -26,15 +26,12 @@ class TrinoCatalogProjection
     if credential&.oauth2?
       values["iceberg.rest-catalog.oauth2.credential"] = "#{credential.client_id}:#{credential.secret}"
     end
-    # A native-Nessie catalog authenticates with a bearer token. It goes
-    # through the same masking path as every other secret, so the plaintext
-    # never reaches the registry's JSON column.
-    if native_nessie?(catalog) && credential&.auth_method == "bearer_static"
-      values["iceberg.nessie-catalog.authentication.token"] = credential.secret
-    end
-    # The .select on SENSITIVE_KEYS below drops a blank token, so the type and
-    # the token cannot diverge: nessie_bearer? gates the type on exactly the
-    # same "bearer_static with a present secret" condition.
+    # A static bearer token (native-Nessie included) rides the REST
+    # connector's OAUTH2 mode as a fixed token. It goes through the same
+    # masking path as every other secret, so the plaintext never reaches the
+    # registry's JSON column - and bearer_credential? gates the security mode
+    # on exactly this condition, so mode and token cannot diverge.
+    values["iceberg.rest-catalog.oauth2.token"] = credential.secret if bearer_credential?(catalog)
     values.merge!(catalog.resolve_s3_credentials)
     values.select { |key, value| SENSITIVE_KEYS.include?(key) && value.present? }
           .transform_values(&:to_s)
@@ -120,11 +117,16 @@ class TrinoCatalogProjection
   def connector_properties(catalog)
     credential = catalog.catalog_credential
 
-    props = if native_nessie?(catalog)
-              native_nessie_properties(catalog)
-    else
-              rest_catalog_properties(catalog)
-    end
+    # EVERY catalog projects to Trino through the REST connector, including
+    # native-mode Nessie. The native Nessie connector (iceberg.catalog.type=
+    # nessie) never splits the schema string into namespace levels
+    # (TrinoNessieCatalog#namespaceExists, IcebergNessieUtil#toIdentifier), so
+    # tables in nested namespaces are unreachable through it under ANY SQL
+    # syntax - see #238. The REST connector splits under
+    # nested-namespace-enabled, and hooking Trino to Nessie via REST is also
+    # what Nessie's own Trino guide prescribes. nessie_api_mode stays what it
+    # always was: how the APP discovers the catalog, not how Trino reaches it.
+    props = rest_catalog_properties(catalog)
 
     # The retention floors come from the engine config as typed, validated
     # fields (see #216). They used to be reachable only by hand-editing the
@@ -184,55 +186,49 @@ class TrinoCatalogProjection
     # never send one — the configured default answers.
     props["iceberg.rest-catalog.warehouse"] = catalog.name if catalog.catalog_type == "polaris"
 
+    # A native-mode Nessie catalog can read a non-default branch. Nessie
+    # decodes the REST `warehouse` parameter as its prefix ({ref}|{warehouse}),
+    # so sending the bare ref pins the branch while the server's default
+    # warehouse still answers - the warehouse only governs where NEW tables
+    # are created, and maintenance touches existing ones. A server with named
+    # warehouses but no default can still be pointed at one via the
+    # per-catalog properties JSON ("<ref>|<warehouse-name>"), which merges
+    # over this.
+    if self.class.native_nessie?(catalog) && catalog.nessie_ref.present?
+      props["iceberg.rest-catalog.warehouse"] = catalog.nessie_ref
+    end
+
     if credential&.oauth2?
       props["iceberg.rest-catalog.security"] = "OAUTH2"
       props["iceberg.rest-catalog.oauth2.scope"] = credential.scope
+    elsif bearer_credential?(catalog)
+      # A static bearer token rides the OAUTH2 security mode with a fixed
+      # token - the configuration Nessie's own Trino guide uses. The token
+      # itself is masked as a baleia secret ref via SENSITIVE_KEYS below.
+      props["iceberg.rest-catalog.security"] = "OAUTH2"
     end
 
     props
   end
 
-  # Connector properties for the native Nessie model: Trino's Iceberg connector
-  # supports Nessie directly via iceberg.catalog.type=nessie with the uri, ref,
-  # warehouse and authentication.type — the model NessieCatalog itself uses.
+  # Whether the catalog authenticates with a static bearer token.
   #
-  # @param catalog [Catalog] the catalog being projected
-  # @return [Hash{String => String}] the native Nessie properties
-  def native_nessie_properties(catalog)
-    props = {
-      "iceberg.catalog.type" => "nessie",
-      "iceberg.nessie-catalog.uri" => "#{catalog.endpoint.chomp("/")}/api/v2",
-      # Pinned to match the /api/v2 suffix above. The version is encoded in the
-      # path AND configurable separately, so leaving it implicit allows the two
-      # to disagree - which would surface as a protocol error rather than a
-      # configuration one.
-      "iceberg.nessie-catalog.client-api-version" => "V2",
-      "iceberg.nessie-catalog.ref" => catalog.nessie_ref.presence || "main",
-      "iceberg.nessie-catalog.default-warehouse-dir" => catalog.nessie_warehouse,
-      "fs.s3.enabled" => "true",
-      "s3.endpoint" => catalog.s3_endpoint.presence || ENV.fetch("CEPH_ENDPOINT", "http://ceph.local"),
-      "s3.path-style-access" => "true"
-    }
-
-    # BEARER is the ONLY member of IcebergNessieCatalogConfig$Security - there
-    # is no "NONE" and no disabled member - so for an unauthenticated Nessie
-    # the property must be OMITTED. Any sentinel value fails catalog
-    # initialization outright, which is what made these catalogs unusable.
-    # The token itself is masked as a baleia secret ref further down, via
-    # SENSITIVE_KEYS; it never lands in the registry as plaintext.
-    props["iceberg.nessie-catalog.authentication.type"] = "BEARER" if nessie_bearer?(catalog)
-
-    props
-  end
-
-  # Whether a native-Nessie catalog carries a bearer token to authenticate with.
+  # Class-level because sensitive_property_values needs the same predicate:
+  # the security mode and the token are gated on one condition, so they
+  # cannot diverge.
   #
   # @param catalog [Catalog] the catalog being projected
   # @return [Boolean]
-  def nessie_bearer?(catalog)
-    catalog.catalog_credential&.auth_method == "bearer_static" &&
-      catalog.catalog_credential.secret.present?
+  def self.bearer_credential?(catalog)
+    credential = catalog.catalog_credential
+    credential&.auth_method == "bearer_static" && credential.secret.present?
   end
+
+  # Instance-side shorthand.
+  # @param catalog [Catalog] the catalog being projected
+  # @return [Boolean]
+  def bearer_credential?(catalog) = self.class.bearer_credential?(catalog)
+
 
   # Base URI Trino's Iceberg REST connector talks to. Unlike the app's own
   # Ruby-side REST client (which appends its mount prefix itself via

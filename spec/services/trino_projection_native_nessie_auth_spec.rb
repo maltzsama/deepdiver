@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe TrinoCatalogProjection, "native Nessie authentication" do
+RSpec.describe TrinoCatalogProjection, "native-mode Nessie projected via the REST connector" do
   let(:projection) { described_class.new(cluster_name: "default") }
 
   def native_catalog(**attrs)
@@ -12,22 +12,36 @@ RSpec.describe TrinoCatalogProjection, "native Nessie authentication" do
     projection.send(:connector_properties, catalog)
   end
 
-  context "without authentication" do
-    it "omits authentication.type entirely" do
-      # BEARER is the only member of the connector's Security enum, so any
-      # sentinel value ("NONE") fails catalog initialization outright.
-      props = props_for(native_catalog)
+  it "uses the REST connector, whose namespace handling splits the dotted schema" do
+    props = props_for(native_catalog)
 
-      expect(props).not_to have_key("iceberg.nessie-catalog.authentication.type")
-      expect(props).not_to have_key("iceberg.nessie-catalog.authentication.token")
-    end
-
-    it "never emits the string NONE for the security property" do
-      expect(props_for(native_catalog).values).not_to include("NONE")
-    end
+    expect(props["iceberg.catalog.type"]).to eq("rest")
+    expect(props["iceberg.rest-catalog.uri"]).to eq("http://nessie:19120/iceberg")
+    expect(props["iceberg.rest-catalog.nested-namespace-enabled"]).to eq("true")
   end
 
-  context "with a bearer token" do
+  it "emits no native-connector key at all" do
+    expect(props_for(native_catalog).keys.grep(/nessie-catalog/)).to be_empty
+  end
+
+  it "pins a non-default branch through the warehouse parameter, which Nessie decodes as its prefix" do
+    props = props_for(native_catalog(nessie_ref: "etl_dev"))
+
+    expect(props["iceberg.rest-catalog.warehouse"]).to eq("etl_dev")
+  end
+
+  it "sends no warehouse when no ref is configured, so the server default answers" do
+    expect(props_for(native_catalog)).not_to have_key("iceberg.rest-catalog.warehouse")
+  end
+
+  it "does not change rest-mode Nessie catalogs" do
+    rest = create(:catalog, catalog_type: "nessie", nessie_api_mode: "rest",
+                            nessie_ref: "etl_dev", endpoint: "http://nessie:19120")
+
+    expect(props_for(rest)).not_to have_key("iceberg.rest-catalog.warehouse")
+  end
+
+  context "with a static bearer token" do
     let(:catalog) do
       native_catalog.tap do |c|
         c.create_catalog_credential!(auth_method: "bearer_static", secret: "tok-abc-123")
@@ -35,53 +49,37 @@ RSpec.describe TrinoCatalogProjection, "native Nessie authentication" do
       end
     end
 
-    it "sets the type to BEARER" do
-      expect(props_for(catalog)["iceberg.nessie-catalog.authentication.type"]).to eq("BEARER")
+    it "rides OAUTH2 with a fixed token, per Nessie's own Trino guide" do
+      props = props_for(catalog)
+
+      expect(props["iceberg.rest-catalog.security"]).to eq("OAUTH2")
+      expect(props["iceberg.rest-catalog.oauth2.token"]).to start_with("@baleia-secret[file:")
     end
 
-    it "masks the token as a baleia secret ref rather than plaintext" do
-      value = props_for(catalog)["iceberg.nessie-catalog.authentication.token"]
-
-      expect(value).to start_with("@baleia-secret[file:")
+    it "never leaks the plaintext into the registry properties" do
       expect(props_for(catalog).values.join).not_to include("tok-abc-123")
     end
 
     it "carries the token through sensitive_property_values so the Secret is written" do
-      values = described_class.sensitive_property_values(catalog)
-
-      expect(values["iceberg.nessie-catalog.authentication.token"]).to eq("tok-abc-123")
+      expect(described_class.sensitive_property_values(catalog)["iceberg.rest-catalog.oauth2.token"])
+        .to eq("tok-abc-123")
     end
 
-    it "omits both when the credential is bearer_static but the secret is blank" do
+    it "emits neither mode nor token when the secret is blank" do
       blank = native_catalog
       blank.create_catalog_credential!(auth_method: "none")
       props = props_for(blank.reload)
 
-      expect(props).not_to have_key("iceberg.nessie-catalog.authentication.type")
-      expect(props).not_to have_key("iceberg.nessie-catalog.authentication.token")
+      expect(props).not_to have_key("iceberg.rest-catalog.security")
+      expect(props).not_to have_key("iceberg.rest-catalog.oauth2.token")
     end
-  end
-
-  it "does not offer a Nessie token for a REST catalog" do
-    rest = create(:catalog, catalog_type: "polaris", endpoint: "http://polaris:8181")
-    rest.create_catalog_credential!(auth_method: "bearer_static", secret: "tok-rest")
-
-    expect(described_class.sensitive_property_values(rest.reload))
-      .not_to have_key("iceberg.nessie-catalog.authentication.token")
-  end
-
-  it "pins the client API version to match the /api/v2 path it builds" do
-    props = props_for(native_catalog)
-
-    expect(props["iceberg.nessie-catalog.uri"]).to end_with("/api/v2")
-    expect(props["iceberg.nessie-catalog.client-api-version"]).to eq("V2")
   end
 end
 
 RSpec.describe TrinoCatalogProjection, "S3 filesystem property" do
   let(:projection) { described_class.new(cluster_name: "default") }
 
-  it "uses the current fs.s3.enabled name for a REST catalog" do
+  it "uses fs.s3.enabled for a REST catalog" do
     catalog = create(:catalog, catalog_type: "polaris", endpoint: "http://polaris:8181")
     props = projection.send(:connector_properties, catalog)
 
@@ -89,12 +87,11 @@ RSpec.describe TrinoCatalogProjection, "S3 filesystem property" do
     expect(props).not_to have_key("fs.native-s3.enabled")
   end
 
-  it "uses the current name for a native Nessie catalog too" do
+  it "uses fs.s3.enabled for a native-mode Nessie catalog too" do
     catalog = create(:catalog, catalog_type: "nessie", nessie_api_mode: "native",
                                nessie_warehouse: "s3://bucket/", endpoint: "http://nessie:19120")
     props = projection.send(:connector_properties, catalog)
 
     expect(props["fs.s3.enabled"]).to eq("true")
-    expect(props).not_to have_key("fs.native-s3.enabled")
   end
 end
