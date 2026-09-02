@@ -441,12 +441,22 @@ module ApplicationHelper
     end
   end
 
-  # Coordinator Deployment target (namespace/name) for the engine strip subtitle.
-  # Safe to call in broadcast context (no current_user) and in test env.
+  # Coordinator Deployment target (namespace/name) for the engine strip subtitle
+  # and the engine history panel header.
+  #
+  # Resolved through the provisioner, so the adapter in use decides - the strip
+  # and the history panel used to resolve the same value through two different
+  # paths (TrinoK8sClient directly vs. TrinoProvisioner), one of which raised.
+  #
+  # The rescue is deliberately narrow: an unreachable API or a missing
+  # Deployment is expected and falls back to a label, but a NoMethodError is a
+  # programming error and must not be swallowed - a bare `rescue StandardError`
+  # here hid a missing `target` on every provisioner adapter.
+  #
   # @return [String] the deployment target or a fallback label.
   def engine_coordinator_target
-    TrinoK8sClient.new.target
-  rescue StandardError
+    TrinoProvisioner.target
+  rescue Kubeclient::HttpError, Kubeclient::ResourceNotFoundError, KeyError, SocketError, Timeout::Error
     t("activity.engine.title")
   end
 
@@ -466,11 +476,7 @@ module ApplicationHelper
 
   # Coordinator Deployment identifier for engine-sourced events.
   # @return [String] e.g. "trino/production-coordinator"
-  def engine_target_label
-    TrinoProvisioner.target
-  rescue StandardError
-    "engine"
-  end
+  def engine_target_label = engine_coordinator_target
 
   # One engine session (generation): a single provisioning → ready → drain →
   # stop cycle. Durations are derived from the lifecycle transition timestamps;

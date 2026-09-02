@@ -77,6 +77,17 @@ class ChartTrinoProvisioner
     @k8s.replicas
   end
 
+  # The addressed coordinator Deployment as "namespace/name".
+  #
+  # TrinoProvisioner delegates :target to the adapter, but no adapter defined
+  # it - so every call raised NoMethodError, which engine_target_label's bare
+  # `rescue StandardError` swallowed into the literal string "engine".
+  #
+  # @return [String] the namespace-qualified Deployment name
+  def target
+    @k8s.target
+  end
+
   # No queries running or queued, per GET /v1/query.
   #
   # An unreachable coordinator must NOT read as idle: DrainEngineJob uses this
