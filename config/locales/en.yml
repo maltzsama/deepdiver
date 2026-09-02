@@ -438,7 +438,8 @@ en:
   tables:
     run_maintenance:
       enqueued: "Maintenance enqueued - it will start when the engine comes up."
-      not_addressable: "This table is at the catalog root and cannot be maintained: Trino needs a schema to address it."
+      not_addressable_root: "This table is at the catalog root and cannot be maintained: Trino needs a schema to address it."
+      not_addressable_nested_native_nessie: "This table is in a nested namespace and cannot be maintained: this catalog uses the Nessie native API, whose Trino connector does not split the schema into namespace levels. Switching the catalog to the Iceberg REST surface makes nested namespaces reachable, which has to be enabled on the Nessie server."
       already_queued: "Maintenance for this table is already queued or running."
     sync_table:
       enqueued: "Table metadata refresh enqueued."
@@ -451,7 +452,8 @@ en:
       status: "Status"
       last_write: "Last write"
       trino_id: "Trino identifier"
-      not_addressable: "not addressable - the table is at the catalog root, which has no schema"
+      not_addressable_root: "not addressable - the table is at the catalog root, which has no schema"
+      not_addressable_nested_native_nessie: "not addressable - a nested namespace on a Nessie native catalog, whose connector does not split the schema"
       schedules_title: "Schedules"
       schedules_note: "%{count} of %{total} operations"
       empty_title: "No schedules for this table"
@@ -1007,7 +1009,8 @@ en:
         maintenance_plan:
           attributes:
             iceberg_table:
-              not_addressable_in_trino: "is at the catalog root and cannot be maintained: Trino needs a schema to address the table"
+              not_addressable_root: "is at the catalog root and cannot be maintained: Trino needs a schema to address the table"
+              not_addressable_nested_native_nessie: "is in a nested namespace on a Nessie native catalog and cannot be maintained: that connector does not split the schema into namespace levels"
         maintenance_step:
           attributes:
             config:
