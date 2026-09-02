@@ -87,10 +87,22 @@ class IcebergTable < ApplicationRecord
     }
   end
 
-  # Namespace and table name joined with a dot.
+  # The three-part identifier: catalog.namespace.table.
+  #
+  # Uses trino_catalog_name rather than the catalog's display name, because
+  # trino_catalog_name_override means the two can differ and only the former
+  # resolves in Trino - the value is presented as an identifier, so it should
+  # be the resolvable one.
+  #
+  # A table at the repository root has a blank namespace and renders as
+  # catalog.table, without the empty middle part that a plain join produces.
+  #
+  # Display only. trino_identifier / trino_metadata_table build their own
+  # quoted identifiers for SQL and never call this.
+  #
   # @return [String]
   def fully_qualified_name
-    "#{namespace}.#{name}"
+    [ catalog&.trino_catalog_name, namespace.presence, name ].compact.join(".")
   end
 
   # Average size of the table's data files, or nil when the stats are unknown.

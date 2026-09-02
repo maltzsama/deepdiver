@@ -1,9 +1,24 @@
 require "test_helper"
 
 class IcebergTableTest < ActiveSupport::TestCase
-  test "fully_qualified_name joins namespace and name" do
+  test "fully_qualified_name is the three-part catalog.namespace.table identifier" do
     table = build_table
-    assert_equal "reporting.dwd_orders", table.fully_qualified_name
+    assert_equal "analytics.reporting.dwd_orders", table.fully_qualified_name
+  end
+
+  test "fully_qualified_name omits the empty part for a table at the root" do
+    catalog = build_catalog
+    table = catalog.iceberg_tables.new(namespace: "", name: "rootbl")
+
+    assert_equal "analytics.rootbl", table.fully_qualified_name
+  end
+
+  test "fully_qualified_name uses the Trino name override when set" do
+    catalog = Catalog.new(name: "x", trino_catalog_name_override: "polaris_prod",
+                          catalog_type: "polaris", endpoint: "http://x")
+    table = IcebergTable.new(catalog: catalog, namespace: "silver", name: "orders")
+
+    assert_equal "polaris_prod.silver.orders", table.fully_qualified_name
   end
 
   test "trino_identifier has three parts for a simple namespace" do
