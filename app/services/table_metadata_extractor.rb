@@ -30,6 +30,14 @@ class TableMetadataExtractor
     # nothing synced stays unknown rather than scoring from a phantom snapshot.
     count = table.snapshot_count || 0
     count = 1 if summary.any? && count.zero?
+
+    # When the real count is unknown (0/nil) but both ends of the observed
+    # window are, pad to TWO snapshots so the oldest/latest timestamps cannot
+    # alias onto one Hash (see #208) and the evaluator's commit-rate derivation
+    # keeps a real window instead of silently collapsing to the 10/day fallback.
+    if count == 1 && table.oldest_snapshot_at && table.last_data_update && table.oldest_snapshot_at != table.last_data_update
+      count = 2
+    end
     snapshots = Array.new(count) { {} }
 
     # Preserve the observed snapshot window so the health evaluator can derive
