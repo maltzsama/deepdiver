@@ -1023,4 +1023,5 @@ en:
       title: "Last maintenance impact"
       subtitle: "before → after"
       no_data: "No maintenance has run on this table yet."
+      run: "maintenance run %{time}"
 

@@ -253,6 +253,22 @@ RSpec.describe ApplicationHelper, "#metadata_diff", type: :helper do
     expect(html).to include("5 processed")
   end
 
+  it "keeps unchanged metrics alongside the step-metric rows" do
+    execution.update!(
+      metadata_before: { "total_data_files" => 10, "snapshot_count" => 5 },
+      metadata_after:  { "total_data_files" => 10, "snapshot_count" => 5 }
+    )
+    create(:execution_step, execution_history: execution, operation: "optimize",
+                            metrics: { "rows" => 177, "batched_statements" => 59 })
+
+    html = helper.metadata_diff(execution)
+
+    # Unchanged metric is still shown ("10 → 10"), and the step work too.
+    expect(html).to include("Data files")
+    expect(html).to include("177")
+    expect(html).to include("59 statements")
+  end
+
   it "returns nil when there is nothing to show" do
     execution.update!(
       metadata_before: { "total_data_files" => 10 },

@@ -535,10 +535,11 @@ def engine_sessions(events)
 
   # Renders a before/after metadata diff for a maintenance execution.
   #
-  # Two layers: the table-level metric diff first; when none of the tracked
-  # metrics moved, fall back to what the steps themselves reported (row counts,
-  # batched statements, elapsed time) so a successful run that did real work is
-  # never presented as "no metadata changes detected".
+  # Two complementary layers, rendered together (see #196):
+  #   * the table-level metric diff, INCLUDING unchanged metrics — "4689 → 4689"
+  #     after an optimize is itself the finding (the compaction achieved nothing);
+  #   * what the steps themselves reported (row counts, batched statements).
+  # Only an operation with no tracked metric produces silence.
   #
   # @param execution [ExecutionHistory] the execution with before/after snapshots
   # @return [ActiveSupport::SafeBuffer, nil] the rendered diff, or nil when not available
@@ -549,7 +550,7 @@ def engine_sessions(events)
 
     operations = execution.execution_steps.pluck(:operation).uniq
     rows = table_metric_rows(operations, before, after)
-    rows = step_metric_rows(execution) if rows.empty?
+    rows += step_metric_rows(execution)
 
     return nil if rows.empty?
 
@@ -587,6 +588,10 @@ def engine_sessions(events)
 
   # The before/after rows for the operations' table-level metrics.
   #
+  # Unchanged metrics are KEPT: "4689 → 4689" after an optimize is a meaningful
+  # finding (the compaction achieved nothing), so only a metric absent from both
+  # snapshots is skipped.
+  #
   # @param operations [Array<String>] the operations that ran
   # @param before [Hash] the pre-maintenance metadata snapshot
   # @param after [Hash] the post-maintenance metadata snapshot
@@ -598,12 +603,10 @@ def engine_sessions(events)
     relevant_keys.filter_map do |key|
       old_val = before[key]
       new_val = after[key]
-      next if old_val == new_val
+      next if old_val.nil? && new_val.nil?
 
       label = t("maintenance.metrics.#{key}", default: key.humanize)
       delta = compute_delta(key, old_val, new_val)
-      next if delta.nil?
-
       [ label, old_val, new_val, delta ]
     end
   end

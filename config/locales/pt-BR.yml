@@ -953,6 +953,7 @@ pt-BR:
       title: "Ultimo impacto da manutencao"
       subtitle: "antes → depois"
       no_data: "Nenhuma manutencao rodou nesta tabela ainda."
+      run: "manutencao de %{time}"
 
   activerecord:
     errors:
