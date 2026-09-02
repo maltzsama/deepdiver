@@ -4,6 +4,22 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.11.2](https://github.com/maltzsama/deepdiver/compare/v0.11.1...v0.11.2) (2026-09-02)
+
+
+### Bug Fixes
+
+* **activity:** compute_delta handles oldest_snapshot_at Strings and non-numeric metrics (closes [#203](https://github.com/maltzsama/deepdiver/issues/203)) ([76041b3](https://github.com/maltzsama/deepdiver/commit/76041b3708ac5cd07e89f7fd19d21664d2b57344))
+* **activity:** label step-metric rows with the operation name, not 'Execution' (closes [#205](https://github.com/maltzsama/deepdiver/issues/205)) ([fcd0dce](https://github.com/maltzsama/deepdiver/commit/fcd0dce9414b77cfb4ce886ac8ad28a23880c82f))
+* **errors:** scope table_events to the table's catalog (closes [#210](https://github.com/maltzsama/deepdiver/issues/210)) ([c780573](https://github.com/maltzsama/deepdiver/commit/c780573e8eb30bb209ab8e343a3c74c358f0cc0b))
+* **health:** keep the observed snapshot window when snapshot_count is unknown (closes [#208](https://github.com/maltzsama/deepdiver/issues/208)) ([ed096ec](https://github.com/maltzsama/deepdiver/commit/ed096ecb3f722cea488035cba35e4931246d9f54))
+* **health:** snapshot_buildup budget from recent snapshots, not count/span (closes [#207](https://github.com/maltzsama/deepdiver/issues/207)) ([7ccc535](https://github.com/maltzsama/deepdiver/commit/7ccc535a147b1371c7afeaef2fcd1d3152c3840d))
+* **maintenance:** enforce one active execution per table with a partial unique index (closes [#206](https://github.com/maltzsama/deepdiver/issues/206)) ([475b9b8](https://github.com/maltzsama/deepdiver/commit/475b9b86d81eb72df45f8166311a7851b9602c5b))
+* **maintenance:** ExecutionFailureHandler is idempotent across all its steps (closes [#209](https://github.com/maltzsama/deepdiver/issues/209)) ([58ba923](https://github.com/maltzsama/deepdiver/commit/58ba923d714066a574b03614bd23c9fa3faf9f2f))
+* **optimize:** render timestamp partitions as TIMESTAMP literals and anchor the regex (closes [#204](https://github.com/maltzsama/deepdiver/issues/204)) ([822efc6](https://github.com/maltzsama/deepdiver/commit/822efc6232660012dde8faf40b1c32f8c9853262))
+* regression, health scoring, dedupe guard, scoping & query-id validation (closes [#203](https://github.com/maltzsama/deepdiver/issues/203)–[#211](https://github.com/maltzsama/deepdiver/issues/211)) ([adeb55c](https://github.com/maltzsama/deepdiver/commit/adeb55c1478ea372509dd551b4e34b5bd287fb4c))
+* **security:** validate query_id before interpolating into the coordinator URL (closes [#211](https://github.com/maltzsama/deepdiver/issues/211)) ([e8e729c](https://github.com/maltzsama/deepdiver/commit/e8e729c1eaacb07cddbf275dbb37c60091baf380))
+
 ## [0.11.1](https://github.com/maltzsama/deepdiver/compare/v0.11.0...v0.11.1) (2026-09-02)
 
 
