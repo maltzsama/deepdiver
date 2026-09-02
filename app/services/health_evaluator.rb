@@ -82,9 +82,15 @@ class HealthEvaluator
   # data.
   def fragmentation
     average = @extractor.average_file_size
-    return nil if average.nil?
+    return nil if average.nil? || average <= 0
 
-    (average.to_f / target_file_size).clamp(0.0, 1.0)
+    # Log scale: a linear ratio collapses every real table into the bottom ~2%
+    # of the scale (61 KB -> 0.0009, 819 KB -> 0.012), so the heaviest-weighted
+    # component carries no discriminating signal and all tables converge on the
+    # same score. Each 10x below target now costs ~1/3 of the component:
+    # at target -> 1.0, 10x below -> 0.67, 100x -> 0.33, 1000x or worse -> 0.0.
+    decades_below = Math.log10(target_file_size.to_f / average)
+    (1.0 - decades_below / 3.0).clamp(0.0, 1.0)
   end
 
   # Scores the snapshot count against the expected budget.

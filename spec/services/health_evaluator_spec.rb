@@ -76,6 +76,35 @@ RSpec.describe HealthEvaluator do
     expect(result[:components][:manifest_buildup]).to be_present
   end
 
+  describe "fragmentation log scale" do
+    let(:target) { (64 * 1024 * 1024).to_s }
+
+    def frag(average)
+      described_class.evaluate(
+        extractor(average_file_size: average,
+                  properties: { "write.target-file-size-bytes" => target })
+      )[:components][:fragmentation]
+    end
+
+    it "scores at-target tables at 1.0" do
+      expect(frag(64 * 1024 * 1024)).to eq(1.0)
+    end
+
+    it "scores ~10x below target around 0.67" do
+      expect(frag(6 * 1024 * 1024)).to be_within(0.05).of(0.67)
+    end
+
+    it "scores ~1000x below target at 0.0" do
+      expect(frag(64 * 1024)).to eq(0.0)
+    end
+
+    it "separates tables that the linear ratio collapsed" do
+      # 819 KB vs 1.29 MB: linear gave 0.0122 vs 0.0192 (indistinguishable);
+      # log gives ~0.37 vs ~0.43 — the less-fragmented table scores higher.
+      expect(frag(819 * 1024)).to be < frag(1_290 * 1024)
+    end
+  end
+
   describe "snapshot_buildup budget" do
     let(:plan) { create(:maintenance_plan, :with_all_steps) }
 
