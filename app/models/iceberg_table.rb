@@ -13,7 +13,11 @@ class IcebergTable < ApplicationRecord
 
   enum :health_status, HEALTH_STATUSES.to_h { |s| [ s, s ] }
 
-  validates :namespace, :name, presence: true
+  validates :name, presence: true
+  # A blank namespace is legitimate: Nessie (and Iceberg generally) permits
+  # tables at the repository root. The column stays NOT NULL - "" is the root,
+  # nil is missing data - so presence cannot be asserted here.
+  validates :namespace, exclusion: { in: [ nil ] }
   validates :name, uniqueness: { scope: %i[catalog_id namespace],
                                  conditions: -> { where(active: true) } }
   validates :table_uuid, uniqueness: { scope: :catalog_id }, if: :table_uuid

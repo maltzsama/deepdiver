@@ -85,9 +85,15 @@ class Catalog < ApplicationRecord
 
   # Makes a real call and returns what happened, for the "Test" button.
   def verify_connection!
-    namespaces = CatalogClientFactory.for(self).namespaces
+    client = CatalogClientFactory.for(self)
+    namespaces = client.namespaces
+    # Count the tables too. Namespace discovery succeeding while the table
+    # listing is broken reported a verified connection that then imported
+    # nothing, and "N namespaces, 0 tables" is what makes that visible at the
+    # moment an operator is deciding whether the catalog works.
+    table_count = count_tables(client, namespaces)
     catalog_credential&.update!(verified_at: Time.current, verification_error: nil)
-    { ok: true, namespace_count: namespaces.size }
+    { ok: true, namespace_count: namespaces.size, table_count: table_count }
   rescue StandardError => e
     catalog_credential&.update!(verified_at: Time.current, verification_error: e.message)
     { ok: false, error: e.message }
@@ -133,7 +139,29 @@ class Catalog < ApplicationRecord
     end
   end
 
+  # Namespaces sampled when counting tables for the verification message.
+  # Verification is interactive, so the count is a signal that the listing
+  # works at all - not an inventory. A catalog with more namespaces than this
+  # stops early rather than making the operator wait on a full walk.
+  VERIFY_NAMESPACE_SAMPLE = 25
+
   private
+
+  # Tables found across the sampled namespaces. A namespace whose listing
+  # raises contributes nothing rather than failing the whole verification:
+  # the connection itself is already proven by the namespace call.
+  #
+  # @param client [CatalogClient] the catalog client
+  # @param namespaces [Array<String>] the discovered namespaces
+  # @return [Integer] the number of tables seen
+  def count_tables(client, namespaces)
+    namespaces.first(VERIFY_NAMESPACE_SAMPLE).sum do |namespace|
+      client.tables_in(namespace).size
+    rescue StandardError => e
+      Rails.logger.warn("verify_connection!: listing #{namespace.inspect} failed: #{e.message}")
+      0
+    end
+  end
 
   # Validates the EFFECTIVE value - derived or override. Errors surface on the
   # form, not as a CHECK violation at provisioning time.

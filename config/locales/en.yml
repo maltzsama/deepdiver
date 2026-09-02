@@ -425,7 +425,7 @@ en:
       rest: "Iceberg REST surface (/iceberg)"
       native: "Native /api/v2"
     verify:
-      ok: "Connection verified. Found %{count} namespace(s)."
+      ok: "Connection verified. Found %{count} namespace(s) and %{tables} table(s)."
       failed: "Connection failed: %{error}"
     edit:
       title: "Edit catalog"

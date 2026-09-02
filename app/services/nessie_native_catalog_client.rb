@@ -35,21 +35,43 @@ class NessieNativeCatalogClient < CatalogClient
   #
   # @return [Array<String>] all descendant namespace paths
   def namespaces
-    collect_namespaces(nil, 0)
+    # The root ("") is listed first so the sync visits tables that live at the
+    # repository root, which Nessie permits. Without it those tables were
+    # unreachable: the sync only ever calls tables_in for a discovered
+    # namespace, so a repository keeping tables at the root imported part of
+    # its catalog with no error to say anything was missed.
+    [ "" ] + collect_namespaces(nil, 0)
   end
 
   # Lists the Iceberg table names directly under a namespace.
   #
-  # @param namespace [String] the dotted namespace path
+  # A blank namespace lists the tables at the repository ROOT, which Nessie
+  # permits. Those entries have a single-element name and no namespace, so the
+  # filter is `entry.namespace == ''` and the prefix guard cannot apply.
+  #
+  # ICEBERG_VIEW entries are deliberately excluded: the maintenance operations
+  # do not apply to views.
+  #
+  # @param namespace [String] the dotted namespace path ("" for the root)
   # @return [Array<String>] table names in the namespace
   def tables_in(namespace)
-    entries(namespace).filter_map do |entry|
+    root = namespace.blank?
+
+    entries(root ? "" : namespace).filter_map do |entry|
       next unless entry["type"] == "ICEBERG_TABLE"
 
-      name = dotted_name(entry)
-      next unless name.start_with?("#{namespace}.")
+      elements = Array(entry.dig("name", "elements"))
+      next if elements.empty?
 
-      name.split(".").last
+      if root
+        # A root table is exactly one element deep; anything deeper belongs to
+        # a namespace and is listed by that namespace's own call.
+        next unless elements.size == 1
+      else
+        next unless dotted_name(entry).start_with?("#{namespace}.")
+      end
+
+      elements.last
     end.compact
   end
 
@@ -62,7 +84,9 @@ class NessieNativeCatalogClient < CatalogClient
   # @param table [String] the table name
   # @return [Hash] a { "metadata" => ... }-shaped payload the sync can read
   def table_metadata(namespace, table)
-    path = "#{namespace}.#{table}"
+    # A root table's content key is the bare table name - prefixing a blank
+    # namespace would send a leading dot and miss the content.
+    path = namespace.presence ? "#{namespace}.#{table}" : table
     content = get("#{base_url}/trees/#{ERB::Util.url_encode(ref)}/contents/#{path}")
 
     {
@@ -85,14 +109,20 @@ class NessieNativeCatalogClient < CatalogClient
     @ref ||= catalog.nessie_ref.presence || "main"
   end
 
-  # GETs all entries, following the "token" pagination field. When a namespace
-  # is given, the entries are scoped with the "key" query param.
+  # GETs all entries, following the "token" pagination field.
   #
-  # @param namespace [String, nil] the dotted namespace (nil = root)
+  # Scoping uses the CEL `filter` expression, NOT `key`: in the Nessie v2 API
+  # `key` is an exact content-key lookup, so it matched the namespace entry
+  # itself and returned nothing beneath it - every namespace listed zero
+  # tables. `exact` selects between a namespace's direct contents and its
+  # descendants, which is what recursive namespace discovery needs.
+  #
+  # @param namespace [String, nil] the dotted namespace (nil = whole tree)
+  # @param exact [Boolean] true for direct contents, false for descendants
   # @return [Array<Hash>] the raw entry objects
-  def entries(namespace)
+  def entries(namespace, exact: true)
     path = +"/trees/#{ERB::Util.url_encode(ref)}/entries"
-    path << "?key=#{encode_native_path(namespace)}" if namespace
+    path << "?filter=#{ERB::Util.url_encode(namespace_filter(namespace, exact:))}" if namespace
     path << (path.include?("?") ? "&" : "?") + "max-records=100"
 
     pages = []
@@ -109,13 +139,25 @@ class NessieNativeCatalogClient < CatalogClient
     pages
   end
 
-  # Encodes a dotted namespace path as a single URL-encoded key (the native API
-  # uses a single "key" param with the namespace path as one value).
+  # The CEL expression scoping entries to a namespace.
   #
   # @param namespace [String] the dotted namespace path
-  # @return [String] the encoded key
-  def encode_native_path(namespace)
-    ERB::Util.url_encode(namespace)
+  # @param exact [Boolean] true for direct contents, false for descendants
+  # @return [String] the CEL filter expression
+  def namespace_filter(namespace, exact:)
+    literal = escape_cel(namespace)
+    exact ? "entry.namespace == '#{literal}'" : "entry.namespace.startsWith('#{literal}')"
+  end
+
+  # Escapes a namespace for interpolation into a CEL single-quoted string
+  # literal. A name carrying a quote or a backslash would otherwise produce a
+  # malformed expression - unlikely, but the value comes from the catalog and
+  # is not ours to trust.
+  #
+  # @param value [String] the raw namespace
+  # @return [String] the escaped literal body
+  def escape_cel(value)
+    value.to_s.gsub("\\", "\\\\\\\\").gsub("'", "\\\\'")
   end
 
   # The dotted path of an entry from its name.elements array.
@@ -135,7 +177,9 @@ class NessieNativeCatalogClient < CatalogClient
     return [] if depth >= MAX_NAMESPACE_DEPTH
 
     prefix = parent ? "#{parent}." : ""
-    children = entries(parent).filter_map do |entry|
+    # Descendants, not direct contents: a namespace's children are themselves
+    # namespaces nested below it.
+    children = entries(parent, exact: false).filter_map do |entry|
       next unless entry["type"] == "NAMESPACE"
 
       name = dotted_name(entry)

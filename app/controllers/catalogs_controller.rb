@@ -76,7 +76,7 @@ class CatalogsController < ApplicationController
     result = @catalog.verify_connection!
 
     if result[:ok]
-      redirect_to @catalog, notice: t("catalogs.verify.ok", count: result[:namespace_count])
+      redirect_to @catalog, notice: t("catalogs.verify.ok", count: result[:namespace_count], tables: result[:table_count])
     else
       redirect_to @catalog, alert: t("catalogs.verify.failed", error: result[:error])
     end
@@ -91,7 +91,7 @@ class CatalogsController < ApplicationController
     result = catalog.verify_connection!
 
     if result[:ok]
-      redirect_back fallback_location: catalogs_path, notice: t("catalogs.verify.ok", count: result[:namespace_count])
+      redirect_back fallback_location: catalogs_path, notice: t("catalogs.verify.ok", count: result[:namespace_count], tables: result[:table_count])
     else
       redirect_back fallback_location: catalogs_path, alert: t("catalogs.verify.failed", error: result[:error])
     end
