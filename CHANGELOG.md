@@ -4,6 +4,14 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.12.2](https://github.com/maltzsama/deepdiver/compare/v0.12.1...v0.12.2) (2026-09-02)
+
+
+### Bug Fixes
+
+* root-table guard 500s the detail page and blocks Run ([#231](https://github.com/maltzsama/deepdiver/issues/231)) ([b767e94](https://github.com/maltzsama/deepdiver/commit/b767e941f62f55f6698cf218eb5652ff7db45008))
+* **tables:** stop the root-table guard from 500ing the detail page (closes [#231](https://github.com/maltzsama/deepdiver/issues/231)) ([e003677](https://github.com/maltzsama/deepdiver/commit/e003677e5cdf1617b1785557e90b9b54033549f1))
+
 ## [0.12.1](https://github.com/maltzsama/deepdiver/compare/v0.12.0...v0.12.1) (2026-09-02)
 
 
