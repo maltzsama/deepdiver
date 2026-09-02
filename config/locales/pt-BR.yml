@@ -950,6 +950,11 @@ pt-BR:
       snapshot_count: "Snapshots"
       oldest_snapshot_at: "Snapshot mais antigo"
       manifest_count: "Manifestos"
+    operations:
+      optimize: "Optimize"
+      expire_snapshots: "Expirar snapshots"
+      optimize_manifests: "Otimizar manifestos"
+      remove_orphan_files: "Remover arquivos orfaos"
     step_metrics:
       processed: "%{count} processados"
       statements: "%{count} statements"

@@ -5,7 +5,8 @@ RSpec.describe HealthEvaluator do
     instance_double(TableMetadataExtractor,
                     { average_file_size: nil, snapshot_count: nil, total_records: nil,
                       position_deletes: nil, equality_deletes: nil, properties: {},
-                      oldest_snapshot_at: nil, last_snapshot_at: nil, manifest_count: nil }.merge(overrides))
+                      oldest_snapshot_at: nil, last_snapshot_at: nil, manifest_count: nil,
+                      snapshots: [] }.merge(overrides))
   end
 
   it "does not penalize a cold table that is well compacted" do
@@ -109,15 +110,21 @@ RSpec.describe HealthEvaluator do
     let(:plan) { create(:maintenance_plan, :with_all_steps) }
 
     def busy_extractor(count:, oldest:, latest:)
+      snapshots = Array.new(count) do |i|
+        ts = oldest.to_f + ((latest.to_f - oldest.to_f) * (i.to_f / [ count - 1, 1 ].max))
+        { "timestamp-ms" => (ts * 1000).to_i }
+      end
       extractor(
         average_file_size: 128 * 1024 * 1024,
         snapshot_count: count, oldest_snapshot_at: oldest, last_snapshot_at: latest,
-        total_records: 1_000_000, position_deletes: 0, equality_deletes: 0
+        total_records: 1_000_000, position_deletes: 0, equality_deletes: 0,
+        snapshots: snapshots
       )
     end
 
     it "scores a busy table (committing hourly) healthy right after expire" do
-      # 7 days of hourly commits = 168 snapshots; expire should leave ~168.
+      # 7 days of hourly commits = 168 snapshots, all inside the reference
+      # window; budget ≈ 168 so the score is high.
       oldest = 7.days.ago
       latest = Time.current
       result = described_class.evaluate(busy_extractor(count: 168, oldest:, latest:), plan:)
@@ -126,17 +133,28 @@ RSpec.describe HealthEvaluator do
       expect(result[:status]).to eq(:healthy)
     end
 
-    it "derives the budget from the real commit rate, not a fixed 10/day" do
-      oldest = 7.days.ago
+    it "scores the same span differently by count — the count no longer cancels" do
+      # Identical 30-day window: 1 000 snapshots all recent score high, while
+      # 2 000 snapshots spread over the same span (half older than the window)
+      # score low.
+      oldest = 30.days.ago
       latest = Time.current
-      evaluator = described_class.new(busy_extractor(count: 168, oldest:, latest:), plan:)
+      recent_span = [ 1_000, 7.days ].max
+      recent_count = described_class.new(
+        busy_extractor(count: 1_000, oldest: 7.days.ago, latest: Time.current), plan:
+      ).call[:components][:snapshot_buildup]
 
-      expect(evaluator.send(:observed_snapshots_per_day)).to be_within(0.1).of(24)
+      backlog_count = described_class.new(
+        busy_extractor(count: 2_000, oldest:, latest:), plan:
+      ).call[:components][:snapshot_buildup]
+
+      expect(recent_count).to be > backlog_count
     end
 
     it "does not reward raising retention for a fixed snapshot count" do
-      # 30 days of hourly commits = 720 snapshots. Budget = rate(24/day) × fixed
-      # 7-day window = 168. The table is over-budget (expire is not running).
+      # 720 snapshots over 30 days: only the recent ~168 fall inside the
+      # reference window, so the table is over-budget; a longer retention must
+      # not make it healthier.
       oldest = 30.days.ago
       latest = Time.current
       step = plan.maintenance_steps.find_by!(operation: "expire_snapshots")
@@ -148,8 +166,8 @@ RSpec.describe HealthEvaluator do
       loose = described_class.new(busy_extractor(count: 720, oldest:, latest:), plan:)
       loose_score = loose.call[:components][:snapshot_buildup]
 
-      # The budget is rate-based over a fixed reference window, decoupled from
-      # the configurable retention — raising retention changes nothing.
+      # The budget comes from the reference window, decoupled from the
+      # configurable retention — raising retention changes nothing.
       expect(tight_score).to eq(loose_score)
       expect(tight_score).to be < 0.1
     end

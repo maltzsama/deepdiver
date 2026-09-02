@@ -141,4 +141,25 @@ RSpec.describe OptimizeStatementPlanner do
       expect(ErrorEvent.last.message).to include("unsupported partition value")
     end
   end
+
+  describe "#sql_literal" do
+    subject(:literal) { described_class.new(table, optimize_step, runtime: runtime) }
+
+    it "renders a date-only value as a DATE literal" do
+      expect(literal.send(:sql_literal, "2026-08-28")).to eq("DATE '2026-08-28'")
+    end
+
+    it "renders a timestamp value as a TIMESTAMP literal" do
+      expect(literal.send(:sql_literal, "2026-08-28T12:57:08")).to eq("TIMESTAMP '2026-08-28 12:57:08'")
+    end
+
+    it "renders a space-separated timestamp with fractional seconds" do
+      expect(literal.send(:sql_literal, "2026-08-28 12:57:08.000")).to eq("TIMESTAMP '2026-08-28 12:57:08.000'")
+    end
+
+    it "rejects a timestamp with trailing content (anchored regex)" do
+      expect { literal.send(:sql_literal, "2026-08-28T12:57 OR 1=1") }
+        .to raise_error(ArgumentError, /unsupported partition value/)
+    end
+  end
 end

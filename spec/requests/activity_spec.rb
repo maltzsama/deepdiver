@@ -127,8 +127,9 @@ RSpec.describe "GET /activity", type: :request do
   it "lets an admin hard-reset the engine, failing in-flight work" do
     sign_in create(:user, :admin)
     plan = create(:maintenance_plan, :with_all_steps)
+    other_table = create(:iceberg_table)
     running = create(:execution_history, maintenance_plan: plan, iceberg_table: plan.iceberg_table, status: :running)
-    pending = create(:execution_history, maintenance_plan: plan, iceberg_table: plan.iceberg_table, status: :pending)
+    pending = create(:execution_history, iceberg_table: other_table, status: :pending)
     TableLock.acquire(running)
     TrinoEngineSupervisor.state.update!(status: "up", status_changed_at: Time.current)
     allow(TrinoProvisioner).to receive(:destroy!)

@@ -11,14 +11,21 @@ RSpec.describe ChartTrinoProvisioner do
   it "cancels a query via DELETE /v1/query/:id" do
     allow(transport).to receive(:delete).and_return({})
 
-    expect(provisioner.cancel_query("qid-123")).to be(true)
-    expect(transport).to have_received(:delete).with("http://trino/v1/query/qid-123")
+    expect(provisioner.cancel_query("20260828_120000_00001_coordinator")).to be(true)
+    expect(transport).to have_received(:delete).with("http://trino/v1/query/20260828_120000_00001_coordinator")
   end
 
   it "returns false when the cancel request fails" do
     allow(transport).to receive(:delete).and_raise(HttpTransport::ApiError.new(404, ""))
 
-    expect(provisioner.cancel_query("qid-123")).to be(false)
+    expect(provisioner.cancel_query("20260828_120000_00001_coordinator")).to be(false)
+  end
+
+  it "rejects a non-conforming query id instead of interpolating it" do
+    allow(transport).to receive(:delete)
+
+    expect(provisioner.cancel_query("../../v1/info")).to be(false)
+    expect(transport).not_to have_received(:delete)
   end
 
   it "lists active queries from GET /v1/query" do

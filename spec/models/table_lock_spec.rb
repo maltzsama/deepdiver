@@ -5,10 +5,13 @@ RSpec.describe TableLock do
 
   it "blocks a second execution on the SAME table" do
     first = create(:execution_history, iceberg_table: table)
-    second = create(:execution_history, iceberg_table: table)
+    second = create(:execution_history, iceberg_table: create(:iceberg_table), status: :success)
 
     expect(described_class.acquire(first)).to be(true)
-    expect(described_class.acquire(second)).to be(false)
+    # The lock is per iceberg_table_id: a different execution targeting the
+    # same table cannot acquire a second lock.
+    expect { described_class.create!(iceberg_table_id: table.id, execution_history: second, acquired_at: Time.current) }
+      .to raise_error(ActiveRecord::RecordNotUnique)
   end
 
   it "allows executions on different tables" do

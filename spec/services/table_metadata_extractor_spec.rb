@@ -61,6 +61,18 @@ RSpec.describe TableMetadataExtractor, type: :service do
 
       expect(extractor.manifest_count).to eq(15)
     end
+
+    it "keeps a real window when snapshot_count is unknown and both timestamps exist" do
+      oldest = 5.days.ago
+      latest = Time.current
+      table = create(:iceberg_table, snapshot_count: nil, total_records: 100,
+                                     oldest_snapshot_at: oldest, last_data_update: latest)
+      extractor = described_class.from_persisted(table)
+
+      expect(extractor.oldest_snapshot_at).to be_present
+      expect(extractor.last_snapshot_at).to be_present
+      expect(extractor.oldest_snapshot_at).not_to eq(extractor.last_snapshot_at)
+    end
   end
 
   describe "#total_size_bytes" do

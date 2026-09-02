@@ -28,8 +28,15 @@ class ExecutionFailureHandler
 
   # Runs the failure handling sequence and returns the updated execution.
   #
+  # Idempotent: an execution already in a terminal state is returned untouched.
+  # Without this guard, only fail_execution bailed early while
+  # increment_and_maybe_pause still bumped the plan's consecutive_failures — a
+  # double-handled execution over-counted and auto-paused the plan early (#209).
+  #
   # @return [ExecutionHistory] the updated execution
   def call
+    return @execution if TERMINAL_STATUSES.include?(@execution.status)
+
     fail_execution
     increment_and_maybe_pause
     release_table_lock

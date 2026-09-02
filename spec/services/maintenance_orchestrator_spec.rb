@@ -74,9 +74,10 @@ RSpec.describe "Cadence per step" do
     execution = MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 03:00"))
 
     # Acquire the lock from outside — simulates another execution grabbing it
-    # between run_plan and start_execution_on_engine.
-    holder = create(:execution_history, iceberg_table: table, status: :running)
-    TableLock.acquire(holder)
+    # between run_plan and start_execution_on_engine. The holder is a distinct
+    # execution on another table; the lock itself is on the target table.
+    holder = create(:execution_history, iceberg_table: create(:iceberg_table), status: :running)
+    TableLock.create!(iceberg_table_id: table.id, execution_history: holder, acquired_at: Time.current)
 
     MaintenanceOrchestrator.start_execution_on_engine(execution.id)
 
@@ -98,6 +99,15 @@ RSpec.describe "Cadence per step" do
     expect { MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 03:00")) }
       .not_to change { ExecutionHistory.count }
     expect(MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 03:00"))).to eq(existing)
+  end
+
+  it "returns the winning execution when two dispatches race the create" do
+    allow(ExecutionHistory).to receive(:create!).and_raise(ActiveRecord::RecordNotUnique)
+    winner = create(:execution_history, iceberg_table: table, maintenance_plan: plan, status: :pending)
+
+    result = MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 03:00"))
+
+    expect(result).to eq(winner)
   end
 
   it "drains the engine when a dispatch is skipped and nothing else needs it" do

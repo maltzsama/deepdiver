@@ -149,34 +149,32 @@ class HealthEvaluator
     @extractor.properties["write.target-file-size-bytes"]&.to_i.presence || DEFAULT_TARGET_FILE_SIZE
   end
 
-  # The expected snapshot budget derived from the table's observed commit rate
-  # over a FIXED reference window. Retention is deliberately NOT in the budget:
-  # scaling it by the configurable retention_threshold meant raising retention
-  # made a table look healthier (the metric's meaning inverted). The reference
-  # window is the same steady-state horizon the plan defaults to, so a table
-  # that expires correctly sits at ~budget regardless of how the operator tunes
-  # retention.
+  # The expected snapshot budget: the number of snapshots actually retained in
+  # the reference window. Derived from the RECENT snapshots (those newer than
+  # the reference window), NOT from count/full_span — the latter cancels
+  # algebraically (budget = count*7/span, score = 2 - span/7), so the component
+  # measured only window age and a 10 000-snapshot table scored 1.0 (see #207).
+  #
+  # A table that expires correctly keeps roughly its recent window's worth of
+  # snapshots, so count ≈ budget and the score is high; snapshots older than
+  # the window push count above budget and the score falls.
   #
   # @return [Integer] the snapshot budget
   def expected_snapshot_budget
-    rate = observed_snapshots_per_day || 10
-    [ rate * REFERENCE_SNAPSHOT_WINDOW_DAYS, 10 ].max.round
+    recent = @extractor.snapshots.count { |s| recent_snapshot?(s) }
+    [ recent, 10 ].max.round
   end
 
-  # The table's observed snapshot commit rate, derived from the oldest and
-  # latest snapshot timestamps. Returns nil when either end is unknown.
+  # Whether a snapshot falls inside the reference window relative to the
+  # evaluation clock.
   #
-  # @return [Float, nil] snapshots per day
-  def observed_snapshots_per_day
-    oldest = @extractor.oldest_snapshot_at
-    latest = @extractor.last_snapshot_at
-    count  = @extractor.snapshot_count
-    return nil if oldest.nil? || latest.nil? || count.nil? || count.zero?
+  # @param snapshot [Hash] a raw snapshot with a timestamp-ms field
+  # @return [Boolean]
+  def recent_snapshot?(snapshot)
+    ms = snapshot["timestamp-ms"] || snapshot["timestamp_ms"]
+    return false if ms.nil?
 
-    span_days = (latest - oldest) / 1.day
-    return nil if span_days <= 0
-
-    count.to_f / span_days
+    Time.at(ms.to_f / 1000.0) >= @now - REFERENCE_SNAPSHOT_WINDOW_DAYS.days
   end
 
   # The expected manifest budget: proportional to the snapshot budget since
