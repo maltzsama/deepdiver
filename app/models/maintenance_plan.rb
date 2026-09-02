@@ -122,7 +122,7 @@ class MaintenancePlan < ApplicationRecord
     return if iceberg_table.nil?
     return if iceberg_table.addressable_in_trino?
 
-    errors.add(:iceberg_table, :not_addressable_in_trino)
+    errors.add(:iceberg_table, :"not_addressable_#{iceberg_table.unaddressable_reason}")
   end
 
   # Validates that cron is a parseable expression, adding an error otherwise.

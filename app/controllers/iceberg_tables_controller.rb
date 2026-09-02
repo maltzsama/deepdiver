@@ -89,7 +89,7 @@ class IcebergTablesController < ApplicationController
     # creating a default plan for it would raise. Say so instead.
     unless @table.addressable_in_trino?
       redirect_back fallback_location: iceberg_tables_path,
-                    alert: t("tables.run_maintenance.not_addressable")
+                    alert: t("tables.run_maintenance.not_addressable_#{@table.unaddressable_reason}")
       return
     end
 

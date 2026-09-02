@@ -19,7 +19,7 @@ RSpec.describe "root-level table detail", type: :request do
 
     get iceberg_table_path(table)
 
-    expect(response.body).to include(I18n.t("tables.show.not_addressable"))
+    expect(response.body).to include(I18n.t("tables.show.not_addressable_root"))
   end
 
   it "still shows the identifier for an addressable table" do
@@ -28,7 +28,7 @@ RSpec.describe "root-level table detail", type: :request do
     get iceberg_table_path(table)
 
     expect(response.body).to include("&quot;cat&quot;.&quot;silver&quot;.&quot;orders&quot;")
-    expect(response.body).not_to include(I18n.t("tables.show.not_addressable"))
+    expect(response.body).not_to include(I18n.t("tables.show.not_addressable_root"))
   end
 
   it "refuses a run instead of raising while building a default plan" do
@@ -37,7 +37,7 @@ RSpec.describe "root-level table detail", type: :request do
     post run_maintenance_iceberg_table_path(table)
 
     expect(response).to have_http_status(:redirect)
-    expect(flash[:alert]).to eq(I18n.t("tables.run_maintenance.not_addressable"))
+    expect(flash[:alert]).to eq(I18n.t("tables.run_maintenance.not_addressable_root"))
     expect(table.reload.maintenance_plan).to be_nil
   end
 end

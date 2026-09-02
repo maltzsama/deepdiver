@@ -403,7 +403,8 @@ pt-BR:
   tables:
     run_maintenance:
       enqueued: "Manutencao enfileirada - iniciara quando o motor subir."
-      not_addressable: "Esta tabela esta na raiz do catalogo e nao pode receber manutencao: o Trino precisa de um schema para enderecar."
+      not_addressable_root: "Esta tabela esta na raiz do catalogo e nao pode receber manutencao: o Trino precisa de um schema para enderecar."
+      not_addressable_nested_native_nessie: "Esta tabela esta em um namespace aninhado e nao pode receber manutencao: este catalogo usa a API nativa do Nessie, cujo conector do Trino nao divide o schema em niveis de namespace. Mudar o catalogo para a superficie Iceberg REST torna namespaces aninhados alcancaveis, o que precisa ser habilitado no servidor Nessie."
       already_queued: "Manutencao para esta tabela ja esta na fila ou em execucao."
     banner_dismissed: "Banner de erros dispensado para esta tabela."
     show:
@@ -414,7 +415,8 @@ pt-BR:
       status: "Status"
       last_write: "Ultima escrita"
       trino_id: "Identificador Trino"
-      not_addressable: "nao enderecavel - a tabela esta na raiz do catalogo, que nao tem schema"
+      not_addressable_root: "nao enderecavel - a tabela esta na raiz do catalogo, que nao tem schema"
+      not_addressable_nested_native_nessie: "nao enderecavel - namespace aninhado em catalogo Nessie nativo, cujo conector nao divide o schema"
       schedules_title: "Agendamentos"
       schedules_note: "%{count} de %{total} operacoes"
       empty_title: "Nenhum agendamento para esta tabela"
@@ -984,7 +986,8 @@ pt-BR:
         maintenance_plan:
           attributes:
             iceberg_table:
-              not_addressable_in_trino: "esta na raiz do catalogo e nao pode receber manutencao: o Trino precisa de um schema para enderecar a tabela"
+              not_addressable_root: "esta na raiz do catalogo e nao pode receber manutencao: o Trino precisa de um schema para enderecar a tabela"
+              not_addressable_nested_native_nessie: "esta em um namespace aninhado em catalogo Nessie nativo e nao pode receber manutencao: esse conector nao divide o schema em niveis de namespace"
         maintenance_step:
           attributes:
             config:

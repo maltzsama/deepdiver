@@ -64,7 +64,9 @@
           <% if (identifier = @table.trino_identifier_for_display) %>
             <%= identifier %>
           <% else %>
-            <span class="text-cosmos-fg-mute italic"><%= t("tables.show.not_addressable") %></span>
+            <span class="text-cosmos-fg-mute italic">
+              <%= t("tables.show.not_addressable_#{@table.unaddressable_reason}") %>
+            </span>
           <% end %>
         </dd>
       </div>
