@@ -93,7 +93,7 @@ class IcebergTablesController < ApplicationController
       return
     end
 
-    MaintenanceOrchestrator.run_plan(plan.id)
+    MaintenanceOrchestrator.run_plan(plan.id, force: true)
     redirect_back fallback_location: iceberg_tables_path, notice: t("tables.run_maintenance.enqueued")
   end
 

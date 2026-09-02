@@ -12,7 +12,12 @@ module MaintenanceOrchestrator
   # will run and what stays out is visible before it starts, and the decision
   # does not change mid-chain), then hands the engine lifecycle over to the
   # supervisor.
-  def self.run_plan(plan_id, at: Time.current)
+  # @param force [Boolean] operator-initiated run: bypass each step's CADENCE
+  #   check so the plan runs now instead of only inside its cron minute. The
+  #   step-level `enabled` flag is still honoured (cadence is a schedule, not a
+  #   permission), and the duplicate guard below is untouched - a forced run is
+  #   still one run.
+  def self.run_plan(plan_id, at: Time.current, force: false)
     plan = MaintenancePlan.find(plan_id)
 
     # Idempotent: a table already queued or running does not queue again.
@@ -30,7 +35,7 @@ module MaintenanceOrchestrator
     return execution if duplicate
 
     plan.maintenance_steps.each do |step|
-      running = step.enabled && step.due_at?(at)
+      running = step.enabled && (force || step.due_at?(at))
       reason = running ? nil : skip_reason(step, at)
 
       execution.execution_steps.create!(
