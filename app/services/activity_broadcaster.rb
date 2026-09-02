@@ -22,12 +22,17 @@ module ActivityBroadcaster
     engine_events = ErrorEvent.where(source_system: "engine", operation: "engine-lifecycle")
                               .order(last_seen_at: :desc)
                               .limit(20)
+    # Read idleness from the tables directly, never through TrinoDemand: its
+    # #count calls reap_orphans!, which would fail executions from a broadcast.
+    engine_idle = state.status == "down" && running.empty? && queued.empty? &&
+                  !FreshnessRun.where(status: %w[pending running]).exists?
 
     Turbo::StreamsChannel.broadcast_replace_to(
       "activity",
       target: "activity-engine-strip",
       partial: "activity/engine_strip",
-      locals: { engine_state: state, active_count: active_count, queries: queries.size, engine_timer: true }
+      locals: { engine_state: state, active_count: active_count, queries: queries.size,
+                engine_timer: true, engine_events: engine_events, engine_idle: engine_idle }
     )
     Turbo::StreamsChannel.broadcast_replace_to(
       "activity",

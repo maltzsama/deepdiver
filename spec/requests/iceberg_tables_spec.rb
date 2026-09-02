@@ -286,3 +286,64 @@ RSpec.describe "Pagination", type: :request do
     expect(response).to have_http_status(:ok)
   end
 end
+
+RSpec.describe "GET /iceberg_tables/:id", type: :request do
+  let(:user) { create(:user) }
+
+  before { sign_in user }
+
+  it "renders the breakdown from the persisted evaluation, agreeing with the list" do
+    table = create(:iceberg_table, snapshot_count: 12, total_records: 1_000,
+                                   total_data_files: 8, total_size_bytes: 8 * 1024 * 1024,
+                                   manifest_count: 4, last_data_update: Time.current,
+                                   oldest_snapshot_at: 3.days.ago)
+    # First render backfills and persists; nothing is evaluated on read after that.
+    get iceberg_table_path(table)
+    expect(response).to have_http_status(:ok)
+
+    table.reload
+    expect(table.health_components).to be_present
+    expect(table.health_score).to be_present
+
+    # The badge on the detail page and the column the list renders must agree.
+    persisted = table.persisted_health_evaluation
+    expect(persisted[:score]).to eq(table.health_score)
+    expect(persisted[:status].to_s).to eq(table.health_status)
+  end
+
+  it "does not re-evaluate once the breakdown is persisted" do
+    table = create(:iceberg_table, snapshot_count: 5, total_records: 100,
+                                   total_data_files: 2, total_size_bytes: 1024,
+                                   last_data_update: Time.current)
+    get iceberg_table_path(table)
+    first = table.reload.health_evaluated_at
+
+    expect(HealthEvaluator).not_to receive(:evaluate)
+    get iceberg_table_path(table)
+
+    expect(table.reload.health_evaluated_at).to eq(first)
+  end
+end
+
+RSpec.describe "GET /iceberg_tables/:id for an unscoreable table", type: :request do
+  let(:user) { create(:user) }
+
+  before { sign_in user }
+
+  it "does not re-evaluate on every render when the table has no score" do
+    table = create(:iceberg_table, snapshot_count: nil, total_records: nil,
+                                   total_data_files: nil, total_size_bytes: nil,
+                                   manifest_count: nil, last_data_update: nil,
+                                   oldest_snapshot_at: nil)
+    get iceberg_table_path(table)
+    expect(response).to have_http_status(:ok)
+    expect(table.reload.health_score).to be_nil
+    first = table.health_evaluated_at
+    expect(first).to be_present
+
+    expect(HealthEvaluator).not_to receive(:evaluate)
+    get iceberg_table_path(table)
+
+    expect(table.reload.health_evaluated_at).to eq(first)
+  end
+end

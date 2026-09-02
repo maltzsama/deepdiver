@@ -51,6 +51,38 @@ RSpec.describe "Cadence per step" do
     expect(execution.execution_steps.where(status: "pending")).to be_empty
   end
 
+  it "force runs every enabled step regardless of cadence" do
+    # 02:00 is outside the 03:00 cadence of three of the four steps.
+    execution = MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 02:00"), force: true)
+
+    pending = execution.execution_steps.where(status: "pending")
+                       .joins(:maintenance_step).order("maintenance_steps.position")
+    expect(pending.pluck(:operation)).to eq(MaintenancePlan::CANONICAL_ORDER)
+    expect(execution.execution_steps.where(status: "skipped")).to be_empty
+  end
+
+  it "force still honours the step-level enabled flag" do
+    plan.maintenance_steps.find_by(operation: "expire_snapshots").update!(enabled: false)
+
+    execution = MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 02:00"), force: true)
+
+    expect(execution.execution_steps.where(status: "pending").pluck(:operation))
+      .not_to include("expire_snapshots")
+    disabled = execution.execution_steps.find_by(operation: "expire_snapshots")
+    expect(disabled.status).to eq("skipped")
+    expect(disabled.skip_reason).to eq("step disabled")
+  end
+
+  it "force does not bypass the duplicate guard" do
+    previous = create(:execution_history, iceberg_table: table, status: :running)
+    TableLock.acquire(previous)
+
+    execution = MaintenanceOrchestrator.run_plan(plan.id, at: Time.zone.parse("2026-08-10 02:00"), force: true)
+
+    expect(execution.id).to eq(previous.id)
+    expect(plan.execution_histories.count).to eq(0)
+  end
+
   it "returns the existing running execution instead of creating a duplicate" do
     previous = create(:execution_history, iceberg_table: table, status: :running)
     TableLock.acquire(previous)

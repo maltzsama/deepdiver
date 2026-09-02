@@ -1,5 +1,5 @@
 <%# Shared: explained health score.
-    Expects: evaluation (HealthEvaluator result hash), extractor (TableMetadataExtractor) %>
+    Expects: evaluation (HealthEvaluator result hash, persisted or fresh) %>
 <section class="panel mb-6">
   <div class="panel-head">
     <h2 class="panel-title"><%= t("health.title") %></h2>
@@ -24,27 +24,34 @@
       <% end %>
     </div>
 
+    <%# Every row renders the SAME four grid cells - label, track, percentage,
+        detail - whether or not it has data. The bar/percentage/detail block
+        used to live inside a has_data branch, so a row without data occupied a
+        different amount of horizontal space and the columns shifted between
+        rows; the track was also flex-1 inside a variable-width container, so
+        tracks were not a consistent length. The track now has its own explicit
+        grid column. %>
     <div class="space-y-2.5">
-      <% health_component_rows(evaluation, extractor).each do |row| %>
-        <div class="grid grid-cols-[8rem_minmax(0,1fr)_auto] items-center gap-3 text-body">
+      <% health_component_rows(evaluation).each do |row| %>
+        <div class="grid grid-cols-[8rem_minmax(0,1fr)_2.75rem_auto] items-center gap-3 text-body">
           <span class="text-cosmos-fg-soft" title="<%= row[:explains] %>"><%= row[:label] %></span>
 
+          <div class="h-1.5 overflow-hidden rounded-full bg-cosmos-line">
+            <div class="h-full rounded-full <%= severity_fill_class(row[:severity]) %>"
+                 style="width: <%= row[:has_data] ? row[:pct] : 0 %>%"></div>
+          </div>
+
           <% if row[:has_data] %>
-            <div class="flex items-center gap-2">
-              <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-cosmos-line">
-                <div class="h-full rounded-full <%= severity_fill_class(row[:severity]) %>"
-                     style="width: <%= row[:pct] %>%"></div>
-              </div>
-              <span class="w-9 text-right font-mono text-small tabular-nums text-cosmos-fg-soft"><%= row[:pct] %>%</span>
-            </div>
+            <span class="text-right font-mono text-small tabular-nums text-cosmos-fg-soft"><%= row[:pct] %>%</span>
             <span class="max-w-56 justify-self-end text-right text-small text-cosmos-fg-mute">
               <%= row[:detail] %>
               <span class="text-accent-DEFAULT">→ <%= row[:operation] %></span>
             </span>
           <% else %>
-            <span class="text-small italic text-cosmos-fg-mute"><%= t("health.component_no_data") %></span>
-            <span class="justify-self-end text-right text-small text-cosmos-fg-mute">
-              <%= t("health.component_missing", component: row[:label]) %>
+            <span class="text-right font-mono text-small tabular-nums text-cosmos-fg-mute">—</span>
+            <span class="max-w-56 justify-self-end text-right text-small italic text-cosmos-fg-mute"
+                  title="<%= t("health.component_missing", component: row[:label]) %>">
+              <%= t("health.component_no_data") %>
             </span>
           <% end %>
         </div>

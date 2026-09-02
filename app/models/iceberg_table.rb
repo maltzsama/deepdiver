@@ -28,6 +28,61 @@ class IcebergTable < ApplicationRecord
     update!(active: false, deactivated_at: at)
   end
 
+  # The attributes that persist a HealthEvaluator result.
+  #
+  # ONE writer shape for every caller, so the score, the status label and the
+  # component breakdown are always written together from a single evaluation.
+  # Recomputing on read is what let the list and the detail page disagree on
+  # both the score and the label (see #215); persisting the breakdown lets the
+  # detail page render by reading, so a divergence cannot arise.
+  #
+  # An unscoreable table still records that it WAS evaluated: the breakdown and
+  # the timestamp are written while the score and label are left untouched.
+  # Without that, health_components stayed blank and the detail page treated
+  # the table as never-evaluated and re-evaluated it on every single render -
+  # the very thing this exists to prevent.
+  #
+  # @param health [Hash] a HealthEvaluator.evaluate result
+  # @param at [Time] the evaluation clock
+  # @return [Hash] attributes to assign
+  def health_attributes(health, at: Time.current)
+    return { health_components: serialize_health_components(health), health_evaluated_at: at } if health[:score].nil?
+
+    attributes = {
+      health_score: health[:score],
+      health_status: health[:status].to_s,
+      health_components: serialize_health_components(health),
+      health_evaluated_at: at
+    }
+    # Only stamp when the state actually CHANGES. Stamping on every sync would
+    # reset the clock and make "broke most recently" ordering just sync order.
+    attributes[:health_status_changed_at] = at if attributes[:health_status] != health_status
+    attributes
+  end
+
+  # The persisted breakdown, in the shape HealthEvaluator.evaluate returns, so
+  # the view renders a read and a fresh evaluation identically.
+  #
+  # @return [Hash, nil] the evaluation shape, or nil when nothing is persisted
+  def persisted_health_evaluation
+    return nil if health_components.blank?
+
+    stored = health_components
+    components = (stored["components"] || {}).transform_keys(&:to_sym)
+    {
+      score: health_score,
+      # An unscoreable table keeps whatever label it last had, but the panel
+      # must render :unknown rather than a stale badge with no score behind it.
+      status: health_score.nil? ? :unknown : health_status.to_sym,
+      components: components,
+      coverage: stored["coverage"],
+      worst_component: stored["worst_component"]&.to_sym,
+      worst_ratio: stored["worst_ratio"],
+      details: (stored["details"] || {}).transform_keys(&:to_sym),
+      evaluated_at: health_evaluated_at
+    }
+  end
+
   # Namespace and table name joined with a dot.
   # @return [String]
   def fully_qualified_name
@@ -80,6 +135,23 @@ class IcebergTable < ApplicationRecord
   end
 
   private
+
+  # Flattens an evaluation into the JSON column. The component ratios AND the
+  # raw numbers behind them are stored, because the breakdown panel needs both
+  # and the raw numbers come from the extractor, which is not available on a
+  # read path.
+  #
+  # @param health [Hash] a HealthEvaluator.evaluate result
+  # @return [Hash] the JSON-serialisable breakdown
+  def serialize_health_components(health)
+    {
+      "components" => (health[:components] || {}).transform_keys(&:to_s),
+      "coverage" => health[:coverage],
+      "worst_component" => health[:worst_component]&.to_s,
+      "worst_ratio" => health[:worst_ratio],
+      "details" => (health[:details] || {}).transform_keys(&:to_s)
+    }
+  end
 
   # Quotes an identifier for use inside a Trino SQL statement, escaping any
   # embedded double quotes.

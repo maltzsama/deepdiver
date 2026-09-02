@@ -66,9 +66,8 @@ class CatalogSyncService
     extractor = TableMetadataExtractor.from_persisted(table)
     health = HealthEvaluator.evaluate(extractor, plan: table.maintenance_plan,
                                           manifest_count: manifest_count&.to_i)
-    if health[:score]
-      table.update_columns(health_score: health[:score], health_status: health[:status].to_s)
-    end
+    attributes = table.health_attributes(health)
+    table.update_columns(attributes) if attributes.any?
   rescue StandardError => e
     Rails.logger.warn("enrich_from_trino! failed for #{table.fully_qualified_name}: #{e.message}")
   end
@@ -169,7 +168,6 @@ class CatalogSyncService
     extractor = TableMetadataExtractor.new(payload["metadata"] || payload)
 
     table = find_or_initialize_table(namespace, table_name, extractor.table_uuid)
-    previous_status = table.health_status
     # manifest_count comes from the persisted Trino enrichment, not the catalog
     # summary — pass it so the persisted health_score matches the detail page
     # and enrich_from_trino! (see #198).
@@ -201,15 +199,11 @@ class CatalogSyncService
     # enrichment already measured — the two sources have different
     # availability. Only write size when the catalog actually carried it.
     attributes[:total_size_bytes] = extractor.total_size_bytes if extractor.total_size_bytes
-    if health[:score]
-      attributes[:health_score] = health[:score]
-      attributes[:health_status] = health[:status].to_s
-    end
 
-    # Só carimba quando MUDA de estado. Sem isso, todo sync reiniciaria o
-    # relógio e a ordenação por "quebrou agora" seria sempre a ordem do sync.
-    attributes[:health_status_changed_at] = @now if attributes[:health_status] &&
-                                                    attributes[:health_status] != previous_status
+    # One writer shape for the score, the status label and the breakdown, so
+    # they can never be persisted from different evaluations (see #215). The
+    # status_changed_at stamping lives there too.
+    attributes.merge!(table.health_attributes(health, at: @now))
 
     table.update!(attributes)
     table

@@ -23,37 +23,83 @@ class TableMetadataExtractor
     summary["total-equality-deletes"] = table.equality_deletes if table.equality_deletes
     summary["manifest-count"] = table.manifest_count if table.manifest_count
 
-    # A snapshot must carry the summary. When snapshot_count is 0/nil the old
-    # code produced an empty list and the summary was discarded, so every metric
-    # read back nil even though the columns hold measured values. Pad to one
-    # synthetic snapshot only when there IS a metric to surface — a table with
-    # nothing synced stays unknown rather than scoring from a phantom snapshot.
+    snapshots = persisted_snapshots(table, summary)
+
+    # No current-snapshot-id: the summary is attached to the LAST entry and
+    # #current_snapshot falls back to it. Passing an id (0) made the lookup
+    # match a real snapshot that happened to carry that id, so the rebuilt
+    # summary was never read and every summary metric came back nil.
+    new(
+      "properties" => table.properties_json || {},
+      "snapshots" => snapshots
+    )
+  end
+
+  # The snapshot list to score from.
+  #
+  # Prefers the REAL snapshots persisted by the sync (`snapshots_json` is
+  # written straight from `extractor.snapshots`, so every entry keeps its own
+  # `timestamp-ms`). The evaluator's snapshot budget counts snapshots inside
+  # the reference window, which needs a timestamp on every entry - the previous
+  # synthetic list stamped only the two ends, so N-2 entries counted as
+  # not-recent, the budget collapsed to its floor and snapshot_buildup was 0.0
+  # for every table.
+  #
+  # Falls back to the synthetic list only when no real snapshots are persisted,
+  # so a table whose columns hold measured values still surfaces them.
+  #
+  # @param table [IcebergTable] the table to read from
+  # @param summary [Hash] the summary rebuilt from the persisted columns
+  # @return [Array<Hash>] the snapshot list
+  def self.synthesized_snapshots(table, summary)
+    # A snapshot must carry the summary. With an empty list the summary is
+    # discarded and every metric reads back nil even though the columns hold
+    # measured values. Pad only when there IS a metric to surface - a table
+    # with nothing synced stays unknown rather than scoring from a phantom.
     count = table.snapshot_count || 0
     count = 1 if summary.any? && count.zero?
 
-    # When the real count is unknown (0/nil) but both ends of the observed
-    # window are, pad to TWO snapshots so the oldest/latest timestamps cannot
-    # alias onto one Hash (see #208) and the evaluator's commit-rate derivation
-    # keeps a real window instead of silently collapsing to the 10/day fallback.
-    if count == 1 && table.oldest_snapshot_at && table.last_data_update && table.oldest_snapshot_at != table.last_data_update
+    # Two entries when both ends of the window are known, so the oldest/latest
+    # timestamps cannot alias onto one Hash (see #208).
+    if count == 1 && table.oldest_snapshot_at && table.last_data_update &&
+       table.oldest_snapshot_at != table.last_data_update
       count = 2
     end
     snapshots = Array.new(count) { {} }
+    return snapshots if count.zero?
 
-    # Preserve the observed snapshot window so the health evaluator can derive
-    # the real commit rate (snapshots/day) instead of assuming a fixed one.
-    if count.positive?
-      snapshots.first["timestamp-ms"] = (table.oldest_snapshot_at.to_f * 1000).to_i if table.oldest_snapshot_at
-      snapshots.last["timestamp-ms"] = (table.last_data_update.to_f * 1000).to_i if table.last_data_update
-      snapshots.last["summary"] = summary if summary.any?
-    end
-
-    new(
-      "properties" => table.properties_json || {},
-      "snapshots" => snapshots,
-      "current-snapshot-id" => 0
-    )
+    snapshots.first["timestamp-ms"] = (table.oldest_snapshot_at.to_f * 1000).to_i if table.oldest_snapshot_at
+    snapshots.last["timestamp-ms"] = (table.last_data_update.to_f * 1000).to_i if table.last_data_update
+    snapshots.last["summary"] = summary if summary.any?
+    snapshots
   end
+  private_class_method :synthesized_snapshots
+
+  # The persisted snapshots, with the rebuilt summary attached to the newest
+  # entry so the summary-derived metrics stay available.
+  #
+  # @param table [IcebergTable] the table to read from
+  # @param summary [Hash] the summary rebuilt from the persisted columns
+  # @return [Array<Hash>] the snapshot list
+  def self.persisted_snapshots(table, summary)
+    real = table.snapshots_json
+    return synthesized_snapshots(table, summary) unless real.is_a?(Array) && real.any?
+
+    # Do not mutate the persisted JSON: the summary is layered onto a copy.
+    snapshots = real.map { |snapshot| snapshot.is_a?(Hash) ? snapshot.dup : snapshot }
+
+    # Attach to the LAST entry, which is what #current_snapshot falls back to
+    # (there is no current-snapshot-id to match here). Iceberg persists
+    # snapshots oldest-first, so the last entry is the newest.
+    newest = snapshots.last
+
+    # The persisted columns are the authority for the summary metrics: they
+    # carry the Trino enrichment (size, manifest count) that the catalog
+    # snapshot summary does not.
+    newest["summary"] = (newest["summary"] || {}).merge(summary) if newest.is_a?(Hash) && summary.any?
+    snapshots
+  end
+  private_class_method :persisted_snapshots
 
   # The table's UUID.
   #
@@ -143,6 +189,12 @@ class TableMetadataExtractor
   # @return [Hash, nil] the snapshot
   def current_snapshot
     id = @metadata["current-snapshot-id"] || @metadata["current-snapshot_id"]
+    # Without an id, fall straight through to the newest snapshot. Matching on
+    # a nil id found the first entry whose own snapshot-id was also absent -
+    # the OLDEST synthetic snapshot - so the summary attached to the newest was
+    # never read and every summary metric came back nil.
+    return snapshots.last if id.nil?
+
     snapshots.find { |s| (s["snapshot-id"] || s["snapshot_id"]) == id } || snapshots.last
   end
 

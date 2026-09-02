@@ -172,6 +172,7 @@ pt-BR:
       history_title: "Historico do motor"
       no_history: "Nenhuma atividade do motor registrada ainda."
       gen: "geracao %{gen}"
+      col_coordinator: "Coordinator"
       col_started: "Inicio"
       col_ready: "Pronto"
       col_uptime: "Uptime"
@@ -559,10 +560,11 @@ pt-BR:
       snapshot_buildup: "snapshots acumulados alem do orcamento de retencao"
       delete_overhead: "arquivos de delete empilhados sobre o total de registros"
       manifest_buildup: "manifestos fragmentados"
-    component_no_data: "sem dados"
+    component_no_data: "ainda nao medido"
     component_missing: "precisa da metrica %{component}"
     detail_fragmentation: "media %{avg} de %{target} alvo"
-    detail_snapshots: "%{count} snapshots"
+    detail_snapshots: "%{count} de %{budget} retidos"
+    detail_manifests: "%{count} de %{budget} esperados"
     detail_deletes: "%{deletes} deletes sobre %{records} registros"
     footer: "A pontuacao mede o que a manutencao corrige, nao o frescor dos dados. Uma tabela pode pontuar alto enquanto seu pipeline esta parado - isso aparece na coluna de frescor, nao aqui."
 
@@ -863,7 +865,7 @@ pt-BR:
     eyebrow: "Infraestrutura"
     title: "Motor Trino"
     subtitle: "Como o motor Trino efemero e materializado quando a manutencao roda."
-    chain_note: "Retencao e configuracao por etapa (o que roda em cada tabela) ficam nas Politicas de manutencao: %{link}."
+    chain_note: "Configuracao por etapa (o que roda em cada tabela) fica nas Politicas de manutencao: %{link}."
     chain_link: "definir padroes da cadeia aqui"
     topologies:
       single: "No unico (coordenador tambem executa tarefas)"
@@ -881,6 +883,10 @@ pt-BR:
       worker_title: "Recursos do worker"
       worker_cpu: "CPU do worker"
       worker_memory: "Memoria do worker"
+      retention_title: "Pisos de retencao"
+      retention_hint: "A menor retencao que o motor aceita. Uma etapa de manutencao que pedir menos e rejeitada ao salvar, nao no meio da execucao. Magnitude mais unidade de tempo, ex. 7d, 12h."
+      expire_snapshots_min_retention: "Minimo para expirar snapshots"
+      remove_orphan_files_min_retention: "Minimo para remover arquivos orfaos"
       applies_next_start: "Se o motor estiver ocioso, alteracoes se aplicam na proxima inicializacao. Se estiver rodando, entram em efeito imediatamente."
       submit: "Salvar configuracao do motor"
     notices:
@@ -967,6 +973,16 @@ pt-BR:
   activerecord:
     errors:
       models:
+        trino_engine_config:
+          attributes:
+            expire_snapshots_min_retention:
+              invalid_duration: "precisa ser uma magnitude mais uma unidade de tempo (ex. 7d, 12h)"
+            remove_orphan_files_min_retention:
+              invalid_duration: "precisa ser uma magnitude mais uma unidade de tempo (ex. 7d, 12h)"
+        maintenance_step:
+          attributes:
+            config:
+              retention_below_floor: "retention_threshold %{requested} para %{operation} esta abaixo do minimo configurado no motor (%{floor}) - aumente o valor, ou reduza o piso nas configuracoes do motor Trino"
         table_freshness_sla:
           attributes:
             severe_after_minutes:

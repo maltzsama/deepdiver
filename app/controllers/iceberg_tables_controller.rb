@@ -54,14 +54,18 @@ class IcebergTablesController < ApplicationController
     @freshness_sla = @table.table_freshness_sla
     @freshness_checks = @table.freshness_checks.latest.limit(30)
 
-    # Rebuilds the decomposition from the stored metadata (CR-42 columns) so the
-    # score can explain itself without a new catalog round-trip. manifest_count
-    # is a persisted Trino-enriched column — it must reach the evaluator or the
-    # Manifests component is silently excluded and this score differs from the
-    # badge beside it (which was persisted by the sync with the count fed in).
-    @extractor = TableMetadataExtractor.from_persisted(@table)
-    @evaluation = HealthEvaluator.evaluate(@extractor, plan: @table.maintenance_plan,
-                                            manifest_count: @table.manifest_count)
+    # READ the persisted evaluation; do not re-evaluate here. The score, the
+    # status label and the breakdown are written together by the sync and by
+    # the post-maintenance enrichment, so the list, the badge, the status
+    # filter and this panel all describe the same evaluation. Recomputing on
+    # read is what made the list and the detail disagree on both the score and
+    # the label, and it came back every time HealthEvaluator changed (see #215,
+    # after #165 and #198 each aligned one input).
+    #
+    # A table synced before the breakdown was persisted has no components yet;
+    # evaluate once and persist, so the panel is populated from then on and
+    # still only ever has one stored evaluation.
+    @evaluation = @table.persisted_health_evaluation || backfill_health_evaluation(@table)
   end
 
   # Remembers that the operator dismissed the open-errors banner for this table
@@ -93,7 +97,7 @@ class IcebergTablesController < ApplicationController
       return
     end
 
-    MaintenanceOrchestrator.run_plan(plan.id)
+    MaintenanceOrchestrator.run_plan(plan.id, force: true)
     redirect_back fallback_location: iceberg_tables_path, notice: t("tables.run_maintenance.enqueued")
   end
 
@@ -113,6 +117,26 @@ class IcebergTablesController < ApplicationController
   end
 
   private
+
+  # Evaluates and PERSISTS health for a table whose breakdown predates the
+  # persisted column, then returns it in the read shape.
+  #
+  # This is a one-time backfill per table, not a read-path evaluation: it
+  # writes, so the next render reads. Keeping it a write is what preserves the
+  # single-evaluation invariant - a read that quietly evaluated its own value
+  # is exactly the divergence #215 is about.
+  #
+  # @param table [IcebergTable] the table to backfill
+  # @return [Hash] the evaluation in read shape
+  def backfill_health_evaluation(table)
+    extractor = TableMetadataExtractor.from_persisted(table)
+    health = HealthEvaluator.evaluate(extractor, plan: table.maintenance_plan,
+                                      manifest_count: table.manifest_count)
+    attributes = table.health_attributes(health)
+    table.update_columns(attributes) if attributes.any?
+
+    table.persisted_health_evaluation || health
+  end
 
   # Loads the iceberg table for the current request.
   def set_table

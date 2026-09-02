@@ -73,7 +73,7 @@ class MaintenancePlansController < ApplicationController
   # Enqueues maintenance for the plan through the orchestrator and redirects.
   def run
     authorize @plan, :run?
-    MaintenanceOrchestrator.run_plan(@plan.id)
+    MaintenanceOrchestrator.run_plan(@plan.id, force: true)
     redirect_to @plan, notice: t("plans.notices.enqueued")
   end
 

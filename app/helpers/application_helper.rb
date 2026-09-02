@@ -344,15 +344,45 @@ module ApplicationHelper
   # Ordered lifecycle stages for the engine stepper.
   ENGINE_LIFECYCLE_STAGES = %w[down starting up draining stopping].freeze
 
+  # The stage that was in flight when a start failed, so the stepper can leave
+  # that segment red instead of reverting the whole line to inert grey.
+  #
+  # A failed engine never reached `up`, so the segment that was running is the
+  # one leaving `starting`.
+  #
+  # @param state [TrinoEngineState] the current engine state.
+  # @return [String, nil] the stage, or nil when nothing failed.
+  def engine_failed_stage(state)
+    return nil unless state.status == "failed" || state.last_error.present?
+
+    "starting"
+  end
+
   # Renders the lifecycle stepper: stage nodes (dot + label) joined by
-  # full-width connectors. The active stage carries a colored, haloed dot;
-  # past stages and their connectors read as done. For the timed states the
-  # active→next connector becomes the countdown progress bar, filled via the
-  # --engine-progress custom property driven by the engine-timer controller.
+  # full-width connectors.
+  #
+  # Each passed connector holds the colour of the stage it represents at full
+  # width, so the line ACCUMULATES and "how far did it get" stays readable,
+  # including after the fact. Previously every completed connector was painted
+  # one neutral grey, so the line neither grew with the lifecycle nor said
+  # anything about it.
+  #
+  # The in-flight connector fills against the median duration of that phase
+  # (see #engine_phase_estimates), not against the timeout. The timeout still
+  # matters, but as an APPEARANCE change - the JS controller switches to a
+  # warning treatment past the estimate and to a failure treatment at the
+  # deadline - rather than as the denominator.
+  #
+  # `idle` is not stage zero: with the engine scaled to zero and nothing
+  # waiting, the line renders as resting rather than as "stuck at the first
+  # stage", which is the state an operator sees most often.
+  #
   # @param status [String] the current engine status.
   # @param timer [Boolean] whether to wire the progress connector to the timer.
+  # @param failed_at [String, nil] the stage that was in flight when a start failed.
+  # @param idle [Boolean] whether the engine is at rest with no demand.
   # @return [String] HTML-safe stepper markup.
-  def engine_lifecycle_stepper(status, timer: false)
+  def engine_lifecycle_stepper(status, timer: false, failed_at: nil, idle: false)
     stages = ENGINE_LIFECYCLE_STAGES
     active_index = stages.index(status) || 0
     countdown = %w[starting draining stopping].include?(status)
@@ -362,19 +392,29 @@ module ApplicationHelper
         step = [ "step", "step--#{stage}" ]
         step << "done"   if i < active_index
         step << "active" if i == active_index
+        step << "idle"   if idle && i == active_index
+        step << "failed" if failed_at == stage
         concat content_tag(:span, safe_join([
           content_tag(:span, "", class: "step-dot"),
           content_tag(:span, t("activity.engine.stage_#{stage}"))
         ]), class: step.join(" "))
         next if i == stages.length - 1
 
-        link = [ "step-link" ]
+        link = [ "step-link", "step-link--#{stage}" ]
         if i < active_index
+          # A passed connector keeps its own stage's colour at full width.
           link << "done"
+        elsif failed_at == stage
+          # The segment that was in flight when the start failed stays red at
+          # the width it reached.
+          link << "failed"
         elsif i == active_index && countdown
           link << "progress"
-          link << "bar-warn"      if status == "draining"
+          link << "bar-warn" if status == "draining"
+          # Only stopping has no measurable duration to fill against.
           link << "indeterminate" if status == "stopping"
+        elsif i == active_index && idle
+          link << "resting"
         end
         options = { class: link.join(" ") }
         options[:data] = { engine_timer_target: "bar" } if link.include?("progress") && timer
@@ -441,12 +481,22 @@ module ApplicationHelper
     end
   end
 
-  # Coordinator Deployment target (namespace/name) for the engine strip subtitle.
-  # Safe to call in broadcast context (no current_user) and in test env.
+  # Coordinator Deployment target (namespace/name) for the engine strip subtitle
+  # and the engine history panel header.
+  #
+  # Resolved through the provisioner, so the adapter in use decides - the strip
+  # and the history panel used to resolve the same value through two different
+  # paths (TrinoK8sClient directly vs. TrinoProvisioner), one of which raised.
+  #
+  # The rescue is deliberately narrow: an unreachable API or a missing
+  # Deployment is expected and falls back to a label, but a NoMethodError is a
+  # programming error and must not be swallowed - a bare `rescue StandardError`
+  # here hid a missing `target` on every provisioner adapter.
+  #
   # @return [String] the deployment target or a fallback label.
   def engine_coordinator_target
-    TrinoK8sClient.new.target
-  rescue StandardError
+    TrinoProvisioner.target
+  rescue Kubeclient::HttpError, Kubeclient::ResourceNotFoundError, KeyError, SocketError, Timeout::Error
     t("activity.engine.title")
   end
 
@@ -466,18 +516,15 @@ module ApplicationHelper
 
   # Coordinator Deployment identifier for engine-sourced events.
   # @return [String] e.g. "trino/production-coordinator"
-  def engine_target_label
-    TrinoProvisioner.target
-  rescue StandardError
-    "engine"
-  end
+  def engine_target_label = engine_coordinator_target
 
   # One engine session (generation): a single provisioning → ready → drain →
   # stop cycle. Durations are derived from the lifecycle transition timestamps;
   # a nil field means the transition fell outside the query window and is
   # rendered as "—" rather than a fabricated number.
   EngineSession = Struct.new(:generation, :started_at, :ready_seconds, :uptime_seconds,
-                             :drain_seconds, :attempts, :outcome, keyword_init: true) do
+                             :drain_seconds, :attempts, :outcome, :coordinator,
+                             keyword_init: true) do
     # @return [Boolean] whether the session is still running.
     def running?
       outcome == :running
@@ -514,6 +561,39 @@ def engine_sessions(events)
     .map { |group| build_engine_session(session_generation(group), group) }
     .sort_by { |session| session.started_at || Time.at(0) }
     .reverse
+  end
+
+  # Median duration of each timed phase, from the sessions already reconstructed
+  # for the history panel.
+  #
+  # This is the denominator the stepper fills against. Filling against the
+  # TIMEOUT instead made a healthy ~22s start render as ~5% of an 8-minute bar
+  # and then jump to `up`, so a normal start looked stalled and a bar near 100%
+  # meant "about to fail" - the opposite of the usual reading.
+  #
+  # Only completed sessions contribute: a running one has no final duration.
+  # Returns nil per phase when nothing has completed yet, so the caller can
+  # fall back to an honest indeterminate rather than to a fabricated estimate.
+  #
+  # @param sessions [Array<EngineSession>] the reconstructed sessions
+  # @return [Hash{Symbol => Float, nil}] median seconds per phase
+  def engine_phase_estimates(sessions)
+    {
+      starting: median(sessions.reject(&:running?).filter_map(&:ready_seconds)),
+      draining: median(sessions.reject(&:running?).filter_map(&:drain_seconds))
+    }
+  end
+
+  # The median of a list of numbers, or nil when empty.
+  #
+  # @param values [Array<Numeric>] the values
+  # @return [Float, nil] the median
+  def median(values)
+    return nil if values.empty?
+
+    sorted = values.sort
+    middle = sorted.size / 2
+    sorted.size.odd? ? sorted[middle].to_f : ((sorted[middle - 1] + sorted[middle]) / 2.0)
   end
 
   # The generation label of a session: the generation of its starting transition,
@@ -583,18 +663,23 @@ def engine_sessions(events)
           content_tag(:span, "→", class: "metadata-diff-arrow"),
           content_tag(:span, format_metric_value(key_for(label), new_val), class: "metadata-diff-new"),
           render_delta(delta)
-        ].compact)
+        ])
       end
     end
   end
 
-  # Renders the delta cell with its direction, or nothing when the metric did
-  # not move.
+  # Renders the delta cell with its direction.
+  #
+  # ALWAYS emits a cell. The row is a five-column grid with `display: contents`,
+  # so there is no row box to absorb a missing cell - returning nil let the next
+  # row's cells auto-place into the gap and shifted every column. An unchanged
+  # metric is also the common case, so dropping the cell meant the direction
+  # classes (is-down/is-up/is-new) were never rendered at all.
   #
   # @param delta [Hash, nil] { direction:, magnitude: } or nil for unchanged
-  # @return [ActiveSupport::SafeBuffer, nil] the delta cell
+  # @return [ActiveSupport::SafeBuffer] the delta cell
   def render_delta(delta)
-    return nil if delta.nil?
+    return content_tag(:span, "=", class: "metadata-diff-delta is-flat") if delta.nil?
 
     direction, magnitude = delta.values_at(:direction, :magnitude)
     glyph, css = case direction
@@ -745,7 +830,10 @@ def engine_sessions(events)
       uptime_seconds: uptime_seconds,
       drain_seconds: duration_between(terminal&.last_seen_at, draining&.last_seen_at),
       attempts: ordered.filter_map { |e| e.context&.dig("attempts") }.map(&:to_i).max || 0,
-      outcome: session_outcome(up, terminal)
+      outcome: session_outcome(up, terminal),
+      # The coordinator recorded when this session STARTED, not whatever the
+      # configuration points at now.
+      coordinator: ordered.filter_map { |e| e.context&.dig("coordinator") }.first
     )
   end
 

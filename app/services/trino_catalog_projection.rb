@@ -105,12 +105,17 @@ class TrinoCatalogProjection
               rest_catalog_properties(catalog)
     end
 
+    # The retention floors come from the engine config as typed, validated
+    # fields (see #216). They used to be reachable only by hand-editing the
+    # catalog's properties JSON with the raw connector key.
+    props.merge!(TrinoEngineConfig.instance.connector_retention_properties)
+
     # The operator's catalog-level Iceberg connector properties (the stored
     # properties JSON, already validated to carry no secrets) are merged over
-    # the computed defaults. This is the only way to set connector properties
-    # the projection does not hardcode — e.g. iceberg.expire-snapshots.min-retention
-    # and iceberg.remove-orphan-files.min-retention below 7d. Catalog values win
-    # over the fixed defaults, but never over the sensitive refs below.
+    # the computed defaults. This remains the escape hatch for connector
+    # settings the projection does not model - it is merged LAST, so a
+    # per-catalog override still wins over the engine-wide floor. Catalog
+    # values never win over the sensitive refs below.
     props.merge!(catalog.properties.stringify_keys.transform_values(&:to_s))
 
     props["s3.region"] = catalog.s3_region if catalog.s3_region.present?

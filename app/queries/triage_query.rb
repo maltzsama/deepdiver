@@ -1,9 +1,9 @@
-# Tabelas que exigem acao, em UMA lista. Uma linha por tabela, com as duas
-# dimensoes como colunas.
+# Tables that need attention, in ONE list. One row per table, with both
+# dimensions as columns.
 #
-# Ordenacao: por quando entrou no estado ruim, MAIS RECENTE PRIMEIRO. Numa
-# tela de triagem, o que esta vermelho ha dias ja foi visto; o que quebrou
-# agora e a informacao nova.
+# Ordering: by when the table entered the bad state, MOST RECENT FIRST. On a
+# triage screen, what has been red for days has already been seen; what just
+# broke is the new information.
 class TriageQuery
   BAD_HEALTH = %w[critical].freeze
   BAD_FRESHNESS = %w[late warning].freeze
@@ -18,7 +18,7 @@ class TriageQuery
   def call(limit: 50)
     rows = candidates.map { |table| build_row(table) }
 
-    # NULL vai para o fim: sem instante conhecido, nao e novidade.
+    # NULLs sort last: with no known instant, it is not new information.
     rows.sort_by { |row| [ row.degraded_at.nil? ? 1 : 0, -(row.degraded_at&.to_i || 0) ] }
         .first(limit)
   end
@@ -63,8 +63,8 @@ class TriageQuery
       instants << (sla.breached_since || sla.status_changed_at)
     end
 
-    # Tabela ruim nas duas dimensoes: vale o instante MAIS RECENTE, porque
-    # a novidade e o que acabou de acontecer.
+    # Bad on both dimensions: the MOST RECENT instant wins, because the new
+    # information is whatever just happened.
     Row.new(table:, sla:, reasons:, degraded_at: instants.compact.max)
   end
 end

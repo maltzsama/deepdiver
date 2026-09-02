@@ -31,7 +31,9 @@ RSpec.describe ApplicationHelper, "#engine_lifecycle_stepper", type: :helper do
     html = helper.engine_lifecycle_stepper("starting")
 
     expect(html.scan(%r{class="step step--}).size).to eq(5)
-    expect(html.scan("step-link").size).to eq(4)
+    # Each connector now also carries a per-stage modifier, so "step-link"
+    # appears twice per connector (base class + step-link--<stage>).
+    expect(html.scan(%r{step-link--}).size).to eq(4)
     expect(html).to include("step-dot")
     expect(html).to include("step step--starting active")
     expect(html).not_to include("badge-")
@@ -49,14 +51,16 @@ RSpec.describe ApplicationHelper, "#engine_lifecycle_stepper", type: :helper do
   it "wires the active→next connector as the progress bar for timed states" do
     html = helper.engine_lifecycle_stepper("draining", timer: true)
 
-    expect(html).to include("step-link progress bar-warn")
+    expect(html).to include("progress")
+    expect(html).to include("bar-warn")
     expect(html).to include('data-engine-timer-target="bar"')
   end
 
   it "does not wire the timer when timer: false" do
     html = helper.engine_lifecycle_stepper("draining")
 
-    expect(html).to include("step-link progress bar-warn")
+    expect(html).to include("progress")
+    expect(html).to include("bar-warn")
     expect(html).not_to include("data-engine-timer-target")
   end
 

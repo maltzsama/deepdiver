@@ -74,6 +74,23 @@
         </div>
       </div>
 
+      <div class="field-group">
+        <p class="field-group-title"><%= t("trino_engine_config.form.retention_title") %></p>
+        <p class="field-hint mb-4"><%= t("trino_engine_config.form.retention_hint") %></p>
+
+        <div class="field">
+          <%= form.label :expire_snapshots_min_retention,
+                t("trino_engine_config.form.expire_snapshots_min_retention"), class: "field-label" %>
+          <%= form.text_field :expire_snapshots_min_retention, class: "field-input", placeholder: "7d" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :remove_orphan_files_min_retention,
+                t("trino_engine_config.form.remove_orphan_files_min_retention"), class: "field-label" %>
+          <%= form.text_field :remove_orphan_files_min_retention, class: "field-input", placeholder: "7d" %>
+        </div>
+      </div>
+
       <p class="field-hint"><%= t("trino_engine_config.form.applies_next_start") %></p>
 
       <div class="form-actions">

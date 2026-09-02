@@ -7,16 +7,16 @@
     <span class="font-display font-extrabold text-base tracking-[0.04em] uppercase text-[#F4F1E8] whitespace-nowrap"><%= t("layout.app_name") %></span>
   </div>
 
-  <!-- Navegação -->
+  <!-- Navigation -->
   <nav class="flex-1 overflow-y-auto overflow-x-hidden pb-2">
-    <% # Seção 1 %>
+    <% # Section 1 %>
     <div class="sidebar-section">
       <div class="sidebar-section-title"><%= t("layout.nav.monitor") %></div>
       <%= nav_link_to root_path, icon: "grid" do %><span><%= t("layout.nav.overview") %></span><% end %>
       <%= nav_link_to activity_path, icon: "activity" do %><span><%= t("layout.nav.in_progress") %></span><% end %>
     </div>
 
-    <% # Seção 2 %>
+    <% # Section 2 %>
     <div class="sidebar-section">
       <div class="sidebar-section-title"><%= t("layout.nav.data") %></div>
       <%= nav_link_to iceberg_tables_path, icon: "database" do %>
@@ -29,7 +29,7 @@
       <% end %>
     </div>
 
-    <% # Seção 3 %>
+    <% # Section 3 %>
     <div class="sidebar-section">
       <div class="sidebar-section-title"><%= t("layout.nav.operations") %></div>
       <%= nav_link_to maintenance_plans_path, icon: "clock" do %>
@@ -57,7 +57,7 @@
     <% end %>
   </nav>
 
-  <!-- Rodapé da Sidebar -->
+  <!-- Sidebar footer -->
   <div class="border-t border-cosmos-line p-3 flex items-center justify-center flex-shrink-0 min-h-11">
     <button class="sidebar-collapse" title="<%= t("layout.nav.collapse") %>" data-sidebar-target="collapse"
             aria-label="<%= t("layout.nav.collapse") %>"

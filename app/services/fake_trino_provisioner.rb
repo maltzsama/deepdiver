@@ -28,6 +28,11 @@ class FakeTrinoProvisioner
   # @return [Integer] 1 after create!, 0 after destroy!
   def replicas = @exists ? 1 : 0
 
+  # The addressed "Deployment" of the fake engine.
+  #
+  # @return [String] a stand-in namespace-qualified name
+  def target = "fake/trino"
+
   # The fake engine is always idle.
   #
   # @return [Boolean] always true

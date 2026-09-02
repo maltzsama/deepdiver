@@ -7,13 +7,20 @@
   timer_mode   = engine_timer_mode(status)
   deadline     = engine_deadline(engine_state)
   queries      = local_assigns.fetch(:queries, 0)
+  idle         = local_assigns.fetch(:engine_idle, false)
+  # Median duration of this phase across completed sessions: the denominator
+  # the progress bar fills against. nil until a session has completed, and the
+  # bar then renders indeterminate rather than against the failure horizon.
+  estimates    = engine_phase_estimates(engine_sessions(Array(local_assigns[:engine_events])))
+  estimate     = estimates[status.to_sym]
 %>
 <section id="activity-engine-strip" class="panel mb-6"
-         <% if timer_mode != "none" && deadline %>
+         <% if timer_mode != "none" %>
          data-controller="engine-timer"
          data-engine-timer-mode-value="<%= timer_mode %>"
          data-engine-timer-deadline-value="<%= deadline %>"
          data-engine-timer-start-value="<%= engine_state.status_changed_at&.iso8601 %>"
+         data-engine-timer-estimate-value="<%= estimate.to_i %>"
          <% end %>>
   <div class="panel-head">
     <div class="flex flex-col">
@@ -37,10 +44,12 @@
     </div>
   </div>
   <div class="panel-body">
-    <%# Lifecycle stepper: the active→next connector doubles as the countdown
-        progress bar, filled via --engine-progress by the engine-timer controller. %>
+    <%# Lifecycle stepper: passed connectors hold their own stage's colour, and
+        the in-flight one fills against that phase's median duration (filled via
+        --engine-progress by the engine-timer controller). %>
     <div class="engine-stepper mb-3">
-      <%= engine_lifecycle_stepper(status, timer: local_assigns[:engine_timer]) %>
+      <%= engine_lifecycle_stepper(status, timer: local_assigns[:engine_timer],
+                                   failed_at: engine_failed_stage(engine_state), idle: idle) %>
     </div>
 
     <%# Phase detail: description on the left, time on the right. %>
