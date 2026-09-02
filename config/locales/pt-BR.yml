@@ -172,6 +172,7 @@ pt-BR:
       history_title: "Historico do motor"
       no_history: "Nenhuma atividade do motor registrada ainda."
       gen: "geracao %{gen}"
+      col_coordinator: "Coordinator"
       col_started: "Inicio"
       col_ready: "Pronto"
       col_uptime: "Uptime"

@@ -91,3 +91,48 @@ RSpec.describe ApplicationHelper, "engine stepper progress model", type: :helper
     end
   end
 end
+
+RSpec.describe ApplicationHelper, "per-session coordinator identity", type: :helper do
+  def lifecycle_event(state:, generation:, coordinator:, at:)
+    ErrorEvent.create!(schema: "engine", operation: "engine-lifecycle", table: "",
+                       source_system: "engine", severity: "info", status: "resolved",
+                       message: "engine #{state} (generation #{generation})",
+                       first_seen_at: at, last_seen_at: at,
+                       context: { "state" => state, "generation" => generation,
+                                  "attempts" => 1, "coordinator" => coordinator })
+  end
+
+  it "reports the coordinator recorded when the session started" do
+    base = Time.current - 1.hour
+    events = [
+      lifecycle_event(state: "starting", generation: 10, coordinator: "ns/coord-aaa", at: base),
+      lifecycle_event(state: "up",       generation: 11, coordinator: "ns/coord-aaa", at: base + 20.seconds),
+      lifecycle_event(state: "down",     generation: 12, coordinator: "ns/coord-aaa", at: base + 80.seconds)
+    ]
+
+    session = helper.engine_sessions(events).first
+
+    expect(session.coordinator).to eq("ns/coord-aaa")
+  end
+
+  it "keeps each session on its own coordinator rather than the newest one" do
+    base = Time.current - 2.hours
+    events = [
+      lifecycle_event(state: "starting", generation: 1, coordinator: "ns/coord-old", at: base),
+      lifecycle_event(state: "down",     generation: 2, coordinator: "ns/coord-old", at: base + 60.seconds),
+      lifecycle_event(state: "starting", generation: 3, coordinator: "ns/coord-new", at: base + 30.minutes),
+      lifecycle_event(state: "down",     generation: 4, coordinator: "ns/coord-new", at: base + 31.minutes)
+    ]
+
+    coordinators = helper.engine_sessions(events).map(&:coordinator)
+
+    expect(coordinators).to contain_exactly("ns/coord-new", "ns/coord-old")
+  end
+
+  it "renders an em dash for a session recorded before the identity was captured" do
+    base = Time.current - 1.hour
+    events = [ lifecycle_event(state: "starting", generation: 1, coordinator: nil, at: base) ]
+
+    expect(helper.engine_sessions(events).first.coordinator).to be_nil
+  end
+end

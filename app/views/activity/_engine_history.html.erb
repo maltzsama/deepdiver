@@ -1,5 +1,7 @@
-<%# Engine lifecycle history - one row per session (generation), newest first.
-     The coordinator deployment name lives once in the panel header. %>
+<%# Engine lifecycle history - one row per session, newest first.
+     The coordinator is shown PER ROW, captured when that session started, so a
+     historical row is not attributed to whatever the configuration points at
+     now. The header keeps the currently-configured target for contrast. %>
 <% sessions = engine_sessions(Array(local_assigns[:engine_events])) %>
 <section id="activity-engine-history" class="panel mb-6">
   <div class="panel-head">
@@ -13,6 +15,7 @@
         <thead>
           <tr>
             <th scope="col"><%= t("activity.engine.col_started") %></th>
+            <th scope="col"><%= t("activity.engine.col_coordinator") %></th>
             <th scope="col"><%= t("activity.engine.col_ready") %></th>
             <th scope="col"><%= t("activity.engine.col_uptime") %></th>
             <th scope="col"><%= t("activity.engine.col_shutdown") %></th>
@@ -23,6 +26,13 @@
           <% sessions.each do |session| %>
             <tr>
               <td><%= timestamp(session.started_at) %></td>
+              <td>
+                <% if session.coordinator.present? %>
+                  <span class="font-mono text-small text-cosmos-fg-soft"><%= session.coordinator %></span>
+                <% else %>
+                  <span class="cell-muted">—</span>
+                <% end %>
+              </td>
               <td class="cell-num">
                 <% if session.ready_seconds %>
                   <%= duration_label(session.ready_seconds) %>

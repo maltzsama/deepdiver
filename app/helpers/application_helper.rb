@@ -523,7 +523,8 @@ module ApplicationHelper
   # a nil field means the transition fell outside the query window and is
   # rendered as "—" rather than a fabricated number.
   EngineSession = Struct.new(:generation, :started_at, :ready_seconds, :uptime_seconds,
-                             :drain_seconds, :attempts, :outcome, keyword_init: true) do
+                             :drain_seconds, :attempts, :outcome, :coordinator,
+                             keyword_init: true) do
     # @return [Boolean] whether the session is still running.
     def running?
       outcome == :running
@@ -829,7 +830,10 @@ def engine_sessions(events)
       uptime_seconds: uptime_seconds,
       drain_seconds: duration_between(terminal&.last_seen_at, draining&.last_seen_at),
       attempts: ordered.filter_map { |e| e.context&.dig("attempts") }.map(&:to_i).max || 0,
-      outcome: session_outcome(up, terminal)
+      outcome: session_outcome(up, terminal),
+      # The coordinator recorded when this session STARTED, not whatever the
+      # configuration points at now.
+      coordinator: ordered.filter_map { |e| e.context&.dig("coordinator") }.first
     )
   end
 

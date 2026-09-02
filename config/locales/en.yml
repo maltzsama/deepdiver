@@ -172,6 +172,7 @@ en:
       history_title: "Engine history"
       no_history: "No engine activity recorded yet."
       gen: "generation %{gen}"
+      col_coordinator: "Coordinator"
       col_started: "Started"
       col_ready: "Ready"
       col_uptime: "Uptime"

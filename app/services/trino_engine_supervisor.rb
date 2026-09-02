@@ -229,8 +229,26 @@ module TrinoEngineSupervisor
       catalog: nil, schema: "engine", operation: "engine-lifecycle",
       source_system: "engine", severity: "info", status: "resolved",
       message: "engine #{status} (generation #{record.generation})",
-      context: { attempts: record.start_attempts, generation: record.generation, state: status }
+      context: { attempts: record.start_attempts, generation: record.generation, state: status,
+                 coordinator: coordinator_identity }
     )
   end
   private_class_method :record_lifecycle!
+
+  # The coordinator this session runs on, captured AT TRANSITION TIME.
+  #
+  # The history panel previously attributed every historical session to
+  # whatever the Deployment happens to point at now, because the only
+  # coordinator label on the page was resolved live at render time. Recording
+  # it into the lifecycle event's context needs no schema change: that hash is
+  # already persisted and already read when sessions are reconstructed.
+  #
+  # @return [String, nil] the namespace-qualified Deployment, or nil when it
+  #   cannot be resolved (never let this break a transition)
+  def coordinator_identity
+    TrinoProvisioner.target
+  rescue StandardError
+    nil
+  end
+  private_class_method :coordinator_identity
 end
