@@ -11,7 +11,7 @@ class DashboardController < ApplicationController
                                    .where(iceberg_tables: { active: true })
                                    .includes(iceberg_table: :catalog)
 
-    # Contadores do topo continuam — são resumo, não lista.
+    # The top counters stay - they are a summary, not a list.
     @health_counts = IcebergTable.active.group(:health_status).count
     @total_tables  = @health_counts.values.sum
     @freshness_counts = TableFreshnessSla.enabled.joins(:iceberg_table)
