@@ -480,6 +480,8 @@
   .metadata-diff-delta.is-down { @apply text-ok-DEFAULT; }
   .metadata-diff-delta.is-up { @apply text-warn-DEFAULT; }
   .metadata-diff-delta.is-new { @apply text-cosmos-fg-mute font-normal; }
+  /* Measured and did not move - distinct from a metric with no data at all. */
+  .metadata-diff-delta.is-flat { @apply text-cosmos-fg-mute font-normal; }
 
   /* ---------- authentication screen ---------- */
   .auth-shell {

@@ -583,18 +583,23 @@ def engine_sessions(events)
           content_tag(:span, "→", class: "metadata-diff-arrow"),
           content_tag(:span, format_metric_value(key_for(label), new_val), class: "metadata-diff-new"),
           render_delta(delta)
-        ].compact)
+        ])
       end
     end
   end
 
-  # Renders the delta cell with its direction, or nothing when the metric did
-  # not move.
+  # Renders the delta cell with its direction.
+  #
+  # ALWAYS emits a cell. The row is a five-column grid with `display: contents`,
+  # so there is no row box to absorb a missing cell - returning nil let the next
+  # row's cells auto-place into the gap and shifted every column. An unchanged
+  # metric is also the common case, so dropping the cell meant the direction
+  # classes (is-down/is-up/is-new) were never rendered at all.
   #
   # @param delta [Hash, nil] { direction:, magnitude: } or nil for unchanged
-  # @return [ActiveSupport::SafeBuffer, nil] the delta cell
+  # @return [ActiveSupport::SafeBuffer] the delta cell
   def render_delta(delta)
-    return nil if delta.nil?
+    return content_tag(:span, "=", class: "metadata-diff-delta is-flat") if delta.nil?
 
     direction, magnitude = delta.values_at(:direction, :magnitude)
     glyph, css = case direction
