@@ -24,9 +24,9 @@ class MaintenanceStep < ApplicationRecord
   private
 
   # A duration/threshold magnitude plus a unit, e.g. "7d", "128MB", "1.5GB".
-  # These are interpolated straight into the ALTER TABLE ... EXECUTE statement,
-  # so anything else is rejected instead of shipped as raw SQL.
-  THRESHOLD_PATTERN = /\A\d+(?:\.\d+)?\s*[a-zA-Z]+\z/
+  # Shared with the engine config's retention floors, which are compared
+  # against these values.
+  THRESHOLD_PATTERN = TrinoDuration::PATTERN
 
   # Snapshot ids are interpolated into ARRAY[...] unquoted, so they must be
   # integers only - never SQL.
@@ -46,6 +46,7 @@ class MaintenanceStep < ApplicationRecord
     validate_threshold("retention_threshold")
     validate_snapshot_ids
     validate_where_predicate
+    validate_retention_above_engine_floor
   end
 
   # The column defaults to {}, but a form that submits a blank config sends nil
@@ -68,6 +69,32 @@ class MaintenanceStep < ApplicationRecord
     return if value.to_s.strip.match?(SNAPSHOT_IDS_PATTERN)
 
     errors.add(:config, "snapshot_ids must be a comma-separated list of integers")
+  end
+
+  # Trino rejects a retention shorter than the connector's configured floor,
+  # and it does so mid-chain, hours after the plan was saved. Both values are
+  # known here, so the conflict is reported at save time instead - naming the
+  # floor and where to change it.
+  def validate_retention_above_engine_floor
+    value = config_hash["retention_threshold"]
+    return if value.blank?
+
+    requested = TrinoDuration.to_seconds(value)
+    return if requested.nil?
+
+    floor = TrinoEngineConfig.instance.retention_floor_seconds(operation)
+    return if floor.nil? || requested >= floor
+
+    errors.add(:config, :retention_below_floor,
+               requested: value.to_s,
+               floor: engine_floor_label,
+               operation: operation)
+  end
+
+  # The configured floor as the operator typed it, for the error message.
+  def engine_floor_label
+    config = TrinoEngineConfig.instance
+    operation == "expire_snapshots" ? config.expire_snapshots_min_retention : config.remove_orphan_files_min_retention
   end
 
   def validate_where_predicate

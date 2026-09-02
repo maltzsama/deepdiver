@@ -910,7 +910,7 @@ en:
     eyebrow: "Infrastructure"
     title: "Trino engine"
     subtitle: "How the ephemeral Trino engine is materialised when maintenance runs."
-    chain_note: "Retention and per-step configuration (what runs on each table) live in Maintenance Policies: %{link}."
+    chain_note: "Per-step configuration (what runs on each table) lives in Maintenance Policies: %{link}."
     chain_link: "set chain-wide defaults here"
     topologies:
       single: "Single node (coordinator also runs tasks)"
@@ -928,6 +928,10 @@ en:
       worker_title: "Worker resources"
       worker_cpu: "Worker CPU"
       worker_memory: "Worker memory"
+      retention_title: "Retention floors"
+      retention_hint: "The shortest retention the engine will accept. A maintenance step asking for less is rejected when it is saved, not mid-run. Magnitude plus a time unit, e.g. 7d, 12h."
+      expire_snapshots_min_retention: "Expire snapshots minimum"
+      remove_orphan_files_min_retention: "Remove orphan files minimum"
       applies_next_start: "If the engine is idle, changes apply on the next start. If it is running, they take effect immediately."
       submit: "Save engine config"
     notices:
@@ -991,6 +995,16 @@ en:
   activerecord:
     errors:
       models:
+        trino_engine_config:
+          attributes:
+            expire_snapshots_min_retention:
+              invalid_duration: "must be a magnitude plus a time unit (e.g. 7d, 12h)"
+            remove_orphan_files_min_retention:
+              invalid_duration: "must be a magnitude plus a time unit (e.g. 7d, 12h)"
+        maintenance_step:
+          attributes:
+            config:
+              retention_below_floor: "retention_threshold %{requested} for %{operation} is below the engine's configured minimum of %{floor} - raise it, or lower the floor in the Trino engine settings"
         table_freshness_sla:
           attributes:
             severe_after_minutes:

@@ -29,7 +29,8 @@ class TrinoEngineConfigsController < ApplicationController
   # Strong parameters for the engine configuration.
   def config_params
     params.require(:trino_engine_config).permit(
-      :topology, :worker_replicas, :coordinator_cpu, :coordinator_memory, :worker_cpu, :worker_memory
+      :topology, :worker_replicas, :coordinator_cpu, :coordinator_memory, :worker_cpu, :worker_memory,
+      :expire_snapshots_min_retention, :remove_orphan_files_min_retention
     )
   end
 
