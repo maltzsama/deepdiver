@@ -131,16 +131,17 @@ RSpec.describe TrinoCatalogProjection do
       expect(props["iceberg.catalog.type"]).to eq("rest")
       expect(props["iceberg.rest-catalog.uri"]).to eq("http://nessie:19120/iceberg")
       expect(props["iceberg.rest-catalog.nested-namespace-enabled"]).to eq("true")
-      # The ref rides the warehouse parameter, which Nessie decodes as its
-      # {ref}|{warehouse} prefix.
-      expect(props["iceberg.rest-catalog.warehouse"]).to eq("etl_dev")
+      # The stored warehouse is sent verbatim (Nessie resolves name or
+      # location); the ref is NOT sent - the config endpoint rejects it as an
+      # unknown warehouse, and the returned prefix embeds the default branch.
+      expect(props["iceberg.rest-catalog.warehouse"]).to eq("s3://bucket/")
       expect(props.keys.grep(/nessie-catalog/)).to be_empty
     end
 
-    it "omits the warehouse parameter when no ref is configured" do
+    it "omits the warehouse parameter when none is stored, so the server default answers" do
       create(:catalog, catalog_type: "nessie", name: "native-nessie2",
              nessie_api_mode: "native", nessie_warehouse: "s3://bucket/",
-             endpoint: "http://nessie:19120")
+             endpoint: "http://nessie:19120").update_column(:nessie_warehouse, "")
       described_class.new.sync_all!
 
       props = TrinoCatalogRegistry.find_by(catalog_name: "native_nessie2").properties

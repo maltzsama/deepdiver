@@ -24,14 +24,15 @@ RSpec.describe TrinoCatalogProjection, "native-mode Nessie projected via the RES
     expect(props_for(native_catalog).keys.grep(/nessie-catalog/)).to be_empty
   end
 
-  it "pins a non-default branch through the warehouse parameter, which Nessie decodes as its prefix" do
-    props = props_for(native_catalog(nessie_ref: "etl_dev"))
-
-    expect(props["iceberg.rest-catalog.warehouse"]).to eq("etl_dev")
+  it "sends the stored warehouse verbatim - Nessie resolves it by name or by location (live-verified)" do
+    expect(props_for(native_catalog)["iceberg.rest-catalog.warehouse"]).to eq("s3://bucket/")
+    expect(props_for(native_catalog(nessie_warehouse: "cephlab"))["iceberg.rest-catalog.warehouse"]).to eq("cephlab")
   end
 
-  it "sends no warehouse when no ref is configured, so the server default answers" do
-    expect(props_for(native_catalog)).not_to have_key("iceberg.rest-catalog.warehouse")
+  it "never sends the ref as the warehouse - the config endpoint rejects it as an unknown warehouse" do
+    props = props_for(native_catalog(nessie_ref: "etl_dev"))
+
+    expect(props["iceberg.rest-catalog.warehouse"]).not_to eq("etl_dev")
   end
 
   it "does not change rest-mode Nessie catalogs" do

@@ -186,16 +186,17 @@ class TrinoCatalogProjection
     # never send one — the configured default answers.
     props["iceberg.rest-catalog.warehouse"] = catalog.name if catalog.catalog_type == "polaris"
 
-    # A native-mode Nessie catalog can read a non-default branch. Nessie
-    # decodes the REST `warehouse` parameter as its prefix ({ref}|{warehouse}),
-    # so sending the bare ref pins the branch while the server's default
-    # warehouse still answers - the warehouse only governs where NEW tables
-    # are created, and maintenance touches existing ones. A server with named
-    # warehouses but no default can still be pointed at one via the
-    # per-catalog properties JSON ("<ref>|<warehouse-name>"), which merges
-    # over this.
-    if self.class.native_nessie?(catalog) && catalog.nessie_ref.present?
-      props["iceberg.rest-catalog.warehouse"] = catalog.nessie_ref
+    # Live-verified against Nessie: the REST config endpoint resolves the
+    # `warehouse` parameter by NAME or by LOCATION (both answered 200 with a
+    # usable prefix), and does NOT decode it as a {ref}|{warehouse} prefix -
+    # "main" and "main|<wh>" are both rejected as unknown warehouses. So the
+    # catalog's stored warehouse is sent verbatim, and the ref is NOT sent:
+    # the returned prefix embeds the server's default branch. A server with a
+    # default warehouse answers with the field blank. Catalogs pinned to a
+    # non-default ref cannot express it through the REST connector - that is
+    # a connector-surface limit, documented, not silently worked around.
+    if self.class.native_nessie?(catalog) && catalog.nessie_warehouse.present?
+      props["iceberg.rest-catalog.warehouse"] = catalog.nessie_warehouse
     end
 
     if credential&.oauth2?
