@@ -559,31 +559,52 @@ def engine_sessions(events)
     end
   end
 
-  # Renders one diff row. A step-metric fallback row (old == nil, summary in
-  # the new slot) renders as a plain "label — summary" line; a table-metric row
-  # renders the before → after arrow layout.
+  # Renders one diff row. A step-metric summary row (old == nil, summary in the
+  # new slot) spans the value columns; a table-metric row emits the five grid
+  # cells (label · old · → · new · delta) so columns align across rows.
   #
   # @param row [Array] [label, old, new, delta]
   # @return [ActiveSupport::SafeBuffer] the row
   def render_diff_row(row)
     label, old_val, new_val, delta = row
 
-    content_tag(:div, class: "metadata-diff-row") do
-      if old_val.nil? && new_val.is_a?(String)
+    if old_val.nil? && new_val.is_a?(String)
+      content_tag(:div, class: "metadata-diff-row is-summary") do
         safe_join([
           content_tag(:span, label, class: "metadata-diff-label"),
           content_tag(:span, new_val, class: "metadata-diff-new")
         ])
-      else
+      end
+    else
+      content_tag(:div, class: "metadata-diff-row") do
         safe_join([
           content_tag(:span, label, class: "metadata-diff-label"),
           content_tag(:span, format_metric_value(key_for(label), old_val), class: "metadata-diff-old"),
-          safe_join([ content_tag(:span, "→", class: "metadata-diff-arrow"),
-                      content_tag(:span, format_metric_value(key_for(label), new_val), class: "metadata-diff-new") ]),
-          content_tag(:span, delta, class: "metadata-diff-delta")
+          content_tag(:span, "→", class: "metadata-diff-arrow"),
+          content_tag(:span, format_metric_value(key_for(label), new_val), class: "metadata-diff-new"),
+          render_delta(delta)
         ].compact)
       end
     end
+  end
+
+  # Renders the delta cell with its direction, or nothing when the metric did
+  # not move.
+  #
+  # @param delta [Hash, nil] { direction:, magnitude: } or nil for unchanged
+  # @return [ActiveSupport::SafeBuffer, nil] the delta cell
+  def render_delta(delta)
+    return nil if delta.nil?
+
+    direction, magnitude = delta.values_at(:direction, :magnitude)
+    glyph, css = case direction
+    when :down then [ "↓", "is-down" ]
+    when :up   then [ "↑", "is-up" ]
+    else            [ nil, "is-new" ]
+    end
+
+    text = direction == :new ? magnitude.to_s : [ glyph, magnitude ].compact.join(" ")
+    content_tag(:span, text, class: "metadata-diff-delta #{css}")
   end
 
   # The before/after rows for the operations' table-level metrics.
@@ -649,24 +670,25 @@ def engine_sessions(events)
 
   private
 
-  # Computes a human-readable delta string for a metric.
+  # Computes a structured delta for a metric.
+  #
+  # @param key [String] the metric key
+  # @param old_val [Object, nil] the pre-maintenance value
+  # @param new_val [Object, nil] the post-maintenance value
+  # @return [Hash, nil] { direction:, magnitude: }, or nil when the metric did not move
   def compute_delta(key, old_val, new_val)
     return nil if old_val.nil? && new_val.nil?
+    return { direction: :new, magnitude: format_metric_value(key, new_val) } if old_val.nil?
+    return { direction: :down, magnitude: format_metric_value(key, old_val) } if new_val.nil?
 
-    if old_val.nil?
-      "+#{format_metric_value(key, new_val)}"
-    elsif new_val.nil?
-      "-#{format_metric_value(key, old_val)}"
-    else
-      diff = new_val - old_val
-      return nil if diff == 0
+    diff = new_val - old_val
+    return nil if diff.zero?
 
-      sign = diff.positive? ? "+" : ""
-      case key
-      when "total_size_bytes" then "#{sign}#{number_to_human_size(diff.abs)}"
-      else "#{sign}#{number_with_delimiter(diff)}"
-      end
+    magnitude = case key
+    when "total_size_bytes" then number_to_human_size(diff.abs)
+    else number_with_delimiter(diff.abs)
     end
+    { direction: diff.negative? ? :down : :up, magnitude: magnitude }
   end
 
   # Reverse-lookup: label → key for formatting.

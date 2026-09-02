@@ -279,4 +279,42 @@ RSpec.describe ApplicationHelper, "#metadata_diff", type: :helper do
 
     expect(helper.metadata_diff(execution)).to be_nil
   end
+
+  it "marks a null before as :new instead of fabricating a growth" do
+    execution.update!(
+      metadata_before: { "manifest_count" => nil },
+      metadata_after:  { "manifest_count" => 84 }
+    )
+    create(:execution_step, execution_history: execution, operation: "optimize_manifests")
+
+    html = helper.metadata_diff(execution)
+
+    expect(html).to include("Manifests")
+    expect(html).to include("84")
+    expect(html).not_to include("+84")
+  end
+
+  it "keeps the sign on a size reduction" do
+    execution.update!(
+      metadata_before: { "total_data_files" => 100, "total_size_bytes" => 10_000_000 },
+      metadata_after:  { "total_data_files" => 100, "total_size_bytes" => 5_000_000 }
+    )
+    create(:execution_step, execution_history: execution, operation: "optimize")
+
+    html = helper.metadata_diff(execution)
+
+    expect(html).to include("↓")
+  end
+
+  it "marks a size growth as :up" do
+    execution.update!(
+      metadata_before: { "total_data_files" => 100, "total_size_bytes" => 5_000_000 },
+      metadata_after:  { "total_data_files" => 100, "total_size_bytes" => 10_000_000 }
+    )
+    create(:execution_step, execution_history: execution, operation: "optimize")
+
+    html = helper.metadata_diff(execution)
+
+    expect(html).to include("↑")
+  end
 end
