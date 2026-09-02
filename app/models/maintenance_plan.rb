@@ -27,6 +27,7 @@ class MaintenancePlan < ApplicationRecord
 
   validates :cron, presence: true
   validate  :cron_is_parseable
+  validate  :table_is_addressable_in_trino
 
   scope :dispatchable, -> { where(is_paused: false) }
 
@@ -112,6 +113,17 @@ class MaintenancePlan < ApplicationRecord
   end
 
   private
+
+  # A table with no addressable Trino identifier cannot be maintained: every
+  # execution path would raise RootTableNotAddressable once it tried to build a
+  # statement. Refuse the plan here, with the reason, instead of letting each
+  # path discover it independently in the middle of a chain.
+  def table_is_addressable_in_trino
+    return if iceberg_table.nil?
+    return if iceberg_table.addressable_in_trino?
+
+    errors.add(:iceberg_table, :not_addressable_in_trino)
+  end
 
   # Validates that cron is a parseable expression, adding an error otherwise.
   def cron_is_parseable

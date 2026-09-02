@@ -438,6 +438,7 @@ en:
   tables:
     run_maintenance:
       enqueued: "Maintenance enqueued - it will start when the engine comes up."
+      not_addressable: "This table is at the catalog root and cannot be maintained: Trino needs a schema to address it."
       already_queued: "Maintenance for this table is already queued or running."
     sync_table:
       enqueued: "Table metadata refresh enqueued."
@@ -450,6 +451,7 @@ en:
       status: "Status"
       last_write: "Last write"
       trino_id: "Trino identifier"
+      not_addressable: "not addressable - the table is at the catalog root, which has no schema"
       schedules_title: "Schedules"
       schedules_note: "%{count} of %{total} operations"
       empty_title: "No schedules for this table"
@@ -1002,6 +1004,10 @@ en:
               invalid_duration: "must be a magnitude plus a time unit (e.g. 7d, 12h)"
             remove_orphan_files_min_retention:
               invalid_duration: "must be a magnitude plus a time unit (e.g. 7d, 12h)"
+        maintenance_plan:
+          attributes:
+            iceberg_table:
+              not_addressable_in_trino: "is at the catalog root and cannot be maintained: Trino needs a schema to address the table"
         maintenance_step:
           attributes:
             config:
