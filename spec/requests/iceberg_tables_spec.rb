@@ -149,6 +149,29 @@ RSpec.describe "GET /iceberg_tables/:id", type: :request do
     expect(response.body).to include("Manifests")
     expect(response.body).not_to include("needs the manifest_buildup metric")
   end
+
+  it "shows the open-errors banner with a table-scoped History link" do
+    table = create(:iceberg_table, catalog:)
+    ErrorEvent.record(catalog:, schema: table.namespace, table: table.name,
+                      operation: "execution", source_system: "engine", message: "boom")
+
+    get iceberg_table_path(table)
+
+    expect(response.body).to include("open error")
+    expect(response.body).to include(execution_histories_path(table_id: table.id))
+    expect(response.body).to include("Dismiss")
+  end
+
+  it "hides the banner after the operator dismisses it" do
+    table = create(:iceberg_table, catalog:)
+    ErrorEvent.record(catalog:, schema: table.namespace, table: table.name,
+                      operation: "execution", source_system: "engine", message: "boom")
+
+    post dismiss_errors_iceberg_table_path(table)
+    get iceberg_table_path(table)
+
+    expect(response.body).not_to include("open error")
+  end
 end
 
 RSpec.describe "POST /iceberg_tables/:id/run_maintenance", type: :request do

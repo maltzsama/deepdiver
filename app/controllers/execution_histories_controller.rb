@@ -12,10 +12,11 @@ class ExecutionHistoriesController < ApplicationController
   def index
     authorize ExecutionHistory
     @catalogs = Catalog.order(:name)
-    filters = params.permit(:kind, :catalog_id, :status, :operation, :stopped_at_step, :page)
+    filters = params.permit(:kind, :catalog_id, :table_id, :status, :operation, :stopped_at_step, :page)
     timeline = OperationTimeline.new(
       kind: filters[:kind].to_s.presence,
       catalog_id: filters[:catalog_id].to_s.presence,
+      table_id: filters[:table_id].to_s.presence,
       status: filters[:status].to_s.presence,
       operation: filters[:operation].to_s.presence,
       stopped_at_step: filters[:stopped_at_step].to_s.presence

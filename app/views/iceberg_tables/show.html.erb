@@ -1,10 +1,23 @@
 <% content_for :title, "#{@table.fully_qualified_name} — DeepDiver" %>
 
-<% if @open_error_count && @open_error_count.positive? %>
-  <a href="<%= execution_histories_path(kind: "freshness") %>"
-     class="flash flash-alert mb-5 no-underline block">
-    <%= t("error_events.table_banner", count: @open_error_count) %>
-  </a>
+<% if @open_error_count&.positive? &&
+      !(session[:dismissed_error_banners] || []).include?(@table.id) %>
+  <div class="flash flash-alert mb-5 flex items-center gap-3">
+    <p class="flex-1" role="alert">
+      <% dominant_op, dominant_count = @open_error_groups.max_by { |_op, count| count } %>
+      <%= t("error_events.table_banner", count: @open_error_count) %>
+      <% if dominant_op %>
+        <span class="text-cosmos-fg-soft">— <%= t("error_events.table_banner_kind", operation: dominant_op, count: dominant_count) %></span>
+      <% end %>
+      <%= link_to t("error_events.table_banner_link"),
+                  execution_histories_path(table_id: @table.id),
+                  class: "link text-body underline" %>
+    </p>
+    <%= button_to t("error_events.table_banner_dismiss"),
+                  dismiss_errors_iceberg_table_path(@table), method: :post,
+                  class: "btn btn-default btn-sm",
+                  data: { turbo_submits_with: t("actions.sending") } %>
+  </div>
 <% end %>
 
 <div class="page-head">

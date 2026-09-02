@@ -54,6 +54,13 @@ RSpec.describe TableMetadataExtractor, type: :service do
       expect(extractor.total_records).to eq(500)
       expect(extractor.total_size_bytes).to eq(1_000)
     end
+
+    it "carries the persisted manifest_count so health inputs match everywhere" do
+      table = create(:iceberg_table, manifest_count: 15)
+      extractor = described_class.from_persisted(table)
+
+      expect(extractor.manifest_count).to eq(15)
+    end
   end
 
   describe "#total_size_bytes" do

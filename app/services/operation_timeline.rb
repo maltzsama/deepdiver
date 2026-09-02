@@ -15,9 +15,10 @@ class OperationTimeline
   # @param status [String, nil] restrict by status (applied per kind)
   # @param operation [String, nil] maintenance-only: executions containing this step
   # @param stopped_at_step [String, nil] maintenance-only: executions failed at this step
-  def initialize(kind: nil, catalog_id: nil, status: nil, operation: nil, stopped_at_step: nil)
+  def initialize(kind: nil, catalog_id: nil, table_id: nil, status: nil, operation: nil, stopped_at_step: nil)
     @kind = kind
     @catalog_id = catalog_id
+    @table_id = table_id
     @status = status
     @operation = operation
     @stopped_at_step = stopped_at_step
@@ -131,11 +132,12 @@ class OperationTimeline
     sql
   end
 
-  # The maintenance WHERE clause: catalog, status, operation, stopped-at-step.
+  # The maintenance WHERE clause: table, catalog, status, operation, stopped-at-step.
   #
   # @return [String] the WHERE SQL
   def where_for_maintenance
     conds = []
+    conds << "e.iceberg_table_id = #{@table_id.to_i}" if @table_id.present?
     conds << "e.iceberg_table_id IN (SELECT id FROM iceberg_tables WHERE catalog_id = #{@catalog_id.to_i})" if @catalog_id.present?
     conds << "e.status = #{quote(@status)}" if @status.present?
     if @operation.present?
@@ -147,11 +149,12 @@ class OperationTimeline
     conds.empty? ? "" : "WHERE #{conds.join(" AND ")}"
   end
 
-  # The freshness WHERE clause: catalog and status.
+  # The freshness WHERE clause: table, catalog and status.
   #
   # @return [String] the WHERE SQL
   def where_for_freshness
     conds = []
+    conds << "f.iceberg_table_id = #{@table_id.to_i}" if @table_id.present?
     conds << "f.iceberg_table_id IN (SELECT id FROM iceberg_tables WHERE catalog_id = #{@catalog_id.to_i})" if @catalog_id.present?
     conds << "f.status = #{quote(@status)}" if @status.present?
     conds.empty? ? "" : "WHERE #{conds.join(" AND ")}"

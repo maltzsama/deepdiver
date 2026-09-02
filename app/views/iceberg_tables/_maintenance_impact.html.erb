@@ -1,19 +1,23 @@
 <%# Last maintenance impact panel: shows the before/after metadata diff for
-    the most recent successful maintenance run on this table. %>
-<% last_success = @table.execution_histories.success.latest.first %>
-<% if last_success&.metadata_before&.present? && last_success&.metadata_after&.present? %>
+    the most recent successful maintenance run that actually produced a
+    comparison. A run whose steps were all skipped (nothing was due) is
+    recorded as success with nil snapshots; selecting "the latest success"
+    would hide the last run that did real work behind it (see #196). %>
+<% last_success = @table.execution_histories.success
+                        .where.not(metadata_before: nil)
+                        .where.not(metadata_after: nil)
+                        .latest.first %>
+<% if last_success %>
   <section class="panel mb-6">
     <div class="panel-head">
       <h2 class="panel-title"><%= t("maintenance.impact.title") %></h2>
       <span class="panel-note"><%= t("maintenance.impact.subtitle") %></span>
     </div>
     <div class="panel-body">
-      <% diff = metadata_diff(last_success) %>
-      <% if diff %>
-        <%= diff %>
-      <% else %>
-        <p class="cell-muted"><%= t("operations.index.no_change") %></p>
-      <% end %>
+      <p class="cell-meta text-small mb-3">
+        <%= t("maintenance.impact.run", time: timestamp(last_success.started_at || last_success.created_at)) %>
+      </p>
+      <%= metadata_diff(last_success) %>
     </div>
   </section>
 <% end %>

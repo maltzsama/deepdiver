@@ -82,9 +82,15 @@ class HealthEvaluator
   # data.
   def fragmentation
     average = @extractor.average_file_size
-    return nil if average.nil?
+    return nil if average.nil? || average <= 0
 
-    (average.to_f / target_file_size).clamp(0.0, 1.0)
+    # Log scale: a linear ratio collapses every real table into the bottom ~2%
+    # of the scale (61 KB -> 0.0009, 819 KB -> 0.012), so the heaviest-weighted
+    # component carries no discriminating signal and all tables converge on the
+    # same score. Each 10x below target now costs ~1/3 of the component:
+    # at target -> 1.0, 10x below -> 0.67, 100x -> 0.33, 1000x or worse -> 0.0.
+    decades_below = Math.log10(target_file_size.to_f / average)
+    (1.0 - decades_below / 3.0).clamp(0.0, 1.0)
   end
 
   # Scores the snapshot count against the expected budget.
@@ -122,9 +128,14 @@ class HealthEvaluator
   # accumulate alongside snapshots). When manifest_count is nil (engine
   # was down / never measured), the component is excluded.
   #
+  # The count comes from the explicit keyword (fresh-from-Trino path, not yet
+  # persisted) or falls back to the extractor, which carries the persisted
+  # manifest_count for any caller rebuilding state from the database — so every
+  # call site evaluates with the same inputs (see #198).
+  #
   # @return [Float, nil] 0.0-1.0, or nil when there is no manifest data
   def manifest_buildup
-    count = @manifest_count
+    count = @manifest_count || @extractor.manifest_count
     return nil if count.nil?
 
     budget = expected_manifest_budget

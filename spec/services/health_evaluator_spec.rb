@@ -5,7 +5,7 @@ RSpec.describe HealthEvaluator do
     instance_double(TableMetadataExtractor,
                     { average_file_size: nil, snapshot_count: nil, total_records: nil,
                       position_deletes: nil, equality_deletes: nil, properties: {},
-                      oldest_snapshot_at: nil, last_snapshot_at: nil }.merge(overrides))
+                      oldest_snapshot_at: nil, last_snapshot_at: nil, manifest_count: nil }.merge(overrides))
   end
 
   it "does not penalize a cold table that is well compacted" do
@@ -66,6 +66,43 @@ RSpec.describe HealthEvaluator do
 
   it "leaves worst_component nil when nothing is measurable" do
     expect(described_class.evaluate(extractor)[:worst_component]).to be_nil
+  end
+
+  it "reads manifest_count from the extractor when no keyword is passed" do
+    table = create(:iceberg_table, snapshot_count: 5, total_records: 1000,
+                                   manifest_count: 2)
+    result = described_class.evaluate(TableMetadataExtractor.from_persisted(table))
+
+    expect(result[:components][:manifest_buildup]).to be_present
+  end
+
+  describe "fragmentation log scale" do
+    let(:target) { (64 * 1024 * 1024).to_s }
+
+    def frag(average)
+      described_class.evaluate(
+        extractor(average_file_size: average,
+                  properties: { "write.target-file-size-bytes" => target })
+      )[:components][:fragmentation]
+    end
+
+    it "scores at-target tables at 1.0" do
+      expect(frag(64 * 1024 * 1024)).to eq(1.0)
+    end
+
+    it "scores ~10x below target around 0.67" do
+      expect(frag(6 * 1024 * 1024)).to be_within(0.05).of(0.67)
+    end
+
+    it "scores ~1000x below target at 0.0" do
+      expect(frag(64 * 1024)).to eq(0.0)
+    end
+
+    it "separates tables that the linear ratio collapsed" do
+      # 819 KB vs 1.29 MB: linear gave 0.0122 vs 0.0192 (indistinguishable);
+      # log gives ~0.37 vs ~0.43 — the less-fragmented table scores higher.
+      expect(frag(819 * 1024)).to be < frag(1_290 * 1024)
+    end
   end
 
   describe "snapshot_buildup budget" do
