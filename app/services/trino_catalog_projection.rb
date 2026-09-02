@@ -8,6 +8,7 @@ class TrinoCatalogProjection
 
   SENSITIVE_KEYS = %w[
     iceberg.rest-catalog.oauth2.credential
+    iceberg.nessie-catalog.authentication.token
     s3.aws-access-key
     s3.aws-secret-key
     s3.aws-session-token
@@ -25,9 +26,29 @@ class TrinoCatalogProjection
     if credential&.oauth2?
       values["iceberg.rest-catalog.oauth2.credential"] = "#{credential.client_id}:#{credential.secret}"
     end
+    # A native-Nessie catalog authenticates with a bearer token. It goes
+    # through the same masking path as every other secret, so the plaintext
+    # never reaches the registry's JSON column.
+    if native_nessie?(catalog) && credential&.auth_method == "bearer_static"
+      values["iceberg.nessie-catalog.authentication.token"] = credential.secret
+    end
+    # The .select on SENSITIVE_KEYS below drops a blank token, so the type and
+    # the token cannot diverge: nessie_bearer? gates the type on exactly the
+    # same "bearer_static with a present secret" condition.
     values.merge!(catalog.resolve_s3_credentials)
     values.select { |key, value| SENSITIVE_KEYS.include?(key) && value.present? }
           .transform_values(&:to_s)
+  end
+
+  # Whether this Nessie catalog uses the native /api/v2 access model.
+  #
+  # A class method because sensitive_property_values (also class-level) needs
+  # it to decide whether a bearer token applies.
+  #
+  # @param catalog [Catalog] the catalog being projected
+  # @return [Boolean]
+  def self.native_nessie?(catalog)
+    catalog.catalog_type == "nessie" && catalog.nessie_api_mode == "native"
   end
 
   # File name mounted by baleia — MUST match the ref in #connector_properties
@@ -131,13 +152,11 @@ class TrinoCatalogProjection
     props.transform_values(&:to_s)
   end
 
-  # Whether this Nessie catalog uses the native /api/v2 access model.
+  # Instance-side shorthand for the class-level predicate.
   #
   # @param catalog [Catalog] the catalog being projected
   # @return [Boolean]
-  def native_nessie?(catalog)
-    catalog.catalog_type == "nessie" && catalog.nessie_api_mode == "native"
-  end
+  def native_nessie?(catalog) = self.class.native_nessie?(catalog)
 
   # Connector properties for the Iceberg REST surface (Polaris, Nessie-rest,
   # and any future REST-backed catalog).
@@ -153,7 +172,9 @@ class TrinoCatalogProjection
       # Nested namespace: the application configures it instead of relying on
       # someone having enabled it on the cluster. See CR-02.
       "iceberg.rest-catalog.nested-namespace-enabled" => "true",
-      "fs.native-s3.enabled" => "true",
+      # fs.native-s3.enabled is a legacy alias the filesystem manager still
+      # accepts but reports as replaced. fs.s3.enabled is the current name.
+      "fs.s3.enabled" => "true",
       "s3.endpoint" => catalog.s3_endpoint.presence || ENV.fetch("CEPH_ENDPOINT", "http://ceph.local"),
       "s3.path-style-access" => "true"
     }
@@ -178,16 +199,39 @@ class TrinoCatalogProjection
   # @param catalog [Catalog] the catalog being projected
   # @return [Hash{String => String}] the native Nessie properties
   def native_nessie_properties(catalog)
-    {
+    props = {
       "iceberg.catalog.type" => "nessie",
       "iceberg.nessie-catalog.uri" => "#{catalog.endpoint.chomp("/")}/api/v2",
+      # Pinned to match the /api/v2 suffix above. The version is encoded in the
+      # path AND configurable separately, so leaving it implicit allows the two
+      # to disagree - which would surface as a protocol error rather than a
+      # configuration one.
+      "iceberg.nessie-catalog.client-api-version" => "V2",
       "iceberg.nessie-catalog.ref" => catalog.nessie_ref.presence || "main",
       "iceberg.nessie-catalog.default-warehouse-dir" => catalog.nessie_warehouse,
-      "iceberg.nessie-catalog.authentication.type" => "NONE",
-      "fs.native-s3.enabled" => "true",
+      "fs.s3.enabled" => "true",
       "s3.endpoint" => catalog.s3_endpoint.presence || ENV.fetch("CEPH_ENDPOINT", "http://ceph.local"),
       "s3.path-style-access" => "true"
     }
+
+    # BEARER is the ONLY member of IcebergNessieCatalogConfig$Security - there
+    # is no "NONE" and no disabled member - so for an unauthenticated Nessie
+    # the property must be OMITTED. Any sentinel value fails catalog
+    # initialization outright, which is what made these catalogs unusable.
+    # The token itself is masked as a baleia secret ref further down, via
+    # SENSITIVE_KEYS; it never lands in the registry as plaintext.
+    props["iceberg.nessie-catalog.authentication.type"] = "BEARER" if nessie_bearer?(catalog)
+
+    props
+  end
+
+  # Whether a native-Nessie catalog carries a bearer token to authenticate with.
+  #
+  # @param catalog [Catalog] the catalog being projected
+  # @return [Boolean]
+  def nessie_bearer?(catalog)
+    catalog.catalog_credential&.auth_method == "bearer_static" &&
+      catalog.catalog_credential.secret.present?
   end
 
   # Base URI Trino's Iceberg REST connector talks to. Unlike the app's own
