@@ -4,6 +4,16 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.12.1](https://github.com/maltzsama/deepdiver/compare/v0.12.0...v0.12.1) (2026-09-02)
+
+
+### Bug Fixes
+
+* **catalog:** scope Nessie native entries with a CEL filter instead of key (closes [#225](https://github.com/maltzsama/deepdiver/issues/225)) ([1059c10](https://github.com/maltzsama/deepdiver/commit/1059c1033ef52f7cf31c7dfb794fd96f3c27fc6f))
+* Nessie native table discovery, fully-qualified names, and root-table identifiers ([#225](https://github.com/maltzsama/deepdiver/issues/225), [#228](https://github.com/maltzsama/deepdiver/issues/228)) ([e83cfa6](https://github.com/maltzsama/deepdiver/commit/e83cfa69fd5f9b3dee142eaf0b7a51af9084a0e4))
+* **tables:** make fully_qualified_name actually fully qualified (closes [#228](https://github.com/maltzsama/deepdiver/issues/228)) ([1447c26](https://github.com/maltzsama/deepdiver/commit/1447c26d7d92c0264fb223418cb9e91a4209f674))
+* **tables:** refuse a Trino identifier for a root table, and document the three-part model (refs [#227](https://github.com/maltzsama/deepdiver/issues/227)) ([cbdd2c3](https://github.com/maltzsama/deepdiver/commit/cbdd2c39520a0f510f74c222eb28fdbd8d14da6f))
+
 ## [0.12.0](https://github.com/maltzsama/deepdiver/compare/v0.11.2...v0.12.0) (2026-09-02)
 
 
