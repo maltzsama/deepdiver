@@ -170,7 +170,11 @@ class CatalogSyncService
 
     table = find_or_initialize_table(namespace, table_name, extractor.table_uuid)
     previous_status = table.health_status
-    health = HealthEvaluator.evaluate(extractor, plan: table.maintenance_plan, now: @now)
+    # manifest_count comes from the persisted Trino enrichment, not the catalog
+    # summary — pass it so the persisted health_score matches the detail page
+    # and enrich_from_trino! (see #198).
+    health = HealthEvaluator.evaluate(extractor, plan: table.maintenance_plan,
+                                      manifest_count: table.manifest_count, now: @now)
 
     attributes = {
       namespace: namespace,

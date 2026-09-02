@@ -21,6 +21,7 @@ class TableMetadataExtractor
     summary["total-files-size"] = table.total_size_bytes if table.total_size_bytes
     summary["total-position-deletes"] = table.position_deletes if table.position_deletes
     summary["total-equality-deletes"] = table.equality_deletes if table.equality_deletes
+    summary["manifest-count"] = table.manifest_count if table.manifest_count
 
     # A snapshot must carry the summary. When snapshot_count is 0/nil the old
     # code produced an empty list and the summary was discarded, so every metric
@@ -111,6 +112,12 @@ class TableMetadataExtractor
   #
   # @return [Integer, nil] the count
   def equality_deletes = summary_int("total-equality-deletes")
+  # Manifest count, nil when absent - NOT zero. Persisted by the Trino
+  # enrichment and carried here so any caller reconstructing state from the
+  # database feeds the evaluator the same inputs (see #198).
+  #
+  # @return [Integer, nil] the count
+  def manifest_count = summary_int("manifest-count")
 
   # Average data-file size in bytes, nil when there are no files.
   #

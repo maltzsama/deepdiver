@@ -5,7 +5,7 @@ RSpec.describe HealthEvaluator do
     instance_double(TableMetadataExtractor,
                     { average_file_size: nil, snapshot_count: nil, total_records: nil,
                       position_deletes: nil, equality_deletes: nil, properties: {},
-                      oldest_snapshot_at: nil, last_snapshot_at: nil }.merge(overrides))
+                      oldest_snapshot_at: nil, last_snapshot_at: nil, manifest_count: nil }.merge(overrides))
   end
 
   it "does not penalize a cold table that is well compacted" do
@@ -66,6 +66,14 @@ RSpec.describe HealthEvaluator do
 
   it "leaves worst_component nil when nothing is measurable" do
     expect(described_class.evaluate(extractor)[:worst_component]).to be_nil
+  end
+
+  it "reads manifest_count from the extractor when no keyword is passed" do
+    table = create(:iceberg_table, snapshot_count: 5, total_records: 1000,
+                                   manifest_count: 2)
+    result = described_class.evaluate(TableMetadataExtractor.from_persisted(table))
+
+    expect(result[:components][:manifest_buildup]).to be_present
   end
 
   describe "snapshot_buildup budget" do

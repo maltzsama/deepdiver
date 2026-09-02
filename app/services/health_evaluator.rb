@@ -122,9 +122,14 @@ class HealthEvaluator
   # accumulate alongside snapshots). When manifest_count is nil (engine
   # was down / never measured), the component is excluded.
   #
+  # The count comes from the explicit keyword (fresh-from-Trino path, not yet
+  # persisted) or falls back to the extractor, which carries the persisted
+  # manifest_count for any caller rebuilding state from the database — so every
+  # call site evaluates with the same inputs (see #198).
+  #
   # @return [Float, nil] 0.0-1.0, or nil when there is no manifest data
   def manifest_buildup
-    count = @manifest_count
+    count = @manifest_count || @extractor.manifest_count
     return nil if count.nil?
 
     budget = expected_manifest_budget
