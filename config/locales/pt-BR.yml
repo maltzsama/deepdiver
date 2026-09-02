@@ -559,10 +559,11 @@ pt-BR:
       snapshot_buildup: "snapshots acumulados alem do orcamento de retencao"
       delete_overhead: "arquivos de delete empilhados sobre o total de registros"
       manifest_buildup: "manifestos fragmentados"
-    component_no_data: "sem dados"
+    component_no_data: "ainda nao medido"
     component_missing: "precisa da metrica %{component}"
     detail_fragmentation: "media %{avg} de %{target} alvo"
-    detail_snapshots: "%{count} snapshots"
+    detail_snapshots: "%{count} de %{budget} retidos"
+    detail_manifests: "%{count} de %{budget} esperados"
     detail_deletes: "%{deletes} deletes sobre %{records} registros"
     footer: "A pontuacao mede o que a manutencao corrige, nao o frescor dos dados. Uma tabela pode pontuar alto enquanto seu pipeline esta parado - isso aparece na coluna de frescor, nao aqui."
 

@@ -602,10 +602,11 @@ en:
       snapshot_buildup: "snapshots accumulated beyond the retention budget"
       delete_overhead: "delete files stacked on the record total"
       manifest_buildup: "fragmented manifests"
-    component_no_data: "no data"
+    component_no_data: "not measured yet"
     component_missing: "needs the %{component} metric"
     detail_fragmentation: "avg %{avg} of %{target} target"
-    detail_snapshots: "%{count} snapshots"
+    detail_snapshots: "%{count} of %{budget} retained"
+    detail_manifests: "%{count} of %{budget} expected"
     detail_deletes: "%{deletes} deletes over %{records} records"
     footer: "The score measures what maintenance fixes, not data freshness. A table can score high while its pipeline is stalled - that shows up in the freshness column, not here."
 
