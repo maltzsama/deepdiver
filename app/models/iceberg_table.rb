@@ -1,14 +1,13 @@
 # A table in a catalog discovered or registered by the application. Tracks the
 # table's health, freshness history, maintenance schedules, and executions.
 class IcebergTable < ApplicationRecord
-  # Raised when a SQL identifier is requested for a table Trino cannot name.
+  # Raised when a SQL identifier is requested for a table Trino cannot name:
+  # a table at the catalog root, where there is no schema to address -
+  # Trino's identifier is catalog.schema.table with no two-part form.
   #
-  # Two causes, both structural rather than transient:
-  #   * the table is at the catalog root, so there is no schema to address -
-  #     Trino's identifier is catalog.schema.table with no two-part form;
-  #   * the table is in a NESTED namespace on a native-Nessie catalog, whose
-  #     connector passes the schema as one namespace level and never splits on
-  #     the dot, so no SQL syntax reaches it.
+  # Nested namespaces are NOT a cause: every catalog projects to Trino via
+  # the REST connector, which splits the dotted schema under
+  # nested-namespace-enabled (see #238).
   #
   # Kept under the original name so existing rescues keep working.
   class NotAddressableInTrino < StandardError; end
@@ -187,34 +186,17 @@ class IcebergTable < ApplicationRecord
 
   # Why Trino cannot name this table, or nil when it can.
   #
-  # Two structural cases:
-  #
-  #   :root    - no namespace at all. Trino's identifier is
-  #              catalog.schema.table with no two-part form, so there is no
-  #              schema to address.
-  #
-  #   :nested_native_nessie - a nested namespace on a native-Nessie catalog.
-  #              TrinoNessieCatalog#namespaceExists and
-  #              IcebergNessieUtil#toIdentifier build Namespace.of with the
-  #              schema string as a SINGLE element - they never split on the
-  #              dot - so "a.b" addresses a one-level namespace that does not
-  #              exist. 3 parts fails at the connector and 4 parts fails at
-  #              the parser, so no syntax reaches the table. The REST
-  #              connector does split (TrinoRestCatalog#toNamespace, under
-  #              nested-namespace-enabled), which is why nesting is fine
-  #              there and the dotted 3-part identifier stays correct.
+  # One structural case: :root - no namespace at all, so there is no schema
+  # for Trino's three-part identifier to address. Nested namespaces are fine
+  # on every catalog: the projection routes them all through the REST
+  # connector, which splits the dotted schema (see #238).
   #
   # @return [Symbol, nil]
   def unaddressable_reason
     return :root if namespace.blank?
-    return :nested_native_nessie if nested_namespace? && native_nessie_catalog?
 
     nil
   end
-
-  # Whether the namespace has more than one level.
-  # @return [Boolean]
-  def nested_namespace? = namespace.to_s.include?(".")
 
   # The Trino identifier for DISPLAY, or nil when there is none.
   #
@@ -251,22 +233,10 @@ class IcebergTable < ApplicationRecord
   #
   # @raise [RootTableNotAddressable] when the namespace is blank
   def ensure_addressable!
-    case unaddressable_reason
-    when nil then nil
-    when :root
-      raise NotAddressableInTrino,
-            "#{fully_qualified_name} lives at the catalog root and has no schema to address in Trino"
-    when :nested_native_nessie
-      raise NotAddressableInTrino,
-            "#{fully_qualified_name} is in a nested namespace on a native-Nessie catalog, " \
-            "whose Trino connector does not split the schema into namespace levels"
-    end
-  end
+    return if unaddressable_reason.nil?
 
-  # Whether the owning catalog uses the native Nessie access model.
-  # @return [Boolean]
-  def native_nessie_catalog?
-    catalog.present? && TrinoCatalogProjection.native_nessie?(catalog)
+    raise NotAddressableInTrino,
+          "#{fully_qualified_name} lives at the catalog root and has no schema to address in Trino"
   end
 
   # Quotes an identifier for use inside a Trino SQL statement, escaping any
