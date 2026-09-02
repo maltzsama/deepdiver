@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/maltzsama/deepdiver/actions/workflows/ci.yml/badge.svg)](https://github.com/maltzsama/deepdiver/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.11.2)](#changelog) <!-- x-release-please-version -->
+[![Version](https://img.shields.io/badge/version-v0.12.0)](#changelog) <!-- x-release-please-version -->
 [![Ruby](https://img.shields.io/badge/ruby-4.0.6-red.svg)](https://www.ruby-lang.org/)
 [![Rails](https://img.shields.io/badge/rails-8.1-brightgreen.svg)](https://rubyonrails.org/)
 

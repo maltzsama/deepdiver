@@ -4,6 +4,28 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.12.0](https://github.com/maltzsama/deepdiver/compare/v0.11.2...v0.12.0) (2026-09-02)
+
+
+### Features
+
+* **activity:** give the engine stepper a real progress model (closes [#220](https://github.com/maltzsama/deepdiver/issues/220)) ([b7b7161](https://github.com/maltzsama/deepdiver/commit/b7b716186d08e339073177cae7934be18b6411a8))
+* **activity:** record the coordinator per engine session (closes [#221](https://github.com/maltzsama/deepdiver/issues/221)) ([150d1f4](https://github.com/maltzsama/deepdiver/commit/150d1f49dc7d8e52603648d64d225b01bfd64e58))
+* **engine:** real form fields for the Trino retention floors (closes [#216](https://github.com/maltzsama/deepdiver/issues/216)) ([24db771](https://github.com/maltzsama/deepdiver/commit/24db7712d09e69869c5d81d15e3fa039847b81f9))
+
+
+### Bug Fixes
+
+* **engine:** require a registered worker before reporting the cluster healthy (closes [#218](https://github.com/maltzsama/deepdiver/issues/218)) ([dd77c6d](https://github.com/maltzsama/deepdiver/commit/dd77c6d18ee2a1f30cd42ce8656e1ecf2f82766f))
+* **engine:** resolve the coordinator target through the provisioner instead of swallowing NoMethodError (closes [#221](https://github.com/maltzsama/deepdiver/issues/221) in part) ([61d5aac](https://github.com/maltzsama/deepdiver/commit/61d5aaccf3cb75ab740bec2992cdb86da7457213))
+* **health:** give every breakdown row a value and a uniform structure (closes [#219](https://github.com/maltzsama/deepdiver/issues/219)) ([f4462f2](https://github.com/maltzsama/deepdiver/commit/f4462f2b967e8d0ee5f56c31b6238c2453faa0a6))
+* **health:** persist the breakdown and stop evaluating on read (closes [#215](https://github.com/maltzsama/deepdiver/issues/215)) ([2e76d00](https://github.com/maltzsama/deepdiver/commit/2e76d00b018f864b60af4d60f98eb883f37ce4ba))
+* **health:** record the evaluation for an unscoreable table too (refs [#215](https://github.com/maltzsama/deepdiver/issues/215)) ([3f3b7d7](https://github.com/maltzsama/deepdiver/commit/3f3b7d7ef9af941ef9c30e44e256284a265a1ea5))
+* **health:** score snapshot_buildup from the real persisted snapshots (closes [#214](https://github.com/maltzsama/deepdiver/issues/214)) ([51e55a9](https://github.com/maltzsama/deepdiver/commit/51e55a916a297a91de5d71cee9ec29e7aecb75ee))
+* **maintenance:** run every enabled step on an operator-initiated run, ignoring cadence (closes [#217](https://github.com/maltzsama/deepdiver/issues/217)) ([afea1b2](https://github.com/maltzsama/deepdiver/commit/afea1b273ebe526a4d08f39d3c01b727bb6c8848))
+* resolve issues [#214](https://github.com/maltzsama/deepdiver/issues/214)-[#222](https://github.com/maltzsama/deepdiver/issues/222) (health scoring, engine readiness, manual trigger, retention config, stepper) ([3533f99](https://github.com/maltzsama/deepdiver/commit/3533f99df21569a7d0b5a86583a5ad5356da2354))
+* **ui:** always emit the metadata diff delta cell so the grid aligns and colours render (closes [#222](https://github.com/maltzsama/deepdiver/issues/222)) ([ee9fbd8](https://github.com/maltzsama/deepdiver/commit/ee9fbd841b5ffeb7109657f7f1b9b7e520166cff))
+
 ## [0.11.2](https://github.com/maltzsama/deepdiver/compare/v0.11.1...v0.11.2) (2026-09-02)
 
 
