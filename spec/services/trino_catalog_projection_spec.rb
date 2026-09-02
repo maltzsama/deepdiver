@@ -132,7 +132,11 @@ RSpec.describe TrinoCatalogProjection do
       expect(props["iceberg.nessie-catalog.uri"]).to eq("http://nessie:19120/api/v2")
       expect(props["iceberg.nessie-catalog.ref"]).to eq("etl_dev")
       expect(props["iceberg.nessie-catalog.default-warehouse-dir"]).to eq("s3://bucket/")
-      expect(props["iceberg.nessie-catalog.authentication.type"]).to eq("NONE")
+      expect(props["iceberg.nessie-catalog.client-api-version"]).to eq("V2")
+      # BEARER is the connector's only Security member: with no credential the
+      # property must be absent, not set to a sentinel that fails catalog
+      # initialization.
+      expect(props).not_to have_key("iceberg.nessie-catalog.authentication.type")
     end
 
     it "defaults the ref to main when blank" do
