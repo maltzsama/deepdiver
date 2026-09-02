@@ -122,12 +122,19 @@ class ChartTrinoProvisioner
     ENV.fetch("TRINO_USER", "deepdiver")
   end
 
+  # Trino query ids have a fixed shape: <yyyyMMdd>_<HHmmss>_<seq>_<coordinator>.
+  # Validating before interpolation prevents a crafted value (e.g. ../../v1/info)
+  # from escaping the /v1/query/ prefix into an arbitrary coordinator path (#211).
+  TRINO_QUERY_ID = /\A\d{8}_\d{6}_\d{5}_[a-z0-9]+\z/
+
   # Cancels a running or queued query on the coordinator. Tolerates a query that
   # already finished (returns false) without raising.
   #
   # @param query_id [String] the Trino query id to cancel
   # @return [Boolean] true when the DELETE was accepted
   def cancel_query(query_id)
+    return false unless query_id.to_s.match?(TRINO_QUERY_ID)
+
     @transport.delete("#{@base_url}/v1/query/#{query_id}")
     true
   rescue StandardError
