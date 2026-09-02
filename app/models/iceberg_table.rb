@@ -36,14 +36,17 @@ class IcebergTable < ApplicationRecord
   # both the score and the label (see #215); persisting the breakdown lets the
   # detail page render by reading, so a divergence cannot arise.
   #
-  # Returns {} when the evaluation produced no score, so an unscoreable table
-  # keeps whatever was last known rather than being blanked.
+  # An unscoreable table still records that it WAS evaluated: the breakdown and
+  # the timestamp are written while the score and label are left untouched.
+  # Without that, health_components stayed blank and the detail page treated
+  # the table as never-evaluated and re-evaluated it on every single render -
+  # the very thing this exists to prevent.
   #
   # @param health [Hash] a HealthEvaluator.evaluate result
   # @param at [Time] the evaluation clock
-  # @return [Hash] attributes to assign, empty when there is no score
+  # @return [Hash] attributes to assign
   def health_attributes(health, at: Time.current)
-    return {} if health[:score].nil?
+    return { health_components: serialize_health_components(health), health_evaluated_at: at } if health[:score].nil?
 
     attributes = {
       health_score: health[:score],
@@ -68,7 +71,9 @@ class IcebergTable < ApplicationRecord
     components = (stored["components"] || {}).transform_keys(&:to_sym)
     {
       score: health_score,
-      status: health_status.to_sym,
+      # An unscoreable table keeps whatever label it last had, but the panel
+      # must render :unknown rather than a stale badge with no score behind it.
+      status: health_score.nil? ? :unknown : health_status.to_sym,
       components: components,
       coverage: stored["coverage"],
       worst_component: stored["worst_component"]&.to_sym,

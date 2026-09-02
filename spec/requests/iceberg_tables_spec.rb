@@ -324,3 +324,26 @@ RSpec.describe "GET /iceberg_tables/:id", type: :request do
     expect(table.reload.health_evaluated_at).to eq(first)
   end
 end
+
+RSpec.describe "GET /iceberg_tables/:id for an unscoreable table", type: :request do
+  let(:user) { create(:user) }
+
+  before { sign_in user }
+
+  it "does not re-evaluate on every render when the table has no score" do
+    table = create(:iceberg_table, snapshot_count: nil, total_records: nil,
+                                   total_data_files: nil, total_size_bytes: nil,
+                                   manifest_count: nil, last_data_update: nil,
+                                   oldest_snapshot_at: nil)
+    get iceberg_table_path(table)
+    expect(response).to have_http_status(:ok)
+    expect(table.reload.health_score).to be_nil
+    first = table.health_evaluated_at
+    expect(first).to be_present
+
+    expect(HealthEvaluator).not_to receive(:evaluate)
+    get iceberg_table_path(table)
+
+    expect(table.reload.health_evaluated_at).to eq(first)
+  end
+end

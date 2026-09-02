@@ -29,8 +29,12 @@ RSpec.describe IcebergTable, "health persistence" do
         .to have_key(:health_status_changed_at)
     end
 
-    it "returns nothing when the evaluation produced no score" do
-      expect(table.health_attributes(evaluation.merge(score: nil))).to eq({})
+    it "records the evaluation but not a score when there is none" do
+      attributes = table.health_attributes(evaluation.merge(score: nil))
+
+      expect(attributes.keys).to contain_exactly(:health_components, :health_evaluated_at)
+      expect(attributes).not_to have_key(:health_score)
+      expect(attributes).not_to have_key(:health_status)
     end
   end
 
@@ -62,5 +66,38 @@ RSpec.describe IcebergTable, "health persistence" do
 
     expect(detail[:score]).to eq(table.health_score)
     expect(detail[:status].to_s).to eq(table.health_status)
+  end
+end
+
+RSpec.describe IcebergTable, "health persistence for an unscoreable table" do
+  let(:table) { create(:iceberg_table) }
+  let(:unscoreable) do
+    { score: nil, status: :unknown, worst_component: nil,
+      components: { fragmentation: nil, snapshot_buildup: nil,
+                    delete_overhead: nil, manifest_buildup: nil },
+      details: { snapshot_count: 0, delete_count: 0 } }
+  end
+
+  it "records that it was evaluated, so the detail page does not re-evaluate forever" do
+    table.update!(table.health_attributes(unscoreable))
+
+    expect(table.reload.health_components).to be_present
+    expect(table.health_evaluated_at).to be_present
+    expect(table.persisted_health_evaluation).not_to be_nil
+  end
+
+  it "leaves the score and label untouched rather than blanking them" do
+    table.update!(health_score: 55, health_status: "warning")
+    table.update!(table.health_attributes(unscoreable))
+
+    expect(table.reload.health_score).to eq(55)
+    expect(table.health_status).to eq("warning")
+  end
+
+  it "reads back as unknown when there is no score" do
+    table.update!(health_score: nil, health_status: "unknown")
+    table.update!(table.health_attributes(unscoreable))
+
+    expect(table.reload.persisted_health_evaluation[:status]).to eq(:unknown)
   end
 end
