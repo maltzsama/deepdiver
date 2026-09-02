@@ -36,8 +36,10 @@ class ChartTrinoProvisioner
   end
 
   # Healthy means HTTP 200 and starting:false on /v1/info.  In cluster
-  # topology, also verifies that every node (including workers) has finished
-  # starting.  Two paths are tried in order:
+  # topology, also verifies that at least one worker has registered AND that
+  # every registered node has finished starting - a coordinator that is up
+  # before any worker joins must not read as healthy.  Two paths are tried in
+  # order:
   #
   # 1. GET /v1/node on the coordinator (requires MANAGEMENT_READ; works when
   #    http-server.authentication.type includes management-read).
@@ -194,10 +196,24 @@ class ChartTrinoProvisioner
   # Checks cluster node health via /v1/node, falling back to per-worker /v1/info
   # when the management endpoint is unavailable (404).
   #
-  # @return [Boolean] true when all nodes are healthy
+  # Requires the EXPECTED number of workers to have registered, not merely that
+  # whichever nodes answered are past `starting`. `all?` is vacuously true for
+  # an empty array, so a coordinator that was up before any worker registered
+  # read as healthy: the engine transitioned to `up`, maintenance dispatched,
+  # and the coordinator scheduled a fragment on a worker whose HTTP server was
+  # still initializing (503 "Trino server is still initializing").
+  #
+  # @return [Boolean] true when every expected node is registered and started
   def check_cluster_nodes
     nodes = @transport.get("#{@base_url}/v1/node")
-    nodes.is_a?(Array) && nodes.all? { |n| n["starting"] == false }
+    return false unless nodes.is_a?(Array)
+    return false unless nodes.all? { |n| n["starting"] == false }
+
+    # At least one non-coordinator node must have registered. `all?` alone is
+    # vacuously true for an empty list, which is exactly the state right after
+    # the coordinator comes up and before any worker has joined.
+    workers = nodes.count { |n| n["coordinator"] != true }
+    workers.positive?
   rescue HttpTransport::ApiError => e
     raise unless e.message.include?("404")
 

@@ -159,6 +159,24 @@ RSpec.describe ChartTrinoProvisioner do
       expect(provisioner.healthy?).to be false
     end
 
+    it "returns false in cluster topology when no worker has registered yet" do
+      TrinoEngineConfig.instance.update!(topology: "cluster")
+      allow(transport).to receive(:get).with("http://trino/v1/info").and_return("starting" => false)
+      allow(transport).to receive(:get).with("http://trino/v1/node").and_return([
+        { "starting" => false, "coordinator" => true }
+      ])
+
+      expect(provisioner.healthy?).to be false
+    end
+
+    it "returns false in cluster topology when /v1/node is empty" do
+      TrinoEngineConfig.instance.update!(topology: "cluster")
+      allow(transport).to receive(:get).with("http://trino/v1/info").and_return("starting" => false)
+      allow(transport).to receive(:get).with("http://trino/v1/node").and_return([])
+
+      expect(provisioner.healthy?).to be false
+    end
+
     it "returns false when /v1/info fails" do
       allow(transport).to receive(:get).with("http://trino/v1/info").and_raise(StandardError)
 
