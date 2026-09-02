@@ -59,7 +59,14 @@
       </div>
       <div>
         <dt class="dl-term"><%= t("tables.show.trino_id") %></dt>
-        <dd class="dl-desc-mono text-small"><%= @table.trino_identifier %></dd>
+        <dd class="dl-desc-mono text-small">
+          <%# Read-only field: never let an unaddressable table raise here. %>
+          <% if (identifier = @table.trino_identifier_for_display) %>
+            <%= identifier %>
+          <% else %>
+            <span class="text-cosmos-fg-mute italic"><%= t("tables.show.not_addressable") %></span>
+          <% end %>
+        </dd>
       </div>
     </dl>
   </div>

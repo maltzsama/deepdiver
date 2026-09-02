@@ -403,6 +403,7 @@ pt-BR:
   tables:
     run_maintenance:
       enqueued: "Manutencao enfileirada - iniciara quando o motor subir."
+      not_addressable: "Esta tabela esta na raiz do catalogo e nao pode receber manutencao: o Trino precisa de um schema para enderecar."
       already_queued: "Manutencao para esta tabela ja esta na fila ou em execucao."
     banner_dismissed: "Banner de erros dispensado para esta tabela."
     show:
@@ -413,6 +414,7 @@ pt-BR:
       status: "Status"
       last_write: "Ultima escrita"
       trino_id: "Identificador Trino"
+      not_addressable: "nao enderecavel - a tabela esta na raiz do catalogo, que nao tem schema"
       schedules_title: "Agendamentos"
       schedules_note: "%{count} de %{total} operacoes"
       empty_title: "Nenhum agendamento para esta tabela"
@@ -979,6 +981,10 @@ pt-BR:
               invalid_duration: "precisa ser uma magnitude mais uma unidade de tempo (ex. 7d, 12h)"
             remove_orphan_files_min_retention:
               invalid_duration: "precisa ser uma magnitude mais uma unidade de tempo (ex. 7d, 12h)"
+        maintenance_plan:
+          attributes:
+            iceberg_table:
+              not_addressable_in_trino: "esta na raiz do catalogo e nao pode receber manutencao: o Trino precisa de um schema para enderecar a tabela"
         maintenance_step:
           attributes:
             config:

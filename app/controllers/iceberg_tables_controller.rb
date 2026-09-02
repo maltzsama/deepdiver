@@ -84,6 +84,15 @@ class IcebergTablesController < ApplicationController
   # already has work queued or running is not enqueued again.
   def run_maintenance
     authorize @table, :run_maintenance?
+
+    # A table with no addressable Trino identifier cannot be maintained, and
+    # creating a default plan for it would raise. Say so instead.
+    unless @table.addressable_in_trino?
+      redirect_back fallback_location: iceberg_tables_path,
+                    alert: t("tables.run_maintenance.not_addressable")
+      return
+    end
+
     plan = @table.maintenance_plan
 
     if plan.nil?

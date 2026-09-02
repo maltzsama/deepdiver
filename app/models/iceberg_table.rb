@@ -168,6 +168,30 @@ class IcebergTable < ApplicationRecord
       .map { |part| quote_identifier(part) }.join(".")
   end
 
+  # Whether this table can be named in a Trino statement at all.
+  #
+  # False for a table at the catalog root: Trino's identifier is
+  # catalog.schema.table with no two-part form, so there is no schema to
+  # address. Callers that need to know BEFORE acting - the UI, plan creation -
+  # should ask this rather than rescuing an exception.
+  #
+  # @return [Boolean]
+  def addressable_in_trino?
+    namespace.present?
+  end
+
+  # The Trino identifier for DISPLAY, or nil when there is none.
+  #
+  # Execution paths must keep using trino_identifier and let
+  # RootTableNotAddressable propagate - a statement built for an unaddressable
+  # table has to fail. A read-only field rendering the same value must not,
+  # which is what took the detail page down for every root table.
+  #
+  # @return [String, nil]
+  def trino_identifier_for_display
+    addressable_in_trino? ? trino_identifier : nil
+  end
+
   private
 
   # Flattens an evaluation into the JSON column. The component ratios AND the
