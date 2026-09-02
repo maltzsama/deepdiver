@@ -713,7 +713,38 @@
   position: relative;
 }
 
+/* A PASSED connector keeps the colour of the stage it represents, at full
+   width, so the line accumulates and "how far did it get" is readable at a
+   glance - including after the fact. Painting every done connector one neutral
+   grey is what made the line say nothing. */
 .engine-stepper .step-link.done { background: var(--line-bold); }
+.engine-stepper .step-link--down.done     { background: var(--accent); }
+.engine-stepper .step-link--starting.done { background: var(--ok); }
+.engine-stepper .step-link--up.done       { background: var(--warn); }
+.engine-stepper .step-link--draining.done { background: var(--fg-mute); }
+
+/* The segment in flight when a start failed stays red at the width it
+   reached, rather than reverting to inert grey. */
+.engine-stepper .step-link.failed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  width: var(--engine-progress, 40%);
+  background: var(--red);
+}
+
+/* Idle is not stage zero: the engine at rest with no demand reads as resting,
+   not as "stuck at the first stage". That is the state seen most often. */
+.engine-stepper .step-link.resting {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--sunk) 0 6px,
+    transparent 6px 12px
+  );
+}
+.engine-stepper .step.idle { color: var(--fg-mute); }
+.engine-stepper .step.idle .step-dot { box-shadow: none; width: 7px; height: 7px; }
 
 /* active → next connector carries the countdown fill */
 .engine-stepper .step-link.progress::after {
@@ -727,6 +758,12 @@
 }
 
 .engine-stepper .step-link.progress.bar-warn::after { background: var(--warn); }
+
+/* Escalation is an APPEARANCE change, not a change of scale: the bar fills
+   against the phase's expected duration, then turns amber past it and red at
+   the failure deadline. */
+.engine-stepper .step-link.progress.is-over::after    { background: var(--warn); }
+.engine-stepper .step-link.progress.is-expired::after { background: var(--red); width: 100%; }
 
 .engine-stepper .step-link.progress.indeterminate::after {
   width: 35%;

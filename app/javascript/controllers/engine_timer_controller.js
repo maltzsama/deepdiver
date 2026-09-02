@@ -7,6 +7,11 @@ export default class extends Controller {
     deadline: String,
     start: String,
     mode: String,
+    // Median seconds this phase has historically taken. The progress bar fills
+    // against THIS, not against the deadline: the deadline is a failure
+    // horizon, so using it as the denominator made a normal start render as a
+    // few percent of the bar and a nearly-full bar mean "about to fail".
+    estimate: Number,
   }
 
   connect() {
@@ -42,24 +47,57 @@ export default class extends Controller {
     this.timerTarget.textContent = this.formatRemaining(remainingMs)
   }
 
+  // Fills against the expected duration and escalates the bar's APPEARANCE as
+  // the phase runs long: normal up to the estimate, `over` past it, `expired`
+  // at the deadline. The deadline is therefore still visible, as a treatment
+  // rather than as the scale.
   updateCountdown() {
-    const deadlineTime = this.parseTime(this.deadlineValue)
-    if (!deadlineTime) return
-
     const now = Date.now()
-    const totalMs = deadlineTime - (this.parseTime(this.startValue) || now)
-    const elapsedMs = now - (this.parseTime(this.startValue) || now)
-    const remainingMs = deadlineTime - now
+    const startTime = this.parseTime(this.startValue)
+    const deadlineTime = this.parseTime(this.deadlineValue)
+    if (!startTime) return
 
-    if (remainingMs <= 0) {
-      this.barTarget.style.setProperty("--engine-progress", "100%")
+    const elapsedMs = now - startTime
+    const estimateMs = (this.estimateValue || 0) * 1000
+
+    if (deadlineTime && now >= deadlineTime) {
+      this.setBar(100, "expired")
       this.labelTarget.textContent = this.labelTarget.dataset.expired || ""
       return
     }
 
-    const pct = totalMs > 0 ? Math.min(100, (elapsedMs / totalMs) * 100) : 0
-    this.barTarget.style.setProperty("--engine-progress", pct.toFixed(1) + "%")
-    this.labelTarget.textContent = this.formatRemaining(remainingMs)
+    // No history yet: there is no honest estimate, so do not invent one.
+    if (estimateMs <= 0) {
+      this.setBar(null, "indeterminate")
+      if (deadlineTime) this.labelTarget.textContent = this.formatRemaining(deadlineTime - now)
+      return
+    }
+
+    const pct = Math.min(100, (elapsedMs / estimateMs) * 100)
+    // Past the estimate the bar holds at full and turns to the warning
+    // treatment; it is taking longer than this phase normally does.
+    this.setBar(pct, elapsedMs > estimateMs ? "over" : null)
+    this.labelTarget.textContent =
+      elapsedMs > estimateMs && deadlineTime
+        ? this.formatRemaining(deadlineTime - now)
+        : this.formatEstimate(estimateMs - elapsedMs)
+  }
+
+  // Applies the fill width and the escalation state to the bar. A null width
+  // means indeterminate, and the CSS animates it instead of sizing it.
+  setBar(pct, state) {
+    const bar = this.barTarget
+    bar.classList.remove("is-over", "is-expired", "indeterminate")
+
+    if (state === "indeterminate") {
+      bar.classList.add("indeterminate")
+      bar.style.removeProperty("--engine-progress")
+      return
+    }
+
+    bar.style.setProperty("--engine-progress", pct.toFixed(1) + "%")
+    if (state === "over") bar.classList.add("is-over")
+    if (state === "expired") bar.classList.add("is-expired")
   }
 
   updateUptime() {
@@ -87,6 +125,18 @@ export default class extends Controller {
         : `~${minutes}m left`
     }
     return `~${seconds}s left`
+  }
+
+  // "~14s to go" against the historical estimate, not against a timeout.
+  formatEstimate(ms) {
+    const totalSeconds = Math.max(0, Math.round(ms / 1000))
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+
+    if (minutes > 0) {
+      return seconds > 0 ? `~${minutes}m ${seconds}s to go` : `~${minutes}m to go`
+    }
+    return `~${seconds}s to go`
   }
 
   formatElapsed(ms) {
