@@ -647,7 +647,7 @@ def engine_sessions(events)
       statements = metrics["batched_statements"].to_i
       next if rows.zero? && statements.zero?
 
-      op_label = t("operations.index.owner_execution", default: step.operation).capitalize
+      op_label = t("maintenance.operations.#{step.operation}", default: step.operation.humanize)
       summary = []
       summary << t("maintenance.step_metrics.processed", count: rows) if rows.positive?
       summary << t("maintenance.step_metrics.statements", count: statements) if statements.positive?

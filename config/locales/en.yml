@@ -1020,6 +1020,11 @@ en:
       snapshot_count: "Snapshots"
       oldest_snapshot_at: "Oldest snapshot"
       manifest_count: "Manifests"
+    operations:
+      optimize: "Optimize"
+      expire_snapshots: "Expire snapshots"
+      optimize_manifests: "Optimize manifests"
+      remove_orphan_files: "Remove orphan files"
     step_metrics:
       processed: "%{count} processed"
       statements: "%{count} statements"

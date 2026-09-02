@@ -269,6 +269,23 @@ RSpec.describe ApplicationHelper, "#metadata_diff", type: :helper do
     expect(html).to include("59 statements")
   end
 
+  it "labels each step-metric row with its operation name, not 'Execution'" do
+    execution.update!(
+      metadata_before: { "total_data_files" => 10, "snapshot_count" => 5 },
+      metadata_after:  { "total_data_files" => 10, "snapshot_count" => 5 }
+    )
+    create(:execution_step, execution_history: execution, operation: "optimize",
+                            metrics: { "rows" => 177, "batched_statements" => 59 })
+    create(:execution_step, execution_history: execution, operation: "remove_orphan_files",
+                            metrics: { "rows" => 2_340 })
+
+    html = helper.metadata_diff(execution)
+
+    expect(html).to include("Optimize")
+    expect(html).to include("Remove orphan files")
+    expect(html).not_to include("Execution")
+  end
+
   it "returns nil when there is nothing to show" do
     execution.update!(
       metadata_before: { "total_data_files" => 10 },
