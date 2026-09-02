@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_01_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_02_010000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "singleton_key", default: 1, null: false
@@ -113,6 +113,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_110000) do
     t.datetime "updated_at", null: false
     t.index ["created_at"], name: "idx_on_maintenance_schedule_id_created_at_ba9b5c28dc"
     t.index ["created_at"], name: "index_execution_histories_on_created_at"
+    t.index ["iceberg_table_id"], name: "index_execution_histories_active_per_table", unique: true, where: "status IN ('pending','running')"
     t.index ["iceberg_table_id"], name: "index_execution_histories_on_iceberg_table_id"
     t.index ["maintenance_plan_id"], name: "index_execution_histories_on_maintenance_plan_id"
     t.index ["status", "last_heartbeat_at"], name: "index_execution_histories_on_status_and_last_heartbeat_at"

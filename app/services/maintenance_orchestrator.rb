@@ -26,9 +26,8 @@ module MaintenanceOrchestrator
     # A leftover lock from a finished execution must never block a new run.
     TableLock.reap_stale!
 
-    execution = plan.execution_histories.create!(status: :pending, current_step: :start,
-                                                 iceberg_table_id: plan.iceberg_table_id,
-                                                 started_at: at)
+    execution, duplicate = create_execution(plan, at)
+    return execution if duplicate
 
     plan.maintenance_steps.each do |step|
       running = step.enabled && step.due_at?(at)
@@ -53,6 +52,25 @@ module MaintenanceOrchestrator
     )
     execution
   end
+
+  # Creates the pending execution, resolving a bootstrap race on the new
+  # partial unique index (status IN pending/running per table) by returning
+  # the winning execution as a duplicate.
+  #
+  # @param plan [MaintenancePlan] the plan being run
+  # @param at [Time] the reference time
+  # @return [Array(ExecutionHistory, Boolean)] the execution and whether it is
+  #   a duplicate of one that already exists
+  def self.create_execution(plan, at)
+    execution = plan.execution_histories.create!(status: :pending, current_step: :start,
+                                                 iceberg_table_id: plan.iceberg_table_id,
+                                                 started_at: at)
+    [ execution, false ]
+  rescue ActiveRecord::RecordNotUnique
+    winner = ExecutionHistory.where(iceberg_table_id: plan.iceberg_table_id, status: %w[pending running]).first
+    [ winner || plan.execution_histories.last, true ]
+  end
+  private_class_method :create_execution
 
   # Why a step is skipped at a given time (disabled or outside its cadence).
   #
