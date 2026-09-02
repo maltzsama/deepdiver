@@ -174,8 +174,10 @@ class OptimizeStatementPlanner
     when Numeric then value.to_s
     when true, false then value.to_s
     when String
-      if value.match?(/\A\d{4}-\d{2}-\d{2}\z/) || value.match?(/\A\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/)
+      if value.match?(/\A\d{4}-\d{2}-\d{2}\z/)
         "DATE '#{value}'"
+      elsif value.match?(/\A\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?\z/)
+        "TIMESTAMP '#{value.tr("T", " ")}'"
       else
         raise ArgumentError, "unsupported partition value: #{value.inspect}"
       end
