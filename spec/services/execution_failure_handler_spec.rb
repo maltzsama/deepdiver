@@ -39,6 +39,15 @@ RSpec.describe ExecutionFailureHandler do
       .not_to change { execution.reload.error_message }
   end
 
+  it "does not double-count a plan failure when an execution is handled twice" do
+    described_class.handle(execution, "first failure")
+    failures_before = plan.reload.consecutive_failures
+
+    described_class.handle(execution.reload, "second handling")
+
+    expect(plan.reload.consecutive_failures).to eq(failures_before)
+  end
+
   it "leaves pending steps alone while the execution keeps running" do
     # No handler call: a running execution's pending steps are legitimate.
     expect(execution.execution_steps.where(status: "pending").count).to eq(2)
