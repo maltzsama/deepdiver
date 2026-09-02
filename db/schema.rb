@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_02_010000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_02_020000) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "singleton_key", default: 1, null: false
@@ -88,6 +88,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_02_010000) do
     t.datetime "updated_at", null: false
     t.index ["assigned_by_id"], name: "index_error_events_on_assigned_by_id"
     t.index ["assigned_to_id"], name: "index_error_events_on_assigned_to_id"
+    t.index ["catalog_id", "schema", "table", "status"], name: "index_error_events_on_catalog_schema_table_status"
     t.index ["catalog_id", "status"], name: "index_error_events_on_catalog_id_and_status"
     t.index ["catalog_id"], name: "index_error_events_on_catalog_id"
     t.index ["operation", "status"], name: "index_error_events_on_operation_and_status"

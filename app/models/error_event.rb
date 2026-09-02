@@ -18,9 +18,11 @@ class ErrorEvent < ApplicationRecord
 
   scope :open, -> { where(status: "open") }
   scope :catalog_events, ->(catalog) { where(catalog_id: catalog.id) }
-  scope :not_lifecycle, -> { where.not(operation: "engine-lifecycle", severity: "info") }
   scope :table_events, ->(table) do
-    where(schema: table.namespace, table: table.name)
+    # Table names are unique per catalog, not globally (see #210). Scoping on
+    # schema+table alone would show every same-named table's errors from every
+    # other catalog on this table's page.
+    where(catalog_id: table.catalog_id, schema: table.namespace, table: table.name)
   end
 
   # Assigns the event to a user or to every admin/operator member of a team.

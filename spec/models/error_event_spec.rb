@@ -89,4 +89,22 @@ RSpec.describe ErrorEvent, type: :model do
       expect(plain.reload.status).to eq("open")
     end
   end
+
+  describe ".table_events" do
+    it "isolates events to the table's own catalog" do
+      catalog_a = create(:catalog)
+      catalog_b = create(:catalog)
+      table = create(:iceberg_table, catalog: catalog_a, namespace: "silver", name: "orders")
+
+      described_class.record(catalog: catalog_a, schema: "silver", table: "orders",
+                             operation: "sync-table", source_system: "catalog", message: "own failure")
+      described_class.record(catalog: catalog_b, schema: "silver", table: "orders",
+                             operation: "sync-table", source_system: "catalog", message: "other catalog")
+
+      events = described_class.table_events(table)
+
+      expect(events.count).to eq(1)
+      expect(events.first.message).to eq("own failure")
+    end
+  end
 end
