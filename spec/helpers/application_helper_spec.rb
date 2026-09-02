@@ -317,4 +317,37 @@ RSpec.describe ApplicationHelper, "#metadata_diff", type: :helper do
 
     expect(html).to include("↑")
   end
+
+  it "renders oldest_snapshot_at (ISO8601 Strings) without raising" do
+    execution.update!(
+      metadata_before: { "snapshot_count" => 5, "oldest_snapshot_at" => "2026-08-28T12:57:08Z" },
+      metadata_after:  { "snapshot_count" => 5, "oldest_snapshot_at" => "2026-08-29T12:57:08Z" }
+    )
+    create(:execution_step, execution_history: execution, operation: "expire_snapshots")
+
+    expect { helper.metadata_diff(execution) }.not_to raise_error
+  end
+
+  it "treats a newer oldest_snapshot_at (history expired) as an improvement" do
+    execution.update!(
+      metadata_before: { "snapshot_count" => 5, "oldest_snapshot_at" => "2026-08-28T12:57:08Z" },
+      metadata_after:  { "snapshot_count" => 5, "oldest_snapshot_at" => "2026-08-29T12:57:08Z" }
+    )
+    create(:execution_step, execution_history: execution, operation: "expire_snapshots")
+
+    html = helper.metadata_diff(execution)
+
+    expect(html).to include("↓")
+    expect(html).to include("is-down")
+  end
+
+  it "does not raise on a non-numeric metric" do
+    execution.update!(
+      metadata_before: { "total_data_files" => "unknown" },
+      metadata_after:  { "total_data_files" => "unknown" }
+    )
+    create(:execution_step, execution_history: execution, operation: "optimize")
+
+    expect { helper.metadata_diff(execution) }.not_to raise_error
+  end
 end

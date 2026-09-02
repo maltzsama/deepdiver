@@ -681,6 +681,23 @@ def engine_sessions(events)
     return { direction: :new, magnitude: format_metric_value(key, new_val) } if old_val.nil?
     return { direction: :down, magnitude: format_metric_value(key, old_val) } if new_val.nil?
 
+    # oldest_snapshot_at is persisted as an ISO8601 String; comparing it
+    # numerically would raise. It is the one metric where moving FORWARD means
+    # old history was expired — an improvement, so a newer value is :down.
+    if key == "oldest_snapshot_at"
+      old_t = old_val.is_a?(String) ? Time.parse(old_val) : old_val
+      new_t = new_val.is_a?(String) ? Time.parse(new_val) : new_val
+      seconds = (new_t - old_t).round
+      return nil if seconds.zero?
+
+      return { direction: seconds.positive? ? :down : :up,
+               magnitude: distance_of_time_in_words(seconds.abs) }
+    end
+
+    # Defensive: this renders inside a view with no rescue. A non-numeric
+    # metric must degrade to "no delta" rather than take down the page.
+    return nil unless old_val.is_a?(Numeric) && new_val.is_a?(Numeric)
+
     diff = new_val - old_val
     return nil if diff.zero?
 
