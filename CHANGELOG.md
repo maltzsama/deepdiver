@@ -4,6 +4,18 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.11.1](https://github.com/maltzsama/deepdiver/compare/v0.11.0...v0.11.1) (2026-09-02)
+
+
+### Bug Fixes
+
+* **activity:** align metadata diff into a grid, color deltas by direction, fix delta bugs (closes [#200](https://github.com/maltzsama/deepdiver/issues/200)) ([51cef3d](https://github.com/maltzsama/deepdiver/commit/51cef3d446b18987c5d86981e8787178e0487c11))
+* **activity:** impact panel survives no-op runs and shows unchanged metrics (closes [#196](https://github.com/maltzsama/deepdiver/issues/196)) ([ee87a8d](https://github.com/maltzsama/deepdiver/commit/ee87a8d38bd9234c204dc609a4b561e9a710f282))
+* health scoring, impact panel, metadata diff, error banner (closes [#196](https://github.com/maltzsama/deepdiver/issues/196)–[#200](https://github.com/maltzsama/deepdiver/issues/200)) ([269a74f](https://github.com/maltzsama/deepdiver/commit/269a74f068faed75e0bc0a1d48939110292e520a))
+* **health:** pass manifest_count at the third evaluation site so list/detail agree (closes [#198](https://github.com/maltzsama/deepdiver/issues/198)) ([8ed323c](https://github.com/maltzsama/deepdiver/commit/8ed323c4416dc2f6a5b11120ae075a91021bafee))
+* **health:** score fragmentation on a log scale so tables stop converging (closes [#197](https://github.com/maltzsama/deepdiver/issues/197)) ([f3f7101](https://github.com/maltzsama/deepdiver/commit/f3f71017246a0849a23427685c0cde38fd067384))
+* **ui:** table error banner dismissible, not fully clickable, count matches destination (closes [#199](https://github.com/maltzsama/deepdiver/issues/199)) ([d45f312](https://github.com/maltzsama/deepdiver/commit/d45f3123c5b91c92972122c7b92c0aa60bd25ddf))
+
 ## [0.11.0](https://github.com/maltzsama/deepdiver/compare/v0.10.1...v0.11.0) (2026-09-01)
 
 
