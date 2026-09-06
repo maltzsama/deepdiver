@@ -91,7 +91,7 @@ gem "pagy", "~> 43.6"
 gem "aws-sdk-sts", "~> 1.0", require: false
 
 # Prometheus metrics exposed on GET /metrics (scraped by a cluster-side PodMonitor).
-gem "prometheus-client", "~> 4.2"
+gem "prometheus-client", "~> 5.0"
 
 # Structured, appendable logging: JSON to STDOUT today, swap the appender for
 # Loki/Logstash/Elasticsearch later without rewriting log calls.
