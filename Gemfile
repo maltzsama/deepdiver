@@ -79,7 +79,7 @@ gem "omniauth_openid_connect", "~> 0.8.0"
 
 gem "omniauth-rails_csrf_protection", "~> 2.0"
 
-gem "bullet", "~> 8.1", groups: [ :development, :test ]
+gem "bullet", "~> 8.2", groups: [ :development, :test ]
 
 gem "solid_cable", "~> 4.0"
 
