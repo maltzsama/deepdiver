@@ -20,6 +20,7 @@ class MaintenancePlansController < ApplicationController
   def new
     authorize MaintenancePlan
     @plan = MaintenancePlan.new
+    @plan.iceberg_table_id = params.dig(:maintenance_plan, :iceberg_table_id)
     @plan.cron = MaintenancePlan::DEFAULT_CRON
     MaintenancePlan::CANONICAL_ORDER.each_with_index do |operation, position|
       @plan.maintenance_steps.build(

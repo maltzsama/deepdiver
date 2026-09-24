@@ -30,6 +30,23 @@
   </div>
 
   <div class="page-actions">
+    <% if @plan %>
+      <%= link_to t("plans.show.edit"), edit_maintenance_plan_path(@plan), class: "btn btn-default" if current_user.admin? %>
+      <% if current_user.admin? %>
+        <% if @plan.paused? %>
+          <%= button_to t("plans.show.resume"), resume_maintenance_plan_path(@plan), method: :post,
+                        class: "btn btn-default" %>
+        <% else %>
+          <%= button_to t("plans.show.pause"), pause_maintenance_plan_path(@plan), method: :post,
+                        class: "btn btn-default",
+                        data: { turbo_confirm: t("plans.show.pause_confirm") } %>
+        <% end %>
+      <% end %>
+    <% else %>
+      <%= link_to t("tables.show.create_plan"),
+                  new_maintenance_plan_path(maintenance_plan: { iceberg_table_id: @table.id }),
+                  class: "btn btn-default" if current_user.admin? %>
+    <% end %>
     <% if can_run_maintenance? %>
       <%= button_to t("tables.show.run_now"),
                     run_maintenance_iceberg_table_path(@table), method: :post,

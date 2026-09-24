@@ -45,6 +45,7 @@ class IcebergTablesController < ApplicationController
   # freshness SLA/checks, and a health evaluation rebuilt from stored metadata.
   def show
     authorize @table
+    @plan = @table.maintenance_plan
     @open_errors = ErrorEvent.open.table_events(@table).order(last_seen_at: :desc)
     @open_error_count = @open_errors.size
     # The banner names the dominant open error kind so the operator can decide
