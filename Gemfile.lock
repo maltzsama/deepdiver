@@ -192,7 +192,7 @@ GEM
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
     jmespath (1.6.2)
-    json (3.0.2)
+    json (2.21.2)
     json-jwt (1.17.2)
       activesupport (>= 4.2)
       aes_key_wrap
@@ -554,6 +554,7 @@ DEPENDENCIES
   factory_bot_rails (~> 6.5)
   fugit
   importmap-rails
+  json (~> 2.3)
   kubeclient
   omniauth-rails_csrf_protection (~> 2.0)
   omniauth_openid_connect (~> 0.8.0)
@@ -651,7 +652,7 @@ CHECKSUMS
   io-console (0.9.2) sha256=efa74f891dd03c0939a931dfc6e74c2813d904763d456ea9762b0525e748db08
   irb (1.18.0) sha256=de9454a0703a54704b9811a5ef31a60c86949fbf4013fcf244fabc7c775248e3
   jmespath (1.6.2) sha256=238d774a58723d6c090494c8879b5e9918c19485f7e840f2c1c7532cf84ebcb1
-  json (3.0.2) sha256=8e6d7e7b11384c21230430cef90b71f14849a34a1f4452796670f7c981bd19df
+  json (2.21.2) sha256=1f1d3b7cf2b3ba1a69beca0bb6db13d5438b80bff3cd54cdaaa620b9b07c1c6a
   json-jwt (1.17.2) sha256=97e37c1c3e22e9e1d74a1c0d77319c5cdc8a636226e5dbb1664b0b34eddcf1c9
   jsonpath (1.1.5) sha256=29f70467193a2dc93ab864ec3d3326d54267961acc623f487340eb9c34931dbe
   kubeclient (4.13.0) sha256=51f666b14461e1933328670c5b21114d52518b420562728792e1579a9dde0693
