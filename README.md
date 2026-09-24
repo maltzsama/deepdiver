@@ -1,8 +1,8 @@
-# DeepDiver
+# <img src="public/icon.svg" alt="" width="48"> DeepDiver
 
 [![CI](https://github.com/maltzsama/deepdiver/actions/workflows/ci.yml/badge.svg)](https://github.com/maltzsama/deepdiver/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.12.4)](#changelog) <!-- x-release-please-version -->
+[![Version](https://img.shields.io/badge/version-v0.12.4-blue.svg)](CHANGELOG.md) <!-- x-release-please-version -->
 [![Ruby](https://img.shields.io/badge/ruby-4.0.6-red.svg)](https://www.ruby-lang.org/)
 [![Rails](https://img.shields.io/badge/rails-8.1-brightgreen.svg)](https://rubyonrails.org/)
 
@@ -269,6 +269,10 @@ bundle exec rake docs:inject_counter  # re-inject tracking after manual rdoc reg
 The `trino_catalog_registry` table contains Trino connector credentials in
 plaintext (required by the Baleia plugin). See [docs/security.md](docs/security.md)
 for mitigations, database role separation, and backup handling.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the full release history.
 
 ## License
 
