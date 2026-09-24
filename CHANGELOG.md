@@ -4,6 +4,13 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.12.5](https://github.com/maltzsama/deepdiver/compare/v0.12.4...v0.12.5) (2026-09-24)
+
+
+### Bug Fixes
+
+* pin json gem to ~&gt; 2.3 to prevent breaking ActiveSupport::JSON.decode ([ecbc245](https://github.com/maltzsama/deepdiver/commit/ecbc24586a57a153fc1bd32b488ef0dd758cb151))
+
 ## [0.12.4](https://github.com/maltzsama/deepdiver/compare/v0.12.3...v0.12.4) (2026-09-02)
 
 
