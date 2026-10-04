@@ -81,7 +81,7 @@ gem "omniauth-rails_csrf_protection", "~> 2.0"
 
 gem "bullet", "~> 8.2", groups: [ :development, :test ]
 
-gem "solid_cable", "~> 4.0"
+gem "solid_cable", "~> 4.1"
 
 gem "pundit", "~> 2.5", require: "pundit"
 
