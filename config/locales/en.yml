@@ -211,6 +211,7 @@ en:
       col_state: "State"
       col_failures: "Consecutive failures"
       col_policy: "Policy"
+      col_actions: "Actions"
       needs_review: "review"
       paused: "paused"
       active: "active"

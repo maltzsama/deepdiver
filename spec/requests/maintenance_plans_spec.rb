@@ -11,6 +11,28 @@ RSpec.describe "MaintenancePlans", type: :request do
 
       expect(response).to have_http_status(:ok)
     end
+
+    it "shows Run now and Edit actions for an admin" do
+      sign_in admin
+      p = plan
+
+      get maintenance_plans_path
+
+      doc = Nokogiri::HTML(response.body)
+      expect(doc.at_css("form[action='#{run_maintenance_plan_path(p)}']")).to be_present
+      expect(doc.at_css("a[href='#{edit_maintenance_plan_path(p)}']")).to be_present
+    end
+
+    it "hides the actions from a plain viewer" do
+      sign_in create(:user)
+      p = plan
+
+      get maintenance_plans_path
+
+      doc = Nokogiri::HTML(response.body)
+      expect(doc.at_css("form[action='#{run_maintenance_plan_path(p)}']")).to be_nil
+      expect(doc.at_css("a[href='#{edit_maintenance_plan_path(p)}']")).to be_nil
+    end
   end
 
   describe "GET /maintenance_plans/new" do

@@ -197,6 +197,7 @@ pt-BR:
       col_state: "Estado"
       col_failures: "Falhas consecutivas"
       col_policy: "Politica"
+      col_actions: "Acoes"
       needs_review: "revisao"
       paused: "pausado"
       active: "ativo"
