@@ -1,5 +1,4 @@
-# Team administration: named groups of users that error events can be
-# assigned to. Full CRUD is admin-only.
+# Team administration: named groups of users. Full CRUD is admin-only.
 class TeamsController < ApplicationController
   before_action :set_team, only: %i[show edit update destroy]
 

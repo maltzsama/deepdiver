@@ -65,54 +65,6 @@ en:
       password_updated: "Password updated."
 
   error_events:
-    eyebrow: "Errors"
-    title: "Error events"
-    subtitle: "%{open} open error(s) - what failed and when it started."
-    empty_title: "No error events"
-    empty_hint: "Failures from catalog sync, executions and sign-in show up here."
-    empty_filters_hint: "No errors match the current filters."
-    result_title: "Results"
-    col_table: "Where"
-    col_operation: "Operation"
-    col_message: "Message"
-    col_since: "First seen"
-    col_count: "Times"
-    col_status: "Status"
-    status_open: "Open"
-    status_acknowledged: "Acknowledged"
-    status_resolved: "Resolved"
-    actions:
-      acknowledge: "Acknowledge"
-      resolve: "Mark as resolved"
-      assign: "Assign and notify"
-    show:
-      title: "Error detail"
-      message_title: "What happened"
-      details_title: "Details"
-      where: "Where"
-      operation: "Operation"
-      source_system: "Source"
-      error_class: "Error class"
-      first_seen: "First seen"
-      last_seen: "Last seen"
-      occurrences: "Occurrences"
-      source_column: "Column"
-      acknowledged_at: "Acknowledged at"
-      resolved_at: "Resolved at"
-      context_title: "Context"
-      assign_title: "Assignment"
-      assign_hint: "Hand this problem to a person or a whole team. Assignees get an email; the event stays open until they acknowledge it."
-      target_type: "Assign to"
-      user: "User"
-      team: "Team"
-      assigned_to: "Assigned to"
-      assigned_team: "Assigned team"
-    notices:
-      acknowledged_one: "Error acknowledged."
-      resolved_one: "Error marked as resolved."
-      assigned: "%{count} assignee(s) notified by email."
-      invalid_target: "Pick a valid user or team to assign."
-    overview_banner: "%{count} open error(s) — inspect the error surface."
     catalog_banner: "%{catalog} has %{count} open error(s)."
     table_banner: "This table has %{count} open error(s)."
     table_banner_kind: "%{count} %{operation}"
@@ -123,7 +75,7 @@ en:
     index:
       eyebrow: "Administration"
       title: "Teams"
-      subtitle: "Groups of people that errors can be assigned to."
+      subtitle: "Groups of people."
       new: "New team"
       col_name: "Name"
       col_members: "Members"
@@ -131,7 +83,7 @@ en:
       delete: "Delete"
       delete_confirm: "Delete this team? Members stay in the app."
       empty_title: "No teams yet"
-      empty_hint: "Create a team to hand whole squads a set of errors at once."
+      empty_hint: "Create a team to group people together."
     new:
       title: "New team"
     edit:
@@ -501,25 +453,6 @@ en:
       position_deletes: "Position deletes"
       equality_deletes: "Equality deletes"
       missing_note: "Missing values mean the snapshot summary written by the engine did not carry that field - they are never shown as zero."
-    freshness:
-      title: "Freshness"
-      sla_note: "SLA %{minutes} min"
-      no_sla_title: "No freshness SLA configured"
-      no_sla_hint: "Define a watermark column and SLA to monitor whether data keeps arriving."
-      status: "Status"
-      watermark: "Watermark"
-      partition: "Partition"
-      sla: "SLA"
-      edit_sla: "Edit SLA"
-      severity_bands: "Severity bands"
-      band_value: "warning %{warning} min · severe %{severe} min · critical %{critical} min"
-      alert_destination: "Alert destination"
-      history: "Check history"
-      col_when: "Checked at"
-      col_status: "Status"
-      col_delay: "Delay"
-      col_max_ts: "Max watermark"
-      no_checks: "No checks recorded yet."
     index:
       eyebrow: "Data"
       title: "Tables"
@@ -559,16 +492,6 @@ en:
     filter_namespace: "Namespace"
     filter_status: "Status"
     filter_no_plan: "Plan"
-    filter_freshness: "Freshness"
-    col_freshness: "Freshness"
-    fresh_no_sla: "no SLA"
-    fresh_configure_title: "No SLA yet - click to configure freshness monitoring"
-    fresh_late: "late %{delay}"
-    fresh_error: "probe error"
-    fresh_no_data: "no data"
-    fresh_late_filter: "Late"
-    fresh_no_sla_filter: "No SLA"
-    fresh_error_filter: "Probe error"
     include_inactive: "Include inactive"
     inactive: "inactive"
 
@@ -613,7 +536,7 @@ en:
     detail_snapshots: "%{count} of %{budget} retained"
     detail_manifests: "%{count} of %{budget} expected"
     detail_deletes: "%{deletes} deletes over %{records} records"
-    footer: "The score measures what maintenance fixes, not data freshness. A table can score high while its pipeline is stalled - that shows up in the freshness column, not here."
+    footer: "The score measures what maintenance fixes, not data freshness. A table can score high while its pipeline is stalled."
 
   shared:
     step_chain:
@@ -680,7 +603,7 @@ en:
     index:
       eyebrow: "Data"
       title: "Operations"
-      subtitle: "Log of every maintenance execution and freshness scan, most recent first."
+      subtitle: "Log of every maintenance execution, most recent first."
       result: "Result"
       count: "%{count} event(s)"
       empty_title: "No operations found"
@@ -695,12 +618,9 @@ en:
       col_chain: "Detail"
       col_duration: "Duration"
       col_query_id: "Trino query id"
-      col_triage: "Triage"
-      triage_unassigned: "unassigned"
       filter_stopped_at: "Stopped at step"
       retries: "%{count} retries"
       tab_maintenance: "Maintenance"
-      tab_freshness: "Freshness"
       legend_wait: "wait %{dur}"
       legend_ok: "%{op} %{dur}"
       legend_failed: "%{op} %{dur} failed"
@@ -710,26 +630,12 @@ en:
       legend_waiting_engine: "waiting for engine"
       owner_execution: "execution"
       no_change: "No metadata changes detected"
-      fresh_col_delay: "Delay"
-      fresh_col_sla: "SLA (min)"
     filter_operation: "Operation"
     filter_status: "Status"
-    filter_kind: "Kind"
     kind_maintenance: "maintenance"
-    kind_freshness: "freshness"
-    freshness_sla: "SLA %{sla}min"
     metrics_ms: "ms"
     metrics_processed: "processed"
     metrics_written: "written"
-
-  freshness:
-    status:
-      unknown: "unknown"
-      ok: "ok"
-      warning: "warning"
-      late: "late"
-      error: "error"
-      no_data: "no data"
 
   dashboard:
     index:
@@ -745,24 +651,13 @@ en:
       stat_critical_unit: "%{warning} warning"
       stat_active_plans: "Active Plans"
       stat_active_plans_unit: "%{count} paused"
-      sla_card_label: "Out of SLA"
-      sla_card_unit: "tables"
       triage_title: "Needs action"
       triage_note: "%{count} table(s) · most recent first"
       triage_empty_title: "Nothing needs attention."
-      section_errors: "Errors"
-      section_sla: "Out of SLA"
       section_health: "Critical health"
       section_paused: "Paused plans"
-      see_all: "See all"
       paused_badge: "paused"
-      triage_empty_hint: "No table out of SLA, no table in critical maintenance state."
-      col_table: "Table"
-      col_maintenance: "Maintenance"
-      col_freshness: "Freshness"
-      col_since: "Since"
-      on_track: "on track"
-      no_sla: "no SLA"
+      triage_empty_hint: "No table in critical maintenance state."
       refresh: "Refresh"
       run_now: "Run now"
 
@@ -943,59 +838,9 @@ en:
       updated: "Engine config updated"
       updated_and_applied: "Engine config updated and applied to the running cluster"
 
-  freshness_slas:
-    edit:
-      title: "Freshness SLA · %{table}"
-      subtitle: "What to probe and when a stale table is worth alerting about."
-    form:
-      errors_one: "%{count} problem prevented the save"
-      errors_other: "%{count} problems prevented the save"
-      enabled: "Monitor this table's freshness"
-      probe_title: "Probe"
-      probe_hint: "Which column carries the newest watermark and how to read it."
-      timestamp_column: "Watermark column"
-      timestamp_type: "Timestamp type"
-      source_timezone: "Source timezone"
-      partition_column: "Partition column"
-      partition_hint: "Optional. Prunes the probe to the recent partitions."
-      partition_lookback: "Partition lookback"
-      sla_title: "SLA"
-      sla_hint: "How stale the table may get before it is considered late."
-      sla_minutes: "SLA (minutes)"
-      sla_minutes_hint: "Delay past this is 'late'."
-      warning_at_percent: "Warning at % of SLA"
-      warning_at_percent_hint: "Delay past this share of the SLA shows 'warning'."
-      severity_title: "Severity bands"
-      severity_hint: "Delay (minutes) at which the alert escalates. Warning first, then severe, then critical."
-      warning_after_minutes: "Warning after (minutes)"
-      severe_after_minutes: "Severe after (minutes)"
-      critical_after_minutes: "Critical after (minutes)"
-      band_hint: "Must be ordered: warning < severe < critical."
-      destination_title: "Alert destination"
-      destination_hint: "Where this table's freshness alerts go. Both are allowed."
-      slack_channel: "Slack #channel"
-      slack_channel_hint: "e.g. #support. Posted through the global webhook."
-      email_to: "Email recipients"
-      email_to_hint: "Comma-separated addresses, sent through the configured SMTP server."
-      submit: "Save SLA"
-      cancel: "Cancel"
-    notices:
-      updated: "Freshness SLA updated"
-
   devise:
     failure:
       suspended: "Your account has been suspended. Contact an administrator."
-
-  error_event_mailer:
-    assignment:
-      subject: "[DeepDiver] Error assigned to you: %{operation} on %{where}"
-      greeting: "Hello,"
-      intro: "%{assigned_by} assigned an error event to you."
-      operation: "Operation"
-      where: "Where"
-      message: "Message"
-      error_class: "Error class"
-      occurrences: "Occurrences"
 
   activerecord:
     errors:
@@ -1015,12 +860,6 @@ en:
           attributes:
             config:
               retention_below_floor: "retention_threshold %{requested} for %{operation} is below the engine's configured minimum of %{floor} - raise it, or lower the floor in the Trino engine settings"
-        table_freshness_sla:
-          attributes:
-            severe_after_minutes:
-              must_exceed_warning: "must be greater than the warning threshold"
-            critical_after_minutes:
-              must_exceed_severe: "must be greater than the severe threshold"
         catalog:
           attributes:
             nessie_ref:

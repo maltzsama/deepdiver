@@ -21,11 +21,6 @@ default: &default
       threads: 1
       polling_interval: 1
 
-    # Freshness: one sweep at a time, never waits behind engine work.
-    - queues: freshness
-      threads: 1
-      polling_interval: 1
-
     # Sync: catalog list refresh, idempotent and fast.
     - queues: sync
       threads: 1

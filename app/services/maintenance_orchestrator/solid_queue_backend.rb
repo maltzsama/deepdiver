@@ -49,13 +49,6 @@ module MaintenanceOrchestrator
       ExecuteMaintenanceJob.set(wait: 5.seconds).perform_later(execution_history_id)
     end
 
-    # Enqueues FreshnessSweepJob.
-    #
-    # @param freshness_run_id [Integer] the run to start
-    def start_freshness_sweep(freshness_run_id)
-      FreshnessSweepJob.perform_later(freshness_run_id)
-    end
-
     # Enqueues CatalogSyncJob.
     #
     # @param catalog_id [Integer] the catalog to sync

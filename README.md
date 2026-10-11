@@ -20,7 +20,6 @@ with an ephemeral Trino engine on Kubernetes.
   (kubeclient scale up/down + Trino REST) with `TRINO_RUNTIME=real` in production.
 - Configurable Trino engine topology: single-node or coordinator + separate workers,
   managed from the admin UI (Engine config screen).
-- Freshness monitoring with SLA probes and Slack/email alerting.
 - Pundit policies for admin/viewer/operator RBAC.
 
 ## Stack
@@ -148,11 +147,10 @@ lists every environment variable the application reads.
 ## Deployment (Helm)
 
 The app ships as a Docker image consumed by the Helm chart under `infra/helm/deepdiver`
-(on-prem, no Redis/Kamal). It deploys three workloads plus a migration hook:
+(on-prem, no Redis/Kamal). It deploys the workloads plus a migration hook:
 
 - web — Puma (`bin/rails server`)
 - `worker` — Solid Queue supervisor (`bin/jobs`, maintenance + recurring schedules)
-- `worker-freshness` — its own Solid Queue process (freshness sweeps)
 - `migrationJob` — a `pre-install`/`pre-upgrade` hook that runs `bin/rails db:migrate`
   before web/worker reach readiness
 
@@ -195,7 +193,7 @@ helm upgrade --install deepdiver infra/helm/deepdiver \
 | `env.trinoUrl` | Base URL of the Trino coordinator (e.g. `http://trino-coordinator:8080`). |
 | `env.trinoNamespace` | Namespace of the Trino Deployment to scale (defaults to the release namespace). |
 | `env.trinoDeployment` | Deployment name (default `trino-coordinator`). |
-| `worker.replicaCount`, `workerFreshness.replicaCount` | Workers; 1 each is the default. |
+| `worker.replicaCount` | Worker replicas; 1 is the default. |
 
 `infra/helm/values/prod.yaml` holds the reference production overrides.
 
@@ -245,7 +243,7 @@ exchange, maintenance runs against Dremio tables are blocked even though sync wo
 
 ```bash
 helm status deepdiver -n deepdiver
-kubectl -n deepdiver get pods    # web, worker, worker-freshness all Running
+kubectl -n deepdiver get pods    # web, worker all Running
 kubectl -n deepdiver logs job/deepdiver-migrate   # migration hook output
 ```
 

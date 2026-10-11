@@ -89,16 +89,23 @@ jobs:
           if [ -f chart-index/index.yaml ]; then
             cp chart-index/index.yaml _site/index.yaml
           else
-            # Docs-only deploy: carry the published index forward. Without this
-            # the deploy would silently drop the Helm repo from the site.
-            # `curl -f` plus the explicit test keeps a failed fetch from
-            # publishing a truncated index.
+            # Docs-only deploy: carry the index forward from durable storage.
+            # Without this the deploy would silently drop the Helm repo from
+            # the site. First the published copy, then the gh-pages branch
+            # that chart-releaser writes - because the site itself may be
+            # gone (Pages disabled/reset), in which case fetching from the
+            # site can never succeed. `curl -f` plus the explicit test keeps
+            # a failed fetch from publishing a truncated index.
             curl -fsSL -o published-index.yaml \
               https://maltzsama.github.io/deepdiver/index.yaml || true
+            if [ ! -s published-index.yaml ]; then
+              curl -fsSL -o published-index.yaml \
+                https://raw.githubusercontent.com/maltzsama/deepdiver/gh-pages/index.yaml || true
+            fi
             if [ -s published-index.yaml ]; then
               cp published-index.yaml _site/index.yaml
             else
-              echo "::warning::no published index.yaml to carry forward; the Helm repo will be empty until the next chart release"
+              echo "::warning::no index.yaml to carry forward; the Helm repo will be empty until the next chart release"
             fi
           fi
 

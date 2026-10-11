@@ -1,5 +1,4 @@
-# Team administration is an admin-only concern: teams exist so error events
-# can be assigned to a squad, not as a self-service feature.
+# Team administration is an admin-only concern, not a self-service feature.
 class TeamPolicy < ApplicationPolicy
   # Who is allowed: admins.
   def index?  = user&.admin?

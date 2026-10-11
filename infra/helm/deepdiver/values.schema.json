@@ -135,15 +135,6 @@
         "securityContext": { "type": "object" }
       }
     },
-    "workerFreshness": {
-      "type": "object",
-      "properties": {
-        "enabled": { "type": "boolean" },
-        "replicaCount": { "type": "integer", "minimum": 0 },
-        "resources": { "type": "object" },
-        "securityContext": { "type": "object" }
-      }
-    },
     "workerEngine": {
       "type": "object",
       "properties": {
