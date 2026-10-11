@@ -8,11 +8,6 @@
       <%= @last_sync_at ? t("tables.index.synced_ago", time: time_ago_in_words(@last_sync_at)) : t("tables.index.not_synced") %>
     </p>
   </div>
-  <% if current_user.admin? %>
-    <div class="page-actions">
-      <%= link_to t("tables.index.sync_catalog"), catalogs_path, class: "btn btn-default" %>
-    </div>
-  <% end %>
 </div>
 
 <%= render "shared/filters",

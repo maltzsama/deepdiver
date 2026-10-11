@@ -69,6 +69,14 @@ class CatalogsController < ApplicationController
     redirect_to @catalog, notice: t("catalogs.notices.sync_enqueued")
   end
 
+  # Enqueues a metadata re-sync for every catalog. Admin-only (touches every
+  # catalog). Stays on the catalog list so the operator keeps their context.
+  def sync_all
+    authorize Catalog, :sync?
+    Catalog.find_each { |catalog| MaintenanceOrchestrator.sync_catalog(catalog.id) }
+    redirect_to catalogs_path, notice: t("catalogs.notices.sync_all_enqueued")
+  end
+
   # Verifies the catalog connection and redirects with the outcome as notice
   # or alert.
   def verify

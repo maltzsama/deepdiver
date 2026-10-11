@@ -264,6 +264,9 @@ pt-BR:
       empty_hint: "Registre um Polaris ou Nessie para comecar a descobrir tabelas."
       register: "Registrar catalogo"
       col_tables: "Tabelas"
+      col_actions: "Acoes"
+      sync_all: "Sincronizar todos"
+      sync: "Sincronizar"
     show:
       eyebrow: "Catalogo"
       subtitle_span: "%{count}"
@@ -348,6 +351,7 @@ pt-BR:
       updated: "Catalogo atualizado."
       destroyed: "Catalogo excluido."
       sync_enqueued: "Sincronizacao do catalogo enfileirada."
+      sync_all_enqueued: "Sincronizacao enfileirada para todos os catalogos."
     s3_auth_types:
       none: "Nenhum (anonimo)"
       static: "Credenciais estaticas"
@@ -427,7 +431,6 @@ pt-BR:
       synced_ago: "Metadados sincronizados ha %{time}"
       not_synced: "Tabelas ainda nao sincronizadas"
       sync_now: "Sincronizar agora"
-      sync_enqueued: "Sincronizacao de catalogo enfileirada para todos os catalogos."
       result: "Resultado"
       count: "%{count} tabela(s)"
       empty_title: "Nenhuma tabela encontrada"

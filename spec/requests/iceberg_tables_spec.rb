@@ -287,30 +287,6 @@ RSpec.describe "POST /iceberg_tables/:id/run_maintenance", type: :request do
   end
 end
 
-RSpec.describe "POST /iceberg_tables/sync_all", type: :request do
-  let(:user)    { create(:user, :admin) }
-  let!(:catalog) { create(:catalog) }
-
-  before { sign_in user }
-
-  it "enqueues a sync for every catalog" do
-    allow(MaintenanceOrchestrator).to receive(:sync_catalog)
-
-    post sync_all_iceberg_tables_path
-
-    expect(response).to redirect_to(iceberg_tables_path)
-    expect(MaintenanceOrchestrator).to have_received(:sync_catalog).with(catalog.id)
-  end
-
-  it "rejects viewers" do
-    sign_in create(:user)
-
-    post sync_all_iceberg_tables_path
-
-    expect(response).to redirect_to(root_path)
-  end
-end
-
 RSpec.describe "Pagination", type: :request do
   let(:user) { create(:user) }
 

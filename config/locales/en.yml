@@ -299,6 +299,9 @@ en:
       empty_hint: "Register a Polaris or Nessie to start discovering tables."
       register: "Register catalog"
       col_tables: "Tables"
+      col_actions: "Actions"
+      sync_all: "Sync all"
+      sync: "Sync"
     show:
       eyebrow: "Catalog"
       subtitle_span: "%{count}"
@@ -390,6 +393,7 @@ en:
       updated: "Catalog updated."
       destroyed: "Catalog deleted."
       sync_enqueued: "Catalog sync enqueued."
+      sync_all_enqueued: "Sync enqueued for all catalogs."
 
   tables:
     run_maintenance:
@@ -465,8 +469,6 @@ en:
       synced_ago: "Metadata synced %{time} ago"
       not_synced: "Tables not synced yet"
       sync_now: "Sync now"
-      sync_catalog: "Sync catalog"
-      sync_enqueued: "Catalog sync enqueued for all catalogs."
       result: "Result"
       count: "%{count} table(s)"
       empty_title: "No tables found"

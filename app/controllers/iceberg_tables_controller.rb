@@ -101,14 +101,6 @@ class IcebergTablesController < ApplicationController
     redirect_back fallback_location: iceberg_tables_path, notice: t("tables.run_maintenance.enqueued")
   end
 
-  # Enqueues a metadata re-sync for every catalog so the table list reflects
-  # the current state of the lake. Admin-only (touches every catalog).
-  def sync_all
-    authorize :catalog, :sync?
-    Catalog.find_each { |catalog| MaintenanceOrchestrator.sync_catalog(catalog.id) }
-    redirect_to iceberg_tables_path, notice: t("tables.index.sync_enqueued")
-  end
-
   # Refreshes metadata for a single table without re-syncing the whole catalog.
   def sync_table
     authorize @table, :sync_table?
