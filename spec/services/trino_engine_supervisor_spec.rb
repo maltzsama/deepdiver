@@ -56,16 +56,15 @@ RSpec.describe TrinoEngineSupervisor do
     expect(described_class.state.status).to eq("up")
   end
 
-  describe "two demand sources" do
-    it "counts maintenance and freshness together" do
+  describe "demand" do
+    it "counts running executions" do
       create(:execution_history, status: :running)
-      create(:freshness_run, status: "running")
 
-      expect(TrinoDemand.count).to eq(2)
-      expect(TrinoDemand.breakdown).to eq(maintenance: 1, freshness: 1)
+      expect(TrinoDemand.count).to eq(1)
+      expect(TrinoDemand.breakdown).to eq(maintenance: 1)
     end
 
-    it "does not drain while the other source still has work" do
+    it "does not drain while work remains" do
       create(:execution_history, status: :running)
       described_class.state.update!(status: "up")
 
@@ -79,7 +78,7 @@ RSpec.describe TrinoEngineSupervisor do
     it "does NOT destroy when demand arrives between the check and the destruction" do
       described_class.state.update!(status: "draining", drain_started_at: Time.current)
 
-      create(:freshness_run, status: "pending")
+      create(:execution_history, status: :pending)
 
       expect(described_class.begin_stopping!).to be(false)
       expect(described_class.state.reload.status).to eq("up")
@@ -98,19 +97,12 @@ RSpec.describe TrinoEngineSupervisor do
 
     it "starts again if demand arrived during stopping" do
       described_class.state.update!(status: "stopping", status_changed_at: Time.current)
-      create(:freshness_run, status: "pending")
+      create(:execution_history, status: :pending)
 
       expect(MaintenanceOrchestrator).to receive(:supervise_engine_start)
       described_class.finish_stopping!
 
       expect(described_class.state.reload.status).to eq("starting")
-    end
-  end
-
-  describe "freshness without an enabled table" do
-    it "does not create a run nor bring the engine up" do
-      expect(MaintenanceOrchestrator.enqueue_freshness_sweep).to be_nil
-      expect(described_class.state.reload.status).to eq("down")
     end
   end
 

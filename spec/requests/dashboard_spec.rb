@@ -47,25 +47,6 @@ RSpec.describe "GET /", type: :request do
 
     expect(response.body).to include("Nothing needs attention")
   end
-end
-
-RSpec.describe "Dashboard needs-action feed", type: :request do
-  let(:user)    { create(:user) }
-  let(:catalog) { create(:catalog) }
-
-  before { sign_in user }
-
-  it "lists open freshness breaches linking to the History freshness tab" do
-    table = create(:iceberg_table)
-    error = ErrorEvent.record(catalog: table.catalog, schema: table.namespace, table: table.name,
-                              operation: ErrorEvent::FRESHNESS_OPERATION, source_system: "freshness",
-                              message: "Freshness SLA breached")
-
-    get root_path
-
-    expect(response.body).to include(execution_histories_path(kind: "freshness"))
-    expect(response.body).to include("Freshness SLA breached")
-  end
 
   it "lists paused plans linking to the plan" do
     plan = create(:maintenance_plan, is_paused: true)
@@ -75,38 +56,15 @@ RSpec.describe "Dashboard needs-action feed", type: :request do
     expect(response.body).to include(maintenance_plan_path(plan))
   end
 
-  it "keeps the empty state only when freshness triage and paused plans are all empty" do
-    table = create(:iceberg_table)
-    ErrorEvent.record(catalog: table.catalog, schema: table.namespace, table: table.name,
-                      operation: ErrorEvent::FRESHNESS_OPERATION, source_system: "freshness",
-                      message: "Freshness SLA breached")
+  it "shows a critical table with a link to its page and the run button" do
+    sign_in create(:user, :operator)
+    table = create(:iceberg_table, catalog:, health_status: "critical",
+                                   health_score: 15, health_status_changed_at: 1.hour.ago)
+    create(:maintenance_plan, iceberg_table: table)
 
     get root_path
 
-    expect(response.body).not_to include("Nothing needs attention")
-    expect(response.body).to include("Freshness SLA breached")
-  end
-end
-
-RSpec.describe "Dashboard renders the demo chain", type: :request do
-  let(:user) { create(:user) }
-
-  before { sign_in user }
-
-  it "shows errors section and out-of-SLA tables together" do
-    table = create(:iceberg_table)
-    create(:table_freshness_sla, iceberg_table: table, status: "late",
-                                 breached_since: 2.hours.ago, sla_minutes: 5,
-                                 timestamp_column: "ts", timestamp_type: "timestamp_tz")
-    error = ErrorEvent.record(catalog: table.catalog, schema: table.namespace, table: table.name,
-                              operation: ErrorEvent::FRESHNESS_OPERATION, source_system: "freshness",
-                              message: "Freshness SLA breached")
-
-    get root_path
-
-    expect(response.body).to include("Freshness SLA breached")
-    expect(response.body).to include(execution_histories_path(kind: "freshness"))
     expect(response.body).to include(iceberg_table_path(table))
-    expect(response.body).not_to include("Nothing needs attention")
+    expect(response.body).to include("Run now")
   end
 end

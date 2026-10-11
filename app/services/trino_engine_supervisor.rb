@@ -1,5 +1,5 @@
-# Event-driven lifecycle of the engine, safe with TWO demand sources
-# (maintenance executions and freshness sweeps).
+# Event-driven lifecycle of the engine, driven by demand (maintenance
+# executions).
 #
 # Every transition happens under a row lock (SELECT ... FOR UPDATE on the
 # single trino_engine_states row), which closes three races at once: the
@@ -20,8 +20,8 @@ module TrinoEngineSupervisor
   # @return [TrinoEngineState] the state row
   def state = TrinoEngineState.instance(status: "down", status_changed_at: Time.current)
 
-  # Single entry point for ANY demand source. Maintenance and freshness call
-  # the same method - there is no parallel path that could diverge.
+  # Single entry point for ANY demand source. Callers go through the same
+  # method - there is no parallel path that could diverge.
   def demand_arrived!(dispatch: nil)
     current = state
     current.with_lock do
@@ -130,8 +130,8 @@ module TrinoEngineSupervisor
   # returns the engine to "down". Used from the activity screen when the
   # engine stops making progress and a plain restart is not enough.
   #
-  # Only clears engine and maintenance queues — leaving freshness, sync,
-  # and default queues untouched so unrelated work continues.
+  # Only clears engine and maintenance queues — leaving sync and default
+  # queues untouched so unrelated work continues.
   ENGINE_RESET_QUEUES = %w[engine maintenance].freeze
 
   def hard_reset!
@@ -159,7 +159,7 @@ module TrinoEngineSupervisor
   end
 
   # Frees every execution currently in flight, releasing their table locks so
-  # nothing is left dangling after a hard reset. Freshness runs are failed too.
+  # nothing is left dangling after a hard reset.
   def fail_in_flight!
     ExecutionHistory.where(status: %w[pending running]).find_each do |execution|
       TableLock.release(execution)
@@ -169,18 +169,12 @@ module TrinoEngineSupervisor
         status: "blocked", skip_reason: "engine hard reset", updated_at: Time.current
       )
     end
-    FreshnessRun.where(status: %w[pending running]).find_each do |run|
-      run.update!(status: "failed", finished_at: Time.current, error_message: "engine hard reset")
-    end
   end
 
-  # Releases everything that was waiting for the engine, from both sources.
+  # Releases everything that was waiting for the engine.
   def release_pending!
     ExecutionHistory.where(status: "pending").find_each do |execution|
       MaintenanceOrchestrator.start_execution_on_engine(execution.id)
-    end
-    FreshnessRun.where(status: "pending").find_each do |run|
-      MaintenanceOrchestrator.start_freshness_sweep(run.id)
     end
   end
 

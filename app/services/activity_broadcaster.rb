@@ -1,6 +1,6 @@
 # Broadcasts updated partials to the /activity Turbo Stream channel so the
-# page updates without a full reload. Called after every supervisor transition,
-# maintenance step and freshness sweep boundary.
+# page updates without a full reload. Called after every supervisor transition
+# and maintenance step boundary.
 module ActivityBroadcaster
   module_function
 
@@ -24,8 +24,7 @@ module ActivityBroadcaster
                               .limit(20)
     # Read idleness from the tables directly, never through TrinoDemand: its
     # #count calls reap_orphans!, which would fail executions from a broadcast.
-    engine_idle = state.status == "down" && running.empty? && queued.empty? &&
-                  !FreshnessRun.where(status: %w[pending running]).exists?
+    engine_idle = state.status == "down" && running.empty? && queued.empty?
 
     Turbo::StreamsChannel.broadcast_replace_to(
       "activity",

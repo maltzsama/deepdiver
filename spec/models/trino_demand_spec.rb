@@ -31,32 +31,6 @@ RSpec.describe TrinoDemand do
     expect(orphan.error_message).to include("coordinator")
   end
 
-  describe "freshness run reaping" do
-    it "reaps a freshness run without heartbeat beyond STALE_AFTER" do
-      run = FreshnessRun.create!(status: "running", started_at: 20.minutes.ago)
-
-      expect(described_class.count).to eq(0)
-      expect(run.reload.status).to eq("failed")
-      expect(run.error_message).to eq("sweep interrupted")
-    end
-
-    it "does not reap a freshness run that keeps heartbeating" do
-      run = FreshnessRun.create!(status: "running", started_at: 20.minutes.ago,
-                                 last_heartbeat_at: 1.minute.ago)
-
-      expect(described_class.count).to eq(1)
-      expect(run.reload.status).to eq("running")
-    end
-
-    it "uses COALESCE to cover runs without last_heartbeat_at" do
-      run = FreshnessRun.create!(status: "running", started_at: 20.minutes.ago,
-                                 last_heartbeat_at: nil)
-
-      expect(described_class.count).to eq(0)
-      expect(run.reload.status).to eq("failed")
-    end
-  end
-
   describe "abandoned pending executions" do
     it "fails a pending execution whose dispatch never arrived" do
       stuck = create(:execution_history, status: :pending,
