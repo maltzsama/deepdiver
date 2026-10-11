@@ -91,3 +91,28 @@ RSpec.describe "Catalog credentials", type: :request do
     expect(active).to be_active
   end
 end
+
+RSpec.describe "POST /catalogs/sync_all", type: :request do
+  let(:admin) { create(:user, :admin) }
+
+  it "enqueues a sync for every catalog" do
+    catalogs = create_list(:catalog, 2)
+    sign_in admin
+
+    catalogs.each do |c|
+      expect(MaintenanceOrchestrator).to receive(:sync_catalog).with(c.id)
+    end
+
+    post sync_all_catalogs_path
+
+    expect(response).to redirect_to(catalogs_path)
+  end
+
+  it "rejects a non-admin" do
+    sign_in create(:user)
+
+    post sync_all_catalogs_path
+
+    expect(response).to redirect_to(root_path)
+  end
+end

@@ -3,8 +3,11 @@
     url     - form action (GET)
     fields  - array of hashes: { name:, label:, options: [[label, value], ...] }
     search  - true/false to include the text search
+  Optionally accepts a block rendered as a sibling next to the Filter button
+  (e.g. the bulk apply-policy toolbar on the tables index).
 %>
-<%= form_with url: url, method: :get, class: "mb-4 flex flex-wrap items-end gap-3" do %>
+<div class="mb-4 flex flex-wrap items-end gap-3">
+<%= form_with url: url, method: :get, class: "flex flex-wrap items-end gap-3 grow" do %>
   <% fields.each do |field| %>
     <div class="field">
       <%= label_tag field[:name], field[:label], class: "field-label text-small" %>
@@ -43,3 +46,8 @@
     <% end %>
   </div>
 <% end %>
+
+<% if block_given? %>
+  <%= yield %>
+<% end %>
+</div>

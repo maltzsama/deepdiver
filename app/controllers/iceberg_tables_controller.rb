@@ -20,7 +20,7 @@ class IcebergTablesController < ApplicationController
     @tables = @tables.where(health_status: params[:health_status]) if params[:health_status].present?
 
     if params[:no_plan].present?
-      @tables = @tables.where.not(id: MaintenancePlan.select(:iceberg_table_id))
+      @tables = @tables.where.not(id: MaintenancePlan.kept.select(:iceberg_table_id))
     end
 
     if params[:q].present?
@@ -99,14 +99,6 @@ class IcebergTablesController < ApplicationController
 
     MaintenanceOrchestrator.run_plan(plan.id, force: true)
     redirect_back fallback_location: iceberg_tables_path, notice: t("tables.run_maintenance.enqueued")
-  end
-
-  # Enqueues a metadata re-sync for every catalog so the table list reflects
-  # the current state of the lake. Admin-only (touches every catalog).
-  def sync_all
-    authorize :catalog, :sync?
-    Catalog.find_each { |catalog| MaintenanceOrchestrator.sync_catalog(catalog.id) }
-    redirect_to iceberg_tables_path, notice: t("tables.index.sync_enqueued")
   end
 
   # Refreshes metadata for a single table without re-syncing the whole catalog.

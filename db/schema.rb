@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_11_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_11_133014) do
   create_table "alert_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "singleton_key", default: 1, null: false
@@ -189,7 +189,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_000000) do
     t.integer "maintenance_policy_id"
     t.boolean "needs_review", default: false, null: false
     t.datetime "updated_at", null: false
-    t.index ["iceberg_table_id"], name: "index_maintenance_plans_on_iceberg_table_id", unique: true
+    t.datetime "deleted_at"
+    t.index ["iceberg_table_id"], name: "index_maintenance_plans_on_iceberg_table_id_kept", unique: true, where: "deleted_at IS NULL"
     t.index ["maintenance_policy_id"], name: "index_maintenance_plans_on_maintenance_policy_id"
   end
 

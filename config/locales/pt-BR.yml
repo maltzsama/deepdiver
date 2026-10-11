@@ -197,6 +197,7 @@ pt-BR:
       col_state: "Estado"
       col_failures: "Falhas consecutivas"
       col_policy: "Politica"
+      col_actions: "Acoes"
       needs_review: "revisao"
       paused: "pausado"
       active: "ativo"
@@ -208,6 +209,8 @@ pt-BR:
       pause_confirm: "Pausar este plano? Execucoes agendadas nao serao disparadas ate ser retomado."
       resume: "Retomar plano"
       edit: "Editar"
+      delete: "Excluir plano"
+      delete_confirm: "Excluir este plano? O historico de execucoes e mantido, mas o agendamento e suas etapas sao removidos."
       state: "Estado"
       cron: "Cron"
       failures: "Falhas consecutivas"
@@ -225,7 +228,7 @@ pt-BR:
       subtitle: "Edite o agendamento e a cadeia de etapas de manutencao."
       paused_hint: "Este plano esta pausado. Alteracoes nao serao executadas ate ser retomado."
       review_hint: "Este plano teve %{failures} falhas consecutivas e precisa de revisao antes de voltar a funcionar."
-      policy_inherit: "Este plano e derivado da politica %{policy} - editar aqui faz ele parar de seguir os padroes da cadeia definidos na politica."
+      policy_inherit_html: "Este plano e derivado da politica %{policy} - editar aqui faz ele parar de seguir os padroes da cadeia definidos na politica."
       errors:
         one: "1 problema para corrigir"
         other: "%{count} problemas para corrigir"
@@ -249,6 +252,8 @@ pt-BR:
       enqueued: "Manutencao enfileirada."
       paused: "Plano pausado."
       resumed: "Plano retomado."
+      destroyed: "Plano excluido."
+      destroy_blocked: "Este plano tem uma execucao pendente ou em andamento. Aguarde terminar antes de excluir."
 
   catalogs:
     index:
@@ -260,6 +265,9 @@ pt-BR:
       empty_hint: "Registre um Polaris ou Nessie para comecar a descobrir tabelas."
       register: "Registrar catalogo"
       col_tables: "Tabelas"
+      col_actions: "Acoes"
+      sync_all: "Sincronizar todos"
+      sync: "Sincronizar"
     show:
       eyebrow: "Catalogo"
       subtitle_span: "%{count}"
@@ -344,6 +352,7 @@ pt-BR:
       updated: "Catalogo atualizado."
       destroyed: "Catalogo excluido."
       sync_enqueued: "Sincronizacao do catalogo enfileirada."
+      sync_all_enqueued: "Sincronizacao enfileirada para todos os catalogos."
     s3_auth_types:
       none: "Nenhum (anonimo)"
       static: "Credenciais estaticas"
@@ -363,7 +372,7 @@ pt-BR:
       eyebrow_prefix: "Tabela ·"
       new_schedule: "Novo agendamento"
       create_plan: "Criar plano"
-      run_now: "Executar manutencao agora"
+      run_now: "Executar agora"
       score: "Pontuacao de saude"
       status: "Status"
       last_write: "Ultima escrita"
@@ -423,7 +432,6 @@ pt-BR:
       synced_ago: "Metadados sincronizados ha %{time}"
       not_synced: "Tabelas ainda nao sincronizadas"
       sync_now: "Sincronizar agora"
-      sync_enqueued: "Sincronizacao de catalogo enfileirada para todos os catalogos."
       result: "Resultado"
       count: "%{count} tabela(s)"
       empty_title: "Nenhuma tabela encontrada"
@@ -445,6 +453,9 @@ pt-BR:
       no_plan: "sem plano"
       no_plan_option: "Sem plano"
       run: "Executar"
+      select_policy: "Selecione uma politica..."
+      apply_policy: "Aplicar politica"
+      selected_count: "%{count} selecionada(s)"
       col_actions: "Acoes"
     filter_catalog: "Catalogo"
     filter_namespace: "Namespace"
@@ -658,6 +669,9 @@ pt-BR:
       col_table: "Tabela"
       col_state: "Estado"
       col_failures: "Falhas consecutivas"
+      col_actions: "Acoes"
+      detach: "Remover"
+      detach_confirm: "Remover esta tabela da politica? O agendamento mantem as configuracoes atuais, mas para de seguir os padroes da politica."
       active: "ativo"
       paused: "pausado"
     new:
@@ -690,6 +704,8 @@ pt-BR:
       destroyed: "Politica excluida."
       applied: "%{created} plano(s) criado(s), %{updated} atualizado(s)."
       skipped: "ignorado(s) (ja gerenciado por outra politica)."
+      detached: "Tabela removida da politica. O agendamento agora e autonomo."
+      detach_not_found: "Esse agendamento nao pertence a esta politica."
 
   users:
     index:

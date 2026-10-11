@@ -11,6 +11,28 @@ RSpec.describe "MaintenancePlans", type: :request do
 
       expect(response).to have_http_status(:ok)
     end
+
+    it "shows Run now and Edit actions for an admin" do
+      sign_in admin
+      p = plan
+
+      get maintenance_plans_path
+
+      doc = Nokogiri::HTML(response.body)
+      expect(doc.at_css("form[action='#{run_maintenance_plan_path(p)}']")).to be_present
+      expect(doc.at_css("a[href='#{edit_maintenance_plan_path(p)}']")).to be_present
+    end
+
+    it "hides the actions from a plain viewer" do
+      sign_in create(:user)
+      p = plan
+
+      get maintenance_plans_path
+
+      doc = Nokogiri::HTML(response.body)
+      expect(doc.at_css("form[action='#{run_maintenance_plan_path(p)}']")).to be_nil
+      expect(doc.at_css("a[href='#{edit_maintenance_plan_path(p)}']")).to be_nil
+    end
   end
 
   describe "GET /maintenance_plans/new" do
@@ -138,6 +160,39 @@ RSpec.describe "MaintenancePlans", type: :request do
     it "enqueues a run" do
       expect { post run_maintenance_plan_path(plan) }
         .to change(plan.execution_histories, :count).by(1)
+    end
+  end
+
+  describe "DELETE /maintenance_plans/:id" do
+    it "soft-deletes the plan, keeping the row and its execution history" do
+      sign_in admin
+      history = create(:execution_history, maintenance_plan: plan, status: "success")
+
+      delete maintenance_plan_path(plan)
+
+      expect(response).to redirect_to(iceberg_table_path(plan.iceberg_table))
+      expect(plan.reload).to be_discarded
+      expect(MaintenancePlan.kept).not_to include(plan)
+      expect(history.reload.maintenance_plan_id).to eq(plan.id)
+    end
+
+    it "blocks deletion while an execution is pending or running" do
+      sign_in admin
+      create(:execution_history, maintenance_plan: plan, status: "running")
+
+      delete maintenance_plan_path(plan)
+
+      expect(response).to redirect_to(plan)
+      expect(plan.reload).not_to be_discarded
+    end
+
+    it "blocks viewers" do
+      sign_in create(:user)
+
+      delete maintenance_plan_path(plan)
+
+      expect(response).to redirect_to(root_path)
+      expect(plan.reload).not_to be_discarded
     end
   end
 end

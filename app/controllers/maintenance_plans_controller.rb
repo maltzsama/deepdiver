@@ -2,12 +2,12 @@
 # controlling plans (run, pause, resume). Each action authorizes with Pundit;
 # set_plan loads the plan for the member actions.
 class MaintenancePlansController < ApplicationController
-  before_action :set_plan, only: %i[show edit update run pause resume]
+  before_action :set_plan, only: %i[show edit update run pause resume destroy]
 
   # Lists all maintenance plans with their table and policy, ordered by id.
   def index
     authorize MaintenancePlan
-    @plans = MaintenancePlan.includes(:iceberg_table, :maintenance_policy).order(:id)
+    @plans = MaintenancePlan.kept.includes(:iceberg_table, :maintenance_policy).order(:id)
     @pagy, @plans = pagy(@plans)
   end
 
@@ -36,7 +36,7 @@ class MaintenancePlansController < ApplicationController
   def create
     authorize MaintenancePlan
     table = IcebergTable.find(params[:maintenance_plan][:iceberg_table_id])
-    existing = MaintenancePlan.find_by(iceberg_table: table)
+    existing = MaintenancePlan.kept.find_by(iceberg_table: table)
 
     if existing
       redirect_to edit_maintenance_plan_path(existing), notice: t("plans.notices.already_exists")
@@ -92,11 +92,26 @@ class MaintenancePlansController < ApplicationController
     redirect_to @plan, notice: t("plans.notices.resumed")
   end
 
+  # Soft-deletes the plan: it disappears from every list, but the row, its
+  # steps, and the execution history all survive. A plan with a still-pending
+  # or running execution is refused, so it does not vanish mid-run.
+  def destroy
+    authorize @plan
+    if @plan.execution_histories.where(status: %w[pending running]).exists?
+      redirect_to @plan, alert: t("plans.notices.destroy_blocked")
+      return
+    end
+
+    table = @plan.iceberg_table
+    @plan.destroy!
+    redirect_to iceberg_table_path(table), notice: t("plans.notices.destroyed")
+  end
+
   private
 
   # Loads the maintenance plan for the current request.
   def set_plan
-    @plan = MaintenancePlan.find(params[:id])
+    @plan = MaintenancePlan.kept.find(params[:id])
   end
 
   # Strong parameters for the plan: the cron and the form's maintenance steps.

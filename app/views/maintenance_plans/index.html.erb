@@ -26,6 +26,9 @@
             <th scope="col"><%= t("plans.index.col_state") %></th>
             <th scope="col"><%= t("plans.index.col_failures") %></th>
             <th scope="col"><%= t("plans.index.col_policy") %></th>
+            <% if can_run_maintenance? || current_user.admin? %>
+              <th scope="col"><span class="sr-only"><%= t("plans.index.col_actions") %></span></th>
+            <% end %>
           </tr>
         </thead>
         <tbody>
@@ -47,6 +50,20 @@
               </td>
               <td class="cell-num"><%= plan.consecutive_failures %></td>
               <td class="cell-muted"><%= plan.maintenance_policy&.name || "—" %></td>
+              <% if can_run_maintenance? || current_user.admin? %>
+                <td class="text-right whitespace-nowrap">
+                  <span class="inline-flex items-center gap-2">
+                    <% if can_run_maintenance? %>
+                      <%= button_to t("plans.show.run_now"), run_maintenance_plan_path(plan),
+                                    method: :post, class: "btn btn-primary btn-sm" %>
+                    <% end %>
+                    <% if current_user.admin? %>
+                      <%= link_to t("plans.show.edit"), edit_maintenance_plan_path(plan),
+                                  class: "btn btn-default btn-sm" %>
+                    <% end %>
+                  </span>
+                </td>
+              <% end %>
             </tr>
           <% end %>
         </tbody>

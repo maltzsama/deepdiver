@@ -18,7 +18,7 @@ class IcebergTable < ApplicationRecord
 
   belongs_to :catalog, counter_cache: true
 
-  has_one :maintenance_plan, dependent: :destroy
+  has_one :maintenance_plan, -> { kept }, dependent: :destroy
   has_many :execution_histories, dependent: :destroy
 
   enum :health_status, HEALTH_STATUSES.to_h { |s| [ s, s ] }

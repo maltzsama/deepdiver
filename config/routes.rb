@@ -47,6 +47,7 @@ Rails.application.routes.draw do
 
   resources :catalogs, only: %i[index show new create edit update destroy] do
     collection do
+      post :sync_all
       post :verify_draft
     end
 
@@ -58,10 +59,6 @@ Rails.application.routes.draw do
 
   # Global tables view with filters.
   resources :iceberg_tables, only: %i[index show] do
-    collection do
-      post :sync_all
-    end
-
     member do
       post :run_maintenance
       post :sync_table
@@ -70,7 +67,7 @@ Rails.application.routes.draw do
   end
 
   # Maintenance plans.
-  resources :maintenance_plans, only: %i[index show new create edit update] do
+  resources :maintenance_plans, only: %i[index show new create edit update destroy] do
     member do
       post :run
       post :pause
@@ -81,6 +78,7 @@ Rails.application.routes.draw do
   # Maintenance policies.
   resources :maintenance_policies do
     member { post :apply }
+    member { post :detach }
     collection { post :bulk_apply }
   end
 

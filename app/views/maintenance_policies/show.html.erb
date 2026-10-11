@@ -137,6 +137,9 @@
             <th scope="col"><%= t("policies.show.col_table") %></th>
             <th scope="col"><%= t("policies.show.col_state") %></th>
             <th scope="col"><%= t("policies.show.col_failures") %></th>
+            <% if current_user.admin? %>
+              <th scope="col"><%= t("policies.show.col_actions") %></th>
+            <% end %>
           </tr>
         </thead>
         <tbody>
@@ -151,6 +154,15 @@
                 <% end %>
               </td>
               <td class="cell-num"><%= plan.consecutive_failures %></td>
+              <% if current_user.admin? %>
+                <td class="text-right">
+                  <%= button_to t("policies.show.detach"),
+                                detach_maintenance_policy_path(@policy, maintenance_plan_id: plan.id),
+                                method: :post,
+                                class: "btn btn-default btn-sm",
+                                data: { turbo_confirm: t("policies.show.detach_confirm") } %>
+                </td>
+              <% end %>
             </tr>
           <% end %>
         </tbody>
