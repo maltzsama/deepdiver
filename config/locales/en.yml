@@ -494,6 +494,7 @@ en:
       sync_table: "Refresh"
       select_policy: "Select a policy..."
       apply_policy: "Apply policy"
+      selected_count: "%{count} selected"
       col_actions: "Actions"
     filter_catalog: "Catalog"
     filter_namespace: "Namespace"

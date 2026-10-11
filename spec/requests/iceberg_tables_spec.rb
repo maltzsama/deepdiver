@@ -109,6 +109,43 @@ RSpec.describe "GET /iceberg_tables", type: :request do
   end
 end
 
+RSpec.describe "GET /iceberg_tables bulk apply wiring", type: :request do
+  let(:admin) { create(:user, :admin) }
+  let!(:table) { create(:iceberg_table) }
+
+  it "associates the row checkboxes with the bulk form via the form attribute" do
+    sign_in admin
+
+    get iceberg_tables_path
+
+    doc = Nokogiri::HTML(response.body)
+    form = doc.at_css("form#bulk-apply")
+    expect(form).to be_present
+    expect(form["action"]).to eq(bulk_apply_maintenance_policies_path)
+
+    # Checkboxes sit inside the table but must submit with the bulk form.
+    checkboxes = doc.css("input[name='iceberg_table_ids[]']")
+    expect(checkboxes).not_to be_empty
+    expect(checkboxes).to all(satisfy { |c| c["form"] == "bulk-apply" })
+
+    select_all = doc.at_css("#select-all")
+    expect(select_all["form"]).to eq("bulk-apply")
+    expect(select_all["data-bulk-select-target"]).to eq("all")
+
+    expect(doc.at_css("[data-controller='bulk-select']")).to be_present
+  end
+
+  it "hides the bulk form and checkboxes from a viewer" do
+    sign_in create(:user)
+
+    get iceberg_tables_path
+
+    doc = Nokogiri::HTML(response.body)
+    expect(doc.at_css("form#bulk-apply")).to be_nil
+    expect(doc.css("input[name='iceberg_table_ids[]']")).to be_empty
+  end
+end
+
 RSpec.describe "GET /iceberg_tables/:id", type: :request do
   let(:user)     { create(:user) }
   let(:catalog)  { create(:catalog) }

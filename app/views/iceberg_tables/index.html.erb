@@ -10,6 +10,7 @@
   </div>
 </div>
 
+<div data-controller="bulk-select">
 <%= render "shared/filters",
            url: iceberg_tables_path,
            search: true,
@@ -23,7 +24,21 @@
              { name: :no_plan, label: t("tables.filter_no_plan"),
                options: [ [ t("tables.index.no_plan_option"), "1" ] ] }
            ],
-           checkbox: { name: :inactive, label: t("tables.index.include_inactive") } %>
+           checkbox: { name: :inactive, label: t("tables.index.include_inactive") } do %>
+  <% if can_run_maintenance? %>
+    <%= form_with url: bulk_apply_maintenance_policies_path, method: :post,
+                  id: "bulk-apply", class: "flex items-center gap-2 self-end" do |f| %>
+      <%= f.select :policy_id,
+                   MaintenancePolicy.order(:name).map { |p| [p.name, p.id] },
+                   { prompt: t("tables.index.select_policy") },
+                   class: "field-input field-input-sm" %>
+      <button type="submit" class="btn btn-primary btn-sm"><%= t("tables.index.apply_policy") %></button>
+      <span class="text-small cell-muted" id="bulk-count"
+            data-bulk-select-target="count"
+            data-count-text="<%= t("tables.index.selected_count", count: "__count__") %>"></span>
+    <% end %>
+  <% end %>
+<% end %>
 
 <section class="panel">
   <div class="panel-head">
@@ -43,18 +58,6 @@
       </p>
     </div>
   <% else %>
-  <% if @tables.any? && can_run_maintenance? %>
-    <div class="panel-body border-b border-cosmos-line">
-      <%= form_with url: bulk_apply_maintenance_policies_path, method: :post, class: "flex items-center gap-3" do |f| %>
-        <%= f.select :policy_id,
-                     MaintenancePolicy.order(:name).map { |p| [p.name, p.id] },
-                     { prompt: t("tables.index.select_policy") },
-                     class: "field-input field-input-sm" %>
-        <button type="submit" class="btn btn-primary btn-sm"><%= t("tables.index.apply_policy") %></button>
-        <span class="text-small cell-muted" id="bulk-count"></span>
-      <% end %>
-    </div>
-  <% end %>
 
   <div class="data-table-scroll">
     <table class="data-table">
@@ -62,7 +65,10 @@
         <tr>
           <% if can_run_maintenance? %>
             <th scope="col" class="w-8">
-              <input type="checkbox" id="select-all" class="field-checkbox">
+              <input type="checkbox" id="select-all" class="field-checkbox"
+                     form="bulk-apply"
+                     data-bulk-select-target="all"
+                     data-action="bulk-select#toggleAll">
             </th>
           <% end %>
           <th scope="col"><%= t("tables.index.col_table") %></th>
@@ -85,7 +91,10 @@
               <% if can_run_maintenance? %>
                 <td class="text-center">
                   <input type="checkbox" name="iceberg_table_ids[]" value="<%= table.id %>"
-                         class="field-checkbox table-select">
+                         class="field-checkbox table-select"
+                         form="bulk-apply"
+                         data-bulk-select-target="item"
+                         data-action="bulk-select#refresh">
                 </td>
               <% end %>
               <td>
@@ -132,5 +141,6 @@
     </div>
   <% end %>
 </section>
+</div>
 
 <%== pager_nav(@pagy) %>
