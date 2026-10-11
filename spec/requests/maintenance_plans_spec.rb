@@ -13,6 +13,20 @@ RSpec.describe "MaintenancePlans", type: :request do
     end
   end
 
+  describe "GET /maintenance_plans/new" do
+    it "preselects the table when linked from a table detail page" do
+      sign_in admin
+      table = create(:iceberg_table)
+
+      get new_maintenance_plan_path(maintenance_plan: { iceberg_table_id: table.id })
+
+      expect(response).to have_http_status(:ok)
+      selected = Nokogiri::HTML(response.body)
+                    .at_css("select#maintenance_plan_iceberg_table_id option[selected]")
+      expect(selected["value"]).to eq(table.id.to_s)
+    end
+  end
+
   describe "POST /maintenance_plans/:id/pause and resume" do
     before { sign_in admin }
 
@@ -104,7 +118,7 @@ RSpec.describe "MaintenancePlans", type: :request do
 
       expect(response).to have_http_status(:ok)
       MaintenancePlan::CANONICAL_ORDER.each do |operation|
-        expect(response.body).to include(operation)
+        expect(response.body).to include(operation.humanize)
       end
     end
 
