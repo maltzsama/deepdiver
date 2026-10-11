@@ -57,4 +57,43 @@ RSpec.describe "MaintenancePolicies", type: :request do
       expect(MaintenancePlan.count).to eq(1)
     end
   end
+
+  describe "POST /maintenance_policies/:id/detach" do
+    before { sign_in admin }
+
+    it "detaches a plan from the policy, leaving it standalone" do
+      table = create(:iceberg_table)
+      policy.apply_to!([ table ])
+      plan = policy.maintenance_plans.find_by!(iceberg_table: table)
+
+      post detach_maintenance_policy_path(policy), params: { maintenance_plan_id: plan.id }
+
+      expect(response).to redirect_to(policy)
+      expect(plan.reload.maintenance_policy).to be_nil
+    end
+
+    it "alerts when the plan does not belong to this policy" do
+      other_policy = MaintenancePolicy.create!(name: "Q", cron: "0 4 * * *")
+      table = create(:iceberg_table)
+      other_policy.apply_to!([ table ])
+      plan = other_policy.maintenance_plans.find_by!(iceberg_table: table)
+
+      post detach_maintenance_policy_path(policy), params: { maintenance_plan_id: plan.id }
+
+      expect(response).to redirect_to(policy)
+      expect(plan.reload.maintenance_policy).to eq(other_policy)
+    end
+
+    it "blocks viewers" do
+      sign_in viewer
+      table = create(:iceberg_table)
+      policy.apply_to!([ table ])
+      plan = policy.maintenance_plans.find_by!(iceberg_table: table)
+
+      post detach_maintenance_policy_path(policy), params: { maintenance_plan_id: plan.id }
+
+      expect(response).to redirect_to(root_path)
+      expect(plan.reload.maintenance_policy).to eq(policy)
+    end
+  end
 end

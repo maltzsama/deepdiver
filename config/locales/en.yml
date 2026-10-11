@@ -707,6 +707,9 @@ en:
       col_table: "Table"
       col_state: "State"
       col_failures: "Consecutive failures"
+      col_actions: "Actions"
+      detach: "Remove"
+      detach_confirm: "Remove this table from the policy? The schedule keeps its current settings but stops following the policy's defaults."
       active: "active"
       paused: "paused"
     new:
@@ -740,6 +743,8 @@ en:
       applied: "%{created} plan(s) created, %{updated} updated."
       skipped: "skipped (already managed by another policy)."
       no_tables_selected: "No tables selected."
+      detached: "Table removed from the policy. The schedule is now standalone."
+      detach_not_found: "That schedule does not belong to this policy."
 
   users:
     index:

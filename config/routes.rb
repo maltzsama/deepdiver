@@ -81,6 +81,7 @@ Rails.application.routes.draw do
   # Maintenance policies.
   resources :maintenance_policies do
     member { post :apply }
+    member { post :detach }
     collection { post :bulk_apply }
   end
 

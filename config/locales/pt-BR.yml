@@ -662,6 +662,9 @@ pt-BR:
       col_table: "Tabela"
       col_state: "Estado"
       col_failures: "Falhas consecutivas"
+      col_actions: "Acoes"
+      detach: "Remover"
+      detach_confirm: "Remover esta tabela da politica? O agendamento mantem as configuracoes atuais, mas para de seguir os padroes da politica."
       active: "ativo"
       paused: "pausado"
     new:
@@ -694,6 +697,8 @@ pt-BR:
       destroyed: "Politica excluida."
       applied: "%{created} plano(s) criado(s), %{updated} atualizado(s)."
       skipped: "ignorado(s) (ja gerenciado por outra politica)."
+      detached: "Tabela removida da politica. O agendamento agora e autonomo."
+      detach_not_found: "Esse agendamento nao pertence a esta politica."
 
   users:
     index:

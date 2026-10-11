@@ -2,7 +2,7 @@
 # applied to many tables at once, creating or updating their plans. CRUD plus
 # an apply action with a preview; each action authorizes with Pundit.
 class MaintenancePoliciesController < ApplicationController
-  before_action :set_policy, only: %i[show edit update destroy apply]
+  before_action :set_policy, only: %i[show edit update destroy apply detach]
 
   # Lists all maintenance policies ordered by name.
   def index
@@ -73,6 +73,22 @@ class MaintenancePoliciesController < ApplicationController
     notice += " #{result[:skipped]} #{t('policies.notices.skipped')}" if result[:skipped].positive?
 
     redirect_to @policy, notice: notice
+  end
+
+  # Detaches a plan from this policy: the plan keeps its current cron and
+  # steps but stops following the policy's chain-wide defaults. The plan is
+  # not deleted — it becomes a standalone, manually-managed plan.
+  def detach
+    authorize @policy, :detach?
+    plan = @policy.maintenance_plans.find_by(id: params[:maintenance_plan_id])
+
+    if plan.nil?
+      redirect_to @policy, alert: t("policies.notices.detach_not_found")
+      return
+    end
+
+    plan.update!(maintenance_policy: nil)
+    redirect_to @policy, notice: t("policies.notices.detached")
   end
 
   # Bulk apply from the tables index: select tables → pick a policy → apply.
