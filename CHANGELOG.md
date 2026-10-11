@@ -4,6 +4,26 @@ All notable changes to LakeDeepDiver will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.13.0](https://github.com/maltzsama/deepdiver/compare/v0.12.4...v0.13.0) (2026-10-11)
+
+
+### Features
+
+* add an actions column to the plans index ([8f3727d](https://github.com/maltzsama/deepdiver/commit/8f3727dcafb91cf40efe804ee4813758b7e7e9ad))
+* add plan destroy and consolidate maintenance actions ([70a7a44](https://github.com/maltzsama/deepdiver/commit/70a7a4415e0de35bdca5901e796188508fc74c8b))
+* add plan management actions to table detail page ([#251](https://github.com/maltzsama/deepdiver/issues/251)) ([cfd7a6c](https://github.com/maltzsama/deepdiver/commit/cfd7a6cef4bf52b4980a2bf2e56fedbd6d208409))
+* detach a plan from a policy ([134acc7](https://github.com/maltzsama/deepdiver/commit/134acc7f44247fcc7829fc318d002fc4fa701c6b))
+* maintenance plan lifecycle, policy detach, and screen fixes ([43fbc1a](https://github.com/maltzsama/deepdiver/commit/43fbc1a868ac92c28b3eae003292c5cb7c1248ce))
+* move catalog sync to the catalogs index ([2cfa123](https://github.com/maltzsama/deepdiver/commit/2cfa123fea5b0db4bdf064c45a3462fe68b8924c))
+* soft-delete maintenance plans ([4be22af](https://github.com/maltzsama/deepdiver/commit/4be22afbf6a9a2063fa0c511d9a411d775e47b15))
+
+
+### Bug Fixes
+
+* **ci:** recover the Helm index from gh-pages when the site is gone ([f29d3ca](https://github.com/maltzsama/deepdiver/commit/f29d3cac097ae3e86fe39b84db6577c7c16773a2))
+* pin json gem to ~&gt; 2.3 to prevent breaking ActiveSupport::JSON.decode ([ecbc245](https://github.com/maltzsama/deepdiver/commit/ecbc24586a57a153fc1bd32b488ef0dd758cb151))
+* wire the bulk apply-policy form next to the filters ([776ee3a](https://github.com/maltzsama/deepdiver/commit/776ee3a5a8bfa723e8c56cca3a603e2fc3cd9e70))
+
 ## [0.12.4](https://github.com/maltzsama/deepdiver/compare/v0.12.3...v0.12.4) (2026-09-02)
 
 
