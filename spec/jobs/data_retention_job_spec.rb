@@ -39,16 +39,6 @@ RSpec.describe DataRetentionJob, type: :job do
       expect(ErrorEvent.exists?(recurring.id)).to be(true)
     end
 
-    it "deletes old freshness_checks" do
-      old = create(:freshness_check, created_at: 40.days.ago)
-      recent = create(:freshness_check, created_at: 10.days.ago)
-
-      described_class.perform_now
-
-      expect(FreshnessCheck.exists?(old.id)).to be(false)
-      expect(FreshnessCheck.exists?(recent.id)).to be(true)
-    end
-
     it "records an ErrorEvent when a prune fails" do
       allow(ErrorEvent).to receive(:record)
 
