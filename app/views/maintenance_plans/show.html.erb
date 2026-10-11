@@ -9,19 +9,9 @@
 
   <% if current_user.admin? || current_user.operator? %>
     <div class="page-actions">
-      <%= link_to t("plans.show.edit"), edit_maintenance_plan_path(@plan), class: "btn btn-default" if current_user.admin? %>
       <%= button_to t("plans.show.run_now"), run_maintenance_plan_path(@plan), method: :post,
                     class: "btn btn-primary" %>
-      <% if current_user.admin? %>
-        <% if @plan.paused? %>
-          <%= button_to t("plans.show.resume"), resume_maintenance_plan_path(@plan), method: :post,
-                        class: "btn btn-default" %>
-        <% else %>
-          <%= button_to t("plans.show.pause"), pause_maintenance_plan_path(@plan), method: :post,
-                        class: "btn btn-default",
-                        data: { turbo_confirm: t("plans.show.pause_confirm") } %>
-        <% end %>
-      <% end %>
+      <%= link_to t("plans.show.edit"), edit_maintenance_plan_path(@plan), class: "btn btn-default" if current_user.admin? %>
     </div>
   <% end %>
 </div>

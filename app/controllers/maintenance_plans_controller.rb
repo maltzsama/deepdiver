@@ -2,7 +2,7 @@
 # controlling plans (run, pause, resume). Each action authorizes with Pundit;
 # set_plan loads the plan for the member actions.
 class MaintenancePlansController < ApplicationController
-  before_action :set_plan, only: %i[show edit update run pause resume]
+  before_action :set_plan, only: %i[show edit update run pause resume destroy]
 
   # Lists all maintenance plans with their table and policy, ordered by id.
   def index
@@ -90,6 +90,21 @@ class MaintenancePlansController < ApplicationController
     authorize @plan, :resume?
     @plan.update!(is_paused: false, consecutive_failures: 0, needs_review: false)
     redirect_to @plan, notice: t("plans.notices.resumed")
+  end
+
+  # Soft-deletes the plan: it disappears from every list, but the row, its
+  # steps, and the execution history all survive. A plan with a still-pending
+  # or running execution is refused, so it does not vanish mid-run.
+  def destroy
+    authorize @plan
+    if @plan.execution_histories.where(status: %w[pending running]).exists?
+      redirect_to @plan, alert: t("plans.notices.destroy_blocked")
+      return
+    end
+
+    table = @plan.iceberg_table
+    @plan.destroy!
+    redirect_to iceberg_table_path(table), notice: t("plans.notices.destroyed")
   end
 
   private

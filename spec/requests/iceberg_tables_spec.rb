@@ -176,24 +176,26 @@ RSpec.describe "GET /iceberg_tables/:id", type: :request do
   describe "plan management actions" do
     let(:table) { create(:iceberg_table, catalog:) }
 
-    it "shows Edit and Pause for an admin when the table has an active plan" do
+    it "shows Run now and Edit for an admin when the table has an active plan" do
       sign_in create(:user, :admin)
       plan = create(:maintenance_plan, iceberg_table: table)
 
       get iceberg_table_path(table)
 
       expect(response.body).to include(edit_maintenance_plan_path(plan))
-      expect(response.body).to include(pause_maintenance_plan_path(plan))
+      expect(response.body).to include(run_maintenance_iceberg_table_path(table))
+      # Pause/resume live on the plan edit page, not here.
+      expect(response.body).not_to include(pause_maintenance_plan_path(plan))
       expect(response.body).not_to include(resume_maintenance_plan_path(plan))
     end
 
-    it "shows Resume for an admin when the plan is paused" do
+    it "shows Run now and Edit for an admin when the plan is paused" do
       sign_in create(:user, :admin)
       plan = create(:maintenance_plan, iceberg_table: table, is_paused: true)
 
       get iceberg_table_path(table)
 
-      expect(response.body).to include(resume_maintenance_plan_path(plan))
+      expect(response.body).to include(edit_maintenance_plan_path(plan))
       expect(response.body).not_to include(pause_maintenance_plan_path(plan))
     end
 
@@ -213,7 +215,6 @@ RSpec.describe "GET /iceberg_tables/:id", type: :request do
       get iceberg_table_path(table)
 
       expect(response.body).not_to include(edit_maintenance_plan_path(plan))
-      expect(response.body).not_to include(pause_maintenance_plan_path(plan))
       expect(response.body).not_to include(new_maintenance_plan_path)
     end
   end

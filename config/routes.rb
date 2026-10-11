@@ -70,7 +70,7 @@ Rails.application.routes.draw do
   end
 
   # Maintenance plans.
-  resources :maintenance_plans, only: %i[index show new create edit update] do
+  resources :maintenance_plans, only: %i[index show new create edit update destroy] do
     member do
       post :run
       post :pause

@@ -6,13 +6,28 @@
     <h1 class="page-title-mono"><%= @plan.iceberg_table.fully_qualified_name %></h1>
     <p class="page-sub"><%= t("plans.edit.subtitle") %></p>
   </div>
+  <div class="page-actions">
+    <% if current_user.admin? %>
+      <% if @plan.paused? %>
+        <%= button_to t("plans.show.resume"), resume_maintenance_plan_path(@plan), method: :post,
+                      class: "btn btn-default" %>
+      <% else %>
+        <%= button_to t("plans.show.pause"), pause_maintenance_plan_path(@plan), method: :post,
+                      class: "btn btn-default",
+                      data: { turbo_confirm: t("plans.show.pause_confirm") } %>
+      <% end %>
+      <%= button_to t("plans.show.delete"), maintenance_plan_path(@plan), method: :delete,
+                    class: "btn btn-danger",
+                    data: { turbo_confirm: t("plans.show.delete_confirm") } %>
+    <% end %>
+  </div>
 </div>
 
 <% if @plan.maintenance_policy %>
   <section class="panel mb-6">
     <div class="panel-body">
       <p class="field-hint">
-        <%= t("plans.edit.policy_inherit",
+        <%= t("plans.edit.policy_inherit_html",
               policy: link_to(@plan.maintenance_policy.name, maintenance_policy_path(@plan.maintenance_policy),
                               class: "link text-body")) %>
       </p>

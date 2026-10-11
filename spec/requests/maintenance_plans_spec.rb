@@ -140,4 +140,37 @@ RSpec.describe "MaintenancePlans", type: :request do
         .to change(plan.execution_histories, :count).by(1)
     end
   end
+
+  describe "DELETE /maintenance_plans/:id" do
+    it "soft-deletes the plan, keeping the row and its execution history" do
+      sign_in admin
+      history = create(:execution_history, maintenance_plan: plan, status: "success")
+
+      delete maintenance_plan_path(plan)
+
+      expect(response).to redirect_to(iceberg_table_path(plan.iceberg_table))
+      expect(plan.reload).to be_discarded
+      expect(MaintenancePlan.kept).not_to include(plan)
+      expect(history.reload.maintenance_plan_id).to eq(plan.id)
+    end
+
+    it "blocks deletion while an execution is pending or running" do
+      sign_in admin
+      create(:execution_history, maintenance_plan: plan, status: "running")
+
+      delete maintenance_plan_path(plan)
+
+      expect(response).to redirect_to(plan)
+      expect(plan.reload).not_to be_discarded
+    end
+
+    it "blocks viewers" do
+      sign_in create(:user)
+
+      delete maintenance_plan_path(plan)
+
+      expect(response).to redirect_to(root_path)
+      expect(plan.reload).not_to be_discarded
+    end
+  end
 end
