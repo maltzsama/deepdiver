@@ -99,7 +99,7 @@ gem "semantic_logger", "~> 5.1"
 gem "rails_semantic_logger", "~> 5.2"
 
 # json 3.0 changes JSON.parse to keyword-only args, breaking ActiveSupport::JSON.decode.
-gem "json", "~> 2.3"
+gem "json", "~> 3.0"
 
 group :test do
   gem "capybara"
