@@ -7,7 +7,7 @@ class DashboardController < ApplicationController
   def index
     authorize :dashboard
     @triage = TriageQuery.new.call
-    @paused_plans = MaintenancePlan.where(is_paused: true).joins(:iceberg_table)
+    @paused_plans = MaintenancePlan.kept.where(is_paused: true).joins(:iceberg_table)
                                    .where(iceberg_tables: { active: true })
                                    .includes(iceberg_table: :catalog)
 

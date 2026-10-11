@@ -7,7 +7,7 @@ class MaintenancePlansController < ApplicationController
   # Lists all maintenance plans with their table and policy, ordered by id.
   def index
     authorize MaintenancePlan
-    @plans = MaintenancePlan.includes(:iceberg_table, :maintenance_policy).order(:id)
+    @plans = MaintenancePlan.kept.includes(:iceberg_table, :maintenance_policy).order(:id)
     @pagy, @plans = pagy(@plans)
   end
 
@@ -36,7 +36,7 @@ class MaintenancePlansController < ApplicationController
   def create
     authorize MaintenancePlan
     table = IcebergTable.find(params[:maintenance_plan][:iceberg_table_id])
-    existing = MaintenancePlan.find_by(iceberg_table: table)
+    existing = MaintenancePlan.kept.find_by(iceberg_table: table)
 
     if existing
       redirect_to edit_maintenance_plan_path(existing), notice: t("plans.notices.already_exists")
@@ -96,7 +96,7 @@ class MaintenancePlansController < ApplicationController
 
   # Loads the maintenance plan for the current request.
   def set_plan
-    @plan = MaintenancePlan.find(params[:id])
+    @plan = MaintenancePlan.kept.find(params[:id])
   end
 
   # Strong parameters for the plan: the cron and the form's maintenance steps.

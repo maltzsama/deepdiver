@@ -20,7 +20,7 @@ class IcebergTablesController < ApplicationController
     @tables = @tables.where(health_status: params[:health_status]) if params[:health_status].present?
 
     if params[:no_plan].present?
-      @tables = @tables.where.not(id: MaintenancePlan.select(:iceberg_table_id))
+      @tables = @tables.where.not(id: MaintenancePlan.kept.select(:iceberg_table_id))
     end
 
     if params[:q].present?

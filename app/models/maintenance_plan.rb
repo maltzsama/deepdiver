@@ -1,6 +1,7 @@
 # A scheduled maintenance routine for a single table: a cron schedule plus an
 # ordered chain of maintenance steps that together describe what to run.
 class MaintenancePlan < ApplicationRecord
+  include SoftDeletable
   # Default order. My reasoning, not verified in the docs - worth a review from
   # whoever knows your workload:
   #
@@ -21,7 +22,10 @@ class MaintenancePlan < ApplicationRecord
   belongs_to :iceberg_table
   belongs_to :maintenance_policy, optional: true
   has_many :maintenance_steps, -> { order(:position) }, dependent: :destroy
-  has_many :execution_histories, dependent: :destroy
+  # Soft-deleting a plan keeps the execution history: the rows stay attributed
+  # to the table (execution_histories.iceberg_table_id) and keep pointing at
+  # the plan, so the History/Operations screens keep showing what ran.
+  has_many :execution_histories, dependent: :nullify
 
   accepts_nested_attributes_for :maintenance_steps, allow_destroy: false
 
@@ -29,7 +33,7 @@ class MaintenancePlan < ApplicationRecord
   validate  :cron_is_parseable
   validate  :table_is_addressable_in_trino
 
-  scope :dispatchable, -> { where(is_paused: false) }
+  scope :dispatchable, -> { kept.where(is_paused: false) }
 
   # Builds a plan for a table with the full canonical step chain, enabling only
   # the default steps. Used by the operator "run now" path when a table has no

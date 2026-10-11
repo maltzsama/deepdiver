@@ -7,7 +7,7 @@
 # A policy defines the WHOLE chain: cron, which steps enter, and each step's
 # configuration (steps_config).
 class MaintenancePolicy < ApplicationRecord
-  has_many :maintenance_plans, dependent: :nullify
+  has_many :maintenance_plans, -> { kept }, dependent: :nullify
 
   validates :name, presence: true, uniqueness: true
   validates :cron, presence: true
@@ -21,7 +21,7 @@ class MaintenancePolicy < ApplicationRecord
     skipped = 0
 
     tables.each do |table|
-      plan = MaintenancePlan.find_or_initialize_by(iceberg_table: table)
+      plan = MaintenancePlan.kept.find_or_initialize_by(iceberg_table: table)
 
       if plan.maintenance_policy_id.nil? || plan.maintenance_policy_id == id
         new_record = plan.new_record?
