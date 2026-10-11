@@ -43,7 +43,7 @@
           <div class="flex items-center gap-3 py-2 border-b border-cosmos-line">
             <%= sf.hidden_field :operation %>
             <%= sf.hidden_field :position %>
-            <span class="font-mono text-small w-48"><%= sf.object.operation.humanize %></span>
+            <span class="font-mono text-small w-48"><%= sf.object.operation&.humanize %></span>
             <label class="flex items-center gap-1.5">
               <%= sf.check_box :enabled, class: "field-checkbox" %>
               <span class="text-small cell-muted"><%= t("plans.form.enabled") %></span>

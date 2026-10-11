@@ -362,6 +362,7 @@ pt-BR:
     show:
       eyebrow_prefix: "Tabela ·"
       new_schedule: "Novo agendamento"
+      create_plan: "Criar plano"
       run_now: "Executar manutencao agora"
       score: "Pontuacao de saude"
       status: "Status"

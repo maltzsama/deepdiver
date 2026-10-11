@@ -399,6 +399,7 @@ en:
     show:
       eyebrow_prefix: "Table ·"
       new_schedule: "New schedule"
+      create_plan: "Create plan"
       run_now: "Run maintenance now"
       score: "Health score"
       status: "Status"

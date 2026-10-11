@@ -172,6 +172,51 @@ RSpec.describe "GET /iceberg_tables/:id", type: :request do
 
     expect(response.body).not_to include("open error")
   end
+
+  describe "plan management actions" do
+    let(:table) { create(:iceberg_table, catalog:) }
+
+    it "shows Edit and Pause for an admin when the table has an active plan" do
+      sign_in create(:user, :admin)
+      plan = create(:maintenance_plan, iceberg_table: table)
+
+      get iceberg_table_path(table)
+
+      expect(response.body).to include(edit_maintenance_plan_path(plan))
+      expect(response.body).to include(pause_maintenance_plan_path(plan))
+      expect(response.body).not_to include(resume_maintenance_plan_path(plan))
+    end
+
+    it "shows Resume for an admin when the plan is paused" do
+      sign_in create(:user, :admin)
+      plan = create(:maintenance_plan, iceberg_table: table, is_paused: true)
+
+      get iceberg_table_path(table)
+
+      expect(response.body).to include(resume_maintenance_plan_path(plan))
+      expect(response.body).not_to include(pause_maintenance_plan_path(plan))
+    end
+
+    it "shows a Create plan link prefilled with the table when there is no plan" do
+      sign_in create(:user, :admin)
+
+      get iceberg_table_path(table)
+
+      expect(response.body).to include(
+        new_maintenance_plan_path(maintenance_plan: { iceberg_table_id: table.id })
+      )
+    end
+
+    it "hides plan actions from viewers" do
+      plan = create(:maintenance_plan, iceberg_table: table)
+
+      get iceberg_table_path(table)
+
+      expect(response.body).not_to include(edit_maintenance_plan_path(plan))
+      expect(response.body).not_to include(pause_maintenance_plan_path(plan))
+      expect(response.body).not_to include(new_maintenance_plan_path)
+    end
+  end
 end
 
 RSpec.describe "POST /iceberg_tables/:id/run_maintenance", type: :request do
