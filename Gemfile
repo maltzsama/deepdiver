@@ -34,7 +34,7 @@ gem "tzinfo-data", platforms: %i[ windows jruby ]
 gem "solid_queue"
 
 # PostgreSQL only in production (on-prem, managed by CloudNativePG).
-gem "pg", "~> 1.5", groups: %i[ production ]
+gem "pg", "~> 1.7", groups: %i[ production ]
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
