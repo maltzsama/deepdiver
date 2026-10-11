@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 8.1.3", ">= 8.1.3.1"
+gem "rails", "~> 8.1.4"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use sqlite3 as the database for Active Record
@@ -81,7 +81,7 @@ gem "omniauth-rails_csrf_protection", "~> 2.0"
 
 gem "bullet", "~> 8.2", groups: [ :development, :test ]
 
-gem "solid_cable", "~> 4.0"
+gem "solid_cable", "~> 4.1"
 
 gem "pundit", "~> 2.5", require: "pundit"
 
@@ -99,7 +99,7 @@ gem "semantic_logger", "~> 5.1"
 gem "rails_semantic_logger", "~> 5.2"
 
 # json 3.0 changes JSON.parse to keyword-only args, breaking ActiveSupport::JSON.decode.
-gem "json", "~> 2.3"
+gem "json", "~> 3.0"
 
 group :test do
   gem "capybara"

@@ -37,13 +37,7 @@
         <span class="sidebar-badge"><%= compact_number(MaintenancePlan.count) %></span>
       <% end %>
       <%= nav_link_to maintenance_policies_path, icon: "preset" do %><span><%= t("layout.nav.policies") %></span><% end %>
-      <%= nav_link_to execution_histories_path, icon: "list" do %>
-        <span><%= t("layout.nav.history") %></span>
-        <% open_freshness = ErrorEvent.open.where(operation: ErrorEvent::FRESHNESS_OPERATION).count %>
-        <% if open_freshness.positive? %>
-          <span class="sidebar-badge"><%= compact_number(open_freshness) %></span>
-        <% end %>
-      <% end %>
+      <%= nav_link_to execution_histories_path, icon: "list" do %><span><%= t("layout.nav.history") %></span><% end %>
     </div>
 
     <% if current_user.admin? %>
