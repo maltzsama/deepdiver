@@ -11,8 +11,6 @@ class DataRetentionJob < ApplicationJob
     error_events: 90.days,
     execution_histories: 90.days,
     execution_steps: 90.days,
-    freshness_checks: 30.days,
-    freshness_runs: 30.days,
     # Key name drives the env override: SOLID_QUEUE_RETENTION_DAYS.
     solid_queue: 7.days
   }.freeze
@@ -21,9 +19,7 @@ class DataRetentionJob < ApplicationJob
   KLASSES = {
     error_events: ErrorEvent,
     execution_histories: ExecutionHistory,
-    execution_steps: ExecutionStep,
-    freshness_checks: FreshnessCheck,
-    freshness_runs: FreshnessRun
+    execution_steps: ExecutionStep
   }.freeze
 
   # Which column decides "old". ErrorEvent dedupes by message: a recurring

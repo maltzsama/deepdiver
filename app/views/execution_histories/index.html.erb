@@ -11,12 +11,10 @@
 <%= render "shared/filters",
            url: execution_histories_path,
            fields: [
-             { name: :kind, label: t("operations.filter_kind"),
-               options: OperationTimeline::KINDS.map { |k| [ t("operations.kind_#{k}"), k ] } },
              { name: :catalog_id, label: t("tables.filter_catalog"),
                options: @catalogs.map { |c| [ c.name, c.id ] } },
              { name: :status, label: t("operations.filter_status"),
-               options: (ExecutionHistory::STATUSES + FreshnessCheck::STATUSES).uniq.map { |s| [ s, s ] } },
+               options: ExecutionHistory::STATUSES.map { |s| [ s, s ] } },
              { name: :operation, label: t("operations.filter_operation"),
                options: MaintenancePlan::CANONICAL_ORDER.map { |o| [ o, o ] } },
              { name: :stopped_at_step, label: t("operations.index.filter_stopped_at"),
@@ -42,14 +40,7 @@
     </div>
   <% else %>
     <% @rows.each do |row| %>
-      <% if row[:kind] == "maintenance" %>
-        <%= render "maintenance_run", execution: @executions[row[:record_id]] %>
-      <% else %>
-        <%= render "freshness_check", check: @checks[row[:record_id]],
-                   event: @freshness_events[[ @checks[row[:record_id]].iceberg_table.catalog_id,
-                                             @checks[row[:record_id]].iceberg_table.namespace,
-                                             @checks[row[:record_id]].iceberg_table.name ]] %>
-      <% end %>
+      <%= render "maintenance_run", execution: @executions[row[:record_id]] %>
     <% end %>
     <%== pager_nav(@pagy) %>
   <% end %>

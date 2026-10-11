@@ -65,54 +65,6 @@ pt-BR:
       password_updated: "Senha alterada."
 
   error_events:
-    eyebrow: "Erros"
-    title: "Eventos de erro"
-    subtitle: "%{open} erro(s) aberto(s) - o que falhou e quando comecou."
-    empty_title: "Nenhum evento de erro"
-    empty_hint: "Falhas de sincronizacao de catalogo, execucoes e login aparecem aqui."
-    empty_filters_hint: "Nenhum erro corresponde aos filtros atuais."
-    result_title: "Resultados"
-    col_table: "Onde"
-    col_operation: "Operacao"
-    col_message: "Mensagem"
-    col_since: "Primeira vez"
-    col_count: "Vezes"
-    col_status: "Status"
-    status_open: "Aberto"
-    status_acknowledged: "Reconhecido"
-    status_resolved: "Resolvido"
-    actions:
-      acknowledge: "Assumir o problema"
-      resolve: "Marcar como resolvido"
-      assign: "Atribuir e notificar"
-    show:
-      title: "Detalhe do erro"
-      message_title: "O que aconteceu"
-      details_title: "Detalhes"
-      where: "Onde"
-      operation: "Operacao"
-      source_system: "Origem"
-      error_class: "Classe do erro"
-      first_seen: "Primeira vez"
-      last_seen: "Ultima vez"
-      occurrences: "Ocorrencias"
-      source_column: "Coluna"
-      acknowledged_at: "Assumido em"
-      resolved_at: "Resolvido em"
-      context_title: "Contexto"
-      assign_title: "Atribuicao"
-      assign_hint: "Passe o problema para uma pessoa ou para um time inteiro. Os atribuidos recebem um email; o evento fica aberto ate ser assumido."
-      target_type: "Atribuir a"
-      user: "Usuario"
-      team: "Time"
-      assigned_to: "Atribuido a"
-      assigned_team: "Time atribuido"
-    notices:
-      acknowledged_one: "Erro assumido."
-      resolved_one: "Erro marcado como resolvido."
-      assigned: "%{count} pessoa(s) notificada(s) por email."
-      invalid_target: "Escolha um usuario ou time valido para atribuir."
-    overview_banner: "%{count} erro(s) aberto(s) - inspecione a superficie de erros."
     catalog_banner: "%{catalog} tem %{count} erro(s) aberto(s)."
     table_banner: "Esta tabela tem %{count} erro(s) aberto(s)."
     table_banner_kind: "%{count} %{operation}"
@@ -123,7 +75,7 @@ pt-BR:
     index:
       eyebrow: "Administracao"
       title: "Times"
-      subtitle: "Grupos de pessoas para quem erros podem ser atribuidos."
+      subtitle: "Grupos de pessoas."
       new: "Novo time"
       col_name: "Nome"
       col_members: "Membros"
@@ -131,7 +83,7 @@ pt-BR:
       delete: "Excluir"
       delete_confirm: "Excluir este time? Os membros continuam no app."
       empty_title: "Nenhum time ainda"
-      empty_hint: "Crie um time para entregar um conjunto de erros a uma squad inteira."
+      empty_hint: "Crie um time para agrupar pessoas."
     new:
       title: "Novo time"
     edit:
@@ -463,25 +415,6 @@ pt-BR:
       position_deletes: "Deletes por posicao"
       equality_deletes: "Deletes por igualdade"
       missing_note: "Valores ausentes significam que o resumo do snapshot escrito pelo motor nao continha esse campo - nunca sao mostrados como zero."
-    freshness:
-      title: "Frescor"
-      sla_note: "SLA %{minutes} min"
-      no_sla_title: "Nenhum SLA de frescor configurado"
-      no_sla_hint: "Defina uma coluna de watermark e SLA para monitorar se os dados continuam chegando."
-      status: "Status"
-      watermark: "Watermark"
-      partition: "Particao"
-      sla: "SLA"
-      edit_sla: "Editar SLA"
-      severity_bands: "Faixas de severidade"
-      band_value: "aviso %{warning} min · grave %{severe} min · critico %{critical} min"
-      alert_destination: "Destino do alerta"
-      history: "Historico de verificacoes"
-      col_when: "Verificado em"
-      col_status: "Status"
-      col_delay: "Atraso"
-      col_max_ts: "Watermark maximo"
-      no_checks: "Nenhuma verificacao registrada ainda."
     index:
       eyebrow: "Dados"
       title: "Tabelas"
@@ -516,16 +449,6 @@ pt-BR:
     filter_namespace: "Namespace"
     filter_status: "Status"
     filter_no_plan: "Plano"
-    filter_freshness: "Frescor"
-    col_freshness: "Frescor"
-    fresh_no_sla: "sem SLA"
-    fresh_configure_title: "Sem SLA - clique para configurar monitoramento de frescor"
-    fresh_late: "atrasado %{delay}"
-    fresh_error: "erro na sonda"
-    fresh_no_data: "sem dados"
-    fresh_late_filter: "Atrasado"
-    fresh_no_sla_filter: "Sem SLA"
-    fresh_error_filter: "Erro na sonda"
     include_inactive: "Incluir inativas"
     inactive: "inativa"
 
@@ -570,7 +493,7 @@ pt-BR:
     detail_snapshots: "%{count} de %{budget} retidos"
     detail_manifests: "%{count} de %{budget} esperados"
     detail_deletes: "%{deletes} deletes sobre %{records} registros"
-    footer: "A pontuacao mede o que a manutencao corrige, nao o frescor dos dados. Uma tabela pode pontuar alto enquanto seu pipeline esta parado - isso aparece na coluna de frescor, nao aqui."
+    footer: "A pontuacao mede o que a manutencao corrige, nao o frescor dos dados. Uma tabela pode pontuar alto enquanto seu pipeline esta parado."
 
   shared:
     step_chain:
@@ -636,7 +559,7 @@ pt-BR:
     index:
       eyebrow: "Dados"
       title: "Operacoes"
-      subtitle: "Registro de cada execucao de manutencao e verificacao de frescor, mais recente primeiro."
+      subtitle: "Registro de cada execucao de manutencao, mais recente primeiro."
       result: "Resultado"
       count: "%{count} evento(s)"
       empty_title: "Nenhuma operacao encontrada"
@@ -651,12 +574,9 @@ pt-BR:
       col_chain: "Detalhe"
       col_duration: "Duracao"
       col_query_id: "ID da consulta Trino"
-      col_triage: "Triagem"
-      triage_unassigned: "nao atribuido"
       filter_stopped_at: "Parou na etapa"
       retries: "%{count} tentativas"
       tab_maintenance: "Manutencao"
-      tab_freshness: "Frescor"
       legend_wait: "espera %{dur}"
       legend_ok: "%{op} %{dur}"
       legend_failed: "%{op} %{dur} falhou"
@@ -665,26 +585,12 @@ pt-BR:
       legend_skipped: "%{op}: %{reason}"
       legend_waiting_engine: "aguardando engine"
       owner_execution: "execucao"
-      fresh_col_delay: "Atraso"
-      fresh_col_sla: "SLA (min)"
     filter_operation: "Operacao"
     filter_status: "Status"
-    filter_kind: "Tipo"
     kind_maintenance: "manutencao"
-    kind_freshness: "frescor"
-    freshness_sla: "SLA %{sla}min"
     metrics_ms: "ms"
     metrics_processed: "processados"
     metrics_written: "escritos"
-
-  freshness:
-    status:
-      unknown: "desconhecido"
-      ok: "ok"
-      warning: "atencao"
-      late: "atrasado"
-      error: "erro"
-      no_data: "sem dados"
 
   dashboard:
     index:
@@ -700,24 +606,13 @@ pt-BR:
       stat_critical_unit: "%{warning} em alerta"
       stat_active_plans: "Planos ativos"
       stat_active_plans_unit: "%{count} pausados"
-      sla_card_label: "Fora do SLA"
-      sla_card_unit: "tabelas"
       triage_title: "Necessita acao"
       triage_note: "%{count} tabela(s) · mais recente primeiro"
       triage_empty_title: "Nada precisa de atencao."
-      section_errors: "Erros"
-      section_sla: "Fora do SLA"
       section_health: "Saude critica"
       section_paused: "Planos pausados"
-      see_all: "Ver tudo"
       paused_badge: "pausado"
-      triage_empty_hint: "Nenhuma tabela fora do SLA, nenhuma tabela em estado critico de manutencao."
-      col_table: "Tabela"
-      col_maintenance: "Manutencao"
-      col_freshness: "Frescor"
-      col_since: "Desde"
-      on_track: "em dia"
-      no_sla: "sem SLA"
+      triage_empty_hint: "Nenhuma tabela em estado critico de manutencao."
       refresh: "Atualizar"
       run_now: "Executar agora"
 
@@ -897,59 +792,9 @@ pt-BR:
       updated: "Configuracao do motor atualizada"
       updated_and_applied: "Configuracao do motor atualizada e aplicada ao cluster em execucao"
 
-  freshness_slas:
-    edit:
-      title: "SLA de frescor · %{table}"
-      subtitle: "O que sondar e quando uma tabela desatualizada merece alerta."
-    form:
-      errors_one: "%{count} problema impediu o salvamento"
-      errors_other: "%{count} problemas impediram o salvamento"
-      enabled: "Monitorar o frescor desta tabela"
-      probe_title: "Sonda"
-      probe_hint: "Qual coluna carrega o watermark mais recente e como le-la."
-      timestamp_column: "Coluna de watermark"
-      timestamp_type: "Tipo do timestamp"
-      source_timezone: "Fuso de origem"
-      partition_column: "Coluna de particao"
-      partition_hint: "Opcional. Limita a sonda as particoes recentes."
-      partition_lookback: "Retrocesso de particoes"
-      sla_title: "SLA"
-      sla_hint: "Quao desatualizada a tabela pode ficar antes de ser considerada atrasada."
-      sla_minutes: "SLA (minutos)"
-      sla_minutes_hint: "Atraso acima disso e 'late'."
-      warning_at_percent: "Avisar a % do SLA"
-      warning_at_percent_hint: "Atraso acima dessa fracao do SLA mostra 'warning'."
-      severity_title: "Faixas de severidade"
-      severity_hint: "Atraso (minutos) em que o alerta escala. Aviso primeiro, depois grave, depois critico."
-      warning_after_minutes: "Aviso apos (minutos)"
-      severe_after_minutes: "Grave apos (minutos)"
-      critical_after_minutes: "Critico apos (minutos)"
-      band_hint: "Precisa estar em ordem: aviso < grave < critico."
-      destination_title: "Destino do alerta"
-      destination_hint: "Para onde vao os alertas de frescor desta tabela. Ambos sao permitidos."
-      slack_channel: "#canal do Slack"
-      slack_channel_hint: "ex.: #support. Enviado pelo webhook global."
-      email_to: "Destinatarios de email"
-      email_to_hint: "Enderecos separados por virgula, enviados pelo servidor SMTP configurado."
-      submit: "Salvar SLA"
-      cancel: "Cancelar"
-    notices:
-      updated: "SLA de frescor atualizado"
-
   devise:
     failure:
       suspended: "Sua conta foi suspensa. Fale com um administrador."
-
-  error_event_mailer:
-    assignment:
-      subject: "[DeepDiver] Erro atribuido a voce: %{operation} em %{where}"
-      greeting: "Ola,"
-      intro: "%{assigned_by} atribuiu um evento de erro a voce."
-      operation: "Operacao"
-      where: "Onde"
-      message: "Mensagem"
-      error_class: "Classe do erro"
-      occurrences: "Ocorrencias"
 
   maintenance:
     metrics:
@@ -992,12 +837,6 @@ pt-BR:
           attributes:
             config:
               retention_below_floor: "retention_threshold %{requested} para %{operation} esta abaixo do minimo configurado no motor (%{floor}) - aumente o valor, ou reduza o piso nas configuracoes do motor Trino"
-        table_freshness_sla:
-          attributes:
-            severe_after_minutes:
-              must_exceed_warning: "precisa ser maior que o limite de aviso"
-            critical_after_minutes:
-              must_exceed_severe: "precisa ser maior que o limite de grave"
         catalog:
           attributes:
             nessie_ref:

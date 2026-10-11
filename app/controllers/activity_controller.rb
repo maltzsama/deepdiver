@@ -24,8 +24,7 @@ class ActivityController < ApplicationController
     # the first stage", and it is the one seen most often. Read it from the
     # execution/run tables directly - NOT through TrinoDemand, whose #count
     # calls reap_orphans! and would mutate execution state on a page render.
-    @engine_idle = @engine_state.status == "down" && @running.empty? && @queued.empty? &&
-                   !FreshnessRun.where(status: %w[pending running]).exists?
+    @engine_idle = @engine_state.status == "down" && @running.empty? && @queued.empty?
   end
 
   # Re-triggers the engine start through the supervisor and redirects back to

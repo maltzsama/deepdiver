@@ -135,8 +135,8 @@ class CatalogSyncService
   # Restricted to namespaces that synced completely. A table missing from `seen`
   # because its own sync raised, or because its namespace failed to list, has
   # not been dropped from the catalog - we simply do not know its state, and
-  # deactivating it removes it from the tables screen, from freshness sweeps
-  # (which filter on active) and from maintenance dispatch. A transient catalog
+  # deactivating it removes it from the tables screen and from maintenance
+  # dispatch. A transient catalog
   # error used to silence monitoring for every table it touched; with every
   # namespace failing, `where.not(id: [])` renders as `1=1` and took out the
   # whole catalog.

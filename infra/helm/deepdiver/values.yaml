@@ -218,16 +218,6 @@ worker:
   # Set only to deviate from it for this workload.
   securityContext: {}
 
-# Freshness runs on its own process so it never waits behind an optimize.
-workerFreshness:
-  enabled: true
-  replicaCount: 1
-  resources:
-    requests: { cpu: 100m, memory: 512Mi }
-    limits:   { cpu: 500m, memory: 1Gi }
-  # Empty inherits the top-level `securityContext`.
-  securityContext: {}
-
 # Engine lifecycle — supervise start, drain, watchdog.
 workerEngine:
   enabled: true

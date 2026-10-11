@@ -73,34 +73,6 @@ FactoryBot.define do
     namespace { "reporting" }
   end
 
-  factory :table_freshness_sla do
-    iceberg_table
-    enabled { true }
-    timestamp_column { "load_timestamp" }
-    timestamp_type { "timestamp_tz" }
-    source_timezone { "UTC" }
-    partition_column { "dt" }
-    partition_lookback { 7 }
-    sla_minutes { 120 }
-    warning_at_percent { 80 }
-    warning_after_minutes { 180 }
-    severe_after_minutes { 360 }
-    critical_after_minutes { 720 }
-    slack_channel { "#alerts" }
-  end
-
-  factory :freshness_run do
-    status { "pending" }
-  end
-
-  factory :freshness_check do
-    iceberg_table
-    checked_at { Time.current }
-    status { "ok" }
-    delay_seconds { 0 }
-    sla_minutes { 120 }
-  end
-
   factory :maintenance_plan do
     iceberg_table
     cron { "0 3 * * *" }
