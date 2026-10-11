@@ -160,8 +160,8 @@ RSpec.describe CatalogSyncService do
 
   describe "deactivation safety" do
     # A table absent from `seen` because its sync errored has NOT been dropped
-    # from the catalog. Deactivating it removes it from the tables screen, from
-    # freshness sweeps (which filter on active) and from maintenance dispatch.
+    # from the catalog. Deactivating it removes it from the tables screen and
+    # from maintenance dispatch.
     class NamespaceListingFails
       def namespaces            = [ "bronze" ]
       def tables_in(_namespace) = raise "catalog unreachable"

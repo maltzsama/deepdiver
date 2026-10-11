@@ -26,11 +26,7 @@
              { name: :health_status, label: t("tables.filter_status"),
                options: IcebergTable::HEALTH_STATUSES.map { |s| [ s, s ] } },
              { name: :no_plan, label: t("tables.filter_no_plan"),
-               options: [ [ t("tables.index.no_plan_option"), "1" ] ] },
-             { name: :freshness, label: t("tables.filter_freshness"),
-               options: [ [ t("tables.fresh_late_filter"), "late" ],
-                          [ t("tables.fresh_no_sla_filter"), "no_sla" ],
-                          [ t("tables.fresh_error_filter"), "error" ] ] }
+               options: [ [ t("tables.index.no_plan_option"), "1" ] ] }
            ],
            checkbox: { name: :inactive, label: t("tables.index.include_inactive") } %>
 
@@ -82,7 +78,6 @@
             <th scope="col"><%= t("tables.index.col_records") %></th>
             <th scope="col"><%= t("tables.index.col_snapshots") %></th>
             <th scope="col"><%= t("tables.index.col_plan") %></th>
-            <th scope="col"><%= t("tables.index.col_freshness") %></th>
             <th scope="col"><%= t("tables.index.col_last_write") %></th>
             <% if can_run_maintenance? %>
               <th scope="col"><span class="sr-only"><%= t("tables.index.col_actions") %></span></th>
@@ -122,18 +117,6 @@
                   <%= link_to t("tables.index.create_plan"),
                               new_maintenance_plan_path(maintenance_plan: { iceberg_table_id: table.id }),
                               class: "badge badge-warning" %>
-                <% end %>
-              </td>
-              <td>
-                <% freshness = freshness_label(table) %>
-                <% if table.table_freshness_sla.nil? || !table.table_freshness_sla.enabled %>
-                  <%= link_to edit_iceberg_table_freshness_sla_path(table),
-                              class: "badge badge-mute no-underline hover:text-cosmos-fg",
-                              title: t("tables.fresh_configure_title") do %>
-                    <span class="badge-dot"></span><%= freshness[0] %>
-                  <% end %>
-                <% else %>
-                  <span class="badge <%= freshness[1] %>"><span class="badge-dot"></span><%= freshness[0] %></span>
                 <% end %>
               </td>
               <td><%= timestamp(table.last_data_update) %></td>
