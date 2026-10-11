@@ -45,15 +45,6 @@ app.kubernetes.io/component: worker
 {{- end }}
 
 {{/*
-Selector labels for the freshness worker Deployment.
-*/}}
-{{- define "deepdiver.workerFreshnessSelector" -}}
-app.kubernetes.io/name: {{ include "deepdiver.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/component: worker-freshness
-{{- end }}
-
-{{/*
 Selector labels for the engine worker Deployment.
 */}}
 {{- define "deepdiver.workerEngineSelector" -}}
@@ -90,7 +81,7 @@ authorized the fullname, and every get returned 403.
 Non-empty when the chart renders the <fullname>-chart-env Secret, i.e. when the
 operator supplied a sensitive value through chart values. Every pod must mount
 it whenever it exists: config/initializers/devise.rb runs ENV.fetch on the OIDC
-vars in EVERY process (web and all three workers), so a missing
+vars in EVERY process (web and both workers), so a missing
 OIDC_CLIENT_SECRET while SSO_ENABLED=true is a boot-time KeyError, not just a
 broken login.
 */}}
@@ -194,8 +185,8 @@ of caller-specific annotations, e.g. Prometheus scrape settings on web only).
 {{- end }}
 
 {{/*
-Renders one of the three Solid Queue worker Deployments (worker,
-worker-engine, worker-freshness). They differ only in: name/labels/selector,
+Renders one of the Solid Queue worker Deployments (worker, worker-engine).
+They differ only in: name/labels/selector,
 values key (replicaCount/resources/securityContext), the SOLID_QUEUE_CONFIG
 file, the second SOLID_QUEUE_* env var, and an optional comment above it.
 Takes a dict: root (the "." of the calling template), component (name

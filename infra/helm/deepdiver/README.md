@@ -135,13 +135,12 @@ kubectl create secret generic deepdiver-encryption \
 | `httproute.gatewayNamespace` | `""` | Namespace of the Gateway; empty means the release namespace |
 | `httproute.hosts` | `[]` | `hostnames` for the `HTTPRoute` |
 | `worker.enabled` | `true` | Deploy the Solid Queue worker. `false` omits the Deployment entirely |
-| `workerFreshness.enabled` | `true` | Deploy the freshness worker. `false` omits the Deployment entirely |
 | `workerEngine.enabled` | `true` | Deploy the engine lifecycle worker. `false` omits the Deployment entirely |
 | `migrationJob.enabled` | `true` | Run DB migrations as a Helm hook |
 | `resources` | see values.yaml | web pod resource requests/limits |
 | `securityContext` | see values.yaml | Container security context, applied to every workload. The per-worker `worker*.securityContext` keys override it and inherit this when empty |
 | `podSecurityContext` | `{}` | Pod-level security context |
-| `automountServiceAccountToken` | `true` | Applied to web and all three workers (they call the k8s API to manage the Trino engine/catalog secrets). Always `false` on the migration Job, which never does |
+| `automountServiceAccountToken` | `true` | Applied to web and both workers (they call the k8s API to manage the Trino engine/catalog secrets). Always `false` on the migration Job, which never does |
 | `serviceAccount.annotations` | `{}` | e.g. `eks.amazonaws.com/role-arn` or `iam.gke.io/gcp-service-account`, for cloud IAM federation |
 | `extraEnv` | `[]` | Extra env vars appended to every workload's container |
 | `extraVolumes` / `extraVolumeMounts` | `[]` | Extra volumes/mounts on every workload |
