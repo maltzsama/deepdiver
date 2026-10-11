@@ -30,10 +30,6 @@ module MaintenanceOrchestrator
     #
     # @param execution_history_id [Integer] the execution to retry
     def retry_pending_maintenance(execution_history_id) = raise NotImplementedError
-    # Runs a freshness sweep against the enabled SLAs.
-    #
-    # @param freshness_run_id [Integer] the run to start
-    def start_freshness_sweep(freshness_run_id) = raise NotImplementedError
     # Syncs a catalog's metadata.
     #
     # @param catalog_id [Integer] the catalog to sync

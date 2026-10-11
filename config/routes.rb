@@ -39,15 +39,10 @@ Rails.application.routes.draw do
   resources :execution_histories, only: %i[index] do
     member do
       post :cancel
-      # Freshness triage: acknowledge / assign / resolve a breached-SLA event
-      # directly from the History freshness tab.
-      patch :acknowledge
-      patch :assign
-      patch :resolve
     end
   end
 
-  # Teams group users so error events can be assigned to a whole squad.
+  # Teams group users into squads.
   resources :teams
 
   resources :catalogs, only: %i[index show new create edit update destroy] do
@@ -72,8 +67,6 @@ Rails.application.routes.draw do
       post :sync_table
       post :dismiss_errors
     end
-
-    resource :freshness_sla, only: %i[edit update], controller: "freshness_slas"
   end
 
   # Maintenance plans.

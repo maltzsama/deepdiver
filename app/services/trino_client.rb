@@ -1,6 +1,6 @@
 # Runs arbitrary SQL against the ephemeral Trino and returns rows keyed by
-# column name. Used by the freshness probe (SELECT MAX of a watermark, distinct
-# recent partitions); the maintenance path keeps using TrinoRestClient.
+# column name. Used by the catalog sync (SELECT of table lists); the
+# maintenance path keeps using TrinoRestClient.
 class TrinoClient
   # Raised when Trino rejects a statement or fails to finish a query.
   class Error < StandardError; end
@@ -87,7 +87,7 @@ class TrinoClient
       # Enough rows: stop reading, but tell Trino so. Walking away from an
       # outstanding nextUri leaves the query RUNNING on the coordinator until
       # its client timeout, and ChartTrinoProvisioner#idle? then reports the
-      # engine busy - so every freshness sweep held the engine up for the whole
+      # engine busy - so a cancelled query held the engine up for the whole
       # drain grace period and logged "queries still active".
       if limit && rows.size >= limit
         cancel(current["nextUri"])
@@ -134,7 +134,7 @@ class TrinoClient
   #
   # @return [Hash] the headers
   def headers
-    h = { "X-Trino-User" => "deepdiver", "X-Trino-Source" => "deepdiver-freshness" }
+    h = { "X-Trino-User" => "deepdiver", "X-Trino-Source" => "deepdiver" }
     h["X-Trino-Catalog"] = @catalog_name if @catalog_name.present?
     h
   end

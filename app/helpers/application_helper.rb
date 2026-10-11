@@ -74,19 +74,6 @@ module ApplicationHelper
     end
   end
 
-  # Maps a freshness status to its badge CSS class.
-  # @param status [String, Symbol] the freshness status.
-  # @return [String] the badge class for the status.
-  def freshness_badge_class(status)
-    case status.to_s
-    when "ok"      then "badge-ok"
-    when "late"    then "badge-err"
-    when "warning" then "badge-warn"
-    when "error"   then "badge-err"
-    else "badge-mute"
-    end
-  end
-
   # Maps a health status to the fill colour class used on the health strata bars.
   # @param status [String, Symbol] the health status.
   # @return [String] the strata fill class for the status.
@@ -246,37 +233,6 @@ module ApplicationHelper
       "#{(seconds / 60).round} min"
     else
       "#{(seconds / 3600.0).round(1)} h"
-    end
-  end
-
-  # Formats a freshness delay as a day count when it spans at least a day,
-  # otherwise defers to duration_label. Returns nil when given nil.
-  # @param seconds [Numeric, nil] the delay in seconds.
-  # @return [String, nil] the formatted delay, or nil when seconds is nil.
-  def freshness_delay_label(seconds)
-    return nil if seconds.nil?
-
-    days = seconds.to_i / 86_400
-    return "#{days}d" if days >= 1
-
-    duration_label(seconds)
-  end
-
-  # [label, badge_class] for the freshness column, or nil.
-  # @param table [IcebergTable] the table whose freshness is shown.
-  # @return [Array, nil] the label and badge class, or nil when no SLA applies.
-  def freshness_label(table)
-    sla = table.table_freshness_sla
-    return [ t("tables.fresh_no_sla"), "badge-mute" ] if sla.nil? || !sla.enabled
-
-    delay = freshness_delay_label(table.latest_freshness_check&.delay_seconds)
-    case sla.status
-    when "ok"      then [ delay || "ok", "badge-ok" ]
-    when "warning" then [ delay || "warning", "badge-warn" ]
-    when "late"    then [ t("tables.fresh_late", delay: delay || "?"), "badge-err" ]
-    when "error"   then [ t("tables.fresh_error"), "badge-err" ]
-    when "no_data" then [ t("tables.fresh_no_data"), "badge-mute" ]
-    else [ "—", "badge-mute" ]
     end
   end
 

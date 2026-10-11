@@ -1,11 +1,11 @@
 # Sends an alert to a specific destination: a Slack #channel and/or email
 # recipients, using the global transport (Slack webhook + SMTP) from
-# AlertSetting. The freshness alerter passes the SLA's own destination so each
-# table's alerts go exactly where they are configured to go.
+# AlertSetting. Callers pass their own destination so alerts go exactly where
+# they are configured to go.
 class AlertNotifier
   # Sends an alert to the given destinations.
   #
-  # @param subject [String] the alert subject (short, e.g. "Freshness late")
+  # @param subject [String] the alert subject (short, e.g. "Engine down")
   # @param message [String] the alert message (rich in context)
   # @param severity [String] the alert severity (warning/severe/critical)
   # @param slack_channel [String, nil] a Slack #channel to post to

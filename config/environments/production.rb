@@ -64,7 +64,7 @@ Rails.application.configure do
   config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "localhost") }
 
   # SMTP settings are configured per-tenant via AlertSetting (admin panel),
-  # not here. AlertMailer and ErrorEventMailer pass delivery_method_settings
+  # not here. AlertMailer passes delivery_method_settings
   # from AlertSetting.instance.smtp_settings on each deliver_now call.
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to

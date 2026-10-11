@@ -1,5 +1,5 @@
 # Manages the global view of iceberg tables across all catalogs: a filterable
-# list and per-table detail (schedules, executions, freshness, health), plus a
+# list and per-table detail (schedules, executions, health), plus a
 # "run now" fallback. Each action authorizes with Pundit.
 class IcebergTablesController < ApplicationController
   before_action :set_table, only: %i[show run_maintenance sync_table dismiss_errors]
@@ -13,7 +13,7 @@ class IcebergTablesController < ApplicationController
     @last_sync_at = IcebergTable.maximum(:metadata_synced_at)
 
     base = params[:inactive].present? ? IcebergTable.all : IcebergTable.active
-    @tables = base.includes(:catalog, :maintenance_plan, :table_freshness_sla, :latest_freshness_check)
+    @tables = base.includes(:catalog, :maintenance_plan)
 
     @tables = @tables.where(catalog_id: params[:catalog_id])       if params[:catalog_id].present?
     @tables = @tables.where(namespace: params[:namespace])         if params[:namespace].present?
@@ -21,14 +21,6 @@ class IcebergTablesController < ApplicationController
 
     if params[:no_plan].present?
       @tables = @tables.where.not(id: MaintenancePlan.select(:iceberg_table_id))
-    end
-
-    if params[:freshness].present?
-      case params[:freshness]
-      when "late"    then @tables = @tables.where(id: TableFreshnessSla.where(status: "late").select(:iceberg_table_id))
-      when "error"   then @tables = @tables.where(id: TableFreshnessSla.where(status: "error").select(:iceberg_table_id))
-      when "no_sla"  then @tables = @tables.where.not(id: TableFreshnessSla.select(:iceberg_table_id))
-      end
     end
 
     if params[:q].present?
@@ -42,7 +34,7 @@ class IcebergTablesController < ApplicationController
   end
 
   # Shows one table with its open errors, schedules, recent executions,
-  # freshness SLA/checks, and a health evaluation rebuilt from stored metadata.
+  # and a health evaluation rebuilt from stored metadata.
   def show
     authorize @table
     @open_errors = ErrorEvent.open.table_events(@table).order(last_seen_at: :desc)
@@ -51,8 +43,6 @@ class IcebergTablesController < ApplicationController
     # whether to follow the (table-scoped, kind-agnostic) History link.
     @open_error_groups = @open_errors.group_by(&:operation).transform_values(&:size)
     @executions = @table.execution_histories.latest.limit(20)
-    @freshness_sla = @table.table_freshness_sla
-    @freshness_checks = @table.freshness_checks.latest.limit(30)
 
     # READ the persisted evaluation; do not re-evaluate here. The score, the
     # status label and the breakdown are written together by the sync and by
