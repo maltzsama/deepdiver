@@ -95,7 +95,7 @@ gem "prometheus-client", "~> 5.0"
 
 # Structured, appendable logging: JSON to STDOUT today, swap the appender for
 # Loki/Logstash/Elasticsearch later without rewriting log calls.
-gem "semantic_logger", "~> 5.1"
+gem "semantic_logger", "~> 5.2"
 gem "rails_semantic_logger", "~> 5.2"
 
 # json 3.0 changes JSON.parse to keyword-only args, breaking ActiveSupport::JSON.decode.
