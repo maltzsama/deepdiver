@@ -121,32 +121,31 @@ RSpec.describe TrinoCatalogProjection do
   end
 
   describe "native Nessie mode" do
-    it "emits the native Nessie connector properties" do
+    it "projects through the REST connector, which reaches nested namespaces (see #238)" do
       create(:catalog, catalog_type: "nessie", name: "native-nessie",
              nessie_api_mode: "native", nessie_ref: "etl_dev",
              nessie_warehouse: "s3://bucket/", endpoint: "http://nessie:19120")
       described_class.new.sync_all!
 
       props = TrinoCatalogRegistry.find_by(catalog_name: "native_nessie").properties
-      expect(props["iceberg.catalog.type"]).to eq("nessie")
-      expect(props["iceberg.nessie-catalog.uri"]).to eq("http://nessie:19120/api/v2")
-      expect(props["iceberg.nessie-catalog.ref"]).to eq("etl_dev")
-      expect(props["iceberg.nessie-catalog.default-warehouse-dir"]).to eq("s3://bucket/")
-      expect(props["iceberg.nessie-catalog.client-api-version"]).to eq("V2")
-      # BEARER is the connector's only Security member: with no credential the
-      # property must be absent, not set to a sentinel that fails catalog
-      # initialization.
-      expect(props).not_to have_key("iceberg.nessie-catalog.authentication.type")
+      expect(props["iceberg.catalog.type"]).to eq("rest")
+      expect(props["iceberg.rest-catalog.uri"]).to eq("http://nessie:19120/iceberg")
+      expect(props["iceberg.rest-catalog.nested-namespace-enabled"]).to eq("true")
+      # The stored warehouse is sent verbatim (Nessie resolves name or
+      # location); the ref is NOT sent - the config endpoint rejects it as an
+      # unknown warehouse, and the returned prefix embeds the default branch.
+      expect(props["iceberg.rest-catalog.warehouse"]).to eq("s3://bucket/")
+      expect(props.keys.grep(/nessie-catalog/)).to be_empty
     end
 
-    it "defaults the ref to main when blank" do
+    it "omits the warehouse parameter when none is stored, so the server default answers" do
       create(:catalog, catalog_type: "nessie", name: "native-nessie2",
              nessie_api_mode: "native", nessie_warehouse: "s3://bucket/",
-             endpoint: "http://nessie:19120")
+             endpoint: "http://nessie:19120").update_column(:nessie_warehouse, "")
       described_class.new.sync_all!
 
       props = TrinoCatalogRegistry.find_by(catalog_name: "native_nessie2").properties
-      expect(props["iceberg.nessie-catalog.ref"]).to eq("main")
+      expect(props).not_to have_key("iceberg.rest-catalog.warehouse")
     end
 
     it "keeps using the REST surface when nessie_api_mode is rest" do

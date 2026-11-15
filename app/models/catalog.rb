@@ -92,6 +92,14 @@ class Catalog < ApplicationRecord
     # nothing, and "N namespaces, 0 tables" is what makes that visible at the
     # moment an operator is deciding whether the catalog works.
     table_count = count_tables(client, namespaces)
+    # A native-mode Nessie catalog is projected to Trino through the Iceberg
+    # REST surface, whose /config call must resolve the stored warehouse
+    # (Nessie accepts the name or the location). Probing it here surfaces a
+    # stale or unknown warehouse at verification time, instead of as a
+    # disabled Trino catalog hours later.
+    trino_projection_error = probe_trino_rest_projection
+    return { ok: false, error: trino_projection_error } if trino_projection_error
+
     catalog_credential&.update!(verified_at: Time.current, verification_error: nil)
     { ok: true, namespace_count: namespaces.size, table_count: table_count }
   rescue StandardError => e
@@ -146,6 +154,23 @@ class Catalog < ApplicationRecord
   VERIFY_NAMESPACE_SAMPLE = 25
 
   private
+
+  # Probes the Iceberg REST config call Trino will make for this catalog, or
+  # nil when the projection does not depend on it. Returns the failure as a
+  # message rather than raising, so verification reports it as the outcome.
+  #
+  # @return [String, nil] the error message, or nil when the probe passed
+  def probe_trino_rest_projection
+    return nil unless catalog_type == "nessie" && nessie_api_mode == "native"
+
+    uri = +"#{endpoint.chomp("/")}/iceberg/v1/config"
+    uri << "?warehouse=#{ERB::Util.url_encode(nessie_warehouse)}" if nessie_warehouse.present?
+    HttpTransport.new.get(uri)
+    nil
+  rescue HttpTransport::ApiError => e
+    "Trino projection check failed: #{e.message} - the warehouse must be a name or location " \
+      "defined on the Nessie server (nessie.catalog.warehouses.*)"
+  end
 
   # Tables found across the sampled namespaces. A namespace whose listing
   # raises contributes nothing rather than failing the whole verification:
